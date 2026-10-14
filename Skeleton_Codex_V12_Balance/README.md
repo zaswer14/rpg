@@ -8,6 +8,8 @@
 
 **Thư viện dùng chung (14/10/2026):** `../library/` — 8 trường phái, 34 nghề thân chung, 10 chủng tộc (skeleton, human, elf, dwarf, beastfolk, merfolk, orc, dragonkin, fae, construct), hàm `compose()` để mỗi game chọn chủng tộc. Trang `index.html` có mục **14 · Thư viện chủng tộc** xem cây theo từng chủng tộc. Runtime chiến đấu chưa đọc từ thư viện; xem `../library/README.md` mục 5.
 
+**Khuôn nghề + giáo phái (14/10/2026):** `../library/catalog.html` + `../library/docs/02_Archetype_Catalog.md` — 34 khuôn nghề chung × 278 dạng theo chủng tộc và giáo phái (ví dụ Kỵ Sĩ: skeleton + Hắc Giáo = Kỵ Sĩ Tử Vong ngựa xương, mọi chủng tộc + Quang Minh = Kỵ Sĩ Ánh Sáng, + Hắc Giáo = Hắc Kỵ Sĩ, người thú không đạo = Kỵ Sĩ Nanh Ngà). `../library/docs/03_Faiths.md` — 6 giáo phái (Quang Minh / Hắc Giáo lớn, 4 nhỏ), 23 ngọn tín ngưỡng mở cho mọi chủng tộc. Mỗi chủng tộc nay có 10 nghề T5 (skeleton 17). Kho ý tưởng, chưa chọn dạng nào vào game.
+
 ---
 
 ## (Lịch sử) V11 — Bilingual Jobs, Job Gates & 5-Rank Skill Design

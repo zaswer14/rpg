@@ -1,25 +1,30 @@
-/* Job Library — compose(): ghép thân chung + các chủng tộc một game chọn thành danh sách nghề + cạnh, kèm kiểm tra.
- * Không phụ thuộc DOM hay game. Dùng: const g = JobLibrary.compose({ races:['skeleton','human'] });
+/* Job Library — compose(): ghép thân chung + chủng tộc + giáo phái một game chọn thành danh sách nghề + cạnh, kèm kiểm tra.
+ * Không phụ thuộc DOM hay game. Dùng: const g = JobLibrary.compose({ races:['skeleton','human'], faiths:['light','dark'] });
+ *   - faiths bỏ trống = mọi giáo phái đã nạp (faiths.js); [] = không ghép ngọn tín ngưỡng.
  * Kết quả: { jobs, byId, edges, access[race][jobId], summary[], warnings[], errors[], displayName(race, jobId) }
- *  - access: 'native' | 'foreign' | 'hidden' | 'blocked' | 'other' (ngọn riêng của chủng tộc khác)
+ *  - access: 'native' | 'foreign' | 'hidden' | 'faith' | 'blocked' | 'other' (ngọn riêng của chủng tộc khác)
+ *    'faith' = ngọn tín ngưỡng; vào được khi chủng tộc không bị giáo phái xa lánh (bỏ qua cấm trường phái: tín ngưỡng là cánh cửa).
  *  - errors: vi phạm cấu trúc (id trùng, tiền nhiệm thiếu, sai Tier, ngọn mọc từ chủng tộc khác). Có errors thì không dùng kết quả.
  *  - warnings: chỗ chưa thiết kế xong (gate null) hoặc ngọn mọc từ nghề chủng tộc không vào được.
  */
 window.JobLibrary = window.JobLibrary || {};
 window.JobLibrary.compose = function compose(config) {
-  const L = window.JobLibrary, OK = ['native', 'foreign', 'hidden'];
+  const L = window.JobLibrary, OK = ['native', 'foreign', 'hidden', 'faith'];
   const errors = [], warnings = [];
   const races = (config.races || []).map(id => { const r = L.races[id]; if (!r) errors.push('Chủng tộc không có trong thư viện: ' + id); return r; }).filter(Boolean);
+  const faithIds = config.faiths || Object.keys(L.faiths || {});
+  const faiths = faithIds.map(id => { const f = (L.faiths || {})[id]; if (!f) errors.push('Giáo phái không có trong thư viện: ' + id); return f; }).filter(Boolean);
 
-  const jobs = L.trunk.map(t => ({ ...t, from: [...t.from], to: [], shared: true, race: null, hidden: false }));
+  const jobs = L.trunk.map(t => ({ ...t, from: [...t.from], to: [], shared: true, race: null, faith: null, hidden: false }));
   const byId = Object.fromEntries(jobs.map(j => [j.id, j]));
   const add = j => { if (byId[j.id]) { errors.push('Trùng id nghề: ' + j.id); return null; } jobs.push(j); byId[j.id] = j; return j; };
   const originOf = {};
   for (const r of races) {
-    const o = add({ ...r.origin, tier: 0, school: 'origin', from: [], to: [], shared: false, race: r.id, hidden: false });
+    const o = add({ ...r.origin, tier: 0, school: 'origin', from: [], to: [], shared: false, race: r.id, faith: null, hidden: false });
     if (o) originOf[r.id] = o.id;
-    for (const c of r.crowns || []) add({ ...c, from: [...c.from], to: [], shared: false, race: r.id, hidden: !!c.hidden });
+    for (const c of r.crowns || []) add({ ...c, from: [...c.from], to: [], shared: false, race: r.id, faith: c.faith || null, hidden: !!c.hidden });
   }
+  for (const f of faiths) for (const c of f.crowns || []) add({ ...c, from: [...c.from], to: [], shared: false, race: null, faith: f.id, hidden: !!c.hidden });
 
   // Quyền vào nghề theo chủng tộc.
   const access = {};
@@ -28,6 +33,7 @@ window.JobLibrary.compose = function compose(config) {
     for (const j of jobs) {
       if (j.race && j.race !== r.id) { a[j.id] = 'other'; continue; }
       if (j.race === r.id) { a[j.id] = j.hidden ? 'hidden' : 'native'; continue; }
+      if (j.faith && !j.shared) { const f = L.faiths[j.faith]; a[j.id] = (f.races.shunned || []).includes(r.id) ? 'blocked' : 'faith'; continue; }
       const schools = [j.school, ...(j.schoolAlt || [])];
       a[j.id] = (r.blockedJobs || []).includes(j.id) ? 'blocked'
         : schools.some(s => r.schools.native.includes(s)) ? 'native'
@@ -47,24 +53,26 @@ window.JobLibrary.compose = function compose(config) {
     if (!p) { errors.push(`${j.id}: tiền nhiệm "${f}" không tồn tại`); continue; }
     if (p.tier !== j.tier - 1) errors.push(`${j.id}: Tier ${j.tier} nhưng tiền nhiệm ${f} ở Tier ${p.tier}`);
     if (j.race && p.race && p.race !== j.race) errors.push(`${j.id}: ngọn riêng của ${j.race} mọc từ nghề của ${p.race}`);
+    if (!j.race && j.faith && p.race) errors.push(`${j.id}: ngọn tín ngưỡng ${j.faith} mọc từ nghề riêng của chủng tộc ${p.race}`);
+    if (!j.race && j.faith && p.faith && p.faith !== j.faith && !(j.hidden && /^apostasy:/.test(j.unlock || ''))) errors.push(`${j.id}: ngọn tín ngưỡng ${j.faith} mọc từ ngọn tín ngưỡng khác (${p.faith}); chỉ nghề ẩn unlock "apostasy:…" được bỏ đạo`);
     if (j.race && !p.race && !OK.includes(access[j.race][f])) warnings.push(`${j.id} (${j.race}) mọc từ ${f} nhưng chủng tộc không vào được ${f}`);
-    p.to.push(j.id); edges.push({ from: f, to: j.id, race: j.race });
+    p.to.push(j.id); edges.push({ from: f, to: j.id, race: j.race, faith: j.faith });
   }
-  for (const j of jobs) if (j.tier > 0 && !j.gate) warnings.push(`${j.id}${j.race ? ' (' + j.race + ')' : ''}: chưa có cặp skill gate`);
+  for (const j of jobs) if (j.tier > 0 && !j.gate) warnings.push(`${j.id}${j.race ? ' (' + j.race + ')' : j.faith ? ' (' + j.faith + ')' : ''}: chưa có cặp skill gate`);
 
   const reachable = (rid, id) => OK.includes(access[rid][id]);
   const summary = races.map(r => {
     const avail = jobs.filter(j => reachable(r.id, j.id));
     const e = edges.filter(x => (!x.race || x.race === r.id) && reachable(r.id, x.from) && reachable(r.id, x.to));
     const terminals = avail.filter(j => j.tier > 0 && !j.to.some(t => reachable(r.id, t)));
-    return { race: r.id, nameVi: r.nameVi, jobs: avail.length, shared: avail.filter(j => j.shared).length, crowns: avail.filter(j => !j.shared && j.tier > 0 && !j.hidden).length,
-      hidden: avail.filter(j => j.hidden).length, edges: e.length, terminals: terminals.length, todo: avail.filter(j => j.tier > 0 && !j.gate).length,
-      maxTier: Math.max(...avail.map(j => j.tier)) };
+    return { race: r.id, nameVi: r.nameVi, jobs: avail.length, shared: avail.filter(j => j.shared).length, crowns: avail.filter(j => j.race === r.id && j.tier > 0 && !j.hidden).length,
+      faithJobs: avail.filter(j => !j.race && j.faith).length, hidden: avail.filter(j => j.hidden).length, edges: e.length, terminals: terminals.length,
+      todo: avail.filter(j => j.tier > 0 && !j.gate).length, maxTier: Math.max(...avail.map(j => j.tier)), t5: avail.filter(j => j.tier === 5).length };
   });
 
   const displayName = (raceId, jobId) => {
     const r = L.races[raceId], j = byId[jobId]; if (!r || !j) return { en: jobId, vi: jobId };
-    if (j.race === raceId || j.tier === 0) return { en: j.nameEn, vi: j.nameVi };
+    if (j.race === raceId || j.tier === 0 || (!j.race && j.faith)) return { en: j.nameEn, vi: j.nameVi };
     if (r.displayNames && r.displayNames[jobId]) return r.displayNames[jobId];
     return { en: (r.prefix.en ? r.prefix.en + ' ' : '') + j.nameEn, vi: j.nameVi + (r.prefix.viSuffix ? ' ' + r.prefix.viSuffix : '') };
   };

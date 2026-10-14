@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thư viện Khuôn nghề</title>
+<style>
+:root{
+  --bg:#f6f4ef; --panel:#ffffff; --ink:#1f1d1a; --muted:#6b665e; --line:#e2ddd3; --chip:#f0ece4;
+  --accent:#8a5a2b; --bad:#b0352f; --warn:#a6761d; --ok:#3d7a4a; --shade:#ece7dc;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151413; --panel:#1e1c1a; --ink:#ece8e1; --muted:#a39d93; --line:#34302b; --chip:#2a2724;
+  --accent:#d9a441; --bad:#e0645c; --warn:#e3b868; --ok:#7fbf6a; --shade:#24211e; } }
+:root[data-theme="dark"]{
+  --bg:#151413; --panel:#1e1c1a; --ink:#ece8e1; --muted:#a39d93; --line:#34302b; --chip:#2a2724;
+  --accent:#d9a441; --bad:#e0645c; --warn:#e3b868; --ok:#7fbf6a; --shade:#24211e; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 16px 8px;max-width:1400px;margin:0 auto}
+h1{margin:0 0 4px;font-size:22px}
+.sub{color:var(--muted);margin:0}
+main{max-width:1400px;margin:0 auto;padding:0 16px 40px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0;padding:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;position:sticky;top:0;z-index:5}
+.bar select,.bar input[type=search]{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);max-width:100%}
+.bar input[type=search]{flex:1 1 180px}
+.tabs{display:flex;gap:4px}
+.tabs button,.btn{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+label.chk{display:flex;gap:4px;align-items:center;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.stat b{font-size:18px;display:block}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table.mx{border-collapse:separate;border-spacing:0;min-width:1100px;width:100%}
+.mx th,.mx td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:6px;vertical-align:top;text-align:left}
+.mx thead th{position:sticky;top:0;background:var(--panel);font-size:12px;z-index:2}
+.mx th.arch{position:sticky;left:0;background:var(--panel);min-width:150px;z-index:1}
+.mx thead th.arch{z-index:3}
+.mx td.forbid{background:var(--shade);color:var(--muted);text-align:center}
+.mx td.empty{color:var(--muted);text-align:center}
+.mx tr.school td{background:var(--chip);font-weight:600;position:sticky;left:0}
+.small{font-size:12px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:5px;margin:2px 0;padding:2px 7px 2px 5px;border-radius:999px;background:var(--chip);border:1px solid var(--line);cursor:pointer;font-size:12px;line-height:1.35;text-align:left;color:var(--ink);font-family:inherit}
+.chip:hover,.chip:focus-visible{border-color:var(--accent);outline:none}
+.chip .dot,.dot{width:9px;height:9px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.25)}
+.chip.new{font-weight:600}
+.chip.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.arch-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 14px}
+.arch-card h2{margin:0;font-size:18px}
+.arch-card h2 .en{color:var(--muted);font-weight:400;font-size:14px}
+.kit{margin:6px 0 10px;padding-left:18px}
+.v{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--c,#999);border-radius:8px;padding:10px}
+.v h3{margin:0 0 2px;font-size:15px}
+.v .meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+.v p{margin:4px 0}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:4px;background:var(--chip);border:1px solid var(--line);margin:2px 4px 0 0}
+.tag.crown{border-color:var(--ok);color:var(--ok)} .tag.hidden{border-color:var(--accent);color:var(--accent)} .tag.exc{border-color:var(--warn);color:var(--warn)}
+#detail{margin:12px 0}
+#detail:empty{display:none}
+details.val{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:16px}
+details.val li{margin:2px 0}
+.err{color:var(--bad)} .wrn{color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 0;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;gap:4px;align-items:center}
+.race-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.acc{font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+@media (max-width:640px){ h1{font-size:19px} .bar{position:static} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Thư viện Khuôn nghề</h1>
+  <p class="sub">Nghề chung, dạng riêng theo chủng tộc và giáo phái. Mỗi khuôn dùng chung bộ anim và cơ chế lõi; mỗi dạng có khí chất, luật riêng và ngoại hình riêng. Thứ tự chọn dạng: chủng tộc + giáo phái › giáo phái (mọi chủng tộc) › chủng tộc › dạng chung. Chưa gắn vào game nào. Tài liệu: <a href="docs/02_Archetype_Catalog.md">docs/02</a> · giáo phái: <a href="docs/03_Faiths.md">docs/03</a>.</p>
+</header>
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <div class="tabs" role="group" aria-label="Chế độ xem">
+      <button data-view="matrix" aria-pressed="true">Ma trận</button>
+      <button data-view="arch" aria-pressed="false">Theo khuôn</button>
+      <button data-view="race" aria-pressed="false">Theo chủng tộc</button>
+    </div>
+    <select id="fSchool" aria-label="Trường phái"></select>
+    <select id="fRace" aria-label="Chủng tộc"></select>
+    <select id="fAspect" aria-label="Khí chất"></select>
+    <select id="fFaith" aria-label="Giáo phái"></select>
+    <input type="search" id="fText" placeholder="Tìm tên, luật, ngoại hình…" aria-label="Tìm">
+    <label class="chk"><input type="checkbox" id="fNew"> chỉ dạng mới</label>
+    <button class="btn" id="mdBtn" title="Tải bảng Markdown toàn thư viện">Xuất Markdown</button>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div id="detail"></div>
+  <div id="view"></div>
+  <details class="val" id="val"></details>
+</main>
+
+<script src="schools.js"></script><script src="trunk.js"></script><script src="aspects.js"></script><script src="faiths.js"></script>
+<script src="races/skeleton.js"></script><script src="races/human.js"></script><script src="races/elf.js"></script><script src="races/dwarf.js"></script><script src="races/beastfolk.js"></script>
+<script src="races/merfolk.js"></script><script src="races/orc.js"></script><script src="races/dragonkin.js"></script><script src="races/fae.js"></script><script src="races/construct.js"></script>
+<script src="archetypes/combat.js"></script><script src="archetypes/ranged.js"></script><script src="archetypes/shadow.js"></script><script src="archetypes/arcane.js"></script>
+<script src="archetypes/death.js"></script><script src="archetypes/craft.js"></script><script src="archetypes/beast.js"></script><script src="archetypes/martial.js"></script>
+<script src="catalog.js"></script>
+<script>
+(() => {
+  'use strict';
+  const L = window.JobLibrary, C = L.catalog(), R = L.races, S = L.schools, X = L.aspects, F = L.faiths || {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const raceIds = Object.keys(R), schoolIds = Object.keys(S), faithIds = Object.keys(F);
+  const raceName = r => r === '*' ? 'Mọi chủng tộc' : R[r].nameVi;
+  const fsym = f => F[f] ? F[f].symbol : '';
+  const state = { view:'matrix', school:'', race:'', aspect:'', faith:'', text:'', onlyNew:false, sel:null };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('jobCatalogView') || '{}'), { sel:null }); } catch (e) {}
+  const save = () => { try { localStorage.setItem('jobCatalogView', JSON.stringify({ view:state.view, school:state.school, race:state.race, aspect:state.aspect, faith:state.faith, onlyNew:state.onlyNew })); } catch (e) {} };
+
+  const st = C.stats;
+  $('stats').innerHTML = [
+    [st.archetypes, 'khuôn nghề'], [st.variants, 'dạng'], [st.newVariants, 'dạng mới'],
+    [`${st.linkedCrowns}/${st.crownsTotal}`, 'ngọn đã gắn khuôn'], [raceIds.length, 'chủng tộc'], [faithIds.length, 'giáo phái'], [Object.keys(X).length, 'khí chất']
+  ].map(([n, t]) => `<div class="stat"><b>${n}</b>${t}</div>`).join('');
+
+  $('fSchool').innerHTML = '<option value="">Mọi trường phái</option>' + schoolIds.map(s => `<option value="${s}">${esc(S[s].nameVi)} (${C.stats.bySchool[s] || 0})</option>`).join('');
+  $('fRace').innerHTML = '<option value="">Mọi chủng tộc</option>' + raceIds.map(r => `<option value="${r}">${esc(R[r].nameVi)} (${C.stats.byRace[r] || 0})</option>`).join('') + `<option value="*">Theo tín ngưỡng, mọi chủng tộc (${C.stats.byRace['*'] || 0})</option>`;
+  $('fAspect').innerHTML = '<option value="">Mọi khí chất</option>' + Object.keys(X).map(a => `<option value="${a}">${esc(X[a].nameVi)} (${C.stats.byAspect[a] || 0})</option>`).join('');
+  $('fFaith').innerHTML = '<option value="">Mọi giáo phái</option><option value="-">Không gắn giáo phái</option>' + faithIds.map(f => `<option value="${f}">${esc(F[f].symbol + ' ' + F[f].nameVi)} (${C.stats.byFaith[f] || 0})</option>`).join('');
+  $('legend').innerHTML = Object.keys(X).filter(a => C.stats.byAspect[a]).map(a => `<span><i class="dot" style="background:${X[a].color}"></i>${esc(X[a].nameVi)}</span>`).join('')
+    + faithIds.map(f => `<span title="${esc(F[f].nameEn)}">${esc(F[f].symbol)} ${esc(F[f].nameVi)}</span>`).join('');
+
+  const match = v => {
+    if (state.race && v.race !== state.race) return false;
+    if (state.aspect && v.aspect !== state.aspect) return false;
+    if (state.faith === '-' ? !!v.faith : state.faith && v.faith !== state.faith) return false;
+    if (state.onlyNew && (v.crown || v.skinOf)) return false;
+    if (state.text) {
+      const a = L.archetypes[v.archetype];
+      const hay = [v.nameEn, v.nameVi, v.twist, v.marker, v.mount, v.companion, v.note, a.nameEn, a.nameVi, raceName(v.race), v.faith ? F[v.faith].nameVi : ''].join(' ').toLowerCase();
+      if (!hay.includes(state.text.toLowerCase())) return false;
+    }
+    return true;
+  };
+  const archList = () => C.archetypes.filter(a => !state.school || a.school === state.school)
+    .sort((x, y) => schoolIds.indexOf(x.school) - schoolIds.indexOf(y.school));
+  const chip = v => `<button class="chip${v.crown || v.skinOf ? '' : ' new'}${state.sel === v.id ? ' sel' : ''}" data-v="${v.id}" title="${esc(X[v.aspect].nameVi)}${v.faith ? ' · ' + esc(F[v.faith].nameVi) : ''} · T${v.tier}"><i class="dot" style="background:${X[v.aspect].color}"></i>${esc(v.nameVi)}${v.faith ? ' ' + fsym(v.faith) : ''}${v.hidden ? ' ◆' : ''}</button>`;
+  const tags = v => [
+    v.crown ? `<span class="tag crown">ngọn có sẵn: ${esc(v.crown)}</span>` : '',
+    v.skinOf ? `<span class="tag crown">tên/ngoại hình của nghề chung ${esc(v.skinOf)}</span>` : '',
+    !v.crown && !v.skinOf ? '<span class="tag">mới</span>' : '',
+    v.hidden ? `<span class="tag hidden">ẩn · ${esc(v.unlock || '')}</span>` : '',
+    v.exception ? `<span class="tag exc">ngoại lệ trường phái</span>` : '',
+    v.faith ? `<span class="tag">${esc(fsym(v.faith))} cần ${esc(F[v.faith].nameVi)}</span>` : '',
+    (v.excludes || []).length ? `<span class="tag">loại trừ: ${esc(v.excludes.join(', '))}</span>` : ''
+  ].join('');
+  const vCard = (v, withArch) => {
+    const a = L.archetypes[v.archetype];
+    return `<div class="v" style="--c:${X[v.aspect].color}">
+      <h3>${esc(v.nameVi)} <span class="small">/ ${esc(v.nameEn)}</span></h3>
+      <div class="meta">${withArch ? `${esc(a.nameVi)} · ` : ''}${esc(raceName(v.race))}${v.faith ? ` · ${esc(fsym(v.faith) + ' ' + F[v.faith].nameVi)}` : ''} · T${v.tier} · <i class="dot" style="display:inline-block;background:${X[v.aspect].color}"></i> ${esc(X[v.aspect].nameVi)}${(v.from || []).length ? ` · từ ${esc(v.from.join(', '))}` : ''}</div>
+      <p><b>Khác biệt:</b> ${esc(v.twist)}</p>
+      <p><b>Ngoại hình:</b> ${esc(v.marker)}${v.mount ? ` · <b>cưỡi:</b> ${esc(v.mount)}` : ''}${v.companion ? ` · <b>đồng hành:</b> ${esc(v.companion)}` : ''}</p>
+      ${v.exception ? `<p class="small"><b>Ngoại lệ:</b> ${esc(v.exception)}</p>` : ''}${v.note ? `<p class="small">${esc(v.note)}</p>` : ''}
+      <div>${tags(v)}</div></div>`;
+  };
+  const archHead = a => `<h2>${esc(a.nameVi)} <span class="en">/ ${esc(a.nameEn)} · <code>${esc(a.id)}</code> · ${esc(S[a.school].nameVi)}${(a.schoolAlt || []).length ? ' + ' + a.schoolAlt.map(s => esc(S[s].nameVi)).join(', ') : ''} · T${a.tiers.join('–')}</span></h2>
+    <p>${esc(a.fantasy)}</p>
+    <ul class="kit">${a.core.kit.map(k => `<li>${esc(k)}</li>`).join('')}</ul>
+    <p class="small"><b>Dùng chung:</b> ${esc(a.core.shared)} Vũ khí: ${esc(a.core.weapons.join(', '))} · rig <code>${esc(a.core.rig)}</code>${(a.trunk || []).length ? ` · nền: ${esc(a.trunk.join(', '))}` : ''}<br><b>Dạng chung</b> (chủng tộc không có dạng riêng): ${esc(a.generic.nameVi)} / ${esc(a.generic.nameEn)} — ${esc(a.generic.marker)}</p>`;
+
+  function renderMatrix() {
+    const races = state.race ? [state.race] : [...raceIds, '*'];
+    let html = `<div class="wrap"><table class="mx"><thead><tr><th class="arch">Khuôn nghề</th>${races.map(r => r === '*' ? '<th>Theo tín ngưỡng<div class="small">mọi chủng tộc</div></th>' : `<th>${esc(R[r].nameVi)}<div class="small">${esc(R[r].nameEn)}</div></th>`).join('')}</tr></thead><tbody>`;
+    let school = null, rows = 0;
+    for (const a of archList()) {
+      const cells = races.map(r => C.matrix[a.id][r].filter(match));
+      if ((state.text || state.aspect || state.onlyNew) && !cells.some(c => c.length)) continue;
+      if (a.school !== school) { school = a.school; html += `<tr class="school"><td colspan="${races.length + 1}">${esc(S[school].nameVi)} · ${esc(S[school].nameEn)}</td></tr>`; }
+      html += `<tr><th class="arch"><a href="#" data-a="${a.id}">${esc(a.nameVi)}</a><div class="small">${esc(a.nameEn)}</div></th>` + races.map((r, i) => {
+        if (cells[i].length) return `<td>${cells[i].map(chip).join('<br>')}</td>`;
+        if (r === '*') return '<td class="empty" title="Chưa có dạng theo tín ngưỡng">·</td>';
+        return C.access(r, a.id) === 'forbidden' ? '<td class="forbid" title="Chủng tộc cấm trường phái này">✕</td>' : '<td class="empty" title="Vào được, dùng dạng chung">·</td>';
+      }).join('') + '</tr>'; rows++;
+    }
+    html += '</tbody></table></div><p class="small">Ô ✕: chủng tộc cấm trường phái của khuôn. Ô ·: vào được nhưng chưa có dạng riêng (dùng dạng chung). Chữ đậm: dạng mới; ◆: dạng ẩn; ký hiệu sau tên: dạng cần giáo phái đó. Cột cuối: dạng theo tín ngưỡng, áp cho mọi chủng tộc không có dạng chủng tộc + giáo phái riêng. Bấm một dạng để xem chi tiết, bấm tên khuôn để xem cả khuôn.</p>';
+    $('view').innerHTML = rows ? html : '<p>Không có dạng khớp bộ lọc.</p>';
+  }
+  function renderArch() {
+    const html = archList().map(a => {
+      const vs = C.variants.filter(v => v.archetype === a.id && match(v));
+      if (!vs.length && (state.text || state.aspect || state.onlyNew || state.race)) return '';
+      return `<section class="arch-card" id="a-${a.id}">${archHead(a)}<div class="cards">${vs.map(v => vCard(v, false)).join('') || '<p class="small">Không có dạng khớp bộ lọc.</p>'}</div></section>`;
+    }).join('');
+    $('view').innerHTML = html || '<p>Không có khuôn khớp bộ lọc.</p>';
+  }
+  function renderRace() {
+    const races = state.race && state.race !== '*' ? [state.race] : raceIds;
+    const schoolOk = v => !state.school || v.school === state.school;
+    $('view').innerHTML = races.map(r => {
+      const race = R[r], vs = C.byRace[r].filter(v => match(v) && schoolOk(v));
+      const faithVs = C.byRace['*'].filter(v => C.faithOpen(r, v.faith) && schoolOk(v) && match({ ...v, race: r }) && !C.byRace[r].some(x => x.archetype === v.archetype && x.faith === v.faith));
+      const acc = schoolIds.map(s => `<span class="acc" title="${esc(S[s].nameVi)}">${esc(S[s].nameVi)}: ${({ native:'bản địa', foreign:'ngoại lai', forbidden:'cấm' })[C.accessOf(r, s)]}</span>`).join(' ');
+      const fa = faithIds.map(f => { const fr = F[f].races; const lv = fr.shunned.includes(r) ? 'xa lánh' : fr.favored.includes(r) ? 'ưu ái' : fr.wary.includes(r) ? 'dè dặt +15' : 'mở'; return `<span class="acc">${esc(F[f].symbol + ' ' + F[f].nameVi)}: ${lv}</span>`; }).join(' ');
+      return `<section class="arch-card"><div class="race-head"><h2>${esc(race.nameVi)} <span class="en">/ ${esc(race.nameEn)} · ${vs.length} dạng riêng · ${faithVs.length} dạng qua tín ngưỡng</span></h2></div>
+        <p>${esc(race.lore)}</p><p class="small">${acc}</p><p class="small">${fa}</p><p class="small"><b>Silhouette:</b> ${esc(race.silhouetteHook)}</p>
+        <div class="cards">${vs.map(v => vCard(v, true)).join('') || '<p class="small">Không có dạng khớp bộ lọc.</p>'}</div>
+        ${faithVs.length ? `<h3 style="margin:14px 0 6px;font-size:15px">Qua tín ngưỡng (dùng chung mọi chủng tộc)</h3><div class="cards">${faithVs.map(v => vCard(v, true)).join('')}</div>` : ''}</section>`;
+    }).join('');
+  }
+  function renderDetail() {
+    const v = C.variants.find(x => x.id === state.sel);
+    if (!v || state.view !== 'matrix') { $('detail').innerHTML = ''; return; }
+    const a = L.archetypes[v.archetype], sib = C.variants.filter(x => x.archetype === a.id && x.id !== v.id);
+    $('detail').innerHTML = `<section class="arch-card">${archHead(a)}<div class="cards">${vCard(v, false)}</div>
+      <p class="small" style="margin-top:8px">Cùng khuôn: ${sib.map(chip).join(' ')}</p></section>`;
+  }
+  function render() {
+    document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
+    $('fSchool').value = state.school; $('fRace').value = state.race; $('fAspect').value = state.aspect; $('fFaith').value = state.faith; $('fNew').checked = state.onlyNew;
+    ({ matrix:renderMatrix, arch:renderArch, race:renderRace })[state.view](); renderDetail(); save();
+  }
+
+  document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.view = b.dataset.view; render(); } });
+  $('fSchool').addEventListener('change', e => { state.school = e.target.value; render(); });
+  $('fRace').addEventListener('change', e => { state.race = e.target.value; render(); });
+  $('fAspect').addEventListener('change', e => { state.aspect = e.target.value; render(); });
+  $('fFaith').addEventListener('change', e => { state.faith = e.target.value; render(); });
+  $('fNew').addEventListener('change', e => { state.onlyNew = e.target.checked; render(); });
+  $('fText').addEventListener('input', e => { state.text = e.target.value.trim(); render(); });
+  document.body.addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (c) { state.view = 'matrix'; state.sel = state.sel === c.dataset.v ? null : c.dataset.v; render(); if (state.sel) $('detail').scrollIntoView({ behavior:'smooth', block:'nearest' }); return; }
+    const a = e.target.closest('[data-a]'); if (a) { e.preventDefault(); state.view = 'arch'; state.school = L.archetypes[a.dataset.a].school; render(); const el = document.getElementById('a-' + a.dataset.a); if (el) el.scrollIntoView({ behavior:'smooth' }); }
+  });
+  $('mdBtn').addEventListener('click', () => {
+    const blob = new Blob([L.catalogMarkdown()], { type:'text/markdown' }), url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = 'archetype-catalog.md'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  const n = C.errors.length + C.warnings.length;
+  $('val').innerHTML = `<summary>Kiểm tra dữ liệu: <span class="${C.errors.length ? 'err' : ''}">${C.errors.length} lỗi</span> · <span class="${C.warnings.length ? 'wrn' : ''}">${C.warnings.length} cảnh báo</span> · ${C.info.length} ghi chú</summary>
+    <ul>${C.errors.map(x => `<li class="err">${esc(x)}</li>`).join('')}${C.warnings.map(x => `<li class="wrn">${esc(x)}</li>`).join('')}${C.info.map(x => `<li class="small">${esc(x)}</li>`).join('')}</ul>`;
+  if (C.errors.length) $('val').open = true;
+  render();
+})();
+</script>
+</body>
+</html>

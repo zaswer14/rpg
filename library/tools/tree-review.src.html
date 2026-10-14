@@ -1,0 +1,375 @@
+<title>Duyệt Cây Nghề</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Bố cục: thanh chủng tộc → tóm tắt → [sơ đồ T0–T5 cuộn ngang | bảng chi tiết + duyệt]. Màu sọc nút = trường phái. */
+:root{
+  --bg:#f3f1ec; --panel:#fbfaf7; --ink:#22201c; --muted:#6d685f; --line:#dcd6cb; --edge:#b9b1a3;
+  --accent:#9a5b1e; --accent-ink:#ffffff; --chip:#ebe6dc; --hl:#9a5b1e;
+  --ok:#2f7d4a; --fix:#b07a12; --drop:#b0352f;
+  --font-display:"Spectral SC", Georgia, serif; --font-body:"Be Vietnam Pro", system-ui, sans-serif; --font-mono:"JetBrains Mono", ui-monospace, monospace;
+  --s-origin:#8b857a; --s-combat:#c0533a; --s-ranged:#2f8f7b; --s-shadow:#7a5ba8; --s-arcane:#4f6bd8; --s-death:#3a9e66; --s-craft:#b8862b; --s-beast:#8c6b3f; --s-martial:#c2477a;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#161513; --panel:#1f1d1a; --ink:#ece7de; --muted:#a59f94; --line:#36322c; --edge:#5a544a;
+  --accent:#e0a356; --accent-ink:#1a1208; --chip:#2a2723; --hl:#e0a356; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#161513; --panel:#1f1d1a; --ink:#ece7de; --muted:#a59f94; --line:#36322c; --edge:#5a544a;
+  --accent:#e0a356; --accent-ink:#1a1208; --chip:#2a2723; --hl:#e0a356; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+.page{padding-inline:16px;padding-block:16px 40px;max-width:1600px;margin:0 auto}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 14px;max-width:70ch}
+.races{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.races button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;min-width:92px}
+.races button small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.races button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.races button[aria-selected="true"] small{color:inherit;opacity:.85}
+.races button:focus-visible,.node:focus-visible,.btn:focus-visible{outline:2px solid var(--hl);outline-offset:2px}
+.overview{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;margin-bottom:10px}
+.overview h2{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0}
+.overview .en{color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:6px;font-variant-numeric:tabular-nums}
+.fact{background:var(--chip);border-radius:6px;padding:2px 8px;font-size:12px}
+.fact b{font-weight:600}
+.schools{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 10px;font-size:12px}
+.sc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:1px 8px 1px 6px}
+.sc i{width:8px;height:8px;border-radius:2px;background:var(--c)}
+.sc.forbidden{opacity:.55;text-decoration:line-through}
+.sc .lv{color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:6px 0 10px;font-size:13px}
+.controls label{display:inline-flex;gap:6px;align-items:center}
+.controls select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media (max-width:980px){ .layout{grid-template-columns:minmax(0,1fr)} }
+.scroller{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);max-height:78vh}
+.tree{position:relative;display:grid;grid-template-columns:repeat(6,184px);column-gap:44px;padding:12px 16px 20px;width:max-content}
+.tree svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.col{display:flex;flex-direction:column;gap:8px;position:relative;z-index:1}
+.colhead{font-family:var(--font-display);font-size:13px;color:var(--muted);letter-spacing:.06em;padding-bottom:4px;border-bottom:1px solid var(--line);margin-bottom:2px;position:sticky;top:0;background:var(--panel);z-index:2}
+.colhead b{color:var(--ink);font-weight:600}
+.node{all:unset;box-sizing:border-box;display:block;cursor:pointer;background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--sc);border-radius:6px;padding:5px 8px 6px;transition:opacity .15s}
+.node.crown{background:color-mix(in srgb, var(--sc) 9%, var(--bg))}
+.node.hidden{border-style:dashed;border-left-style:solid}
+.node.faith{border-style:double;border-width:3px;border-left-width:4px;border-left-style:solid;padding:3px 6px 4px}
+.tag.t-faith{color:var(--ink);background:color-mix(in srgb, var(--fc, var(--chip)) 22%, var(--chip))}
+.faiths{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 10px;font-size:12px}
+.fa{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.fa.shunned{opacity:.55;text-decoration:line-through} .fa .lv{color:var(--muted)}
+.sw.fa-sw{border-style:double;border-width:3px;border-left-width:4px;border-left-style:solid}
+.node.candidate{border-style:dotted;border-left-style:dotted;background:transparent}
+.node .top{display:flex;gap:6px;align-items:flex-start;justify-content:space-between}
+.node .vi{font-weight:600;font-size:13px;line-height:1.3}
+.node .en{color:var(--muted);font-size:11.5px;line-height:1.3}
+.node .tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.tag{font-size:10.5px;line-height:1.5;padding:0 5px;border-radius:4px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.tag.t-crown{color:var(--ink)} .tag.t-end{color:var(--ink);font-weight:600} .tag.t-cand{color:var(--accent)} .tag.t-todo{color:var(--fix)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;border:1px solid color-mix(in srgb, var(--ink) 25%, transparent);vertical-align:middle}
+.st{flex:none;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;line-height:1.6}
+.st.ok{background:var(--ok);color:var(--panel)} .st.fix{background:var(--fix);color:var(--panel)} .st.drop{background:var(--drop);color:var(--panel)}
+.node.sel{box-shadow:0 0 0 2px var(--hl)}
+.tree.focus .node:not(.lin){opacity:.32}
+.tree.dimmed .node.dim{opacity:.3}
+path.e{fill:none;stroke:var(--edge);stroke-width:1.4}
+path.e.cand{stroke-dasharray:3 4}
+path.e.lin{stroke:var(--hl);stroke-width:2.4}
+.tree.focus path.e:not(.lin){opacity:.25}
+aside{position:sticky;top:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;max-height:calc(100vh - 24px);overflow:auto;min-width:0}
+aside h3{font-family:var(--font-display);font-weight:600;font-size:19px;margin:0;line-height:1.25}
+aside .en{color:var(--muted)}
+aside dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 10px;margin:10px 0;font-size:13px}
+aside dt{color:var(--muted)} aside dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font-family:var(--font-mono);font-size:12px}
+.twist{background:var(--chip);border-radius:8px;padding:8px 10px;margin:8px 0;font-size:13px}
+.review{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.review .row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.btn.fix[aria-pressed="true"]{background:var(--fix);border-color:var(--fix);color:var(--panel)}
+.btn.drop[aria-pressed="true"]{background:var(--drop);border-color:var(--drop);color:var(--panel)}
+textarea{width:100%;min-height:70px;font:inherit;font-size:13px;margin:8px 0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+.list{margin:8px 0 0;padding:0;list-style:none;font-size:13px}
+.list li{padding:5px 0;border-bottom:1px solid var(--line)}
+.list a{color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.sw{width:22px;height:12px;border:1px solid var(--line);border-left:4px solid var(--s-combat);border-radius:3px;background:var(--bg)}
+.sw.cr{background:color-mix(in srgb, var(--s-combat) 12%, var(--bg))} .sw.hd{border-style:dashed;border-left-style:solid} .sw.cd{border-style:dotted;background:transparent}
+@media (prefers-reduced-motion: reduce){ .node{transition:none} }
+</style>
+
+<div class="page">
+  <h1>Duyệt Cây Nghề</h1>
+  <p class="lede">Sơ đồ chuyển nghề T0→T5 của từng chủng tộc, ghép từ thư viện: nghề thân chung, ngọn riêng đã đặt, ngọn tín ngưỡng (mọi chủng tộc theo giáo phái đó đều tới được), nghề ẩn, và (tùy chọn) các dạng đề xuất từ thư viện khuôn nghề chưa được đặt. Bấm một nghề để xem chi tiết, dòng dõi và ghi quyết định duyệt.</p>
+  <div class="races" id="races" role="tablist" aria-label="Chủng tộc"></div>
+  <div class="overview" id="overview"></div>
+  <div class="schools" id="schools"></div>
+  <div class="faiths" id="faiths"></div>
+  <div class="controls">
+    <label><input type="checkbox" id="showCand"> <span id="candLabel">Hiện dạng đề xuất</span></label>
+    <label>Làm nổi <select id="focusSel">
+      <option value="">tất cả</option><option value="none">chưa duyệt</option><option value="ok">đã duyệt</option><option value="fix">cần sửa</option><option value="drop">bỏ</option><option value="todo">chưa có gate</option>
+    </select></label>
+    <span id="saveState" class="hint"></span>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="scroller" id="scroller"><div class="tree" id="tree"></div></div>
+      <div class="legend">
+        <span><i class="sw"></i>thân chung</span><span><i class="sw cr"></i>ngọn riêng</span><span><i class="sw fa-sw"></i>ngọn tín ngưỡng</span><span><i class="sw hd"></i>nghề ẩn</span><span><i class="sw cd"></i>đề xuất (chưa đặt)</span>
+        <span>màu sọc = trường phái</span><span><i class="st ok">✓</i> duyệt</span><span><i class="st fix">✎</i> cần sửa</span><span><i class="st drop">✕</i> bỏ</span>
+      </div>
+    </div>
+    <aside id="side" aria-live="polite"></aside>
+  </div>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const SCHOOL_ORDER = ['origin', ...Object.keys(DATA.schools)];
+  const TIER_NAMES = ['Khởi Nguyên', 'Nhập Môn', 'Chuyên Môn', 'Cao Cấp', 'Thăng Hoa', 'Thần Thoại'];
+  const ACC = { native:'bản địa', foreign:'ngoại lai', forbidden:'cấm' };
+  const FACC = { favored:'ưu ái', open:'mở', wary:'dè dặt +15', shunned:'xa lánh' };
+  const FD = DATA.faiths || {};
+  const ftag = f => f && FD[f] ? `<span class="tag t-faith" style="--fc:${FD[f].color}">${esc(FD[f].symbol)} ${esc(FD[f].vi)}</span>` : '';
+  const STATUS = { ok:{ t:'✓', vi:'Duyệt' }, fix:{ t:'✎', vi:'Cần sửa' }, drop:{ t:'✕', vi:'Bỏ' } };
+  const schoolName = s => s === 'origin' ? 'Khởi nguyên' : (DATA.schools[s] || {}).vi || s;
+
+  let pref = {};
+  try { pref = JSON.parse(localStorage.getItem('treeReviewPref') || '{}'); } catch (e) {}
+  const hashRace = (location.hash || '').slice(1);
+  const state = {
+    race: DATA.races.some(r => r.id === hashRace) ? hashRace : (pref.race && DATA.races.some(r => r.id === pref.race) ? pref.race : DATA.races[0].id),
+    cand: !!pref.cand, focus: pref.focus || '', sel: null
+  };
+  const savePref = () => { try { localStorage.setItem('treeReviewPref', JSON.stringify({ race:state.race, cand:state.cand, focus:state.focus })); } catch (e) {} };
+
+  // ---- Lưu duyệt (db) ----
+  let db = null, dbState = 'connecting';
+  const reviews = {};             // key race__id -> body
+  const key = (race, id) => race + '__' + id;
+  const reviewOf = (race, id) => reviews[key(race, id)];
+
+  const race = () => DATA.races.find(r => r.id === state.race);
+  const nodesOf = r => state.cand ? [...r.jobs, ...r.cands] : r.jobs;
+
+  function layout(r) {
+    const nodes = nodesOf(r), byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+    const cols = [[], [], [], [], [], []], pos = {};
+    for (const n of nodes) (cols[Math.min(5, Math.max(0, n.tier))]).push(n);
+    for (let t = 0; t < 6; t++) {
+      const keyOf = n => {
+        const ps = (n.from || []).filter(p => pos[p] !== undefined);
+        return ps.length ? ps.reduce((s, p) => s + pos[p], 0) / ps.length : 9;
+      };
+      cols[t].sort((a, b) => keyOf(a) - keyOf(b) || SCHOOL_ORDER.indexOf(a.school) - SCHOOL_ORDER.indexOf(b.school)
+        || (a.kind === 'candidate') - (b.kind === 'candidate') || a.vi.localeCompare(b.vi, 'vi'));
+      cols[t].forEach((n, i) => { pos[n.id] = (i + .5) / cols[t].length; });
+    }
+    const children = {};
+    for (const n of nodes) for (const p of n.from || []) if (byId[p]) (children[p] = children[p] || []).push(n.id);
+    return { nodes, byId, cols, children };
+  }
+
+  function lineage(L, id) {
+    const out = new Set([id]);
+    const up = x => { for (const p of (L.byId[x] || {}).from || []) if (L.byId[p] && !out.has(p)) { out.add(p); up(p); } };
+    const down = x => { for (const c of L.children[x] || []) if (!out.has(c)) { out.add(c); down(c); } };
+    up(id); down(id); return out;
+  }
+
+  function nodeTags(n, L) {
+    const t = [];
+    if (n.kind === 'crown') t.push('<span class="tag t-crown">ngọn riêng</span>');
+    if (n.kind === 'hidden' || n.hiddenJob) t.push(`<span class="tag t-crown">ẩn</span>`);
+    if (n.kind === 'candidate') t.push(`<span class="tag t-cand">đề xuất · ${esc(DATA.archetypes[n.arch].vi)}</span>`);
+    if (n.faith) t.push(ftag(n.faith));
+    if (n.access === 'foreign') t.push('<span class="tag">ngoại lai +15</span>');
+    if (n.aspect) t.push(`<span class="tag"><i class="dot" style="background:${DATA.aspects[n.aspect].color}"></i> ${esc(DATA.aspects[n.aspect].vi)}</span>`);
+    if (n.kind !== 'candidate' && n.tier > 0 && !(L.children[n.id] || []).some(c => L.byId[c].kind !== 'candidate')) t.push('<span class="tag t-end">■ kết thúc</span>');
+    if (n.kind !== 'candidate' && n.tier > 0 && !n.gate) t.push('<span class="tag t-todo">chưa có gate</span>');
+    return t.join('');
+  }
+
+  function renderRaces() {
+    $('races').innerHTML = DATA.races.map(r => {
+      const total = r.jobs.length + r.cands.length;
+      const done = [...r.jobs, ...r.cands].filter(n => reviewOf(r.id, n.id)).length;
+      return `<button role="tab" data-race="${r.id}" aria-selected="${r.id === state.race}">${esc(r.vi)}<small>${r.jobs.length} nghề · duyệt ${done}/${total}</small></button>`;
+    }).join('');
+  }
+
+  function renderOverview() {
+    const r = race(), s = r.summary;
+    $('overview').innerHTML = `<h2>${esc(r.vi)}</h2><span class="en">${esc(r.en)} · rig <code>${esc(r.rig)}</code></span>
+      <div class="facts"><span class="fact"><b>${r.jobs.length}</b> nghề đã đặt</span><span class="fact"><b>${s.shared}</b> thân chung</span><span class="fact"><b>${s.crowns}</b> ngọn riêng</span><span class="fact"><b>${s.faithJobs || 0}</b> ngọn tín ngưỡng</span><span class="fact"><b>${s.hidden}</b> ẩn</span><span class="fact"><b>${s.t5 || 0}</b> nghề T5</span><span class="fact"><b>${s.terminals}</b> kết thúc</span><span class="fact"><b>${s.todo}</b> chưa có gate</span><span class="fact"><b>${r.cands.length}</b> dạng đề xuất</span></div>`;
+    $('schools').innerHTML = Object.keys(DATA.schools).map(k => {
+      const lv = r.schools.native.includes(k) ? 'native' : r.schools.foreign.includes(k) ? 'foreign' : 'forbidden';
+      return `<span class="sc ${lv}" style="--c:var(--s-${k})"><i></i>${esc(DATA.schools[k].vi)} <span class="lv">${ACC[lv]}</span></span>`;
+    }).join('');
+    $('faiths').innerHTML = Object.keys(FD).map(f => { const lv = (r.faithAccess || {})[f] || 'open'; return `<span class="fa ${lv}" title="${esc(FD[f].tenet)}">${esc(FD[f].symbol)} ${esc(FD[f].vi)} <span class="lv">${FACC[lv]}</span></span>`; }).join('');
+    $('candLabel').textContent = `Hiện ${r.cands.length} dạng đề xuất từ thư viện khuôn`;
+  }
+
+  let L = null;
+  function renderTree() {
+    const r = race(); L = layout(r);
+    const lin = state.sel && L.byId[state.sel] ? lineage(L, state.sel) : null;
+    const dimFn = n => {
+      if (!state.focus) return false;
+      const rv = reviewOf(r.id, n.id);
+      if (state.focus === 'none') return !!rv;
+      if (state.focus === 'todo') return n.kind === 'candidate' || n.tier === 0 || !!n.gate;
+      return !rv || rv.status !== state.focus;
+    };
+    const tree = $('tree');
+    tree.className = 'tree' + (lin ? ' focus' : '') + (state.focus ? ' dimmed' : '');
+    tree.innerHTML = '<svg id="edges" aria-hidden="true"></svg>' + L.cols.map((col, t) =>
+      `<div class="col"><div class="colhead"><b>T${t}</b> · ${TIER_NAMES[t]} <span>(${col.length})</span></div>` +
+      col.map(n => {
+        const rv = reviewOf(r.id, n.id);
+        const cls = ['node', n.kind, n.id === state.sel ? 'sel' : '', lin && lin.has(n.id) ? 'lin' : '', dimFn(n) ? 'dim' : ''].join(' ');
+        return `<button class="${cls}" data-id="${esc(n.id)}" style="--sc:var(--s-${n.school})" title="${esc(schoolName(n.school))}">
+          <span class="top"><span class="vi">${esc(n.vi)}</span>${rv ? `<span class="st ${rv.status}">${STATUS[rv.status].t}</span>` : ''}</span>
+          <span class="en" style="display:block">${esc(n.en)}</span><span class="tags">${nodeTags(n, L)}</span></button>`;
+      }).join('') + '</div>').join('');
+    drawEdges(lin);
+  }
+
+  function drawEdges(lin) {
+    const tree = $('tree'), svg = $('edges'); if (!svg) return;
+    const box = tree.getBoundingClientRect();
+    svg.setAttribute('width', tree.scrollWidth); svg.setAttribute('height', tree.scrollHeight);
+    const rect = id => { const el = tree.querySelector(`[data-id="${CSS.escape(id)}"]`); if (!el) return null; const b = el.getBoundingClientRect(); return { x1:b.left - box.left, x2:b.right - box.left, y:b.top - box.top + b.height / 2 }; };
+    const paths = [];
+    for (const n of L.nodes) for (const p of n.from || []) {
+      if (!L.byId[p]) continue;
+      const a = rect(p), b = rect(n.id); if (!a || !b) continue;
+      const mx = (a.x2 + b.x1) / 2;
+      const cls = ['e', n.kind === 'candidate' ? 'cand' : '', lin && lin.has(n.id) && lin.has(p) ? 'lin' : ''].join(' ');
+      paths.push(`<path class="${cls}" d="M${a.x2},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x1},${b.y}"/>`);
+    }
+    // vẽ cạnh dòng dõi sau cùng để nằm trên
+    paths.sort((x, y) => x.includes(' lin') - y.includes(' lin'));
+    svg.innerHTML = paths.join('');
+  }
+
+  function fmtReq(req, access) {
+    if (!req || !Object.keys(req).length) return '—';
+    const bonus = access === 'foreign' ? 15 : 0;
+    return Object.entries(req).map(([k, v]) => `${esc(k)} ${v}${bonus ? ` <span class="en">(+${bonus} = ${v + bonus})</span>` : ''}`).join(', ');
+  }
+  const nameOf = id => { const n = L.byId[id]; return n ? `<a data-go="${esc(id)}">${esc(n.vi)}</a>` : `<code>${esc(id)}</code>`; };
+
+  function renderSide() {
+    const r = race(), n = state.sel && L.byId[state.sel];
+    if (!n) {
+      const marked = [...r.jobs, ...r.cands].map(x => ({ x, rv:reviewOf(r.id, x.id) })).filter(o => o.rv && o.rv.status !== 'ok');
+      const fl = Object.keys(FD).filter(f => (r.faithAccess || {})[f] !== 'shunned').map(f => `<li>${ftag(f)} <span class="hint">${esc(FD[f].tenet)}</span>${FD[f].raceNotes[r.id] ? `<div class="hint">↳ ${esc(FD[f].raceNotes[r.id])}</div>` : ''}</li>`).join('');
+      $('side').innerHTML = `<h3>${esc(r.vi)}</h3><p class="hint" style="margin-top:4px">${esc(r.lore)}</p>
+        <p class="hint"><b>Silhouette:</b> ${esc(r.hook)}</p>
+        ${fl ? `<h3 style="font-size:16px;margin-top:12px">Giáo phái mở với ${esc(r.vi)}</h3><ul class="list">${fl}</ul>` : ''}
+        <p>Bấm một nghề trên sơ đồ để xem chi tiết và ghi quyết định. Dòng dõi (tiền nhiệm và hậu duệ) sẽ được tô sáng.</p>
+        <h3 style="font-size:16px;margin-top:14px">Cần sửa / bỏ (${marked.length})</h3>
+        ${marked.length ? `<ul class="list">${marked.map(o => `<li><span class="st ${o.rv.status}">${STATUS[o.rv.status].t}</span> <a data-go="${esc(o.x.id)}">${esc(o.x.vi)}</a>${o.rv.note ? `<div class="hint">${esc(o.rv.note)}</div>` : ''}</li>`).join('')}</ul>` : '<p class="hint">Chưa có nghề nào bị đánh dấu.</p>'}
+        ${dbNote()}`;
+      return;
+    }
+    const rv = reviewOf(r.id, n.id) || {};
+    const arch = n.arch ? DATA.archetypes[n.arch] : null;
+    const kindVi = { origin:'Khởi nguyên', shared:'Thân chung', crown:'Ngọn riêng', faith:'Ngọn tín ngưỡng (mọi chủng tộc)', hidden:'Nghề ẩn', candidate:'Dạng đề xuất (chưa đặt)' }[n.kind];
+    const kids = L.children[n.id] || [];
+    const fd = n.faith && FD[n.faith];
+    $('side').innerHTML = `<h3>${esc(n.vi)}</h3><div class="en">${esc(n.en)} · <code>${esc(n.variantId || n.id)}</code></div>
+      <dl>
+        <dt>Loại</dt><dd>${kindVi}${n.hiddenJob ? ' · ẩn' : ''}${n.access === 'foreign' ? ' · ngoại lai (Mastery +15)' : ''}${n.unlock ? ` · mở: <code>${esc(n.unlock)}</code>` : ''}</dd>
+        ${fd ? `<dt>Giáo phái</dt><dd>${ftag(n.faith)} <span class="en">${esc(fd.en)} · ${esc(FACC[(r.faithAccess || {})[n.faith] || 'open'])} với ${esc(r.vi)}</span>${fd.raceNotes[r.id] ? `<div class="hint">${esc(fd.raceNotes[r.id])}</div>` : ''}</dd>` : ''}
+        <dt>Tier</dt><dd>T${n.tier} · ${TIER_NAMES[n.tier] || ''}</dd>
+        <dt>Trường phái</dt><dd><i class="dot" style="background:var(--s-${n.school})"></i> ${esc(schoolName(n.school))}${n.role ? ` · ${esc(n.role)}` : ''}</dd>
+        ${arch ? `<dt>Khuôn</dt><dd>${esc(arch.vi)} / ${esc(arch.en)}${n.aspect ? ` · <i class="dot" style="background:${DATA.aspects[n.aspect].color}"></i> ${esc(DATA.aspects[n.aspect].vi)}` : ''}</dd>` : ''}
+        ${!arch && (n.bases || []).length ? `<dt>Nền của khuôn</dt><dd>${n.bases.map(b => esc(DATA.archetypes[b].vi)).join(', ')}</dd>` : ''}
+        <dt>Từ</dt><dd>${(n.from || []).length ? n.from.map(nameOf).join(', ') : (n.kind === 'candidate' && (n.fromHint || []).length ? `<span class="en">gợi ý ${esc(n.fromHint.join(', '))} (không có trong cây này)</span>` : '—')}</dd>
+        <dt>Lên</dt><dd>${kids.length ? kids.map(nameOf).join(', ') : (n.kind === 'candidate' ? '—' : '<b>kết thúc</b>')}</dd>
+        ${n.kind !== 'candidate' && n.tier > 0 ? `<dt>Gate</dt><dd>${n.gate ? n.gate.map(g => `<code>${esc(g)}</code>`).join(' + ') : '<span style="color:var(--fix)">chưa có</span>'}</dd>
+        <dt>Mastery</dt><dd>${fmtReq(n.req, n.access)}</dd><dt>Trial</dt><dd>${esc(n.trial || '—')}</dd>` : ''}
+        ${n.mount ? `<dt>Thú cưỡi</dt><dd>${esc(n.mount)}</dd>` : ''}${n.companion ? `<dt>Đồng hành</dt><dd>${esc(n.companion)}</dd>` : ''}
+        ${n.legacy ? `<dt>ID V12.3</dt><dd><code>${esc(n.legacy)}</code></dd>` : ''}
+      </dl>
+      ${n.twist ? `<div class="twist"><b>Khác biệt:</b> ${esc(n.twist)}</div>` : ''}
+      ${n.marker || n.vmarker ? `<p style="margin:6px 0"><b>Ngoại hình:</b> ${esc(n.vmarker || n.marker)}</p>` : ''}
+      ${n.summary ? `<p class="hint">${esc(n.summary)}</p>` : ''}
+      ${n.todo ? `<p class="hint" style="color:var(--fix)">${esc(n.todo)}</p>` : ''}
+      ${n.exception ? `<p class="hint"><b>Ngoại lệ:</b> ${esc(n.exception)}</p>` : ''}${n.note ? `<p class="hint">${esc(n.note)}</p>` : ''}
+      <div class="review">
+        <div class="row" role="group" aria-label="Quyết định">
+          ${Object.entries(STATUS).map(([k, s]) => `<button class="btn ${k}" data-status="${k}" aria-pressed="${rv.status === k}" ${db ? '' : 'disabled'}>${s.t} ${s.vi}</button>`).join('')}
+          ${rv.status ? `<button class="btn" data-clear ${db ? '' : 'disabled'}>Xóa</button>` : ''}
+        </div>
+        <textarea id="note" placeholder="Ghi chú: đổi tên, đổi Tier, đổi tiền nhiệm, ý tưởng…" ${db ? '' : 'disabled'}>${esc(rv.note || '')}</textarea>
+        <div class="row"><button class="btn" data-savenote ${db ? '' : 'disabled'}>Lưu ghi chú</button><button class="btn" data-back>← Tổng quan chủng tộc</button></div>
+        ${dbNote()}
+      </div>`;
+  }
+  function dbNote() {
+    if (dbState === 'ready') return '<p class="hint">Quyết định được lưu chung cho trang này; Claude đọc lại được.</p>';
+    if (dbState === 'connecting') return '<p class="hint">Đang kết nối nơi lưu duyệt…</p>';
+    return '<p class="hint">Không lưu được ở chế độ xem này (cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa).</p>';
+  }
+
+  function render() { renderRaces(); renderOverview(); renderTree(); renderSide();
+    $('showCand').checked = state.cand; $('focusSel').value = state.focus; savePref(); }
+
+  async function write(status, note) {
+    const r = race(), n = L.byId[state.sel]; if (!db || !n) return;
+    $('saveState').textContent = 'Đang lưu…';
+    try {
+      const ref = db.collection('reviews').doc(key(r.id, n.id));
+      if (status === null) await ref.delete();
+      else await ref.set({ race:r.id, job:n.id, variant:n.variantId || null, faith:n.faith || null, name:n.vi, tier:n.tier, kind:n.kind, status, note:note || '', updatedAt:new Date().toISOString() });
+      $('saveState').textContent = 'Đã lưu';
+    } catch (e) {
+      $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.';
+    }
+  }
+
+  // ---- Sự kiện ----
+  $('races').addEventListener('click', e => { const b = e.target.closest('[data-race]'); if (!b) return; state.race = b.dataset.race; state.sel = null; try { history.replaceState(null, '', '#' + state.race); } catch (x) {} render(); $('scroller').scrollTo({ left:0, top:0 }); });
+  $('showCand').addEventListener('change', e => { state.cand = e.target.checked; if (state.sel && state.sel.startsWith('cand:') && !state.cand) state.sel = null; render(); });
+  $('focusSel').addEventListener('change', e => { state.focus = e.target.value; render(); });
+  $('tree').addEventListener('click', e => { const b = e.target.closest('.node'); if (!b) return; state.sel = state.sel === b.dataset.id ? null : b.dataset.id; renderTree(); renderSide(); });
+  $('side').addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) { const id = go.dataset.go; if (id.startsWith('cand:') && !state.cand) state.cand = true; state.sel = id; render();
+      const el = $('tree').querySelector(`[data-id="${CSS.escape(id)}"]`); if (el) el.scrollIntoView({ block:'center', inline:'center', behavior:'smooth' }); return; }
+    if (e.target.closest('[data-back]')) { state.sel = null; renderTree(); renderSide(); return; }
+    const st = e.target.closest('[data-status]');
+    if (st) { const cur = (reviewOf(state.race, state.sel) || {}).status; write(cur === st.dataset.status ? null : st.dataset.status, $('note').value); return; }
+    if (e.target.closest('[data-clear]')) { write(null); return; }
+    if (e.target.closest('[data-savenote]')) { const cur = (reviewOf(state.race, state.sel) || {}).status || 'fix'; write(cur, $('note').value); }
+  });
+  if (window.ResizeObserver) new ResizeObserver(() => L && drawEdges(state.sel && L.byId[state.sel] ? lineage(L, state.sel) : null)).observe($('tree'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => L && renderTree());
+
+  render();
+
+  (async () => {
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { dbState = 'off'; renderSide(); return; }
+    dbState = 'ready'; renderSide();
+    db.collection('reviews').onSnapshot(snap => {
+      for (const k of Object.keys(reviews)) delete reviews[k];
+      for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
+      const note = document.activeElement && document.activeElement.id === 'note' ? $('note').value : null;
+      renderRaces(); renderTree(); renderSide();
+      if (note !== null && $('note')) { $('note').value = note; $('note').focus(); }
+    }, () => { dbState = 'off'; renderSide(); });
+  })();
+})();
+</script>
