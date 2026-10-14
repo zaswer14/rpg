@@ -1,0 +1,35 @@
+/* New isolated Tier 0 overview; do not override the existing V4/V5/V6 CSS. */
+.tier0-section .tier0-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.tier0-features>div{border:1px solid #4b685a;background:#20332f;border-radius:12px;padding:15px;text-align:center}
+.tier0-features strong{display:block;font-size:25px;color:#e8cb91}.tier0-features span{font-size:12px;color:#b7c9bf}
+.tier0-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.tier0-card{background:linear-gradient(155deg,#16292c,#122129);border:1px solid #456057;border-radius:13px;padding:17px}
+.tier0-card h3{margin-top:0;color:#f2dcae}.tier0-card p{font-size:13px;color:#b9c9bd}
+.tier0-presets{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.tier0-presets button{font-size:11px;padding:7px 9px;background:#2b453e}
+.tier0-points{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px;background:#28382c;color:#e5d8a7;border-radius:7px;margin-bottom:9px}
+.tier0-points small{font-size:11px;color:#b5c9b9}
+.tier0-attributes{display:grid;gap:7px}
+.tier0-stat{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid #3b544f;border-radius:8px;background:#1b302f}
+.tier0-stat b{color:#edd39f;font-size:13px}.tier0-stat span{font-size:12px;margin-left:7px}.tier0-stat small{display:block;font-size:10px;color:#aebdb5}
+.tier0-step{display:flex;align-items:center;gap:7px}.tier0-step button{min-width:30px;padding:3px 6px;background:#375147;font-size:17px}.tier0-step strong{font-size:19px;min-width:23px;text-align:center}.tier0-step button:disabled{opacity:.3}
+.tier0-derived{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}
+.tier0-derived>div{border:1px solid #47665a;border-radius:8px;padding:9px;text-align:center;background:#22382f}
+.tier0-derived small{font-size:10px;display:block;color:#b4cbbb}.tier0-derived strong{font-size:18px;color:#f1d99f}.tier0-derived p{grid-column:1/-1;font-size:11px;margin:6px 0 0}
+.tier0-elements{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:14px 0}
+.tier0-elements>div{background:#1b3131;border:1px solid #405a57;border-radius:8px;padding:8px;min-height:73px}
+.tier0-elements span{display:block;font-size:11px;color:#d8e7d8}.tier0-elements small{font-size:10px;color:#91b4aa;display:block}
+.tier0-elements>div>span:first-child{margin-bottom:6px;color:#edd7a8}
+.tier0-quickstart{margin-top:14px}
+.tier0-path-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.tier0-path{background:#1d312f;border:1px solid #51685d;border-radius:10px;padding:12px}
+.tier0-path>strong{color:#f0d8a7;font-size:13px}.tier0-path p{font-size:12px;margin:6px 0}.tier0-path small{font-size:11px;color:#bed0c6}
+.slot-locked{opacity:.45;background:#111c21!important;border-style:dashed!important}
+@media(max-width:970px){.tier0-layout{grid-template-columns:1fr}.tier0-path-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.tier0-features{grid-template-columns:repeat(2,1fr)!important}.tier0-derived{grid-template-columns:repeat(2,1fr)}.tier0-path-grid{grid-template-columns:1fr}.tier0-elements{grid-template-columns:1fr}.tier0-points{display:block}}
+/* V8 no more free attribute-point distribution. Stats are read-only skill rewards. */
+.tier0-step{flex-direction:column;align-items:flex-end;gap:2px}.tier0-step strong{color:#e8d99e}
+.tier0-step small{font-size:10px;margin:0;color:#94cbb5}
+.tier0-reqs{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}
+.tier0-req{font-size:11px;border:1px solid #7c6251;padding:5px 7px;background:#392c27;border-radius:7px;color:#e2b99e}
+.tier0-req.ready{background:#284735;border-color:#507b5d;color:#d0e9cf}

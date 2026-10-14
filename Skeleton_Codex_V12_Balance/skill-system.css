@@ -1,0 +1,115 @@
+/* V5-V6 additions only; existing V4 selectors and visuals are intentionally preserved. */
+.skill-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.skill-controls label{display:block;font-size:12px;color:#aebfb7;margin-bottom:5px}
+.skill-controls select,.skill-controls input{width:100%;min-width:0}
+.skill-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:16px 0}
+.skill-metric{background:#192a2b;border:1px solid #405d54;border-radius:11px;padding:13px;text-align:center}
+.skill-metric b{display:block;font-size:25px;line-height:1.35;color:#f2d7a4}
+.skill-metric span{display:block;color:#b3cbbd;font-size:11px}
+.skill-dual{display:grid;grid-template-columns:minmax(240px,0.88fr) minmax(0,1.75fr);gap:16px;align-items:start}
+.skill-sidebar{position:sticky;top:12px;background:#12232a;border:1px solid #3a5750;border-radius:13px;padding:16px}
+.skill-sidebar h3{margin:0 0 4px}
+.skill-slot-group{margin-top:14px}
+.slot-heading{font-size:12px;font-weight:800;color:#e5c895;letter-spacing:1px;display:flex;justify-content:space-between;margin:0 0 6px}
+.slot-heading span{color:#a8c4b3}
+.slots-list{display:grid;gap:6px}
+.skill-slot{display:flex;align-items:center;gap:8px;border:1px dashed #475e55;border-radius:9px;padding:9px 8px;min-height:62px;background:#14282d}
+.skill-slot.filled{border-style:solid;background:#243b35;border-color:#668f71}
+.slot-number{font-weight:800;color:#b5cbbd;width:20px;text-align:center}
+.slot-info{min-width:0;flex:1}.slot-info strong{font-size:13px;display:block;line-height:1.2;color:#e5eee5}.slot-info small{display:block;font-size:11px;color:#a5bcaf;overflow-wrap:anywhere}
+.skill-mini-btn{font-size:11px;padding:5px 8px;background:#34423d}
+.skill-action{font-size:12px;width:100%;border-radius:8px;padding:9px;margin-top:auto}
+.skill-action.primary{background:#486a47;border:1px solid #94b477;font-weight:700;color:#f9f2d5}
+.skill-action:disabled{cursor:not-allowed;opacity:.55}
+.skill-feedback{padding:9px 12px;border:1px solid #466b58;background:#1a2c2d;color:#c7dcca;border-radius:9px;margin-top:12px;font-size:12px;min-height:39px}
+.skill-filter-panel{background:#12232a;border:1px solid #3a5750;border-radius:13px;padding:13px;margin-bottom:12px}
+.skill-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.skill-filter-grid input{grid-column:1/-1;width:100%;min-width:0}
+.skill-filter-grid select{min-width:0;width:100%}
+.skill-filter-hint{font-size:11px;color:#a4bbaf;margin:9px 0 0}
+.skill-cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.skill-card-v5{display:flex;flex-direction:column;min-height:275px;background:linear-gradient(135deg,#20322f,#112028);border:1px solid #42645a;border-radius:12px;padding:13px}
+.skill-card-v5.skill-locked{border-color:#3c4e4c;background:#19272b}
+.skill-topline{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:10px}
+.skill-tier,.skill-access,.skill-state{border:1px solid #50675d;border-radius:5px;padding:2px 6px;background:#1a3332;line-height:1.55}
+.skill-tier{color:#f1ce86}
+.skill-access.universal{color:#bbdfc9}.skill-access.restricted{color:#efcfa5}.skill-access.exclusive{color:#edd3b5}.skill-access.lineage{color:#bcceef}
+.skill-state{margin-left:auto;color:#bdc9c0}
+.skill-card-v5 h4{color:#f2e2bd;font-size:16px;margin:11px 0 0;line-height:1.3}
+.skill-card-v5 .skill-type{font-size:11px;color:#b0d2c0;margin:2px 0 9px}
+.skill-card-v5 p{font-size:12px;line-height:1.46;margin:4px 0 10px;color:#c4d5ce}
+.skill-mini-tags{display:flex;gap:5px;flex-wrap:wrap;margin:2px 0 7px}
+.skill-mini-tags span{border:1px solid #41574f;border-radius:4px;padding:1px 5px;font-size:10px;color:#bbc9be}
+.skill-card-v5 .skill-requirement{font-size:11px;color:#a2c3b7;margin-top:auto;padding-top:7px;border-top:1px solid #334944}
+.skill-card-v5 .skill-lock-reasons{font-size:11px;color:#d6ad9d;margin:-1px 0 8px}
+.skill-empty{padding:20px;border:1px solid #3d5652;border-radius:10px;color:#b7cabb}
+.skill-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.skill-summary-grid .card{padding:11px}.skill-summary-grid strong{font-size:13px;color:#f3d6a2}
+.skill-summary-grid p{font-size:12px;margin:5px 0 0}
+@media(max-width:1120px){.skill-dual{grid-template-columns:1fr}.skill-sidebar{position:static}.skill-metrics{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:680px){.skill-controls{grid-template-columns:1fr}.skill-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.skill-cards-grid{grid-template-columns:1fr}.skill-metrics{grid-template-columns:repeat(2,1fr)}.skill-summary-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* V6 role, element and affinity design extension */
+.skill-role-legend{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 20px}
+.role-legend-tag{font-size:12px;padding:5px 9px;background:#203731;border:1px solid #4b685b;border-radius:16px;color:#e2eacb}
+.skill-element-atlas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:8px 0 14px}
+.element-atlas-item{padding:11px 10px;background:#17272b;border:1px solid #416157;border-radius:11px;min-height:96px}
+.element-atlas-item b{display:block;color:#ebdcc1;font-size:14px;margin-bottom:5px}
+.element-atlas-item small{color:#aebfb5;font-size:11px;line-height:1.36;display:block}
+.el-fire{--el-color:#dbaa82}.el-water{--el-color:#8bc5ea}.el-ice{--el-color:#b4d9e9}.el-lightning{--el-color:#dbd190}.el-wind{--el-color:#99d6c2}.el-earth{--el-color:#ccb08b}.el-light{--el-color:#e8dca2}.el-dark{--el-color:#baacd5}.el-nature{--el-color:#9fd0a0}.el-neutral{--el-color:#c3cfc8}
+.element-atlas-item b{color:var(--el-color,#ebdcc1)}
+.skill-reactions{background:#17292b;border:1px solid #48665a;padding:12px 15px;border-radius:11px;margin-bottom:17px}
+.skill-reactions summary{cursor:pointer;color:#efdcaf;font-weight:650;font-size:13px}
+.skill-reaction-list{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:13px}
+.skill-reaction-list>div{background:#1e3333;padding:9px 10px;border-radius:8px;border:1px solid #415d51}
+.skill-reaction-list b{color:#e8d7ad;font-size:12px}.skill-reaction-list p{font-size:11px;margin:4px 0 0}
+.skill-dimensions{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 9px}
+.skill-dimensions>span{font-size:10px;font-weight:650;padding:3px 6px;border-radius:5px;border:1px solid #547064;line-height:1.4}
+.skill-role-pill{background:#25372e;color:#d6edcc}
+.skill-method-pill{background:#2c303c;color:#e0d4f4}
+.skill-element-pill{background:#253238;color:var(--el-color,#dfdfd0)}
+.skill-card-v5 .skill-hitline,.skill-card-v5 .skill-statusline{font-size:11px;color:#c4d6bf;line-height:1.4;margin:2px 0 7px}
+.skill-card-v5 .skill-statusline{color:#e2cda6}
+.skill-controls input[type=range]{padding:0;accent-color:#9eccb6}
+@media(max-width:900px){.skill-element-atlas{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:680px){.skill-element-atlas{grid-template-columns:repeat(2,minmax(0,1fr))}.skill-reaction-list{grid-template-columns:1fr}}
+/* V8 5-rank skill mastery and permanent attribute reward */
+.skill-rank-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 7px;color:#e1ca92;font-size:12px}
+.skill-rank-row>span{display:flex;gap:4px}.skill-rank-row i{display:block;width:17px;height:8px;border-radius:3px;background:#344741;border:1px solid #63726a}
+.skill-rank-row i.lit{background:#cbaa69;border-color:#e8cc93}
+.skill-rank-bonuses{font-size:11px;color:#bce1c1;line-height:1.6;margin:7px 0!important}
+.skill-rank-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.skill-rank-actions .skill-action{margin-top:0;flex:1;min-width:125px}
+
+/* V9 skill rarity, earned-currency loot wheel, and guaranteed starter challenges */
+.skill-gacha-section{margin-top:35px}
+.gacha-loop{padding:13px 16px;border:1px solid #536e5a;border-radius:11px;background:#192d2b;color:#e6d3a5;font-weight:650;font-size:13px;line-height:1.7}
+.gacha-rarity-legend{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:14px 0}
+.gacha-rarity-legend>div{min-width:0;display:flex;flex-direction:column;gap:5px;border:1px solid var(--rarity);border-radius:10px;padding:11px 9px;background:#17282c}
+.gacha-rarity-legend b{color:var(--rarity);font-size:15px}.gacha-rarity-legend small{font-size:11px;color:#d4dacf}.gacha-rarity-legend span{font-size:11px;color:#c7d1c8}
+.rarity-white{--rarity:#e3e6e1}.rarity-green{--rarity:#7cde8d}.rarity-blue{--rarity:#77bcff}.rarity-purple{--rarity:#cf9aff}.rarity-gold{--rarity:#ffd36a}.rarity-red{--rarity:#ff7474}
+.skill-card-v5{border-top:3px solid var(--rarity,#6e9d85)}
+.skill-card-v5.skill-locked{border-top-color:var(--rarity,#6e9d85)}
+.skill-rarity{display:inline-block;padding:3px 7px;border:1px solid var(--rarity);border-radius:5px;background:#0d2228;color:var(--rarity);font-size:10px;font-weight:750;line-height:1.4}
+.skill-source-hint{width:100%;font-size:11px;color:#bdd5c6;line-height:1.5;padding:7px 0}
+.gacha-resource-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}
+.gacha-resource-strip>div{border-radius:10px;border:1px solid #4e6558;background:#1c3030;padding:13px 16px}
+.gacha-resource-strip small{display:block;color:#a7c6b5;font-size:11px}.gacha-resource-strip strong{display:block;font-size:27px;color:#f0d59d}
+.gacha-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.gacha-panel{padding:15px;border:1px solid #4a6758;border-radius:12px;background:#14252a}
+.gacha-panel h3{margin-top:0}.gacha-fight-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.gacha-fight-buttons button{border-radius:8px;background:#334f43;padding:10px;font-size:12px;min-height:40px}
+.gacha-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gacha-settings label{font-size:12px;color:#bacfc4}.gacha-settings select{display:block;width:100%;margin-top:5px;min-width:0}
+.gacha-odds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:11px 0}
+.odds-chip{display:flex;gap:6px;justify-content:space-between;align-items:center;border-radius:6px;border:1px solid var(--rarity);padding:6px 7px;font-size:11px;background:#17292c;color:var(--rarity)}
+.gacha-roll{width:100%;background:#466b4c;border:1px solid #93bb84;border-radius:9px;padding:13px;font-weight:800;color:#f4f4df;margin-top:6px}
+.gacha-roll:disabled{opacity:.45;cursor:not-allowed}
+.gacha-result{border:1px solid #567b65;border-radius:10px;background:#20352f;min-height:44px;padding:12px 15px;font-size:13px;line-height:1.65;margin:13px 0}
+.gacha-guarantee{border:1px solid #426259;border-radius:11px;padding:12px;background:#14292b}
+.gacha-guarantee summary{cursor:pointer;color:#efd6a0}
+.gacha-challenges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:11px 0}
+.gacha-challenge{border:1px solid #465b53;border-radius:9px;background:#1d3331;padding:12px;display:flex;flex-direction:column;gap:6px}
+.gacha-challenge b{font-size:13px;color:#e5d3a4}.gacha-challenge small{font-size:11px;color:#b0c6b9}.gacha-challenge>div{font-size:11px;line-height:1.5}.gacha-challenge button{margin-top:auto;font-size:11px;padding:8px;background:#344e43;border-radius:7px}.gacha-challenge button:disabled{opacity:.6}
+@media(max-width:900px){.gacha-rarity-legend{grid-template-columns:repeat(3,1fr)}.gacha-challenges{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.gacha-panels{grid-template-columns:1fr}.gacha-odds{grid-template-columns:repeat(2,1fr)}.gacha-challenges{grid-template-columns:1fr}.gacha-rarity-legend{grid-template-columns:repeat(2,1fr)}.gacha-settings{grid-template-columns:1fr}}
