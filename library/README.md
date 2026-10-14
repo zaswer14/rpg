@@ -18,11 +18,14 @@ library/
   catalog.js            catalog() → kiểm tra + bảng tra khuôn × chủng tộc; catalogMarkdown()
   catalog.html          trang xem thư viện khuôn nghề (ma trận / theo khuôn / theo chủng tộc, lọc khí chất)
   tools/export.html     chạy kiểm tra compose + catalog và in Markdown (dùng được headless)
+  bestiary/             QUÁI PHỤ trên map: rules.js (12 họ, 8 kiểu di chuyển, cỡ, cấp tinh anh/thủ lĩnh, 8 biến tố),
+                        species.js (43 loài: Quái Thú, Ma Thú, Long Tộc…), biomes.js (6 vùng săn), bestiary.js (kiểm tra + roll/stats)
   games/<game>.js       cấu hình một game = danh sách chủng tộc chọn từ thư viện
   docs/
     01_Race_Catalog.md  mô tả 10 chủng tộc và cách thêm chủng tộc mới
     02_Archetype_Catalog.md  khuôn nghề và dạng: ý tưởng, cách đặt vào game, danh mục đầy đủ
     03_Faiths.md        hệ giáo phái: mô hình Devotion, cách mỗi giáo phái cấp sức mạnh, nghề tín ngưỡng
+    04_Bestiary_Side_Monsters.md  quái phụ: tra cứu cách các game chia quái, mô hình họ/kiểu/cỡ/khí chất, vùng, thưởng
 ```
 
 **Hai lớp nghề.** `trunk.js` + `races/*.js → crowns` + `faiths.js → crowns` là **cây đã đặt** (nghề nào mọc từ đâu; ngọn tín ngưỡng mọc vào cây của mọi chủng tộc theo giáo phái đó). `archetypes/` là **kho ý tưởng chưa đặt**: mỗi khuôn (Kỵ Sĩ, Sát Thủ, Triệu Hồi Sư…) có dạng riêng theo chủng tộc và/hoặc giáo phái (skeleton + Hắc Giáo: Kỵ Sĩ Tử Vong ngựa xương; mọi chủng tộc + Quang Minh: Kỵ Sĩ Ánh Sáng; mọi chủng tộc + Hắc Giáo: Hắc Kỵ Sĩ; người thú không đạo: Kỵ Sĩ Nanh Ngà…). Thứ tự chọn dạng: chủng tộc + giáo phái › giáo phái › chủng tộc › dạng chung. Mọi ngọn hiện có đều là một dạng trong kho (trường `crown`). Chọn dạng nào vào game nào: `docs/02` mục 4.
@@ -77,6 +80,14 @@ Chỉ nạp file chủng tộc mà game cần. Chủng tộc không nạp thì k
 2. Mỗi dạng cần: `race`, `aspect`, tên Việt/Anh, `tier`, `twist` (một **luật** khác, không chỉ số), `marker` không trùng.
 3. Trường phái bị cấm với chủng tộc: thêm `hidden` + `unlock` hoặc `exception`.
 4. Mở `tools/export.html` (hoặc `catalog.html` → mục Kiểm tra dữ liệu) cho tới khi không còn lỗi/cảnh báo; xuất lại Markdown vào `docs/02` mục 5.
+
+## 4c. Thêm loài quái phụ
+
+1. Thêm một dòng vào `bestiary/species.js` (họ, kiểu, cỡ, khí chất từ `aspects.js`, Tier, `habitat`, `attack`, `marker` không trùng).
+2. Mở `tools/export.html` cho tới khi không còn dòng `BESTIARY ERROR`.
+3. Runtime đọc dữ liệu qua `JobLibrary.bestiary()` (`roll()` chọn loài theo vùng/Tier, `stats()` ra chỉ số); thêm loài không cần sửa code. Thêm họ hoặc kiểu mới thì phải viết luật trong runtime. Chi tiết: `docs/04_Bestiary_Side_Monsters.md`.
+
+Khác với nghề, bestiary **đã nối runtime**: Skeleton Codex sinh quái phụ từ thư viện này (mục 7 của docs/04).
 
 ## 5. Quan hệ với Skeleton Codex V12.3
 

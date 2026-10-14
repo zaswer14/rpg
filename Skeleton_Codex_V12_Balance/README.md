@@ -10,6 +10,8 @@
 
 **Khuôn nghề + giáo phái (14/10/2026):** `../library/catalog.html` + `../library/docs/02_Archetype_Catalog.md` — 34 khuôn nghề chung × 278 dạng theo chủng tộc và giáo phái (ví dụ Kỵ Sĩ: skeleton + Hắc Giáo = Kỵ Sĩ Tử Vong ngựa xương, mọi chủng tộc + Quang Minh = Kỵ Sĩ Ánh Sáng, + Hắc Giáo = Hắc Kỵ Sĩ, người thú không đạo = Kỵ Sĩ Nanh Ngà). `../library/docs/03_Faiths.md` — 6 giáo phái (Quang Minh / Hắc Giáo lớn, 4 nhỏ), 23 ngọn tín ngưỡng mở cho mọi chủng tộc. Mỗi chủng tộc nay có 10 nghề T5 (skeleton 17). Kho ý tưởng, chưa chọn dạng nào vào game.
 
+**V13 · Quái phụ trên map (14/10/2026):** ngoài đối thủ chính, mỗi màn có 2–3 ổ quái phụ lấy từ `../library/bestiary/`: 43 loài thuộc 12 họ (Quái Thú, Ma Thú, Long Tộc, Trùng Tộc, Nhầy, Thảo Yêu, Bất Tử, Nguyên Tố Linh, Cơ Giới, Yêu Ma, U Linh, Phi Cầm), 8 kiểu di chuyển, cấp Tinh anh/Thủ lĩnh với 8 biến tố, 6 vùng săn chọn ở thanh chọn màn. Quái phụ không chặn cổng; hạ được thì cộng Chiến tích khi thắng (tối đa +50% thưởng màn) và ghi vào sổ săn trong save. Trang có mục **15 · Sổ tay quái phụ**. Thiết kế, nguồn tham khảo và giới hạn: `../library/docs/04_Bestiary_Side_Monsters.md`.
+
 ---
 
 ## (Lịch sử) V11 — Bilingual Jobs, Job Gates & 5-Rank Skill Design

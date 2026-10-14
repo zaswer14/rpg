@@ -553,6 +553,10 @@ const PROGRESS={
   wins:Math.max(0,Number(savedData.progress?.wins)||0),
   defeats:Math.max(0,Number(savedData.progress?.defeats)||0),
   log:Array.isArray(savedData.progress?.log)?savedData.progress.log.slice(-60):[],
+  // V13: sổ săn quái phụ {speciesId:{kills,elite,alpha}}; chỉ ghi khi thắng màn.
+  bestiary:Object.fromEntries(Object.entries(savedData.progress?.bestiary&&typeof savedData.progress.bestiary==='object'?savedData.progress.bestiary:{})
+    .filter(([k,v])=>/^[a-z][a-z0-9_]{0,40}$/.test(k)&&v&&typeof v==='object').slice(0,200)
+    .map(([k,v])=>[k,{kills:Math.max(0,Math.floor(Number(v.kills)||0)),elite:Math.max(0,Math.floor(Number(v.elite)||0)),alpha:Math.max(0,Math.floor(Number(v.alpha)||0))}])),
 };
 if(!PROGRESS.history.includes(PROGRESS.job))PROGRESS.history.push(PROGRESS.job);
 PROGRESS.learned=[...new Set(PROGRESS.learned.filter(id=>!!skillById[id]))];
@@ -850,7 +854,11 @@ function recordVictory(result){
   if(mode==='trial' && (!jobGate(target).passed || PROGRESS.trials.includes(target)))return {ok:false,message:'Chưa đủ điều kiện Trial hoặc đã hoàn thành'};
   const rewards={...FIGHT_REWARDS,boss:{name:'Boss',reward:260,first:120},training:{name:'Huấn luyện nghề',reward:60,first:0},trial:{name:'Trial chuyển nghề',reward:220,first:0}};
   const entry=rewards[mode];const key=mode+':'+(target||'');const first=!PROGRESS.firstClear.includes(key);
-  const earned=entry.reward+(first?entry.first:0);
+  // V13: tiền thưởng quái phụ (đã hạ trong màn) cộng khi thắng, trần 50% thưởng gốc của màn.
+  const kills=Array.isArray(result.hunt?.kills)?result.hunt.kills.filter(k=>k&&/^[a-z][a-z0-9_]{0,40}$/.test(k.species)&&['normal','elite','alpha'].includes(k.grade)).slice(0,40):[];
+  const hunt=Math.min(Math.floor(entry.reward*.5),kills.reduce((a,k)=>a+Math.max(0,Math.min(40,Math.floor(Number(k.bounty)||0))),0));
+  for(const k of kills){const b=PROGRESS.bestiary[k.species]||(PROGRESS.bestiary[k.species]={kills:0,elite:0,alpha:0});b.kills++;if(k.grade!=='normal')b[k.grade]++;}
+  const earned=entry.reward+(first?entry.first:0)+hunt;
   PROGRESS.trophies+=earned;PROGRESS.wins++;
   if(first)PROGRESS.firstClear.push(key);
   let extra=[];
@@ -870,8 +878,8 @@ function recordVictory(result){
   mastery[fallback]=(Number(mastery[fallback])||0)+5;
   for(const [key,raw] of Object.entries(mastery))if(Object.hasOwn(PROGRESS.mastery,key))PROGRESS.mastery[key]=Math.min(100,PROGRESS.mastery[key]+Math.max(0,Math.min(12,Math.floor(Number(raw)||0))));
   if(result.element && Object.hasOwn(PROGRESS.affinity,result.element))PROGRESS.affinity[result.element]=Math.min(100,PROGRESS.affinity[result.element]+Math.min(10,2+Math.floor(Number(result.elementHits)||0)));
-  const message=`Thắng ${entry.name}${target?' · '+window.SkeletonV11Data.labelJob(target):''}: +${earned} Chiến tích${extra.length?' · '+extra.join(' / '):''}${mode==='trial'?' · Trial hoàn tất':''}`;
-  PROGRESS.log.push({when:new Date().toISOString(),mode,target,earned});PROGRESS.log=PROGRESS.log.slice(-60);
+  const message=`Thắng ${entry.name}${target?' · '+window.SkeletonV11Data.labelJob(target):''}: +${earned} Chiến tích${hunt?` (gồm ${hunt} săn ${kills.length} quái phụ)`:kills.length?` · hạ ${kills.length} quái phụ`:''}${extra.length?' · '+extra.join(' / '):''}${mode==='trial'?' · Trial hoàn tất':''}`;
+  PROGRESS.log.push({when:new Date().toISOString(),mode,target,earned,hunt:kills.length});PROGRESS.log=PROGRESS.log.slice(-60);
   gachaUI.result.textContent=message;
   renderAll();syncAffinity();return {ok:true,message,earned};
 }
@@ -888,6 +896,7 @@ if(typeof window!=='undefined')window.SkeletonSkillProgress={
   getGachaCost(){return gachaCost();},
   getPoolSkillIds(){return poolSkills().map(s=>s.id);},
   getCombatBuild(){const job=PROGRESS.job,p=getProfile(job);cleanSlots(p,job);return {job,weapon:p.weapon,slots:{...p.slots},ranks:{...PROGRESS.ranks},stats:rewardStats(PROGRESS).stats,summonCap:summonCap(job),passives:Object.values(p.slots).filter(id=>skillById[id]?.kind==='passive')};},
+  getBestiary(){return JSON.parse(JSON.stringify(PROGRESS.bestiary));},
   getEconomy(){return {trophies:PROGRESS.trophies,points:PROGRESS.points,pulls:PROGRESS.pulls,challenges:[...PROGRESS.challenges]};},
   getRankCost(id,nextRank){return skillById[id]?rankCost(skillById[id],nextRank):null;},
   getTrainingStatus(target){const starter=BEGINNER_CHALLENGES.find(c=>c.job===target);return {available:!!byId[PROGRESS.job].to.includes(target),cleared:trainingCleared(target),skills:(JOB_REQUIRED_MAX[target]||[]).map(id=>({id,name:skillById[id].nameVi+' / '+skillById[id].name,rank:getRank(PROGRESS,id)}))};},
