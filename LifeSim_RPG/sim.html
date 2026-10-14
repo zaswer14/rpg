@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vạn Kiếp · Cân bằng</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { padding: 16px; }
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
+  .bar2 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type=number] { width: 90px; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  td, th { padding: 3px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  td.n, th.n { text-align: right; }
+  .hbar { height: 8px; background: var(--gold); border-radius: 2px; }
+  .ok { color: var(--good); } .no { color: var(--bad); }
+  h2 { font: 700 18px "Cormorant Garamond", serif; color: var(--gold); margin: 0 0 6px; }
+  .note { color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1 style="font:700 28px 'Cormorant Garamond',serif;color:var(--gold);margin:0">Vạn Kiếp · Cân bằng headless</h1>
+    <p class="note">Chạy N đời tự động tới chết (mọi quyết định do autoChoice), rồi in phân phối. Cùng seed gốc thì ra cùng kết quả. Dùng trước khi chỉnh số trong <code>data/world.js</code> hay <code>js/life.js</code>.</p>
+  </div>
+  <div class="bar2">
+    <label>Số đời <input type="number" id="n" value="1000" min="10" max="20000"></label>
+    <label>Seed gốc <input type="text" id="seed" value="can-bang" style="width:140px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px"></label>
+    <button class="btn" id="run">Chạy</button>
+    <span class="note" id="status"></span>
+  </div>
+  <div class="panel" id="checks"></div>
+  <div class="grid" id="out"></div>
+</div>
+
+<script src="../library/aspects.js"></script>
+<script src="../library/schools.js"></script>
+<script src="../library/trunk.js"></script>
+<script src="../library/races/human.js"></script>
+<script src="../library/races/elf.js"></script>
+<script src="../library/races/dwarf.js"></script>
+<script src="../library/races/orc.js"></script>
+<script src="../library/races/beastfolk.js"></script>
+<script src="../library/races/fae.js"></script>
+<script src="../library/races/merfolk.js"></script>
+<script src="../library/races/dragonkin.js"></script>
+<script src="../library/races/construct.js"></script>
+<script src="../library/races/skeleton.js"></script>
+<script src="../library/faiths.js"></script>
+<script src="../library/compose.js"></script>
+<script src="../library/bestiary/rules.js"></script>
+<script src="../library/bestiary/species.js"></script>
+<script src="../library/bestiary/biomes.js"></script>
+<script src="../library/bestiary/bestiary.js"></script>
+<script src="data/ecology.js"></script>
+<script src="js/core.js"></script>
+<script src="data/world.js"></script>
+<script src="js/map.js"></script>
+<script src="js/life.js"></script>
+<script src="js/systems.js"></script>
+<script src="js/events.js"></script>
+<script>
+const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+$('checks').innerHTML = `<h2>Kiểm tra dữ liệu</h2>` +
+  (G.check.errors.length ? G.check.errors.map(e => `<div class="no">✗ ${esc(e)}</div>`).join('') : '<div class="ok">✓ Không có lỗi (bestiary + compose + đại lục).</div>') +
+  G.check.warnings.map(w => `<div class="note">⚠ ${esc(w)}</div>`).join('') +
+  `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 3} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>`;
+
+function table(title, rows, cols, opt = {}) {
+  const max = Math.max(...rows.map(r => +r[opt.barCol ?? 1] || 0), 1);
+  return `<div class="panel"><h2>${title}</h2><table><tr>${cols.map((c, i) => `<th class="${i ? 'n' : ''}">${c}</th>`).join('')}${opt.bar ? '<th></th>' : ''}</tr>` +
+    rows.map(r => `<tr>${r.map((v, i) => `<td class="${i ? 'n' : ''}">${esc(v)}</td>`).join('')}${opt.bar ? `<td style="width:30%"><div class="hbar" style="width:${(+r[opt.barCol ?? 1] || 0) / max * 100}%"></div></td>` : ''}</tr>`).join('') + `</table>${opt.note ? `<p class="note">${opt.note}</p>` : ''}</div>`;
+}
+
+$('run').onclick = () => {
+  const N = Math.max(10, +$('n').value || 1000), base = $('seed').value || 'can-bang';
+  $('status').textContent = 'Đang chạy…';
+  setTimeout(() => {
+    const t0 = performance.now();
+    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {} };
+    for (let i = 0; i < N; i++) {
+      const sim = new G.Sim({ seed: base + ':' + i, headless: true });
+      sim.newLife({ noPeers: true }); sim.runToDeath();
+      let S = sim.S;
+      const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts };
+      A.lives.push(rec);
+      A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
+      for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
+      (A.byRace[S.race] = A.byRace[S.race] || []).push(rec);
+      (A.byWork[rec.work] = A.byWork[rec.work] || []).push(rec);
+      A.maxTier[rec.tier] = (A.maxTier[rec.tier] || 0) + 1;
+      A.jobTier[rec.job] = (A.jobTier[rec.job] || 0) + 1;
+      A.region[S.born.region] = (A.region[S.born.region] || 0) + 1;
+      if (S.rose) {
+        A.rose++;
+        // Chạy luôn kiếp Bộ Xương để đo đời thứ hai.
+        sim.rise(); sim.runToDeath(); S = sim.S; A.chain++;
+        (A.byRace.skeleton = A.byRace.skeleton || []).push({ race: 'skeleton', years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, inh: S.inherited });
+        A.causes['(xương) ' + S.causeId] = (A.causes['(xương) ' + S.causeId] || 0) + 1;
+        for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
+      }
+    }
+    const ms = Math.round(performance.now() - t0);
+    const avg = (a, f) => a.length ? (a.reduce((x, y) => x + f(y), 0) / a.length) : 0;
+    const pct = (a, b) => (a / b * 100).toFixed(1) + '%';
+    const out = [];
+    const totalHunts = Object.values(A.gaps).reduce((a, b) => a + b, 0);
+    const over = Object.entries(A.gaps).filter(([g]) => +g > 1).reduce((a, [, n]) => a + n, 0);
+    out.push(table('Phân cấp: Tier quái − Tier nhân vật', Object.entries(A.gaps).sort((a, b) => a[0] - b[0]).map(([g, n]) => [(+g > 0 ? '+' : '') + g, n, pct(n, totalHunts)]), ['Chênh', 'Trận', '%'],
+      { bar: true, note: over ? `<span class="no">✗ ${over} trận gặp quái cao hơn Tier + 1 (chỉ được phép khi bật Liều mạng).</span>` : `<span class="ok">✓ ${totalHunts} trận, không trận nào quá Tier + 1.</span>` }));
+    out.push(table('Trỗi dậy thành Bộ Xương', [['Đời đầu đã chết', N], ['Trỗi dậy', A.rose], ['Tỉ lệ', pct(A.rose, N)], ['Mục tiêu', '20%']], ['', '']));
+    const cn = c => { const sk = c.startsWith('(xương) '), id = sk ? c.slice(8) : c; return (sk ? '(Bộ Xương) ' : '') + (id === 'monster' ? 'tử trận trước quái' : (G.CAUSES[id] || { nameVi: id }).nameVi); };
+    out.push(table('Nguyên nhân chết', Object.entries(A.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => [cn(c), n, pct(n, N + A.chain)]), ['Nguyên nhân', 'Số', '%'], { bar: true }));
+    out.push(table('Theo chủng tộc', Object.entries(A.byRace).sort((a, b) => b[1].length - a[1].length).map(([r, l]) => [J.races[r].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.turns).toFixed(1), avg(l, x => x.level).toFixed(1)]),
+      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Cấp TB'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy.' }));
+    out.push(table('Theo sinh kế', Object.entries(A.byWork).sort((a, b) => b[1].length - a[1].length).map(([w, l]) => [w === '—' ? '— (chết trước khi đi làm)' : G.WORKS[w].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.level).toFixed(1), pct(l.filter(x => x.cause === 'monster').length, l.length)]),
+      ['Sinh kế', 'Đời', 'Tuổi TB', 'Cấp TB', 'Chết vì quái']));
+    out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
+    out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
+    out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
+    $('out').innerHTML = out.join('');
+    $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;
+  }, 30);
+};
+$('run').click();
+</script>
+</body>
+</html>

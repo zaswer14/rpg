@@ -1,0 +1,359 @@
+/* Vạn Kiếp — GIAO DIỆN. Chỉ đọc S và gọi API của Sim; logic không biết giao diện tồn tại (gắn qua hook). */
+(function (G) {
+  const J = window.JobLibrary;
+  G.init();
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const SAVE = 'vankiep.save.v1', GRAVES = 'vankiep.graves.v1', PREF = 'vankiep.pref.v1';
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bộ nhớ trình duyệt bị chặn: chơi tiếp, không lưu */ } }
+  };
+  const YEAR_SEC = 8, SPEEDS = [.5, 1, 2, 4, 8];
+  const pref = Object.assign({ speed: 1, auto: true }, store.get(PREF) || {});
+  let sim = null, paused = false, dirty = true, selRegion = null, lastHeader = null, deathShown = false;
+  let graves = store.get(GRAVES) || [];
+  const base = G.renderMapBase(G.map);
+  const canvas = $('map'), ctx = canvas.getContext('2d');
+
+  if (G.check.errors.length) console.warn('Lỗi dữ liệu:', G.check.errors);
+
+  // ───────── Vòng đời phiên chơi ─────────
+  function hook() {
+    return {
+      log: e => appendLog(e),
+      decision: d => showDecision(d),
+      year: () => { dirty = true; save(); },
+      death: S => onDeath(S),
+      hunt: () => { dirty = true; }
+    };
+  }
+  function start(seed) {
+    sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() });
+    sim.autoDecide = pref.auto;
+    clearLog();
+    deathShown = false; $('deathModal').hidden = true; $('decModal').hidden = true;
+    sim.newLife();
+    sim.S.auto = pref.auto;
+    selRegion = sim.S.loc;
+    dirty = true; save();
+  }
+  function rise() {
+    clearLog();
+    deathShown = false; $('deathModal').hidden = true;
+    sim.rise();
+    sim.S.auto = pref.auto;
+    selRegion = sim.S.loc;
+    dirty = true; save();
+  }
+  function save() { if (sim && sim.S) store.set(SAVE, { seed: sim.seed, rs: sim.rs, S: sim.S }); }
+  function load() {
+    const d = store.get(SAVE);
+    if (!d || !d.S || d.S.v !== 1) return false;
+    try {
+      sim = new G.Sim({ seed: d.seed, hook: hook() });
+      sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
+      clearLog(); for (const e of d.S.log) appendLog(e, true);
+      selRegion = d.S.loc;
+      if (d.S.pending) showDecision(d.S.pending);
+      if (d.S.dead) onDeath(d.S);
+      return true;
+    } catch (e) { console.warn('Không đọc được bản lưu', e); return false; }
+  }
+
+  // ───────── Nhật ký ─────────
+  function clearLog() { $('log').innerHTML = ''; lastHeader = null; }
+  function appendLog(e, bulk) {
+    if (!sim || !sim.S) return;
+    const box = $('log'), nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    const key = e.kiep + ':' + e.age;
+    if (key !== lastHeader) {
+      lastHeader = key;
+      const h = document.createElement('div'); h.className = 'yr';
+      h.textContent = sim.S.undead ? `Năm ${e.wy} · năm thứ ${e.yrs} sau khi trỗi dậy` : `Năm ${e.wy} · ${e.yrs} tuổi`;
+      box.appendChild(h);
+    }
+    const d = document.createElement('div'); d.className = 'e ' + e.kind;
+    d.innerHTML = esc(e.text) + (e.fact ? `<span class="f">${esc(e.fact)}</span>` : '');
+    box.appendChild(d);
+    if (!bulk && nearBottom) box.scrollTop = box.scrollHeight;
+    if (bulk) box.scrollTop = box.scrollHeight;
+    dirty = true;
+  }
+
+  // ───────── Quyết định ─────────
+  function showDecision(d) {
+    if (sim.autoDecide && !sim.S.dead) { const D = G.DECISIONS[d.id]; sim.choose(D.auto ? D.auto(sim.S, sim, d) : d.choices[0].k); dirty = true; return; }
+    $('dTitle').textContent = d.title;
+    $('dBody').textContent = d.body || '';
+    $('dFact').textContent = d.fact || '';
+    $('dChoices').innerHTML = '';
+    for (const c of d.choices) {
+      const b = document.createElement('button');
+      b.innerHTML = `${esc(c.label)}${c.sub ? `<small>${esc(c.sub)}</small>` : ''}`;
+      b.onclick = () => { $('decModal').hidden = true; sim.choose(c.k); dirty = true; save(); };
+      $('dChoices').appendChild(b);
+    }
+    $('decModal').hidden = false;
+  }
+
+  // ───────── Cái chết + xúc xắc trỗi dậy ─────────
+  function onDeath(S) {
+    if (deathShown) return; deathShown = true;
+    const g = { x: S.pos[0], y: S.pos[1], name: S.name, years: sim.years(S), cause: S.cause, rose: !!S.rose, race: S.race };
+    if (!graves.some(o => o.name === g.name && o.years === g.years)) { graves.push(g); graves = graves.slice(-60); store.set(GRAVES, graves); }
+    save(); dirty = true;
+    setTimeout(() => renderDeath(S), sim.headless ? 0 : 900);
+  }
+  function renderDeath(S) {
+    const reg = G.REGION[S.loc], dom = S.dominant;
+    $('epi').innerHTML = `${esc(S.name)}<small>${esc(J.races[S.race].nameVi)} · ${sim.years(S)} ${S.undead ? 'năm sau khi trỗi dậy' : 'tuổi'} · ${esc(S.cause)} · ${esc(reg.nameVi)}, năm ${S.world.year}</small>`;
+    drawChart(S);
+    const kills = Object.values(S.kills).reduce((a, b) => a + b, 0);
+    const topKill = Object.entries(S.kills).sort((a, b) => b[1] - a[1])[0];
+    const items = [
+      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Cấp', `${S.level} · Tier ${sim.ctier(S)}`],
+      ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
+      ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
+      ['Bạc để lại', S.gold], ['Con cháu', S.family.kids.length || '—'],
+      ['Trận săn', `${S.hunts.won} thắng · ${S.hunts.lost} thua`], ['Kiếp', S.kiep]
+    ];
+    $('dSum').innerHTML = items.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('');
+    // Xúc xắc d100 hiển thị khớp với kết quả đã tung lúc chết (≤ 20 = trỗi dậy).
+    const h = G.hash(S.name + S.world.year + S.cause);
+    const final = S.rose ? 1 + h % 20 : 21 + h % 80;
+    const die = $('die'), txt = $('rollTxt'), btns = $('deathBtns');
+    die.className = 'die'; btns.innerHTML = ''; txt.textContent = 'Xương cốt có chịu nằm yên? Tung d100: từ 20 trở xuống thì trỗi dậy.';
+    let n = 0;
+    const iv = setInterval(() => {
+      die.textContent = 1 + Math.floor(Math.random() * 100);
+      if (++n > 16) {
+        clearInterval(iv); die.textContent = final;
+        if (S.rose) { die.classList.add('rise'); txt.innerHTML = `<b>${final} ≤ 20.</b> Đất nứt. ${esc(S.name.split(' ')[0])} sẽ trỗi dậy thành Bộ Xương, mang theo <b>${esc(G.mv(S.rose.skill))} ${S.rose.value}</b>.`; }
+        else { die.classList.add('rest'); txt.textContent = `${final} > 20. Yên nghỉ.`; }
+        if (S.rose) addBtn(btns, `Trỗi dậy thành Bộ Xương`, `Giữ kỹ năng ${G.mv(S.rose.skill)} ${S.rose.value}; mọi thứ khác về số 0.`, rise, true);
+        addBtn(btns, 'Sang kiếp mới', 'Một đứa trẻ khác chào đời đâu đó trên đại lục.', () => start());
+        addBtn(btns, 'Xem lại bản đồ', 'Đóng bảng này.', () => { $('deathModal').hidden = true; });
+      }
+    }, 70);
+    $('deathModal').hidden = false;
+  }
+  function addBtn(box, label, sub, fn, primary) {
+    const b = document.createElement('button'); if (primary) b.className = 'primary';
+    b.innerHTML = `${esc(label)}<small>${esc(sub)}</small>`; b.onclick = fn; box.appendChild(b);
+  }
+  function drawChart(S) {
+    const cv = $('lifeChart'), c = cv.getContext('2d'), W = cv.width, H = cv.height, pad = 26;
+    c.clearRect(0, 0, W, H);
+    const ys = S.years; if (ys.length < 2) return;
+    const x = i => pad + (W - pad * 2) * i / (ys.length - 1), y = v => H - pad - (H - pad * 2) * v / 100;
+    c.strokeStyle = '#2a252d'; c.lineWidth = 1; c.fillStyle = '#6f675e'; c.font = '11px system-ui';
+    for (const v of [0, 50, 100]) { c.beginPath(); c.moveTo(pad, y(v)); c.lineTo(W - pad, y(v)); c.stroke(); }
+    const step = Math.max(1, Math.round(ys.length / 8));
+    for (let i = 0; i < ys.length; i += step) c.fillText(ys[i].yrs, x(i) - 6, H - 8);
+    const css = getComputedStyle(document.documentElement);
+    const series = [['hl', 'Sinh lực'], ['h', 'Tâm trạng'], ['so', 'Quan hệ'], ['sm', 'Hiểu biết']];
+    for (const [k] of series) {
+      c.strokeStyle = css.getPropertyValue('--' + k).trim(); c.lineWidth = 2; c.beginPath();
+      ys.forEach((r, i) => i ? c.lineTo(x(i), y(r[k])) : c.moveTo(x(i), y(r[k]))); c.stroke();
+    }
+    c.setLineDash([4, 4]); c.strokeStyle = '#e8c26a'; c.lineWidth = 1.5; c.beginPath();
+    ys.forEach((r, i) => i ? c.lineTo(x(i), y(r.level / G.MAX_LEVEL * 100)) : c.moveTo(x(i), y(r.level / G.MAX_LEVEL * 100))); c.stroke(); c.setLineDash([]);
+    $('chartLegend').innerHTML = series.map(([k, n]) => `<span><i style="background:var(--${k})"></i>${n}</span>`).join('') + '<span><i style="background:#e8c26a"></i>Cấp (0–60)</span>';
+  }
+
+  // ───────── Bảng nhân vật ─────────
+  const STAT = [['hl', 'Sinh lực'], ['h', 'Tâm trạng'], ['so', 'Quan hệ'], ['sm', 'Hiểu biết']];
+  function renderChar() {
+    const S = sim.S, X = sim, reg = X.reg(S), st = X.stage(S), j = X.job(S);
+    const homeS = reg.settlements.find(s => s[0] === S.home.settlement);
+    $('cName').textContent = S.name; $('cName').className = 'nm' + (S.undead ? ' undead' : '');
+    const sexTxt = S.sex === 'm' ? 'nam' : S.sex === 'f' ? 'nữ' : '';
+    $('cMeta').textContent = `${J.races[S.race].nameVi}${sexTxt ? ', ' + sexTxt : ''} · ${X.years(S)} ${S.undead ? 'năm từ khi trỗi dậy' : 'tuổi'} · ${G.STAGES[st]}${S.kiep > 1 ? ` · kiếp ${S.kiep}` : ''}`;
+    $('cPlace').textContent = `${homeS ? homeS[1] + ', ' : 'lang thang ở '}${reg.nameVi}`;
+    const kv = [
+      ['Nghề', `${X.jobName(S)} · T${j ? j.tier : 0}`],
+      ['Sức mạnh', `${X.power(S).toFixed(2)} Tier · cấp Tier ${X.ctier(S)}`],
+      ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
+      ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
+      ['Bạc', S.gold], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
+      ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không']
+    ];
+    $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
+    const need = G.xpNeed(S.level);
+    $('xpBar').style.width = (S.level >= G.MAX_LEVEL ? 100 : S.xp / need * 100) + '%';
+    $('xpTxt').textContent = `Cấp ${S.level}`;
+    $('cStats').innerHTML = STAT.map(([k, n]) => `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${S[k]}%;background:var(--${k})"></i></div><span>${Math.round(S[k])}</span></div>`).join('');
+    const chips = S.conds.map(c => `<span class="chip">${esc(G.CONDS[c.id].nameVi)}</span>`);
+    if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
+    if (S.flags.pet) chips.push(`<span class="chip ok">Nuôi ${esc(S.flags.pet)}</span>`);
+    if (S.flags.lordSlayer) chips.push(`<span class="chip ok">Kẻ hạ ${esc(S.flags.lordSlayer)}</span>`);
+    $('cConds').innerHTML = chips.join('');
+    const ms = Object.entries(S.mastery).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    $('cMast').innerHTML = ms.map(([m, v]) => {
+      const inh = S.inherited && S.inherited.skill === m;
+      return `<div class="mrow${inh ? ' inh' : ''}"><span>${G.mv(m)} <small>${J.schools[G.MASTERY[m]].nameVi}${inh ? ' · kiếp trước' : ''}</small></span><div class="bar"><i style="width:${v}%"></i></div><span>${Math.round(v)}</span></div>`;
+    }).join('') || '<span class="fam">Chưa học gì.</span>';
+    const F = S.family, rows = [];
+    for (const p of F.parents) rows.push(`<span class="${p.alive ? '' : 'dead'}">${p.role[0].toUpperCase() + p.role.slice(1)}: ${esc(p.name)}${p.alive ? ` (${p.age})` : ''}</span>`);
+    if (F.sibs.length) rows.push(`<span>Anh chị: ${F.sibs.map(s => `<span class="${s.alive ? '' : 'dead'}">${esc(s.name)}</span>`).join(', ')}</span>`);
+    if (F.spouse) rows.push(`<span class="${F.spouse.alive ? '' : 'dead'}">Bạn đời: ${esc(F.spouse.name)}</span>`);
+    if (F.kids.length) rows.push(`<span>Con: ${F.kids.map(k => `<span class="${k.alive ? '' : 'dead'}">${esc(k.name)} (${k.age})</span>`).join(', ')}</span>`);
+    if (S.undead) rows.push(`<span>Kiếp trước: ${esc(S.flags.pastName || '?')}</span>`);
+    $('cFam').innerHTML = rows.join('') || '<span>Không ai.</span>';
+  }
+
+  function renderFocus() {
+    const S = sim.S, st = sim.stage(S), box = $('focusBtns');
+    box.innerHTML = '';
+    for (const [k, F] of Object.entries(G.FOCUS)) {
+      if (!F.stages.includes(st) && !(st === 'infant' && k === 'play')) continue;
+      const b = document.createElement('button');
+      b.textContent = `${F.icon} ${F.nameVi}`; b.className = S.focus === k ? 'on' : '';
+      b.disabled = S.dead || st === 'infant' || ((k === 'hunt' || k === 'adventure') && !S.zoneSel);
+      b.onclick = () => { S.focus = k; setAuto(false); dirty = true; };
+      box.appendChild(b);
+    }
+    if (st === 'infant') box.insertAdjacentHTML('beforeend', '<span class="fam">Còn ẵm ngửa; chưa tự chọn được.</span>');
+  }
+
+  const ZCOL = { safe: 'var(--safe)', fair: 'var(--fair)', risky: 'var(--risky)', locked: 'var(--locked)' };
+  const ZTXT = { safe: 'an toàn', fair: 'vừa sức', risky: 'nguy hiểm', locked: 'khóa' };
+  function renderZones() {
+    const S = sim.S, reg = sim.reg(S), zs = sim.zonesFor(S), box = $('zones');
+    $('huntRegion').textContent = reg.nameVi;
+    $('reckless').checked = !!S.reckless;
+    box.innerHTML = '';
+    for (const z of zs) {
+      const b = document.createElement('button');
+      b.className = 'zone' + (S.zoneSel === z.zone.id ? ' sel' : ''); b.style.setProperty('--c', ZCOL[z.level]);
+      b.disabled = !z.open || S.dead;
+      const pop = S.world.zonePop[z.zone.id];
+      b.innerHTML = `<b>${esc(z.zone.nameVi)}</b><span class="t">Tier ${z.zone.tier[0]}${z.zone.tier[1] > z.zone.tier[0] ? '–' + z.zone.tier[1] : ''}</span> · ${ZTXT[z.level]}<div class="pop" title="Mật độ quái ${pop.toFixed(2)}"><i style="width:${Math.min(100, pop / 2.2 * 100)}%"></i></div>`;
+      b.onclick = () => { S.zoneSel = z.zone.id; S.zoneManual = true; dirty = true; };
+      box.appendChild(b);
+    }
+    const z = S.zoneSel && G.ZONE[S.zoneSel] ? G.ZONE[S.zoneSel].zone : null;
+    if (!z) { $('zoneMons').innerHTML = '<span class="mon">Không khu nào vừa sức ở vùng này.</span>'; return; }
+    const ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+    $('zoneMons').innerHTML = Object.keys(z.spawns).map(id => G.B.byId[id]).sort((a, b) => a.tier - b.tier)
+      .map(s => `<span class="mon${s.tier > cap ? ' over' : ''}" title="${esc(G.B.families[s.family].nameVi + ': ' + s.attack)}">${esc(s.nameVi)} <span class="tt">T${s.tier}</span></span>`).join('')
+      + `<span class="mon">Bạn gặp tối đa Tier ${cap}</span>`;
+  }
+
+  function renderRegion() {
+    const box = $('regionPanel');
+    if (!selRegion) { box.hidden = true; return; }
+    const S = sim.S, R = G.REGION[selRegion], rs = S.world.regions[R.id], bio = J.biomes[R.biome];
+    const top = (o, f) => Object.entries(o).filter(([k]) => k !== 'none').sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => f(k)).join(', ');
+    const adj = G.map.adj[G.map.idx[S.loc]].includes(R.id);
+    const canGo = adj && !S.dead && ['teen', 'adult', 'elder'].includes(sim.stage(S)) && S.flags.movedAge !== S.age;
+    const zones = R.zones.map(z => {
+      const ms = Object.keys(z.spawns).map(id => G.B.byId[id]).sort((a, b) => a.tier - b.tier).map(s => `${s.nameVi} T${s.tier}`).join(', ');
+      return `<div class="rz"><b>${esc(z.nameVi)}</b> · Tier ${z.tier[0]}–${z.tier[1]} · mật độ ${S.world.zonePop[z.id].toFixed(2)}<br><span class="fam">${esc(ms)}</span></div>`;
+    }).join('');
+    const state = [rs.plague > 0 ? 'đang có dịch' : '', rs.war > 0 ? 'đang chiến tranh' : '', rs.raid > 0 ? `thú triều ${rs.raid.toFixed(2)}` : ''].filter(Boolean).join(' · ');
+    box.innerHTML = `<h4>${esc(R.nameVi)}</h4>
+      <div class="row"><span>${esc(bio.nameVi)}</span><span>Giàu ${Math.round(R.wealth * 100)}</span><span>Gini ${R.gini}</span><span>Nguy hiểm ${Math.round(R.danger * 100)}</span><span>Ma lực ${Math.round(R.magic * 100)}</span>${state ? `<span style="color:var(--bad)">${state}</span>` : ''}</div>
+      <div class="lore">${esc(R.lore)}</div>
+      <div class="row"><span>Dân: ${esc(top(R.races, k => J.races[k].nameVi))}</span><span>Đạo: ${esc(top(R.faiths, k => J.faiths[k].nameVi) || 'không')}</span></div>
+      <div class="row"><span>${R.settlements.map(s => esc(s[1])).join(' · ')}</span></div>
+      ${zones}
+      ${R.lord ? `<div class="rz" style="color:var(--risky)">Chúa vùng: ${esc(G.B.byId[R.lord.species].nameVi)} (ngủ ở ${esc(G.ZONE[R.lord.zone].zone.nameVi)})</div>` : ''}
+      <div class="act">${S.dead ? '' : R.id === S.loc ? '<span class="fam">Bạn đang ở đây.</span>' : canGo ? '<button class="btn" id="goBtn">Lên đường tới đây</button>' : `<span class="fam">${adj ? 'Năm nay đã đi một chuyến.' : 'Không giáp vùng bạn đang ở.'}</span>`}</div>`;
+    box.hidden = false;
+    const go = $('goBtn');
+    if (go) go.onclick = () => { S.flags.movedAge = S.age; const t = G.moveTo(sim, R.id); if (t) sim.log(t, 'info'); dirty = true; save(); };
+  }
+
+  function renderSide() {
+    const S = sim.S;
+    const peers = S.peers || [];
+    $('peerCount').textContent = peers.length ? `(${peers.filter((p, i) => !S.peerSeen[i]).length}/${peers.length} còn sống)` : '';
+    $('peers').innerHTML = peers.map((p, i) => {
+      const gone = S.peerSeen[i];
+      return `<div class="prow${gone ? ' gone' : ''}"><b>${esc(p.name)}</b> · ${esc(J.races[p.race].nameVi)} · ${esc(p.settlement || p.regionName)}<br>${gone ? `mất ở tuổi ${p.years}: ${esc(p.cause)}${p.rose ? ' · đã trỗi dậy' : ''}` : 'còn sống'}</div>`;
+    }).join('') || '<div class="prow">Kiếp này không có đồng niên.</div>';
+    const L = S.lineage || [];
+    $('lineageBox').hidden = !L.length;
+    $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} cấp ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
+  }
+
+  function renderYear() {
+    const S = sim.S;
+    $('yBar').style.width = Math.min(100, S.t * 100) + '%';
+    $('yLabel').textContent = `Năm ${S.world.year} · ${sim.years(S)} ${S.undead ? 'năm từ khi trỗi dậy' : 'tuổi'}${S.dead ? ' · đã mất' : paused ? ' · tạm dừng' : ''}`;
+  }
+
+  // ───────── Bản đồ ─────────
+  let hoverCell = null, t0 = performance.now();
+  function drawMap(now) {
+    const S = sim.S;
+    const peers = (S.peers || []).map((p, i) => ({ x: p.bornPos[0], y: p.bornPos[1], dead: !!S.peerSeen[i] })).filter(p => !p.dead);
+    G.drawMap(ctx, G.map, base, {
+      selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
+      path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
+      graves, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null
+    });
+  }
+  function canvasPoint(ev) {
+    const r = canvas.getBoundingClientRect();
+    return [(ev.clientX - r.left) / r.width * canvas.width, (ev.clientY - r.top) / r.height * canvas.height];
+  }
+  canvas.addEventListener('mousemove', ev => {
+    const [x, y] = canvasPoint(ev), c = G.map.at(x, y), tip = $('tip');
+    if (!c) { tip.hidden = true; return; }
+    const S = sim.S, ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+    const lvl = c.zone.tier[1] <= ct ? 'safe' : c.zone.tier[0] <= ct ? 'fair' : c.zone.tier[0] <= cap ? 'risky' : 'locked';
+    const near = c.region.settlements.find(s => Math.hypot(s[3] - x, s[4] - y) < 12);
+    const gv = graves.find(g => Math.hypot(g.x - x, g.y - y) < 7);
+    tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
+      + (near ? `<br>${esc(near[1])}` : '') + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '');
+    const r = canvas.getBoundingClientRect();
+    tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 270) + 'px'; tip.style.top = (ev.clientY - r.top + 14) + 'px';
+    tip.hidden = false;
+  });
+  canvas.addEventListener('mouseleave', () => { $('tip').hidden = true; });
+  canvas.addEventListener('click', ev => { const [x, y] = canvasPoint(ev), c = G.map.at(x, y); selRegion = c ? c.region.id : null; dirty = true; });
+
+  // ───────── Điều khiển ─────────
+  function setAuto(on) {
+    pref.auto = on; store.set(PREF, pref);
+    $('autoLife').checked = on;
+    if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decModal').hidden = true; showDecision(sim.S.pending); } }
+  }
+  $('autoLife').checked = pref.auto;
+  $('autoLife').onchange = e => setAuto(e.target.checked);
+  $('reckless').onchange = e => { sim.S.reckless = e.target.checked; sim.ensureZone(); dirty = true; };
+  $('btnNew').onclick = () => { if (sim.S.dead || confirm('Bỏ kiếp đang sống để bắt đầu kiếp mới?')) start(); };
+  $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; dirty = true; };
+  document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); $('btnPause').click(); } });
+  for (const s of SPEEDS) {
+    const b = document.createElement('button'); b.textContent = (s === .5 ? '½' : s) + '×';
+    b.onclick = () => { pref.speed = s; store.set(PREF, pref); [...$('speeds').children].forEach((c, i) => c.classList.toggle('on', SPEEDS[i] === s)); };
+    if (s === pref.speed) b.classList.add('on');
+    $('speeds').appendChild(b);
+  }
+
+  // ───────── Vòng lặp ─────────
+  let last = performance.now(), lastUi = 0;
+  function frame(now) {
+    const dt = Math.min(.1, (now - last) / 1000); last = now;
+    if (sim && sim.S) {
+      if (!paused && !sim.S.dead && !sim.S.pending) sim.tick(dt * pref.speed / YEAR_SEC);
+      drawMap(now);
+      if (now - lastUi > 120) {
+        renderYear();
+        if (dirty) { renderChar(); renderFocus(); renderZones(); renderRegion(); renderSide(); dirty = false; }
+        $('seedLabel').textContent = `seed ${sim.seed}`;
+        lastUi = now;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const urlSeed = new URLSearchParams(location.search).get('seed');
+  if (urlSeed || !load()) start(urlSeed || undefined);
+  requestAnimationFrame(frame);
+  G.ui = { get sim() { return sim; }, start, rise };
+})(window.LifeSim);
