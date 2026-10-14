@@ -263,3 +263,23 @@ Render the SAME skeleton character across Rank I to V using the SAME skull, bone
 ```
 
 **Sản xuất:** Ảnh tham chiếu v2 chỉ là concept. Muốn sprite để đưa vào game phải xuất lại từng Rank thành file riêng, kiểm tra pixel grid, pivot, weapon grip và alpha edges.
+
+## 16. LUẬT MÀU NHẤN THEO NHÁNH — BẮT BUỘC (2026-10-14, V12.3)
+
+**Lý do:** bảy nghề ở bốn nhánh khác nhau mang chủ đề "ma/hồn" (Sword Wraith, Phantom Sniper, Shade Stalker, Soul Assassin, Death Whisper, Soul Medium, Soul Weaver, cộng thuộc hạ Soul Wraith). Nếu để tự do, tất cả sẽ thành "xương phát sáng xanh có sương" và không phân biệt được ở 64 px. Vì vậy màu nhấn thuộc **nhánh**, không thuộc Tier, không thuộc chủ đề tên gọi.
+
+| Nhánh / tuyến | Màu nhấn duy nhất được phép | Cấm |
+|---|---|---|
+| Death (Acolyte → Necromancer → Grand → Lich → Death Sovereign) | xanh tử linh `#5DDF96` | — |
+| Death (Medium → Weaver) | cyan mềm `#9FE0F0` | xanh tử linh đậm, tím |
+| Shadow (Rogue → Assassin → Soul Assassin → Death Whisper) | tím `#926ACC`; Soul Assassin được thêm **đúng một** chấm xanh nhạt ở lọ hồn | xanh tử linh trên thân |
+| Shadow (Stalker) | teal `#2F8F8A` chỉ ở mép áo | glow |
+| Combat lai tử thuật (Dread Knight → Death Knight) | lửa hồn xanh lạnh `#7FB8FF` | xanh tử linh |
+| Combat (Abyss Sovereign) | đỏ vực sâu `#8E1B2C` | xanh mọi loại |
+| Combat (Duelist → Sword Wraith) | đỏ thẫm `#A62B3A`; Wraith thêm trắng mờ `#E8EEF0` | xanh |
+| Ranged (Marksman → Sniper → Huntsman) | cyan ma `#8FD8D2` từ T3; Huntsman thêm vàng nhạt | xanh tử linh |
+| Ranged (Hunter → Wild Hunt) | không glow trên người; chó săn cyan ma | — |
+| Craft (Tinkerer → Engineer → Artificer → Architect) | gỉ xanh `#5E9C8A`; Architect thêm lam bản vẽ `#3F6FA8` | glow phép |
+| Craft (Siege Gunner) | cam tia lửa `#E07A2F` chỉ ở nòng/kíp | glow phép |
+
+Quy tắc áp dụng: mỗi nhân vật tối đa **một** màu nhấn (trừ các ngoại lệ ghi rõ), diện tích nhấn không quá ~10% pixel nhân vật, và màu nhấn chỉ xuất hiện ở vật mang phép (mắt, lưỡi, đèn, lọ, khe giáp), không phủ thân. Portrait vi phạm luật này **bị từ chối ở cổng duyệt A** như lỗi sai số tay chân. Bảng đầy đủ và marker từng nghề: `docs/12_Job_Visual_Identity_Design.md`.

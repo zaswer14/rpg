@@ -210,7 +210,21 @@ Chưa playtest tay cảm giác đánh của 39 skill mới; chúng đi qua dispa
 - Số đo của skill mới: điền số mẫu ngay, đánh dấu †, chỉnh sau playtest.
 - Thuộc hạ: làm cả 3 (4 skill death, 4 kiểu hành vi, cap theo nghề); quân gọi ra cấp thấp hơn chủ, máu mỏng.
 
+## 6. V12.3 — Sửa cây nghề theo `docs/13` (14/10/2026)
+
+Áp dụng mục 2 của `docs/13_Job_Tree_Review.md`. Không đổi ID nghề/skill cũ, không đổi key save.
+
+| Thay đổi | Chi tiết |
+|---|---|
+| Nghề mới **Siege Gunner / Pháo Thủ Công Thành** | T3, craft, grade A, terminal, từ Bone Engineer. Gate `heavy_bolt` + `blast_charge` (T2 restricted craft, mới). Exclusive `breach_cannon` (T3, tím) cấp khi thắng Trial. Mastery: Engineering ≥ 45, Throwing ≥ 25. Cap thuộc hạ 2. Nhánh Craft nay có điểm rẽ ở T2: hỗ trợ (Artificer → Architect) hoặc sát thương (Siege Gunner). |
+| Cạnh mới **Grave Bandit → Shade Stalker** | Grave Bandit lên grade **B**. Gate Shade Stalker đổi từ `phantom_step` (exclusive của Grave Assassin, không cấp được cho Bandit) sang `shadow_climb` (T2 restricted shadow, mới) + `veil_sense`. Cạnh Assassin → Stalker vẫn dùng cặp này; validator "gate mới so với mọi tiền nhiệm" qua cả hai lối. |
+| Đổi tên hiển thị, giữ ID | `Bone Tinkerer Prime` → hiển thị **Bone Artificer / Nghệ Nhân Xương**; `Lich King` → **Lich / Vu Yêu**; summon `bone_archer` → **Skeletal Archer / Xạ Thủ Hài Cốt** (tránh trùng tên nghề Skeleton Archer / Cung Thủ Xương). Cơ chế: `SkeletonV11Data.jobsEn` + `jobEn(id)`; `labelJob` và bảng V11 dùng tên hiển thị, mọi chỗ khác vẫn dùng ID. |
+| Số liệu | 36 nghề · 38 cạnh · 151 skill (4 mới: 3 lam T2, 1 tím T3). 12 nghề terminal. |
+| Tệp | `index.html` (mảng `J`, `JOB_DETAILS`, tiêu đề), `skill-system.js` (4 skill, rarity, reward, cap, gate), `v11-design-data.js` (tên, `jobsEn`, mô tả bậc, mục tiêu Trial), `v11-page.js` (tên hiển thị), `docs/02` mục 16 (luật màu nhánh), `docs/12`, `docs/13`. |
+
+Kiểm thử: trang nạp không lỗi console, validator gate qua; mô phỏng bằng save: Bone Engineer thắng Trial Siege Gunner → nhận Breach Cannon R1 → chuyển nghề thành công, pool gacha của Siege Gunner có `heavy_bolt`/`blast_charge`/`breach_cannon`; Grave Bandit thắng Trial Shade Stalker → nhận Shade Echo → chuyển nghề thành công. `docs/10_V12_EXPORT_CANONICAL.json` **chưa xuất lại** (vẫn 147 skill / 35 nghề); xuất lại từ trang khi cần dữ liệu cho QA.
+
 ## 5. Còn mở
 
-- Playtest tay 43 skill mới và các số †. Test headless: Grand Necromancer gọi 2 lính + cung thủ, hạ được scout, lính mất máu khi bị đánh.
+- Playtest tay 43 skill mới và các số †, cộng 4 skill V12.3 (`heavy_bolt`, `blast_charge`, `breach_cannon`, `shadow_climb`) đang chạy qua dispatcher chung theo roles/tags. Test headless: Grand Necromancer gọi 2 lính + cung thủ, hạ được scout, lính mất máu khi bị đánh.
 - Dispatcher V10 chưa có hành vi riêng cho Execute (Shadow Execution), Loot (Tomb Pilfer), Overclock; hiện chạy theo nhóm chung (attack / utility / support).

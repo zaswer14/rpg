@@ -101,7 +101,7 @@ const SKILLS = [
   // TIER 4 — high tier identity; no extra hotbar capacity.
   S('battle_instinct','Battle Instinct',4,'passive','universal','Tăng khả năng duy trì nhịp combo khi liên tiếp đánh trúng.',{tags:['Combo']}),
   S('reaper_verdict','Reaper Verdict',4,'signature','exclusive','Death Knight dồn sát thương một đường kiếm kết liễu.',{jobs:['Death Knight'],weapons:['sword'],cost:'70 Soul',cooldown:48,tags:['Finisher','Heavy']}),
-  S('grave_dominion','Grave Dominion',4,'signature','exclusive','Lich King tạo khu vực tăng sức mạnh summon trong thời gian ngắn.',{jobs:['Lich King'],weapons:['focus'],cost:'85 Soul',cooldown:55,tags:['Zone','Summon']}),
+  S('grave_dominion','Grave Dominion',4,'signature','exclusive','Lich tạo khu vực tăng sức mạnh summon trong thời gian ngắn.',{jobs:['Lich King'],weapons:['focus'],cost:'85 Soul',cooldown:55,tags:['Zone','Summon']}),
   S('citadel_protocol','Citadel Protocol',4,'signature','exclusive','Bone Architect dựng bộ công trình phòng thủ theo trận địa.',{jobs:['Bone Architect'],weapons:['tool'],cost:'65 Stamina',cooldown:50,tags:['Construct','Setup']}),
   S('legion_banner','Legion Banner',4,'signature','exclusive','Legion Marshal cắm cờ tăng hiệu quả giữ tuyến.',{jobs:['Legion Marshal'],weapons:['shield'],cost:'65 Stamina',cooldown:52,tags:['Support','Guard']}),
   S('eternal_mark','Eternal Mark',4,'signature','exclusive','Eternal Huntsman đặt dấu ấn dài hạn lên mục tiêu mạnh.',{jobs:['Eternal Huntsman'],weapons:['bow'],cost:'62 Stamina',cooldown:48,tags:['Mark','Boss']}),
@@ -152,16 +152,21 @@ const SKILLS = [
   S('shield_wall','Shield Wall',3,'active','exclusive','Bone Phalanx cắm khiên dựng tường: chắn toàn bộ đạn phía trước, đâm thương qua khe khiên.',{jobs:['Bone Phalanx'],weapons:['shield'],cost:'30 Stamina',cooldown:17,roles:['defense','control'],statuses:['barrier','stagger'],tags:['Guard','Zone','Spear'],masteryGain:['Shield','Spear']}),
   S('hunt_call','Hunt Call',3,'active','exclusive','Wild Hunt Captain thổi tù và gọi chó săn ma lao vào mục tiêu đã đánh dấu.',{jobs:['Wild Hunt Captain'],weapons:['bow'],cost:'32 Stamina',cooldown:20,roles:['summon','support'],tags:['Summon','Command','Mark'],masteryGain:['Bow','Stealth']}),
   S('harvest_step','Harvest Step',3,'active','exclusive','Soul Assassin lướt qua mục tiêu đang bị nguyền, gặt một phần Soul và để lại vết cắt.',{jobs:['Soul Assassin'],weapons:['dagger'],cost:'28 Soul',cooldown:13,roles:['mobility','attack'],method:'hybrid',element:'dark',hits:[{type:'physical',element:'neutral',share:50},{type:'magical',element:'dark',share:50}],tags:['Movement','Backstab','Resource'],masteryGain:['Dagger','Soul']}),
-  S('overclock','Overclock',3,'active','exclusive','Bone Tinkerer Prime ép thiết bị chạy quá tải: trụ/bẫy gần đó bắn nhanh gấp đôi rồi hỏng dần.',{jobs:['Bone Tinkerer Prime'],weapons:['tool'],cost:'26 Stamina',cooldown:19,roles:['support','summon'],method:'tech',tags:['Construct','Buff','Setup'],masteryGain:['Engineering']}),
+  S('overclock','Overclock',3,'active','exclusive','Bone Artificer ép thiết bị chạy quá tải: trụ/bẫy gần đó bắn nhanh gấp đôi rồi hỏng dần.',{jobs:['Bone Tinkerer Prime'],weapons:['tool'],cost:'26 Stamina',cooldown:19,roles:['support','summon'],method:'tech',tags:['Construct','Buff','Setup'],masteryGain:['Engineering']}),
   // V12.1 — 3 signature Restricted T3 cho martial thuần (không cần attunement)
   S('bone_tempest','Bone Tempest',3,'signature','restricted','Bão xương: xoay vũ khí liên tục quét vùng rộng, đòn cuối đập đất đẩy lùi.',{domains:['combat'],weapons:['sword','axe','spear'],mastery:'Sword',level:45,cost:'55 Stamina',cooldown:40,roles:['attack','control'],statuses:['stagger'],tags:['AoE','Multi-hit','Heavy','Signature'],masteryGain:['Sword']}),
   S('hundred_barbs','Hundred Barbs',3,'signature','restricted','Trăm gai: bắn loạt tên gai rải dọc tuyến, xuyên mọi mục tiêu và cắm xuống đất thành bãi gai.',{domains:['ranged'],weapons:['bow'],mastery:'Bow',level:45,cost:'52 Stamina',cooldown:42,roles:['attack','control'],statuses:['root'],tags:['Projectile','Pierce','AoE','Signature'],masteryGain:['Bow']}),
   S('veil_massacre','Veil Massacre',3,'signature','restricted','Tàn sát trong màn: biến mất rồi tung chuỗi đâm lên mọi mục tiêu gần, kết thúc sau lưng mục tiêu cuối.',{domains:['shadow'],weapons:['dagger'],mastery:'Dagger',level:45,cost:'50 Stamina',cooldown:38,roles:['attack','mobility'],tags:['Multi-hit','Stealth','Backstab','Signature'],masteryGain:['Dagger','Stealth']}),
   // V12.2 — nhánh tử thuật: 4 skill triệu hồi, mỗi Tier một kiểu hành vi. Quân gọi ra có cấp thấp hơn chủ (tier skill − 1), máu mỏng.
   S('raise_skeleton','Raise Skeleton',1,'active','restricted','Dựng một lính xương cận chiến từ đất: máu mỏng, đi theo chủ và lao vào kẻ địch gần.',{domains:['death'],weapons:['focus'],mastery:'Necromancy',level:10,cost:'16 Soul',cooldown:14,roles:['summon'],method:'magic',element:'dark',tags:['Summon','Melee','Setup'],summonType:'melee',masteryGain:['Necromancy','Soul']}),
-  S('bone_archer','Bone Archer',2,'active','restricted','Gọi cung thủ xương: đứng cách chủ một quãng, bắn mục tiêu gần nhất; rất dễ chết khi bị áp sát.',{domains:['death'],weapons:['focus'],mastery:'Necromancy',level:25,cost:'24 Soul',cooldown:16,roles:['summon'],method:'magic',element:'dark',tags:['Summon','Ranged','Setup'],summonType:'ranged',masteryGain:['Necromancy','Soul']}),
+  S('bone_archer','Skeletal Archer',2,'active','restricted','Gọi cung thủ xương: đứng cách chủ một quãng, bắn mục tiêu gần nhất; rất dễ chết khi bị áp sát.',{domains:['death'],weapons:['focus'],mastery:'Necromancy',level:25,cost:'24 Soul',cooldown:16,roles:['summon'],method:'magic',element:'dark',tags:['Summon','Ranged','Setup'],summonType:'ranged',masteryGain:['Necromancy','Soul']}),
   S('bone_knight','Bone Knight',3,'active','restricted','Gọi kỵ sĩ xương: máu dày hơn lính thường, chặn đòn cho chủ, đánh chậm nhưng gây khựng.',{domains:['death'],weapons:['focus'],mastery:'Necromancy',level:45,cost:'36 Soul',cooldown:20,roles:['summon','defense'],method:'magic',element:'dark',tags:['Summon','Melee','Guard'],summonType:'melee',masteryGain:['Necromancy','Soul']}),
   S('soul_wraith','Soul Wraith',4,'active','restricted','Thả oán linh bay nhanh, ưu tiên săn mục tiêu bị nguyền; tan khi hết thời gian hoặc chịu vài đòn.',{domains:['death'],weapons:['focus'],mastery:'Soul',level:60,cost:'40 Soul',cooldown:18,roles:['summon','attack'],method:'magic',element:'dark',tags:['Summon','Hound','Curse'],summonType:'hound',masteryGain:['Soul','Necromancy']}),
+  // V12.3 — nhánh tấn công cho Craft (Siege Gunner, T3 terminal từ Bone Engineer) và lối Grave Bandit → Shade Stalker.
+  S('heavy_bolt','Heavy Bolt',2,'active','restricted','Bắn mũi nỏ máy nặng: nạp ngắn, đường đạn thẳng, xuyên một phần giáp; trúng mục tiêu bị trói gây khựng.',{domains:['craft'],weapons:['tool'],mastery:'Engineering',level:25,cost:'22 Stamina',cooldown:8,roles:['attack'],method:'tech',tags:['Projectile','Charged','Pierce'],masteryGain:['Engineering','Throwing']}),
+  S('blast_charge','Blast Charge',2,'active','restricted','Ném khối nổ phế liệu có kíp trễ: nổ vùng nhỏ, gây khựng và phá công trình địch.',{domains:['craft'],weapons:['tool'],mastery:'Engineering',level:25,cost:'26 Stamina',cooldown:12,roles:['attack','control'],method:'tech',statuses:['stagger'],tags:['Throw','AoE','Delayed','Setup'],masteryGain:['Engineering','Throwing']}),
+  S('breach_cannon','Breach Cannon',3,'active','exclusive','Siege Gunner vác pháo phá thành bắn thẳng: nạp lâu, giật lùi, đạn xuyên hàng và nổ khi chạm đất.',{jobs:['Siege Gunner'],weapons:['tool'],cost:'38 Stamina',cooldown:16,roles:['attack','control'],method:'tech',statuses:['stagger'],tags:['Projectile','Pierce','Heavy','AoE'],masteryGain:['Engineering']}),
+  S('shadow_climb','Shadow Climb',2,'active','restricted','Bám vào tường hoặc mép bệ trong bóng tối rồi thả người xuống; đòn tiếp đất tính là đánh lén.',{domains:['shadow'],mastery:'Stealth',level:20,cost:'18 Stamina',cooldown:10,roles:['mobility','attack'],tags:['Movement','Stealth','Climb','Backstab'],aerial:true,masteryGain:['Stealth']}),
   // TIER 5 — 2 active
   S('sovereign_bulwark','Sovereign Bulwark',5,'active','restricted','Thành lũy chúa tể: dựng tường giáp hồn chắn đạn và đòn, phản lại đòn đầu tiên.',{domains:['combat'],mastery:'Sword',level:85,cost:'55 Soul',cooldown:28,roles:['defense','control'],method:'hybrid',element:'dark',statuses:['barrier','stagger'],tags:['Guard','Counter','Zone'],masteryGain:['Shield','Necromancy']}),
   S('oblivion_pulse','Oblivion Pulse',5,'active','restricted','Xung hư vô nổ quanh thân, xóa buff kẻ địch và làm thuộc hạ hợp kích ngay sau đó.',{domains:['death'],weapons:['focus'],mastery:'Necromancy',level:85,cost:'60 Soul',cooldown:26,roles:['attack','support'],method:'magic',element:'dark',statuses:['curse'],tags:['AoE','Command','Debuff'],masteryGain:['Necromancy','Soul']}),
@@ -314,8 +319,8 @@ const RARITY_IDS={
   // T1: 6 kỹ thuật nhập môn restricted hạ xuống trắng; T2: 3 skill cơ chế mạnh lên tím.
   white_v12:'sword_cleave shield_tap aimed_shot knife_feint soul_spark scrap_mine cutpurse_toss',
   green_v12:'snare_arrow spirit_ward axe_hook raise_skeleton',
-  blue_v12:'bone_archer long_draw tomb_pilfer steady_draw corpse_lantern soul_thread veil_sense firm_grip last_stand phalanx_thrust hunters_net smoke_veil arc_welder',
-  purple_v12:'bone_knight soul_wraith shield_wall hunt_call harvest_step overclock leaping_strike armor_rend volley soul_tithe iron_charge piercing_bolt soul_rend bone_spike_field soul_siphon fortify_module marksman_breath grave_attunement skyfall_arrow shadow_execution siege_turret unyielding_bones arcane_reservoir',
+  blue_v12:'bone_archer long_draw tomb_pilfer steady_draw corpse_lantern soul_thread veil_sense firm_grip last_stand phalanx_thrust hunters_net smoke_veil arc_welder heavy_bolt blast_charge shadow_climb',
+  purple_v12:'bone_knight soul_wraith shield_wall hunt_call harvest_step overclock leaping_strike armor_rend volley soul_tithe iron_charge piercing_bolt soul_rend bone_spike_field soul_siphon fortify_module marksman_breath grave_attunement skyfall_arrow shadow_execution siege_turret unyielding_bones arcane_reservoir breach_cannon',
   gold_v12:'bone_tempest hundred_barbs veil_massacre warlord_stride necrotic_wave sovereign_bulwark oblivion_pulse'
 };
 const rarityAssignments={};
@@ -374,6 +379,7 @@ const REWARD_BY_SKILL={
   warlord_stride:{3:{STR:1},5:{STR:1,VIT:1}},skyfall_arrow:{3:{DEX:1},5:{DEX:1,WIL:1}},shadow_execution:{3:{DEX:1},5:{DEX:1,AGI:1}},
   necrotic_wave:{3:{INT:1},5:{INT:1,WIL:1}},siege_turret:{3:{INT:1},5:{INT:1,DEX:1}},unyielding_bones:{5:{VIT:2}},arcane_reservoir:{5:{WIL:2}},
   raise_skeleton:{5:{INT:1}},bone_archer:{5:{INT:1}},bone_knight:{5:{INT:1,VIT:1}},soul_wraith:{3:{WIL:1},5:{INT:1}},
+  heavy_bolt:{5:{DEX:1}},blast_charge:{5:{DEX:1}},breach_cannon:{5:{DEX:1,STR:1}},shadow_climb:{5:{AGI:1}},
   long_draw:{5:{DEX:1}},tomb_pilfer:{5:{AGI:1}},shield_wall:{5:{VIT:2}},hunt_call:{5:{DEX:1,WIL:1}},harvest_step:{5:{AGI:1,WIL:1}},overclock:{5:{INT:2}},
   bone_tempest:{3:{STR:1},5:{STR:1,VIT:1}},hundred_barbs:{3:{DEX:1},5:{DEX:1,STR:1}},veil_massacre:{3:{AGI:1},5:{DEX:1,AGI:1}},
   sovereign_bulwark:{3:{VIT:1},5:{VIT:1,WIL:1}},oblivion_pulse:{3:{INT:1},5:{INT:1,WIL:1}}
@@ -424,7 +430,7 @@ for(const [id,[type,count]] of Object.entries(SUMMON_OVERRIDES)){const s=SKILLS.
 for(const s of SKILLS)if(s.roles.includes('summon')&&!s.summonType&&!['grave_dominion','death_symphony','overclock'].includes(s.id))s.summonType=s.method==='tech'?'turret':'melee';
 // V12.2 (C): giới hạn thuộc hạ đồng thời theo nghề thật.
 const JOB_SUMMON_CAP={'Bone Acolyte':2,'Necromancer':3,'Soul Medium':2,'Grand Necromancer':4,'Soul Weaver':3,'Lich King':4,'Death Sovereign':5,
-  'Bone Tinkerer':2,'Bone Engineer':3,'Bone Tinkerer Prime':3,'Bone Architect':4,'Grave Hunter':2,'Wild Hunt Captain':3};
+  'Bone Tinkerer':2,'Bone Engineer':3,'Bone Tinkerer Prime':3,'Siege Gunner':2,'Bone Architect':4,'Grave Hunter':2,'Wild Hunt Captain':3};
 const summonCap=job=>JOB_SUMMON_CAP[job]||2;
 const JOB_REQUIRED_MAX={
   'Bone Fighter':['cracked_slash','brace'],
@@ -449,10 +455,11 @@ const JOB_REQUIRED_MAX={
   'Phantom Sniper':['volley','steady_draw'],
   'Wild Hunt Captain':['hunter_mark','ankle_trap'],
   'Soul Assassin':['phantom_step','soul_tithe'],
-  'Shade Stalker':['phantom_step','veil_sense'],
+  'Shade Stalker':['shadow_climb','veil_sense'], // V12.3: bỏ phantom_step (exclusive Grave Assassin) vì Stalker nay có lối vào từ Grave Bandit
   'Grand Necromancer':['summon_guard','soul_bind'],
   'Soul Weaver':['corpse_lantern','soul_thread'],
   'Bone Tinkerer Prime':['deploy_sentry','turret_repair'],
+  'Siege Gunner':['heavy_bolt','blast_charge'],
   'Legion Marshal':['phalanx_thrust','iron_charge'],
   'Death Knight':['dread_cleaver','wraith_rush'],
   'Eternal Huntsman':['ghostline_shot','piercing_bolt'],

@@ -30,16 +30,23 @@ const jobs = {
   "Shade Stalker": "Kẻ Rình Rập Bóng Tối",
   "Grand Necromancer": "Đại Pháp Sư Tử Linh",
   "Soul Weaver": "Kẻ Dệt Linh Hồn",
-  "Bone Tinkerer Prime": "Đại Thợ Chế Tác Xương",
+  "Bone Tinkerer Prime": "Nghệ Nhân Xương",
+  "Siege Gunner": "Pháo Thủ Công Thành",
   "Legion Marshal": "Thống Soái Quân Đoàn",
   "Death Knight": "Kỵ Sĩ Tử Vong",
   "Eternal Huntsman": "Thợ Săn Vĩnh Hằng",
   "Death Whisper": "Lời Thì Thầm Tử Vong",
-  "Lich King": "Vua Vu Yêu",
+  "Lich King": "Vu Yêu",
   "Bone Architect": "Kiến Trúc Sư Xương",
   "Abyss Sovereign": "Chúa Tể Vực Sâu",
   "Death Sovereign": "Chúa Tể Tử Vong"
 };
+// V12.3: tên tiếng Anh hiển thị khác ID (ID giữ nguyên để không hỏng save). Chỉ liệt kê nghề có đổi tên.
+const jobsEn = {
+  "Bone Tinkerer Prime": "Bone Artificer",
+  "Lich King": "Lich"
+};
+const jobEn=id=>jobsEn[id]||id;
 const skillDesign = {
  "bone_dash": {
   "vi": "Lướt Xương",
@@ -1011,7 +1018,7 @@ Object.assign(skillDesign,{
  "sovereign_bulwark":{vi:"Thành Lũy Chúa Tể",features:["Tường 100 → 140px†","Phản 100% → 150% đòn đầu†","Chắn cả đạn phép","Tường vỡ: sóng đẩy lùi 150px†"]},
  "oblivion_pulse":{vi:"Xung Hư Vô",features:["Bán kính 150 → 200px†","Xóa 1 → 2 buff†","Thuộc hạ hợp kích sau 0,3s (R1: 0,8s)†","Mục tiêu bị nguyền 3s và chậm 30%†"]},
  "raise_skeleton":{vi:"Dựng Xương Lính",features:["Lính sống 10s → 13s†","Máu 20 → 26†","Lính đánh trúng gây khựng 0,15s†","Gọi 2 lính (mỗi con 70% máu)†"]},
- "bone_archer":{vi:"Cung Thủ Xương",features:["Bắn mỗi 1,1s → 0,9s†","Tầm 320 → 380px†","Tên gây chậm 0,4s†","Lùi tự động khi địch áp sát <60px†"]},
+ "bone_archer":{vi:"Xạ Thủ Hài Cốt",features:["Bắn mỗi 1,1s → 0,9s†","Tầm 320 → 380px†","Tên gây chậm 0,4s†","Lùi tự động khi địch áp sát <60px†"]},
  "bone_knight":{vi:"Kỵ Sĩ Xương",features:["Máu 45 → 58†","Chặn 30% sát thương bay về chủ khi đứng chắn†","Đòn gây khựng 0,3s†","Hết thời gian nổ thành lá chắn 10 cho chủ†"]},
  "soul_wraith":{vi:"Oán Linh",features:["Tốc 220 → 270px/s†","Mục tiêu bị nguyền nhận ×1,5 sát thương†","Bay qua được hố và bệ","Mục tiêu chết làm oán linh sống thêm 3s†"]},
  "long_draw":{vi:"Kéo Dài Dây",features:["Nạp 1,0s → 0,85s†","Bỏ qua 30% giáp†","Đứng yên ≥1s: +25% sát thương†","Xuyên 1 mục tiêu khi nạp đầy"]},
@@ -1019,6 +1026,11 @@ Object.assign(skillDesign,{
  "shield_wall":{vi:"Tường Khiên",features:["Tường 2s → 3s†","Chắn cả đạn phép","Đâm qua khe khiên mỗi 0,5s†","Tường hết hạn: đẩy lùi 100px†"]},
  "hunt_call":{vi:"Hiệu Lệnh Săn",features:["Chó săn 6s → 8s†","Ưu tiên mục tiêu có Hunter Mark (+30% sát thương)†","Gọi 2 chó","Chó cắn gây chậm 1s†"]},
  "harvest_step":{vi:"Bước Gặt Hồn",features:["Lướt 150 → 190px†","Gặt 8 → 12 Soul từ mục tiêu bị nguyền†","Vết cắt chảy 3 tick sát thương bóng tối†","Lướt qua 2 mục tiêu"]},
+ // V12.3 — Siege Gunner (nhánh tấn công của Craft) và cạnh Grave Bandit → Shade Stalker
+ "heavy_bolt":{vi:"Mũi Nỏ Nặng",features:["Nạp 0,6s → 0,45s†","Xuyên 30% giáp†","Trúng mục tiêu đang Root gây khựng 0,4s†","Mũi nỏ cắm lại trên đất, nhặt lại hoàn 50% Stamina†"]},
+ "blast_charge":{vi:"Khối Nổ Phế Liệu",features:["Nổ 70 → 90px†","Kíp nổ 0,8s → 0,5s†","Mảnh văng gây thêm 1 hit nhỏ†","Đặt được tối đa 2 khối cùng lúc†"]},
+ "breach_cannon":{vi:"Pháo Phá Thành",features:["Nạp 1,1s → 0,8s†","Đạn xuyên 2 mục tiêu†","Giật lùi tự thân ngắn hơn†","Đạn nổ 80px khi chạm tường/đất†"]},
+ "shadow_climb":{vi:"Bám Bóng",features:["Bám tường lâu hơn 1s†","Thả người xuống tính là đánh lén†","Bật tường lần hai†","Bám xong ẩn thân 0,8s†"]},
  "overclock":{vi:"Quá Tải",features:["Hiệu lực 5s → 7s†","Thiết bị mất 10 → 6 độ bền/s khi quá tải†","Bẫy trong vùng nổ lại 1 lần†","Thiết bị hỏng vì quá tải nổ 80px†"]},
  "bone_tempest":{vi:"Bão Xương",features:["Xoay 6 → 8 nhát†","Bán kính 120 → 150px†","Kháng ngắt đòn khi xoay","Đập đất cuối đẩy lùi 160px, khựng 0,4s†"]},
  "hundred_barbs":{vi:"Trăm Gai",features:["Loạt 8 → 11 tên†","Xuyên mọi mục tiêu trên tuyến","Bãi gai tồn tại 4s, giữ chân 0,6s†","Tên cắm nổ khi hết hạn (40% sát thương)†"]},
@@ -1059,6 +1071,7 @@ const trialObjectives={
  "Grand Necromancer": "Trụ trước nhiều đợt tấn công để hạ chỉ huy",
  "Soul Weaver": "Hoàn thành trận đấu dài trước hỗn hợp pháp sư và giáp binh",
  "Bone Tinkerer Prime": "Đánh bại nhóm quái công thành với thiết bị phòng ngự",
+ "Siege Gunner": "Phá hàng giáp binh bằng hỏa lực nặng trước khi bị áp sát, rồi tới cổng",
  "Legion Marshal": "Thắng trận giữ tuyến trước một chỉ huy giáp nặng",
  "Death Knight": "Đánh bại tinh anh chống chịu và pháp sư tử linh",
  "Eternal Huntsman": "Hạ mục tiêu săn đặc biệt cùng các trinh sát hộ vệ",
@@ -1082,7 +1095,7 @@ function modelFor(s){
    cooldown:s.kind==='passive'?null:cooldown[i],startup:s.kind==='passive'?null:startup[i],
    feature:i===0?s.desc:authored.features[i-1]}))};
 }
-const labelJob=id=>jobs[id]?`${jobs[id]} / ${id}`:id;
+const labelJob=id=>jobs[id]?`${jobs[id]} / ${jobEn(id)}`:id;
 const labelSkill=id=>skillDesign[id]?`${skillDesign[id].vi} / ${id}`:id;
-window.SkeletonV11Data={jobs,skillDesign,trialObjectives,curves,cooldown,startup,modelFor,labelJob,labelSkill};
+window.SkeletonV11Data={jobs,jobsEn,jobEn,skillDesign,trialObjectives,curves,cooldown,startup,modelFor,labelJob,labelSkill};
 })();

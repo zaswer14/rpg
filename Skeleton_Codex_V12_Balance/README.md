@@ -2,6 +2,12 @@
 
 **Mở `index.html` trên Chrome/Edge sau khi giải nén.** V12 là bản vá cân bằng: 147 skill (thêm 43: 30 Restricted, 6 exclusive cấp qua Trial, 3 signature martial, 4 triệu hồi tử thuật); thuộc hạ có 4 kiểu hành vi, máu riêng, cap theo nghề, gate chuyển nghề đặt lại cho 16 nghề (mỗi cạnh đúng 2 skill mới), pool gacha lọc theo nhánh, giá quay theo Tier, thưởng stat theo nguồn sức mạnh, scale STR/DEX/INT, mastery suy từ dữ liệu skill, vũ khí giới hạn theo domain. Save V10/V11 vẫn đọc được. Chi tiết và số liệu: **`docs/10_V12_Balance_Patch.md`**; dữ liệu xuất: `docs/10_V12_EXPORT_CANONICAL.json`.
 
+**V12.3 (14/10/2026):** 36 nghề · 38 cạnh · 151 skill. Thêm nghề **Siege Gunner** (T3 craft, terminal, từ Bone Engineer), cạnh **Grave Bandit → Shade Stalker** (Bandit lên B, gate Stalker đổi sang `shadow_climb` + `veil_sense`), đổi tên hiển thị Bone Tinkerer Prime → Bone Artificer, Lich King → Lich, summon Bone Archer → Skeletal Archer (ID giữ nguyên). Chi tiết: `docs/10` mục 6.
+
+**Art (14/10/2026):** `docs/12_Job_Visual_Identity_Design.md` — thiết kế ngoại hình 35 nghề (silhouette, marker duy nhất, màu theo nhánh, prompt từng nghề); `docs/13_Job_Tree_Review.md` — đánh giá cây nghề, các đề xuất sửa trước khi vẽ art và backlog 19 nghề; `docs/14_Job_Tree_Roadmap_Multi_Race.md` — mô hình thân chung / ngọn riêng cho nhiều chủng tộc và thứ tự sản xuất theo đợt.
+
+**Thư viện dùng chung (14/10/2026):** `../library/` — 8 trường phái, 34 nghề thân chung, 10 chủng tộc (skeleton, human, elf, dwarf, beastfolk, merfolk, orc, dragonkin, fae, construct), hàm `compose()` để mỗi game chọn chủng tộc. Trang `index.html` có mục **14 · Thư viện chủng tộc** xem cây theo từng chủng tộc. Runtime chiến đấu chưa đọc từ thư viện; xem `../library/README.md` mục 5.
+
 ---
 
 ## (Lịch sử) V11 — Bilingual Jobs, Job Gates & 5-Rank Skill Design
