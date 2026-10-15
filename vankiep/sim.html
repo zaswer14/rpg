@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vạn Kiếp · Cân bằng</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { padding: 16px; }
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
+  .bar2 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type=number] { width: 90px; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  td, th { padding: 3px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+  td.n, th.n { text-align: right; }
+  .hbar { height: 8px; background: var(--gold); border-radius: 2px; }
+  .ok { color: var(--good); } .no { color: var(--bad); }
+  h2 { font: 700 18px "Cormorant Garamond", serif; color: var(--gold); margin: 0 0 6px; }
+  .note { color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1 style="font:700 28px 'Cormorant Garamond',serif;color:var(--gold);margin:0">Vạn Kiếp · Cân bằng headless</h1>
+    <p class="note">Chạy N đời tự động tới chết (mọi quyết định do autoChoice), rồi in phân phối. Cùng seed gốc thì ra cùng kết quả. Dùng trước khi chỉnh số trong <code>data/world.js</code> hay <code>js/life.js</code>.</p>
+  </div>
+  <div class="bar2">
+    <label>Số đời <input type="number" id="n" value="1000" min="10" max="20000"></label>
+    <label>Seed gốc <input type="text" id="seed" value="can-bang" style="width:140px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px"></label>
+    <label>Thế giới <input type="text" id="world" value="can-bang" style="width:120px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px"></label>
+    <button class="btn" id="run">Chạy</button>
+    <label>Số thế giới <input type="number" id="nw" value="100" min="5" max="1000"></label>
+    <button class="btn" id="runWorlds">Thử nhiều thế giới</button>
+    <label>Năm <input type="number" id="ny" value="300" min="50" max="2000"></label>
+    <button class="btn" id="runHistory">Thử thế giới động</button>
+    <span class="note" id="status"></span>
+  </div>
+  <div class="panel" id="checks"></div>
+  <div class="grid" id="out"></div>
+</div>
+
+<script src="../shared/aspects.js"></script>
+<script src="../shared/schools.js"></script>
+<script src="../shared/trunk.js"></script>
+<script src="../shared/races/human.js"></script>
+<script src="../shared/races/elf.js"></script>
+<script src="../shared/races/dwarf.js"></script>
+<script src="../shared/races/orc.js"></script>
+<script src="../shared/races/beastfolk.js"></script>
+<script src="../shared/races/fae.js"></script>
+<script src="../shared/races/merfolk.js"></script>
+<script src="../shared/races/dragonkin.js"></script>
+<script src="../shared/races/construct.js"></script>
+<script src="../shared/races/skeleton.js"></script>
+<script src="../shared/faiths.js"></script>
+<script src="../shared/compose.js"></script>
+<script src="../shared/bestiary/rules.js"></script>
+<script src="../shared/bestiary/species.js"></script>
+<script src="../shared/bestiary/biomes.js"></script>
+<script src="../shared/bestiary/bestiary.js"></script>
+<script src="../shared/terrain/ecology.js"></script>
+<script src="../shared/terrain/terrain.js"></script>
+<script src="../shared/names/names.js"></script>
+<script src="js/core.js"></script>
+<script src="data/world.js"></script>
+<script src="data/nations.js"></script>
+<script src="js/map.js"></script>
+<script src="js/realm.js"></script>
+<script src="js/life.js"></script>
+<script src="js/systems.js"></script>
+<script src="js/events.js"></script>
+<script src="js/state.js"></script>
+<script src="js/travel.js"></script>
+<script src="js/dynamic.js"></script>
+<script src="js/org.js"></script>
+<script src="js/edu.js"></script>
+<script src="js/noble.js"></script>
+<script src="js/realmev.js"></script>
+<script>
+const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+// Kiểm tra dữ liệu + tóm tắt thế giới đang chọn (js/realm.js).
+function showChecks() {
+  const RL = G.useWorld($('world').value || 'can-bang'), st = RL.stats;
+  G.bindWorld({ dyn: G.newDyn(RL) });   // bảng dưới là thế giới lúc dựng (realm có thể đang mang trạng thái của đời chạy trước)
+  const nrow = n => { const own = RL.settlements.filter(s => s.nation === n.idx && s.tier !== 'ruin'), pop = RL.provinces.filter(p => p.nation === n.idx).reduce((a, p) => a + p.pop, 0), urb = own.reduce((a, s) => a + s.urban, 0);
+    return `<tr><td><span style="color:${n.color}">■</span> ${esc(n.name)}</td><td>${n.template} ${esc(n.label)}</td><td class="n">${n.size}</td><td class="n">${RL.provinces.filter(p => p.nation === n.idx).length}</td><td class="n">${own.length}</td><td class="n">${pop.toLocaleString('vi')}</td><td class="n">${(urb / Math.max(1, pop) * 100).toFixed(0)}%</td></tr>`; };
+  $('checks').innerHTML = `<h2>Kiểm tra dữ liệu</h2>` +
+    (G.check.errors.length ? G.check.errors.map(e => `<div class="no">✗ ${esc(e)}</div>`).join('') : '<div class="ok">✓ Không có lỗi (bestiary + compose + đại lục).</div>') +
+    G.check.warnings.map(w => `<div class="note">⚠ ${esc(w)}</div>`).join('') +
+    (RL.check.errors.length ? RL.check.errors.map(e => `<div class="no">✗ thế giới: ${esc(e)}</div>`).join('') : `<div class="ok">✓ Thế giới "${esc(RL.seed)}" không có lỗi.</div>`) +
+    RL.check.warnings.map(w => `<div class="note">⚠ thế giới: ${esc(w)}</div>`).join('') +
+    `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 4} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>` +
+    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}% · đường: ${st.roads[2]} ô đường cái, ${st.roads[1]} ô đường mòn, ${st.roads[0]} ô lối nhỏ, ${st.bridges} ô cầu, ${st.passes} ô đèo · tầng (diện tích đất): ${st.bands.map((v, b) => `${G.BAND_VI[b].toLowerCase()} ${(v * 100).toFixed(0)}%`).join(', ')} · ${RL.dungeons.length} di tích (${RL.dungeons.map(d => esc(d.name)).join(', ')}) · ${RL.nests.length} ổ chúa</div>` +
+    `<table><tr><th>Nước</th><th>Mẫu</th><th class="n">Cỡ</th><th class="n">Tỉnh</th><th class="n">Khu</th><th class="n">Dân</th><th class="n">Đô thị</th></tr>${RL.nations.map(nrow).join('')}</table>`;
+}
+showChecks();
+$('world').onchange = showChecks;
+
+function table(title, rows, cols, opt = {}) {
+  const max = Math.max(...rows.map(r => +r[opt.barCol ?? 1] || 0), 1);
+  return `<div class="panel"><h2>${title}</h2><table><tr>${cols.map((c, i) => `<th class="${i ? 'n' : ''}">${c}</th>`).join('')}${opt.bar ? '<th></th>' : ''}</tr>` +
+    rows.map(r => `<tr>${r.map((v, i) => `<td class="${i ? 'n' : ''}">${esc(v)}</td>`).join('')}${opt.bar ? `<td style="width:30%"><div class="hbar" style="width:${(+r[opt.barCol ?? 1] || 0) / max * 100}%"></div></td>` : ''}</tr>`).join('') + `</table>${opt.note ? `<p class="note">${opt.note}</p>` : ''}</div>`;
+}
+
+$('run').onclick = () => {
+  const N = Math.max(10, +$('n').value || 1000), base = $('seed').value || 'can-bang';
+  showChecks();
+  $('status').textContent = 'Đang chạy…';
+  // Chạy từng đợt 25 đời rồi nhả luồng: trang không treo, hiện được tiến độ.
+  setTimeout(async () => {
+    const t0 = performance.now();
+    const ORIGK = ['royalMain', 'royalSide', 'royalCrown', 'royalExile', 'claimWin', 'claimFail', 'nobleHeirBorn', 'nobleInherit', 'nobleRoyal', 'promo', 'duel', 'duelWin'];
+    const EDUK = ['edu1', 'grad1', 'edu2', 'grad2', 'edu3', 'grad3', 'eduGrant', 'eduDrop', 'eduFail2', 'eduFail3', 'mentorCraft', 'mentorMartial', 'mentorDone', 'discipleTake', 'discipleDone', 'nobleBorn', 'nobleInherit', 'nobleMerit', 'nobleBuy', 'nobleLost'];
+    const ORGK = ['advJoin', 'quests', 'advBranch', 'orgJoin', 'mercJoin', 'mercC', 'orgOfficer', 'orgLead', 'orgFound', 'headElect', 'foundVillage', 'foundTown', 'upTown', 'upCity', 'office', 'office2', 'foundNation', 'rebelOK', 'rebelFail'];
+    const A = { dyn: { years: 0, wars: 0, flips: 0, ruins: 0, founded: 0, rebel: 0, newNat: 0, fell: 0, warDeaths: 0, soldiers: 0, soldierDeaths: 0, homeFlip: 0 }, org: { adults: 0, k: {} }, edu: { k: {}, byQ: {}, rank: {} }, orig: { k: {}, promo: {}, ev: {} }, lair: { sum: 0, yrs: 0, made: 0, npc: 0, raid: 0, prov: 0, lives: 0, tries: 0, cleared: 0, dgLives: 0, dgTries: 0, floors: 0, fights: 0, over: 0, deaths: 0 }, lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 }, sea: { lives: 0, voyages: 0, fights: 0, storms: 0, wrecks: 0, pirates: 0, deaths: 0 } };
+    for (let i = 0; i < N; i++) {
+      if (i % 25 === 24) { $('status').textContent = `Đang chạy đời ${i + 1}/${N}…`; await new Promise(r => setTimeout(r, 0)); }
+      const sim = new G.Sim({ seed: base + ':' + i, headless: true });
+      sim.newLife({ noPeers: true });
+      const q0 = sim.S.q;
+      const y0 = sim.S.world.year, bornNat = G.nationOf(G.SET[sim.S.born.settlement]);
+      sim.runToDeath();
+      let S = sim.S;
+      // Thế giới động trong đời này (mỗi đời một thế giới mới từ seed): đếm theo năm thế giới đã trôi (docs/03 mục 5.7).
+      { const D = A.dyn, n = S.world.dyn.n; D.years += S.world.year - y0; D.wars += n.wars; D.flips += n.kept + n.rebel + n.join; D.ruins += n.ruins; D.founded += n.founded + n.revived; D.rebel += n.rebel; D.newNat += n.newNat; D.fell += n.fell;
+        if (S.causeId === 'war') D.warDeaths++; if (S.flags.served) { D.soldiers++; if (S.causeId === 'war') D.soldierDeaths++; } if (S.flags.homeFlip) D.homeFlip++; }
+      { const O = A.orig, F = S.flags; for (const k of ORIGK) if (F[k]) O.k[k] = (O.k[k] || 0) + 1; if (F.promoMax) O.promo[F.promoMax] = (O.promo[F.promoMax] || 0) + 1; for (const id of Object.keys(S.recent)) { const g = id.split('_')[0]; if (['tpl', 'qk', 'nt', 'rl', 'vl'].includes(g)) O.ev[g] = (O.ev[g] || 0) + 1; } }
+      { const E = A.edu, F = S.flags; for (const k of EDUK) if (F[k]) E.k[k] = (E.k[k] || 0) + 1; const b = E.byQ[q0] || (E.byQ[q0] = [0, 0, 0, 0]); b[0]++; for (let l = 1; l <= (S.edu ? S.edu.lv : 0); l++) b[l]++; if (F.nobleMax) E.rank[F.nobleMax] = (E.rank[F.nobleMax] || 0) + 1; }
+      { const O = A.org, F = S.flags; if (sim.years(S) >= G.RACES[S.race].adult) O.adults++; for (const k of ORGK) if (F[k]) O.k[k] = (O.k[k] || 0) + 1; }
+      { const H = A.lair, n = S.world.dyn.n, F = S.flags; H.sum += n.lairSum || 0; H.yrs += n.lairYrs || 0; H.made += n.lairs || 0; H.npc += n.lairNpc || 0; H.raid += n.raidYrs || 0; H.prov += n.provYrs || 0;
+        if (F.lairTries) H.lives++; H.tries += F.lairTries || 0; H.cleared += F.lairs || 0; if (F.dgTries) H.dgLives++; H.dgTries += F.dgTries || 0; H.floors += F.dgFloors || 0;
+        H.fights += F.lairFights || 0; H.over += F.lairOver || 0; if (S.dead && F.inLair) H.deaths++; }
+      const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts };
+      A.lives.push(rec);
+      A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
+      for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
+      (A.byRace[S.race] = A.byRace[S.race] || []).push(rec);
+      (A.byWork[rec.work] = A.byWork[rec.work] || []).push(rec);
+      A.maxTier[rec.tier] = (A.maxTier[rec.tier] || 0) + 1;
+      A.jobTier[rec.job] = (A.jobTier[rec.job] || 0) + 1;
+      A.region[S.born.region] = (A.region[S.born.region] || 0) + 1;
+      { const F = S.flags, L = A.law; if (F.crimes) L.crimes++; if (S.causeId === 'hanged') L.hanged++; if (F.served) L.served++; if (F.wanted) L.fled++; if (F.expelled) L.expelled++;
+        const n = S.nation != null ? G.realm.nations[S.nation] : null; if (n && n.wary.includes(S.race)) L.wary++; if (n && n.fav.includes(S.race)) L.fav++; }
+      { const T = A.trip, F = S.flags; if (F.trips) { T.lives++; T.trips += F.trips; } if (F.onRoad && S.dead) T.roadDeaths++; T.escorts += F.escorts || 0; }
+      { const Q = A.sea, F = S.flags; if (F.voyages) { Q.lives++; Q.voyages += F.voyages; } Q.fights += F.seaFights || 0; Q.storms += F.storms || 0; Q.wrecks += F.wrecks || 0; Q.pirates += F.pirates || 0; if (S.dead && (F.atSea || S.causeId === 'shipwreck')) Q.deaths++; }
+      { const bs = G.SET[S.born.settlement], key = bs ? (S.born.urban ? G.TIER_VI[bs.tier] + ' (trong khu)' : 'vùng quê quanh ' + G.TIER_VI[bs.tier].toLowerCase()) : '?'; A.bornTier[key] = (A.bornTier[key] || 0) + 1;
+        const nk = bornNat ? bornNat.name : 'đất vô chủ'; A.bornNation[nk] = (A.bornNation[nk] || 0) + 1; }   // nước lúc sinh (tỉnh có thể đổi chủ trong đời)
+      if (S.rose) {
+        A.rose++;
+        // Chạy luôn kiếp Bộ Xương để đo đời thứ hai.
+        sim.rise(); sim.runToDeath(); S = sim.S; A.chain++;
+        (A.byRace.skeleton = A.byRace.skeleton || []).push({ race: 'skeleton', years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, inh: S.inherited });
+        A.causes['(xương) ' + S.causeId] = (A.causes['(xương) ' + S.causeId] || 0) + 1;
+        for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
+      }
+    }
+    const ms = Math.round(performance.now() - t0);
+    const avg = (a, f) => a.length ? (a.reduce((x, y) => x + f(y), 0) / a.length) : 0;
+    const pct = (a, b) => (a / b * 100).toFixed(1) + '%';
+    const out = [];
+    const totalHunts = Object.values(A.gaps).reduce((a, b) => a + b, 0);
+    const over = Object.entries(A.gaps).filter(([g]) => +g > 1).reduce((a, [, n]) => a + n, 0);
+    out.push(table('Phân cấp: Tier quái − Tier nhân vật', Object.entries(A.gaps).sort((a, b) => a[0] - b[0]).map(([g, n]) => [(+g > 0 ? '+' : '') + g, n, pct(n, totalHunts)]), ['Chênh', 'Trận', '%'],
+      { bar: true, note: over ? `<span class="no">✗ ${over} trận gặp quái cao hơn Tier + 1 (chỉ được phép khi bật Liều mạng).</span>` : `<span class="ok">✓ ${totalHunts} trận, không trận nào quá Tier + 1.</span>` }));
+    out.push(table('Trỗi dậy thành Bộ Xương', [['Đời đầu đã chết', N], ['Trỗi dậy', A.rose], ['Tỉ lệ', pct(A.rose, N)], ['Mục tiêu', '20%']], ['', '']));
+    const cn = c => { const sk = c.startsWith('(xương) '), id = sk ? c.slice(8) : c; return (sk ? '(Bộ Xương) ' : '') + (id === 'monster' ? 'tử trận trước quái' : (G.CAUSES[id] || { nameVi: id }).nameVi); };
+    out.push(table('Nguyên nhân chết', Object.entries(A.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => [cn(c), n, pct(n, N + A.chain)]), ['Nguyên nhân', 'Số', '%'], { bar: true }));
+    out.push(table('Theo chủng tộc', Object.entries(A.byRace).sort((a, b) => b[1].length - a[1].length).map(([r, l]) => [J.races[r].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.turns).toFixed(1), avg(l, x => x.level).toFixed(1)]),
+      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Cấp TB'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy.' }));
+    out.push(table('Theo sinh kế', Object.entries(A.byWork).sort((a, b) => b[1].length - a[1].length).map(([w, l]) => [w === '—' ? '— (chết trước khi đi làm)' : G.WORKS[w].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.level).toFixed(1), pct(l.filter(x => x.cause === 'monster').length, l.length)]),
+      ['Sinh kế', 'Đời', 'Tuổi TB', 'Cấp TB', 'Chết vì quái']));
+    out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
+    out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
+    out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
+    out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu docs/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
+    out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'docs/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));
+    out.push(table('Đi biển (đời đầu)', [['Đời có đi tàu', A.sea.lives, pct(A.sea.lives, N)], ['Số chuyến tàu', A.sea.voyages, ''], ['Trận trên biển', A.sea.fights, ''], ['Gặp bão', A.sea.storms, ''], ['Đắm tàu', A.sea.wrecks, ''], ['Gặp cướp biển', A.sea.pirates, ''], ['Chết trên biển (kể cả đắm tàu khi làm nghề)', A.sea.deaths, pct(A.sea.deaths, N)]], ['', 'Số', '%'], { note: 'docs/03 mục 7.3. Trận trên biển cũng tính vào bảng phân cấp Tier.' }));
+    out.push(table('Luật và thái độ (đời đầu)', [['Từng bị bắt', A.law.crimes, pct(A.law.crimes, N)], ['Bị treo cổ', A.law.hanged, pct(A.law.hanged, N)], ['Đi lính nghĩa vụ', A.law.served, pct(A.law.served, N)], ['Trốn lính', A.law.fled, pct(A.law.fled, N)], ['Bị lệnh trục xuất', A.law.expelled, pct(A.law.expelled, N)], ['Chết ở nước dè chừng mình', A.law.wary, pct(A.law.wary, N)], ['Chết ở nước ưu ái mình', A.law.fav, pct(A.law.fav, N)]], ['', 'Đời', '%'], { note: 'Đếm trên đời đầu (trước khi trỗi dậy). docs/04 mục 3.' }));
+    { const D = A.dyn, per = v => (v / Math.max(1, D.years) * 100).toFixed(2);
+      out.push(table('Thế giới động (đời đầu)', [['Năm thế giới đã trôi', D.years, ''], ['Chiến tranh nổ ra', D.wars, per(D.wars)], ['Tỉnh đổi chủ (giữ sau chiến tranh, nổi loạn)', D.flips, per(D.flips)], ['Nổi loạn thành công', D.rebel, per(D.rebel)], ['Nước mới lập', D.newNat, per(D.newNat)], ['Nước diệt vong', D.fell, per(D.fell)], ['Khu dân cư sụp', D.ruins, per(D.ruins)], ['Khu dân cư lập mới, dựng lại', D.founded, per(D.founded)],
+        ['Đời chết trận', D.warDeaths, pct(D.warDeaths, N)], ['Lính nghĩa vụ chết trận', D.soldierDeaths, pct(D.soldierDeaths, Math.max(1, D.soldiers))], ['Đời có quê đổi chủ', D.homeFlip, pct(D.homeFlip, N)]], ['', 'Số', '/ 100 năm (lính: % lính)'],
+        { note: 'docs/03 mục 5.3, 10: tỉnh đổi chủ 3–8 / 100 năm, khu sụp / lập 1–3 / 100 năm. Mỗi đời một thế giới mới từ seed (G.makeWorld).' })); }
+    { const H = A.lair, per = v => (v / Math.max(1, A.dyn.years) * 100).toFixed(2);
+      out.push(table('Hang ổ và di tích (đời đầu)', [['Hang ổ đang có (trung bình theo năm)', (H.sum / Math.max(1, H.yrs)).toFixed(1), ''], ['Hang mới mọc', H.made, per(H.made)], ['Hang đoàn mạo hiểm NPC dọn', H.npc, per(H.npc)], ['Năm-tỉnh có thú triều', pct(H.raid, Math.max(1, H.prov)), ''],
+        ['Đời từng vào hang', H.lives, pct(H.lives, N)], ['Lần vào hang / dọn sạch', H.tries + ' / ' + H.cleared, ''], ['Đời từng vào di tích', H.dgLives, pct(H.dgLives, N)], ['Lần xuống di tích / tầng dọn sạch', H.dgTries + ' / ' + H.floors, ''],
+        ['Trận trong hang, di tích', H.fights, ''], ['Trận vượt Tier + 1 trong hang, di tích', H.over, ''], ['Chết trong hang, di tích', H.deaths, pct(H.deaths, N)]], ['', 'Số', '/ 100 năm'],
+        { note: 'docs/03 mục 4, 10: hang ổ đang có 8–15 toàn đại lục; trận trong hang vẫn 0 vượt Tier + 1. Trận trong hang cũng tính vào bảng phân cấp Tier ở trên.' })); }
+    { const O = A.org, row = (t, k) => [t, O.k[k] || 0, pct(O.k[k] || 0, Math.max(1, O.adults))];
+      out.push(table('Tổ chức và lập nghiệp (đời đầu)', [row('Ghi tên Hiệp Hội Mạo Hiểm', 'advJoin'), row('Nhận nhiệm vụ Hiệp Hội', 'quests'), row('Trưởng chi nhánh Hiệp Hội', 'advBranch'), row('Vào phường nghề', 'orgJoin'), row('Vào đoàn lính đánh thuê', 'mercJoin'), row('Đánh thuê trong chiến tranh', 'mercC'),
+        row('Quản sự / phó đoàn', 'orgOfficer'), row('Được bầu hội trưởng', 'orgLead'), row('Lập hội, đoàn', 'orgFound'), row('Được bầu trưởng khu', 'headElect'), row('Lập làng', 'foundVillage'), row('Lập thẳng thị trấn', 'foundTown'), row('Nâng làng lên thị trấn', 'upTown'), row('Nâng thị trấn lên thành phố', 'upCity'),
+        row('Ra làm quan', 'office'), row('Lên Đại thần', 'office2'), row('Lập nước (tỉnh vô chủ)', 'foundNation'), row('Dấy binh thành công', 'rebelOK'), row('Dấy binh thất bại', 'rebelFail')], ['', 'Đời', '% đời trưởng thành'],
+        { note: 'docs/03 mục 5.5, 5.8: lập làng ~10%, lập nước dưới 2% đời trưởng thành. Mọi hướng đều tự chọn; số trên là của chế độ tự động (theo tính cách).' })); }
+    { const E = A.edu, row = (t, k) => [t, E.k[k] || 0, pct(E.k[k] || 0, N)];
+      out.push(table('Học viện, sư đồ, quý tộc (đời đầu)', [row('Vào sơ cấp', 'edu1'), row('Tốt nghiệp sơ cấp', 'grad1'), row('Vào trung cấp', 'edu2'), row('Tốt nghiệp trung cấp', 'grad2'), row('Vào cao cấp (Học viện)', 'edu3'), row('Tốt nghiệp cao cấp', 'grad3'), row('Có học bổng', 'eduGrant'), row('Bỏ dở vì tiền, trường mất', 'eduDrop'), row('Trượt thi trung cấp', 'eduFail2'), row('Trượt thi cao cấp', 'eduFail3'),
+        row('Học việc thợ lành nghề', 'mentorCraft'), row('Đệ tử cao thủ', 'mentorMartial'), row('Xuất sư', 'mentorDone'), row('Nhận đệ tử', 'discipleTake'), row('Sinh trong nhà quý tộc', 'nobleBorn'), row('Kế tước', 'nobleInherit'), row('Được phong vì công trạng', 'nobleMerit'), row('Mua tước', 'nobleBuy'), row('Mất tước', 'nobleLost')], ['', 'Đời', '% mọi đời'],
+        { note: 'docs/03 mục 5.9. Tước cao nhất từng có: ' + Object.entries(E.rank).sort((a, b) => a[0] - b[0]).map(([r, n]) => `${G.NOBLE_VI[r]} ${n}`).join(', ') + '.' }));
+      out.push(table('Học vấn theo tầng lớp lúc sinh', Object.entries(E.byQ).sort((a, b) => a[0] - b[0]).map(([q, b]) => [G.CLASSES[q].nameVi, b[0], pct(b[1], b[0]), pct(b[2], b[0]), pct(b[3], b[0])]), ['Tầng lớp', 'Đời', 'Sơ cấp', 'Trung cấp', 'Cao cấp'], { note: 'Học phí do gia đình trả theo tầng lớp; nhà nghèo chỉ học được bằng học bổng hoặc tự đi làm trả.' })); }
+    { const O = A.orig, row = (t, k) => [t, O.k[k] || 0, pct(O.k[k] || 0, N)], ev = { tpl: 'đặc tính mẫu', qk: 'đặc trưng riêng', nt: 'quốc gia (ân xá, lễ, sử)', rl: 'nước của mình', vl: 'làng của mình' };
+      out.push(table('Xuất thân, thăng tiến (đời đầu)', [row('Hoàng gia, dòng chính', 'royalMain'), row('Hoàng gia, dòng phụ', 'royalSide'), row('Lên ngôi theo kế vị', 'royalCrown'), row('Giành ngôi thành công', 'claimWin'), row('Giành ngôi thất bại', 'claimFail'), row('Hoàng tộc lưu vong (nước mất)', 'royalExile'),
+        row('Con trưởng nhà quý tộc', 'nobleHeirBorn'), row('Kế tước', 'nobleInherit'), row('Hoàng tộc được phong Công / Hầu tước', 'nobleRoyal'), row('Lên bậc thăng tiến của chính thể', 'promo'), row('Thách đấu giành ngôi', 'duel'), row('Thắng thách đấu, lên ngôi', 'duelWin')], ['', 'Đời', '% mọi đời'],
+        { note: 'docs/03 mục 5.10. Bậc thăng tiến cao nhất: ' + Object.entries(O.promo).sort((a, b) => a[0] - b[0]).map(([r, n]) => `bậc ${r}: ${n}`).join(', ') + '. Sự kiện quốc gia đã xảy ra (mỗi sự kiện tính một lần mỗi đời): ' + Object.entries(ev).map(([g, t]) => `${t} ${O.ev[g] || 0}`).join(', ') + '.' })); }
+    out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
+    $('out').innerHTML = out.join('');
+    $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;
+  }, 30);
+};
+// Thế giới động không có đời người (js/dynamic.js G.runWorld): mỗi thế giới chạy số năm đã chọn, đo số nước còn sống, tỉnh đổi chủ,
+// khu sụp / lập (docs/03 mục 10). Chạy từng thế giới rồi nhả luồng.
+$('runHistory').onclick = () => {
+  const NW = Math.max(5, Math.min(200, +$('nw').value || 50)), years = Math.max(50, +$('ny').value || 300), base = $('world').value || 'can-bang';
+  G.useWorld(base);
+  setTimeout(async () => {
+    const t0 = performance.now(), rs = [];
+    for (let w = 0; w < NW; w++) {
+      $('status').textContent = `Đang chạy thế giới động ${w + 1}/${NW}…`; await new Promise(r => setTimeout(r, 0));
+      const W = G.runWorld(base + ':h' + w, years), n = W.dyn.n;
+      rs.push({ alive: W.dyn.nat.filter(x => x.alive).length, lairs: (n.lairSum || 0) / Math.max(1, n.lairYrs || 0), lv3: W.dyn.lairs.filter(l => l.empty == null && l.lv === 3).length, lairMade: n.lairs || 0, lairNpc: n.lairNpc || 0, lairBack: n.lairBack || 0, lairRuin: n.lairRuin || 0, raid: (n.raidYrs || 0) / Math.max(1, n.provYrs || 0), flips: n.kept + n.rebel + n.join, ruins: n.ruins, founded: n.founded + n.revived, wars: n.wars, rebel: n.rebel, newNat: n.newNat, fell: n.fell, annex: n.annex, moved: n.moved, kings: n.kings, roads: n.roads });
+    }
+    const ms = Math.round(performance.now() - t0), med = k => { const a = rs.map(r => r[k]).sort((x, y) => x - y); return a[a.length >> 1]; }, per = k => (rs.reduce((a, r) => a + r[k], 0) / NW / years * 100).toFixed(2);
+    const pct = (a, b) => (a / b * 100).toFixed(1) + '%';
+    const nAlive = {}; for (const r of rs) nAlive[r.alive] = (nAlive[r.alive] || 0) + 1;
+    const out = [];
+    out.push(table(`${NW} thế giới × ${years} năm`, [['Nước còn sống: trung vị', med('alive'), ''], ['Nước còn sống: ít nhất / nhiều nhất', Math.min(...rs.map(r => r.alive)) + ' / ' + Math.max(...rs.map(r => r.alive)), ''],
+      ['Tỉnh đổi chủ', med('flips'), per('flips')], ['Chiến tranh', med('wars'), per('wars')], ['Nổi loạn thành công', med('rebel'), per('rebel')], ['Nước mới lập', med('newNat'), per('newNat')], ['Nước diệt vong', med('fell'), per('fell')],
+      ['Tỉnh vô chủ sáp nhập', med('annex'), per('annex')], ['Khu dân cư sụp', med('ruins'), per('ruins')], ['Khu dân cư lập mới, dựng lại', med('founded'), per('founded')], ['Dời đô', med('moved'), per('moved')], ['Vua băng hà', med('kings'), per('kings')], ['Đoạn đường xuống cấp', med('roads'), per('roads')], ['Hang ổ đang có (trung bình theo năm)', (rs.reduce((a, r) => a + r.lairs, 0) / NW).toFixed(1), ''], ['Sào huyệt lúc kết thúc', med('lv3'), ''], ['Hang mới mọc', med('lairMade'), per('lairMade')], ['Hang trống bị quái chiếm lại', med('lairBack'), per('lairBack')], ['Hang NPC dọn', med('lairNpc'), per('lairNpc')], ['Phế tích thành hang', med('lairRuin'), per('lairRuin')], ['Năm-tỉnh có thú triều', pct(rs.reduce((a, r) => a + r.raid, 0), NW), ''], ['ms / thế giới', Math.round(ms / NW), '']],
+      ['', 'Trung vị / thế giới', '/ 100 năm (trung bình)'], { note: 'Mục tiêu docs/03 mục 10: nước còn sống sau 300 năm trung vị 5–7, không thế giới nào dưới 3; tỉnh đổi chủ 3–8 / 100 năm; khu sụp / lập 1–3 / 100 năm. Hệ số ở G.DYN (js/dynamic.js).' }));
+    out.push(table('Số nước còn sống', Object.entries(nAlive).map(([k, v]) => [k + ' nước', v, pct(v, NW)]), ['', 'Thế giới', '%'], { bar: true }));
+    $('out').innerHTML = out.join('');
+    $('status').textContent = `${NW} thế giới × ${years} năm trong ${ms} ms.`;
+  }, 30);
+};
+// Tạo nhiều thế giới (chỉ dựng, chưa sống) để xem phân bố mẫu quốc gia, số nước, khu dân cư, tỉ lệ đô thị (docs/04 mục 6, docs/05 mục 12).
+$('runWorlds').onclick = () => {
+  const NW = Math.max(5, +$('nw').value || 100), base = $('world').value || 'can-bang';
+  $('status').textContent = `Đang tạo ${NW} thế giới…`;
+  // Chạy từng đợt 5 thế giới rồi nhả luồng, để trang không treo và hiện được tiến độ.
+  setTimeout(async () => {
+    const t0 = performance.now(), tpl = Object.fromEntries(G.NATION_TEMPLATES.map(t => [t.id, 0])), nN = {}, races = {};
+    let errs = 0, warns = 0, sets = 0, urb = 0, unc = 0, prov = 0;
+    for (let w = 0; w < NW; w++) {
+      if (w % 5 === 4) { $('status').textContent = `Đang tạo thế giới ${w + 1}/${NW}…`; await new Promise(r => setTimeout(r, 0)); }
+      const RL = G.buildRealm(G.map, base + ':w' + w);
+      for (const n of RL.nations) { tpl[n.template]++; races[n.race] = (races[n.race] || 0) + 1; }
+      nN[RL.nations.length] = (nN[RL.nations.length] || 0) + 1;
+      errs += RL.check.errors.length; warns += RL.check.warnings.length;
+      sets += RL.stats.settlements; urb += RL.stats.urbanShare; unc += RL.stats.unclaimed; prov += RL.stats.provinces;
+    }
+    const ms = Math.round(performance.now() - t0), pct = (a, b) => (a / b * 100).toFixed(1) + '%';
+    const out = [];
+    out.push(table(`${NW} thế giới`, [['Lỗi', errs], ['Cảnh báo', warns], ['Khu dân cư / thế giới', (sets / NW).toFixed(1)], ['Tỉnh / thế giới', (prov / NW).toFixed(1)], ['Tỉ lệ đô thị', pct(urb, NW)], ['Đất vô chủ', pct(unc, NW)], ['ms / thế giới', Math.round(ms / NW)]], ['', '']));
+    out.push(table('Số nước', Object.entries(nN).map(([k, v]) => [k + ' nước', v, pct(v, NW)]), ['', 'Thế giới', '%'], { bar: true }));
+    out.push(table('Chủng tộc làm chủ', Object.entries(races).sort((a, b) => b[1] - a[1]).map(([r, v]) => [J.races[r].nameVi, v, pct(v, NW)]), ['Chủng tộc', 'Nước', '% thế giới'], { bar: true }));
+    const never = Object.entries(tpl).filter(([, v]) => !v).map(([k]) => k);
+    out.push(table('Mẫu quốc gia', Object.entries(tpl).sort((a, b) => b[1] - a[1]).map(([id, v]) => [id + ' ' + G.NATION_TEMPLATES.find(t => t.id === id).label, v, pct(v, NW)]), ['Mẫu', 'Lần', '% thế giới'],
+      { bar: true, note: never.length ? `Chưa bao giờ ra: ${never.join(', ')}` : 'Mẫu nào cũng ra ít nhất một lần.' }));
+    $('out').innerHTML = out.join('');
+    $('status').textContent = `${NW} thế giới trong ${ms} ms.`;
+    G.useWorld($('world').value || 'can-bang');
+  }, 30);
+};
+if (!/noauto/.test(location.search)) $('run').click();   // ?noauto: chỉ nạp, không tự chạy (thử từng phần trong console)
+</script>
+</body>
+</html>

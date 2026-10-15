@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<!-- Sinh dữ liệu cho nation-review.src.html:
+     msedge --headless --allow-file-access-from-files --dump-dom file:///<repo>/review/nation-data.html
+     lấy khối pre#out, thay /*DATA*/null trong nation-review.src.html. -->
+<script src="../shared/aspects.js"></script><script src="../shared/faiths.js"></script>
+<script src="../shared/races/human.js"></script><script src="../shared/races/elf.js"></script><script src="../shared/races/dwarf.js"></script>
+<script src="../shared/races/orc.js"></script><script src="../shared/races/beastfolk.js"></script><script src="../shared/races/fae.js"></script>
+<script src="../shared/races/merfolk.js"></script><script src="../shared/races/dragonkin.js"></script><script src="../shared/races/construct.js"></script>
+<script src="../shared/races/skeleton.js"></script>
+<script src="../shared/bestiary/biomes.js"></script>
+<script src="../shared/terrain/ecology.js"></script>
+<script src="../shared/terrain/terrain.js"></script>
+<script src="../shared/names/names.js"></script>
+<script src="../vankiep/data/world.js"></script>
+<script src="../vankiep/data/nations.js"></script>
+<pre id="out"></pre>
+<script>
+const L = JobLibrary, G = LifeSim, N = G.NAMES;
+const RACES = ['human', 'elf', 'dwarf', 'orc', 'beastfolk', 'fae', 'merfolk', 'dragonkin', 'construct', 'skeleton'];
+const data = {
+  races: Object.fromEntries(RACES.map(r => [r, { vi: L.races[r].nameVi, lore: L.races[r].lore, settle: G.RACE_SETTLE[r] }])),
+  faiths: Object.fromEntries(Object.entries(L.faiths).map(([k, f]) => [k, { vi: f.nameVi, symbol: f.symbol, color: L.aspects[f.aspect].color }])),
+  biomes: Object.fromEntries(Object.entries(L.biomes).map(([k, b]) => [k, b.nameVi])),
+  govs: G.GOVS, laws: G.LAWS, quirks: G.QUIRKS,
+  templates: G.NATION_TEMPLATES,
+  names: { prefix: N.nation.prefix, prefixRace: N.nation.prefixRace, root: N.nation.root, ruler: N.nation.ruler }
+};
+document.getElementById('out').textContent = JSON.stringify(data);
+</script>
+</body></html>

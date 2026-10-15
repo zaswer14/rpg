@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<script src="../shared/schools.js"></script><script src="../shared/trunk.js"></script><script src="../shared/aspects.js"></script><script src="../shared/faiths.js"></script>
+<script src="../shared/races/skeleton.js"></script><script src="../shared/races/human.js"></script><script src="../shared/races/elf.js"></script><script src="../shared/races/dwarf.js"></script><script src="../shared/races/beastfolk.js"></script>
+<script src="../shared/races/merfolk.js"></script><script src="../shared/races/orc.js"></script><script src="../shared/races/dragonkin.js"></script><script src="../shared/races/fae.js"></script><script src="../shared/races/construct.js"></script>
+<script src="../shared/archetypes/combat.js"></script><script src="../shared/archetypes/ranged.js"></script><script src="../shared/archetypes/shadow.js"></script><script src="../shared/archetypes/arcane.js"></script>
+<script src="../shared/archetypes/death.js"></script><script src="../shared/archetypes/craft.js"></script><script src="../shared/archetypes/beast.js"></script><script src="../shared/archetypes/martial.js"></script>
+<script src="../shared/compose.js"></script><script src="../shared/catalog.js"></script>
+<!-- Sinh dữ liệu cho tree-review.src.html: msedge --headless --allow-file-access-from-files --dump-dom file:///<repo>/review/tree-data.html, lấy khối pre#out, thay /*DATA*/null trong tree-review.src.html. -->
+<pre id="out"></pre>
+<script>
+const L = JobLibrary, C = L.catalog(), F = L.faiths || {}, OK = ['native','foreign','hidden','faith'];
+const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined && o[k] !== null && o[k] !== '').map(k => [k, o[k]]));
+const data = { schools: {}, aspects: {}, faiths: {}, archetypes: {}, races: [] };
+for (const [k, s] of Object.entries(L.schools)) data.schools[k] = { vi: s.nameVi, en: s.nameEn };
+for (const [k, a] of Object.entries(L.aspects)) data.aspects[k] = { vi: a.nameVi, color: a.color };
+for (const [k, f] of Object.entries(F)) data.faiths[k] = { vi: f.nameVi, en: f.nameEn, symbol: f.symbol, scale: f.scale, color: L.aspects[f.aspect].color, tenet: f.tenet, power: f.powerNote, blessing: f.blessing, rival: f.rival, races: f.races, raceNotes: f.raceNotes || {} };
+for (const a of C.archetypes) data.archetypes[a.id] = { vi: a.nameVi, en: a.nameEn, school: a.school, trunk: a.trunk || [] };
+const faithOpen = (rid, f) => F[f] && !(F[f].races.shunned || []).includes(rid);
+for (const rid of Object.keys(L.races)) {
+  const r = L.races[rid], g = L.compose({ races: [rid] }), acc = g.access[rid];
+  const ok = id => OK.includes(acc[id]);
+  // Dạng áp cho ngọn này với chủng tộc rid: dạng chủng tộc (crown) trước, rồi dạng tín ngưỡng (race '*').
+  const vByCrown = Object.fromEntries(C.byRace['*'].filter(v => v.crown).map(v => [v.crown, v]));
+  Object.assign(vByCrown, Object.fromEntries(C.byRace[rid].filter(v => v.crown).map(v => [v.crown, v])));
+  const vBySkin = Object.fromEntries(C.byRace[rid].filter(v => v.skinOf).map(v => [v.skinOf, v]));
+  const jobs = g.jobs.filter(j => ok(j.id)).map(j => {
+    const n = g.displayName(rid, j.id);
+    const kind = j.tier === 0 ? 'origin' : j.shared ? 'shared' : (!j.race && j.faith) ? 'faith' : j.hidden ? 'hidden' : 'crown';
+    const v = vByCrown[j.id] || vBySkin[j.id];
+    return { id: j.id, tier: j.tier, school: j.school, vi: n.vi, en: n.en, kind, access: acc[j.id], faith: j.faith || null,
+      from: j.from.map(f => f === '@origin' ? r.origin.id : f).filter(ok), to: j.to.filter(ok),
+      ...pick(j, ['gate','req','trial','role','marker','summary','legacy','todo','unlock']),
+      ...(v ? { arch: v.archetype, aspect: v.aspect, twist: v.twist, vmarker: v.marker, mount: v.mount, companion: v.companion, variantId: v.id, hiddenJob: !!j.hidden } : {}),
+      bases: C.archetypes.filter(a => (a.trunk || []).includes(j.id)).map(a => a.id) };
+  });
+  const placed = new Set(jobs.map(j => j.id));
+  const candSrc = [...C.byRace[rid], ...C.byRace['*'].filter(v => faithOpen(rid, v.faith) && !C.byRace[rid].some(x => x.archetype === v.archetype && x.faith === v.faith))];
+  const cands = candSrc.filter(v => !v.crown && !v.skinOf).map(v => ({
+    id: 'cand:' + v.id, variantId: v.id, tier: v.tier, school: v.school, vi: v.nameVi, en: v.nameEn, kind: 'candidate', faith: v.faith || null,
+    arch: v.archetype, aspect: v.aspect, twist: v.twist, marker: v.marker, fromHint: v.from || [],
+    ...pick(v, ['mount','companion','exception','note','unlock','hidden','excludes'])
+  }));
+  const candIds = Object.fromEntries(cands.map(c => [c.variantId, c.id]));
+  for (const c of cands) c.from = c.fromHint.map(f => placed.has(f) ? f : candIds[f]).filter(Boolean);
+  const faithAccess = Object.fromEntries(Object.keys(F).map(f => { const fr = F[f].races; return [f, fr.shunned.includes(rid) ? 'shunned' : fr.favored.includes(rid) ? 'favored' : fr.wary.includes(rid) ? 'wary' : 'open']; }));
+  data.races.push({ id: rid, vi: r.nameVi, en: r.nameEn, lore: r.lore, hook: r.silhouetteHook, schools: r.schools, rig: r.body.rig, faithAccess,
+    origin: r.origin.id, jobs, cands, summary: g.summary[0] });
+}
+document.getElementById('out').textContent = JSON.stringify(data);
+</script></body></html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kho RPG</title>
+<!-- Trang mở đầu của kho. Mở qua server tĩnh: powershell -ExecutionPolicy Bypass -File tools/serve.ps1 → http://localhost:8765/
+     Thêm trang hay tài liệu mới thì thêm một dòng <li> vào mục tương ứng. -->
+<style>
+:root{
+  --bg:#f3f1ec; --panel:#fbfaf7; --ink:#22201c; --muted:#6d685f; --line:#dcd6cb; --chip:#ebe6dc;
+  --c-shared:#4f6bd8; --c-vankiep:#2f7d4a; --c-platform:#c0533a; --c-review:#b07a12; --c-tools:#7a5ba8;
+  --font-display:"Times New Roman","Noto Serif",serif; --font-body:system-ui,-apple-system,"Segoe UI",sans-serif; --font-mono:ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#161513; --panel:#1f1d1a; --ink:#ece7de; --muted:#a59f94; --line:#36322c; --chip:#2a2723;
+  --c-shared:#8ea2ff; --c-vankiep:#6cc08a; --c-platform:#ec8a6f; --c-review:#e3b04f; --c-tools:#b79ae0; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#161513; --panel:#1f1d1a; --ink:#ece7de; --muted:#a59f94; --line:#36322c; --chip:#2a2723;
+  --c-shared:#8ea2ff; --c-vankiep:#6cc08a; --c-platform:#ec8a6f; --c-review:#e3b04f; --c-tools:#b79ae0; color-scheme:dark; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.55}
+.page{max-width:1180px;margin:0 auto;padding:28px 16px 48px}
+h1{font-family:var(--font-display);font-weight:600;font-size:30px;margin:0 0 4px}
+.lede{color:var(--muted);margin:0 0 22px;max-width:75ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;align-items:start}
+section{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:14px 16px 12px;min-width:0}
+section h2{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0}
+section .path{font-family:var(--font-mono);font-size:12px;color:var(--c)}
+section p{margin:4px 0 10px;color:var(--muted);font-size:14px}
+h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px;font-weight:600}
+ul{list-style:none;margin:0;padding:0}
+li{padding:5px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+li:last-child{border-bottom:0}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--c) 55%,transparent);text-underline-offset:3px}
+a:hover{text-decoration-color:var(--c)}
+a:focus-visible{outline:2px solid var(--c);outline-offset:2px;border-radius:2px}
+li small{color:var(--muted);font-size:12px;text-align:right}
+.tag{font-size:11px;background:var(--chip);border-radius:4px;padding:0 6px;color:var(--muted);white-space:nowrap}
+.note{color:var(--muted);font-size:13px;margin-top:22px}
+code{font-family:var(--font-mono);font-size:12.5px;background:var(--chip);border-radius:4px;padding:0 4px}
+.shared{--c:var(--c-shared)} .vankiep{--c:var(--c-vankiep)} .platform{--c:var(--c-platform)} .review{--c:var(--c-review)} .tools{--c:var(--c-tools)}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Kho RPG</h1>
+  <p class="lede">Các dự án game nhập vai dùng chung một phần lõi: cơ chế nghề, chủng tộc, giáo phái, quái, tên riêng, địa hình và luật chung. Mỗi game là một thư mục riêng; các trang duyệt nội dung nằm tách ra. Bản đồ kho cho người làm: <a href="TRA_CUU.md">TRA_CUU.md</a>.</p>
+
+  <div class="grid">
+    <section class="shared">
+      <h2>Phần chung</h2><div class="path">shared/</div>
+      <p>Lõi dùng chung cho mọi game. Sửa ở đây thì kiểm lại cả Vạn Kiếp lẫn Skeleton Codex.</p>
+      <h3>Trang</h3>
+      <ul>
+        <li><a href="shared/catalog.html">Thư viện khuôn nghề</a><small>ma trận khuôn × chủng tộc, kiểm dữ liệu</small></li>
+        <li><a href="shared/tools/export.html">Kiểm tra và xuất Markdown</a><small>compose, catalog, bestiary</small></li>
+      </ul>
+      <h3>Tài liệu</h3>
+      <ul>
+        <li><a href="shared/README.md">README: sơ đồ, cách dùng</a></li>
+        <li><a href="shared/docs/00_Luat_chung.md">00 · Luật chung</a><small>Tier, gate, quyền, quái, tên</small></li>
+        <li><a href="shared/docs/01_Race_Catalog.md">01 · Chủng tộc</a></li>
+        <li><a href="shared/docs/02_Archetype_Catalog.md">02 · Khuôn nghề</a><span class="tag">lớn</span></li>
+        <li><a href="shared/docs/03_Faiths.md">03 · Giáo phái</a></li>
+        <li><a href="shared/docs/04_Bestiary_Side_Monsters.md">04 · Quái phụ</a></li>
+      </ul>
+      <h3>Dữ liệu</h3>
+      <ul>
+        <li><a href="shared/trunk.js">Nghề thân chung</a><small>trunk.js, schools.js, races/, archetypes/</small></li>
+        <li><a href="shared/names/names.js">Kho tên riêng</a><small>names/names.js</small></li>
+        <li><a href="shared/terrain/terrain.js">Địa hình</a><small>terrain.js, ecology.js</small></li>
+        <li><a href="shared/bestiary/rules.js">Luật quái</a><small>bestiary/rules.js</small></li>
+      </ul>
+    </section>
+
+    <section class="vankiep">
+      <h2>Vạn Kiếp</h2><div class="path">vankiep/</div>
+      <p>Mô phỏng một đời kiểu 1in8b trên đại lục Varen: bản đồ sinh theo seed, quốc gia động, tổ chức, học viện, quý tộc.</p>
+      <h3>Trang</h3>
+      <ul>
+        <li><a href="vankiep/index.html">Chơi</a><small>?world=&lt;seed&gt; để chọn thế giới</small></li>
+        <li><a href="vankiep/sim.html">Cân bằng: 1000 đời</a><small>?noauto chỉ nạp</small></li>
+      </ul>
+      <h3>Tài liệu</h3>
+      <ul>
+        <li><a href="vankiep/TIEN_DO.md">Tiến độ, việc tiếp theo</a></li>
+        <li><a href="vankiep/README.md">README: mô tả game</a></li>
+        <li><a href="vankiep/docs/01_Life_Sim_1in8b.md">01 · Ý tưởng 1in8b</a></li>
+        <li><a href="vankiep/docs/02_Ban_do_quoc_gia_dia_hinh.md">02 · Phương án bản đồ</a></li>
+        <li><a href="vankiep/docs/03_Thiet_ke_ban_do_Varen_V2.md">03 · Thiết kế bản đồ V2</a><span class="tag">lớn</span></li>
+        <li><a href="vankiep/docs/04_Mau_quoc_gia.md">04 · 50 mẫu quốc gia</a></li>
+        <li><a href="vankiep/docs/05_Thanh_pho_lang_mac.md">05 · Thành phố, làng mạc</a></li>
+      </ul>
+    </section>
+
+    <section class="platform">
+      <h2>Platform: Skeleton Codex</h2><div class="path">platform/</div>
+      <p>Game hành động platformer 2D: nghề, skill, gate, gacha, quái phụ; trang codex có bản chơi thử.</p>
+      <h3>Trang</h3>
+      <ul>
+        <li><a href="platform/index.html">Codex và bản chơi thử V12</a></li>
+      </ul>
+      <h3>Tài liệu</h3>
+      <ul>
+        <li><a href="platform/README.md">README: lịch sử bản</a></li>
+        <li><a href="platform/docs/01_Skeleton_Free_Job_System.md">01 · Hệ nghề tự do</a></li>
+        <li><a href="platform/docs/03_Skill_Library_And_Loadout_System.md">03 · Kho skill, loadout</a></li>
+        <li><a href="platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md">06 · Bậc skill, cổng Tier</a></li>
+        <li><a href="platform/docs/08_V10_Playable_Combat_Job_Progression.md">08 · Chiến đấu V10</a></li>
+        <li><a href="platform/docs/10_V12_Balance_Patch.md">10 · Bản vá cân bằng V12</a></li>
+        <li><a href="platform/docs/11_Art_Pipeline_ChatGPT_PixelLab.md">11 · Quy trình vẽ art</a></li>
+        <li><a href="platform/docs/12_Job_Visual_Identity_Design.md">12 · Ngoại hình nghề</a></li>
+        <li><a href="platform/docs/14_Job_Tree_Roadmap_Multi_Race.md">14 · Cây nghề nhiều chủng tộc</a></li>
+      </ul>
+    </section>
+
+    <section class="review">
+      <h2>Duyệt nội dung</h2><div class="path">review/</div>
+      <p>Trang duyệt nhanh trên claude.ai: đánh dấu giữ, cần sửa, bỏ cho từng mục; Claude đọc lại kết quả để sửa dữ liệu.</p>
+      <ul>
+        <li><a href="https://claude.ai/artifact/K36G3cQRbzHMALuN7q3SaK" target="_blank" rel="noopener">Duyệt Cây Nghề</a><small>phần chung · 10 chủng tộc</small></li>
+        <li><a href="https://claude.ai/artifact/1FQFmmAroJsyVzVkgwp8W2" target="_blank" rel="noopener">Duyệt Mẫu Quốc Gia</a><small>Vạn Kiếp · mẫu, đặc trưng, luật, chính thể</small></li>
+        <li><a href="review/README.md">README: phạm vi, cách dựng lại, kiểm độ mới</a></li>
+      </ul>
+      <h3>Dữ liệu sinh trang</h3>
+      <ul>
+        <li><a href="review/tree-data.html">tree-data.html</a><small>JSON cho Duyệt Cây Nghề</small></li>
+        <li><a href="review/nation-data.html">nation-data.html</a><small>JSON cho Duyệt Mẫu Quốc Gia</small></li>
+      </ul>
+    </section>
+
+    <section class="tools">
+      <h2>Công cụ</h2><div class="path">tools/</div>
+      <p>Chạy bằng bash (Git Bash trên máy tính) trừ server.</p>
+      <ul>
+        <li><a href="tools/sync.sh">sync.sh</a><small>đồng bộ GitHub đầu / cuối phiên</small></li>
+        <li><a href="tools/muc_luc.sh">muc_luc.sh</a><small>mục lục theo dòng của file lớn</small></li>
+        <li><a href="tools/duyet.sh">duyet.sh</a><small>trang duyệt có theo kịp dữ liệu không</small></li>
+        <li><a href="tools/serve.ps1">serve.ps1</a><small>server tĩnh cổng 8765</small></li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="note">Trang cần chạy qua server (<code>powershell -ExecutionPolicy Bypass -File tools/serve.ps1</code>, rồi mở <code>http://localhost:8765/</code>) vì các game nạp <code>../shared/*.js</code>.</p>
+</div>
+</body>
+</html>

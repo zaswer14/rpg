@@ -14,6 +14,7 @@ mode=${1:-status}
 if [ "$mode" = push ]; then
   n=$(git rev-list --count "$R/$cur..HEAD" 2>/dev/null || echo "?")
   [ -n "$(git status --porcelain)" ] && echo "Lưu ý: còn thay đổi chưa commit (không được đẩy)."
+  bash tools/duyet.sh nhanh 2>/dev/null | sed 's/^/Lưu ý: /'
   if out=$(git push -q "$R" HEAD 2>&1); then echo "Đã đẩy $cur lên $R ($n commit)."
   else echo "Đẩy lỗi:"; echo "$out" | tail -5; exit 1; fi
   exit 0
@@ -42,7 +43,10 @@ done
 
 # Trạng thái Vạn Kiếp: đoạn mở đầu của TIEN_DO.md, lấy bản mới nhất (remote nếu đang thiếu commit).
 src=HEAD; [ "$behind" -gt 0 ] && src=$RB
-git show "$src:LifeSim_RPG/TIEN_DO.md" 2>/dev/null | tr -d '\r' | awk 'NR>1 && /^## /{exit} NR>1 && NF' | sed 's/^/» /'
+git show "$src:vankiep/TIEN_DO.md" 2>/dev/null | tr -d '\r' | awk 'NR>1 && /^## /{exit} NR>1 && NF' | sed 's/^/» /'
+
+# Trang duyệt nhanh: nội dung đổi từ lần đăng (chỉ theo git, không mở trình duyệt).
+bash tools/duyet.sh nhanh 2>/dev/null | sed 's/^/» /'
 
 if [ "$mode" = pull ]; then
   [ "$behind" -eq 0 ] && { echo "Đã mới nhất."; exit 0; }
