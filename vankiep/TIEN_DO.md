@@ -1,8 +1,8 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất:** `006dc94` thiên phú, chí hướng (bước 10 bản đồ V2: `8850989`) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất:** `1ceef33` xã hội tu luyện bước A (thiết kế `e5b7013`; bước 10 bản đồ V2: `8850989`) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
-Bản đồ V2 (`docs/03`) xong 10 bước, thêm thiên phú, chí hướng (`docs/06`). **Định hướng mới (15/10/2026): xã hội tu luyện kiểu Bàn Long** (`docs/07`, người dùng đã chốt mục 8): cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, không tông môn, tiền đồng / bạc / vàng. **Bước A xong** (`js/cult.js`: kỹ năng 5 bậc, cảnh giới, người dạy, thọ nguyên, tiền tệ; chưa commit). **Tiếp: bước B** (địa vị theo cảnh giới, `docs/07` mục 7).
+Bản đồ V2 (`docs/03`) xong 10 bước, thêm thiên phú, chí hướng (`docs/06`). **Định hướng mới (15/10/2026): xã hội tu luyện kiểu Bàn Long** (`docs/07`, người dùng đã chốt mục 8): cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, không tông môn, tiền đồng / bạc / vàng. **Bước A xong** (`js/cult.js`: kỹ năng 5 bậc, cảnh giới, người dạy, thọ nguyên, tiền tệ; `1ceef33`). **Tiếp: bước B** (địa vị theo cảnh giới, `docs/07` mục 7).
 
 ## 1. Đã xong
 
@@ -21,7 +21,7 @@ Bản đồ V2 (`docs/03`) xong 10 bước, thêm thiên phú, chí hướng (`d
 | 9+ | Học viện sơ / trung / cao cấp (học phí theo tầng lớp, học bổng, thi, ngành), sư đồ (học việc thợ, đệ tử cao thủ, nhận đệ tử), quý tộc Nam → Công (kế tước, công trạng, mua tước, thái ấp) | `844e978` | 03 mục 5.9 |
 | 10 | Sự kiện cho 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng `realmev`); tác dụng thế giới của đặc tính (Quân đoàn, Bạo chúa, Kỵ binh, Lò chiến, Sổ thù, Giao thức chiến, Thập tự chinh, Lời nguyền hoàng tộc…); thăng tiến theo chính thể, thách đấu giành ngôi; xuất thân hoàng gia (dòng chính, dòng phụ, kế vị, nhiếp chính, tranh ngôi) và quý tộc (con trưởng, con thứ); chọn xuất thân ở nút Kiếp mới | `8850989` | 03 mục 5.10 |
 | Thiên phú | Căn cốt 6 bậc màu (tu luyện ×0,85–×2, nâng ở bình cảnh cấp 10–50), 40 thiên phú (0–3 lúc sinh, thức tỉnh chọn 1 trong 3), 8 chí hướng (dịch tính cách, focus, nghề ưu tiên; ô Chí hướng dưới focus); quyết định `aim_pick`, `aim_defy` (nối nghiệp nhà), `aim_job` (đổi nghề giữa đời), `aim_chance` (cơ hội theo chí hướng), `tal_awaken`, `tal_break`; hệ con `talent` | `006dc94` | 06 mục 5 |
-| Xã hội tu luyện, bước A | Kỹ năng 5 bậc không tên theo Tier, cấp = số kỹ năng max tới hạn mức 2 + 4 × Tier nghề (kỹ năng thừa chỉ cộng sức), cảnh giới kiểu Bàn Long (Phàm nhân, cấp 1–9, Thánh Vực) từ cấp, chuyển nghề theo gate 2 kỹ năng + người dạy, người dạy theo học viện / sư phụ / gia tộc / giáo hội / hội, luyện ngoài giờ cho mọi người, ma lực nơi ở, thọ nguyên × (1 + 0,12 × Tier), tiền đồng / bạc / vàng (`G.coin`), quyết định `cv_saint`, bình cảnh căn cốt theo Tier; bảng Cảnh giới trong `sim.html`; tab Cảnh giới, kỹ năng trên trang Duyệt Nội Dung | (chưa commit) | 07 mục 4.9 |
+| Xã hội tu luyện, bước A | Kỹ năng 5 bậc không tên theo Tier, cấp = số kỹ năng max tới hạn mức 2 + 4 × Tier nghề (kỹ năng thừa chỉ cộng sức), cảnh giới kiểu Bàn Long (Phàm nhân, cấp 1–9, Thánh Vực) từ cấp, chuyển nghề theo gate 2 kỹ năng + người dạy, người dạy theo học viện / sư phụ / gia tộc / giáo hội / hội, luyện ngoài giờ cho mọi người, ma lực nơi ở, thọ nguyên × (1 + 0,12 × Tier), tiền đồng / bạc / vàng (`G.coin`), quyết định `cv_saint`, bình cảnh căn cốt theo Tier; bảng Cảnh giới trong `sim.html`; tab Cảnh giới, kỹ năng trên trang Duyệt Nội Dung | `1ceef33` | 07 mục 4.9 |
 
 Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 40 tỉnh, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
