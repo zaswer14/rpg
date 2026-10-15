@@ -426,6 +426,58 @@ Khác với thiết kế ở 5.3 và 3.1:
 
 1000 đời: 43.538 trận, 0 trận vượt Tier + 1; trỗi dậy 18,5%; chết vì quái 10,7%; nông dân 27%, mạo hiểm giả 24%; tuổi thọ theo chủng tộc như bản bước 6. Chết trận tăng từ 0,6% lên 1,9% số cái chết (chiến tranh giờ kéo dài theo tỉnh, tỉnh tiền tuyến war = 1, tỉnh khác của hai nước .4); 4,2% lính nghĩa vụ chết trận; 9,7% đời thấy quê đổi chủ. 1000 đời chạy 55 giây (bản bước 6: 24 giây); một thế giới động 300 năm ~0,16 giây. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước, ~0,55 giây mỗi thế giới.
 
+### 5.8. Kết quả bước 9 (15/10/2026)
+
+Đã làm (`LifeSim_RPG/js/org.js`, phần dùng chung tách ra từ `js/dynamic.js`): lập làng theo 5.5, lập nước theo 5.5, focus Quản lý (thay cho "Trị quốc"), cộng thêm theo yêu cầu của người dùng: **lập thẳng thị trấn**, **nâng làng → thị trấn → thành phố**, **hội** (phường nghề, Hiệp Hội Mạo Hiểm, đoàn lính đánh thuê), **làm quan**, **được bầu trưởng khu**. Không hướng nào bắt buộc: mỗi chức đều đến dưới dạng quyết định (nhận hay không), và bảng nhân vật có khối **Vai trò** với nút rời hội / từ chức / thoái vị.
+
+| Hướng | Không tham gia | Thành viên | Quản lý | Lập mới |
+|---|---|---|---|---|
+| Khu dân cư | (ai cũng là cư dân) | cư dân | trưởng thôn / trưởng làng / thị trưởng / thành chủ, được bầu khi danh vọng ≥ 15 / 22 / 38 / 55 (kinh đô không có) | lập làng; lập thẳng thị trấn; nâng làng lên thị trấn, thị trấn lên thành phố |
+| Quốc gia | dân | dân | Quan tỉnh (Hiểu biết ≥ 55 và tầng lớp ≥ 3, hoặc Hiểu biết ≥ 70, hoặc danh vọng ≥ 40) → Đại thần | lập nước ở tỉnh vô chủ; dấy binh |
+| Hội | không vào | thành viên | quản sự (hội đề cử sau ≥ 4 năm) → hội trưởng (được bầu khi hội trưởng NPC nhường) | lập hội, lập đoàn |
+
+**Hội** (`W.dyn.orgs`: `{ id, kind, name, seat, founded, leader, members, rep }`), đặt sẵn khi thế giới bắt đầu ở thị trấn trở lên theo bậc, sống mỗi năm (số người trôi theo dân khu, hội trưởng NPC thay người, khu sụp thì dời hoặc giải tán):
+
+| Loại | Ai vào | Lợi |
+|---|---|---|
+| Phường Thợ, Phường Buôn, Hội Nông Tang, Hội Học Giả, Hội Bóng Đêm | đúng sinh kế (thợ mỏ / tiều phu / thợ rèn; thương nhân / thủy thủ / ngư dân; nông dân / chăn nuôi; học giả / thầy thuốc / tu sĩ; kẻ trộm) | thu nhập +6–25% theo hạng và uy tín hội; miễn phí vào nghề khi nước có luật Độc quyền phường hội; hội phí hằng năm |
+| Hiệp Hội Mạo Hiểm (một hội toàn đại lục, chi nhánh ở khu có Hội Mạo Hiểm) | mọi nghề, Cấp ≥ 3; mạo hiểm giả tự ghi tên | bảng nhiệm vụ mỗi năm (dọn hang có thưởng thêm, hộ tống đoàn buôn, nhận lệnh săn thủ lĩnh, tìm đồ); hạng Đồng → Huyền Thoại theo danh vọng; hạng Vàng ở khu có chi nhánh thì được mời làm trưởng chi nhánh |
+| Đoàn lính đánh thuê / dong binh (tên từ `names.mercenary`) | Cấp ≥ 10, tuổi trưởng thành | hợp đồng với một bên của cuộc chiến gần tỉnh nhà (tiền, danh vọng, đẩy điểm chiến tranh theo hạng và cỡ đoàn, có thể tử trận), không có chiến tranh thì hộ tống |
+
+**Lập làng**: danh vọng ≥ 20, tiền 200 × (1 + độ hoang) cộng phí xin phép (bằng một năm thuế của mình) nếu đất có chủ; nước có luật `no_outsiders` chỉ cho chủng tộc được ưu ái. Chọn trong 2 chỗ trong 160px quanh chỗ đang ở: ô đồng / đồi / rừng của một tỉnh, độ hoang 1,0–2,5, cách khu dân cư ≥ 60px, phế tích ≥ 30px, hang ổ ≥ 25px, ưu tiên ven sông. Làng mới mang tên bốc từ `names.js`, `founder` và `head` là người chơi, nhà dời về đó.
+
+**Lập thẳng thị trấn**: danh vọng ≥ 45, 2.500 bạc, **nhân lực** ≥ 300 người (thành viên các hội mình làm hội trưởng + một phần tư dân khu mình làm trưởng; số này dời theo). Độ hoang ≤ 1,6. Thị trấn có sẵn đền, thầy thuốc, lò rèn, chợ, rào.
+
+**Trưởng khu**: mỗi năm khu lớn theo focus Quản lý (và một phần Làm ăn, Gia đình), sức sống hồi; lương theo dân khu; người tới xin ở; quái (hang ổ trong 70px hoặc thú triều) đánh khu thì người chơi đánh. Làng dựng được rào gỗ (thú triều và quái phá ít hơn một nửa; mọi thị trấn trở lên vốn có rào). Làng 900 người + 800 bạc lên thị trấn; thị trấn 5.000 người + 3.000 bạc + danh vọng 50 lên thành phố; tên đổi chữ chỉ bậc ("Làng Benno" → "Bến Benno" → "Thành Benno"), thêm công trình, vòng văn minh to theo bậc mới.
+
+**Lập nước**: làm trưởng thị trấn trở lên ở tỉnh vô chủ có ≥ 2 khu dân cư, danh vọng ≥ 60, 1.000 bạc; chọn 1 trong 3 mẫu của chủng tộc mình; khu của mình là kinh đô. **Dấy binh**: quan tỉnh hoặc trưởng thị trấn trở lên ở tỉnh không phải tỉnh kinh đô của nước có ổn định < .45, danh vọng ≥ 50, 500 bạc; thành công với xác suất .1 + danh vọng / 300 + (.45 − ổn định) × 1,2 (+.08 nếu là quan), kẹp .05–.8; thất bại thì bị truy nã, 35% bị xử tử. **Người cai trị**: focus Quản lý tăng ổn định, giảm hạnh phúc; thu thuế theo dân; mỗi năm quyết định Triều chính (giảm / tăng thuế 3%, tuyên chiến với nước láng giềng, cầu hòa). Thuế chỉnh lưu ở `D.nat[k].tax`.
+
+**Kế vị** (`G.onDeath` gọi từ `die`): trưởng khu, người cai trị, hội trưởng chết thì con đã trưởng thành nối (không có thì dân bầu / `makeRuler`), sử biên niên ghi người lập kèm biệt hiệu (`names.epithet`). Kiếp sau cùng thế giới có thể sinh ra ở chính làng đó.
+
+Khác với thiết kế ở 5.5:
+
+- **Chỉ lập làng trong tỉnh** (có chủ hoặc vô chủ). Đất hoang ngoài mọi tỉnh (~13% đất liền ở `can-bang`) chưa lập được, vì phải dựng tỉnh mới lúc đang chơi (`provOf`, `_provCells`, kề tỉnh, khóa mật độ quái). Để sau.
+- Lập nước không đòi "trưởng của ≥ 2 khu": chỉ cần làm trưởng khu lớn nhất (thị trấn trở lên) của tỉnh vô chủ có ≥ 2 khu dân cư. Chỉ chọn mẫu, không chọn riêng chính thể + quốc giáo; tên nước bốc tự động.
+- Chưa làm: mở đường từ làng (5.5), gả con lấy liên minh, bật / tắt luật trong triều chính, nước của người chơi sau khi chết vẫn ghi "người lập" trong bảng quốc gia.
+- Lựa chọn tự động (chế độ Tự sống, `sim.html`) theo tính cách cố định của nhân vật, không bốc lại mỗi lần được hỏi; nếu bốc mỗi lần thì nhiều năm cộng dồn thành 20–35% đời.
+- Rào (`walls`) nay giảm một nửa thiệt hại thú triều cho mọi khu có rào, kể cả thị trấn, thành phố dựng sẵn.
+
+Đo bằng `sim.html` (thế giới `can-bang`, 1000 đời, 852 đời tới tuổi trưởng thành):
+
+| Số đo | Mục tiêu | Kết quả (% đời trưởng thành) |
+|---|---|---|
+| Lập làng | ~10% | 10,1% |
+| Lập nước (tỉnh vô chủ + dấy binh thành công) | < 2% | 0,5% (0 + 4 đời); dấy binh thất bại 0,2% |
+| Lập thẳng thị trấn / nâng làng lên thị trấn / lên thành phố | | 0,4% / 0,2% / 0 |
+| Được bầu trưởng khu | | 4,7% |
+| Ra làm quan / lên Đại thần | | 10,6% / 5,3% |
+| Hiệp Hội Mạo Hiểm / nhận nhiệm vụ / trưởng chi nhánh | | 36,3% / 35,4% / 2,2% |
+| Phường nghề / đoàn lính đánh thuê / đánh thuê trong chiến tranh | | 24,7% / 14,3% / 2,7% |
+| Quản sự / hội trưởng / lập hội | | 13,0% / 12,0% / 3,6% |
+| Trận vượt Tier + 1 | 0 | 0 / 47.711 trận |
+
+Trỗi dậy 21,2%; chết vì quái 10,2%; khu dân cư sụp / lập 2,4 / 2,3 mỗi 100 năm; hang ổ 7,1. Thế giới động 50 × 300 năm (không có người chơi) vẫn như bước 8: nước còn sống trung vị 6 (4–8), tỉnh đổi chủ 6,4, khu sụp 1,9 / lập 2,1 mỗi 100 năm. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước.
+
 ## 6. Đường đi và hành trình
 
 ### 6.1. Lưới chi phí
@@ -650,7 +702,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 6 ✓ | Vùng biển 4 tầng, loài biển mới, tàu, hải trình (15/10/2026, xem mục 7.4) | đi biển |
 | 7 ✓ | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên (15/10/2026, xem mục 5.7) | thế giới đổi qua các kiếp |
 | 8 ✓ | Hang ổ, di tích, ổ chúa (15/10/2026, xem mục 4.3) | dọn hang, thú triều có nguồn |
-| 9 | Lập làng, lập nước, focus Trị quốc | người chơi để lại dấu trên bản đồ |
+| 9 ✓ | Lập làng, lập thị trấn, lập nước, hội, làm quan, focus Quản lý (15/10/2026, xem mục 5.8) | người chơi để lại dấu trên bản đồ |
 | 10 | Sự kiện cho luật, đặc tính, đặc trưng riêng; quyết định; đường thăng tiến theo chính thể | |
 
 ## 13. Còn phải chốt

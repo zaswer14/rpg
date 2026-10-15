@@ -383,9 +383,9 @@ window.LifeSim = window.LifeSim || {};
     { id: 'ad_dragon_sky', st: ['child', 'teen', 'adult', 'elder'], undead: 'any', c: S => ['storm_spire', 'ash_peak', 'serpent_bay', 'abyss_rift'].includes(X0(S).biome), w: 2, rep: true, gap: 6, run(S, X) {
         const R = X.reg(S), sp = R.lord ? G.B.byId[R.lord.species] : G.B.byId['sky_wyvern'];
         X.add('h', -2); return { t: `Bóng ${sp.nameVi} lướt qua bầu trời ${R.nameVi}. Chim ngừng hót cả buổi.`, k: 'info', f: `${sp.nameVi}: ${sp.attack}.` }; } },
-    { id: 'ad_guild', st: ['adult'], c: S => S.work === 'adventurer' && S.fame >= 15 && !S.flags['rank' + Math.floor(S.fame / 15)], w: 6, run(S, X) {
-        const r = Math.floor(S.fame / 15); S.flags['rank' + r] = true; const names = ['Đồng', 'Sắt', 'Bạc', 'Vàng', 'Bạch Kim', 'Huyền Thoại', 'Huyền Thoại'];
-        X.add('so', 5); X.money(r * 20); return { t: `Hội Mạo Hiểm nâng bạn lên hạng ${names[r - 1] || 'Huyền Thoại'}.`, k: 'big' }; } },
+    { id: 'ad_guild', st: ['adult', 'elder'], undead: 'any', c: S => !!(S.roles && S.roles.adv) && S.fame >= 15 && !S.flags['rank' + G.advRank(S)], w: 6, run(S, X) {
+        const r = G.advRank(S); S.flags['rank' + r] = true;   // Hiệp Hội Mạo Hiểm (js/org.js): hạng theo danh vọng
+        X.add('so', 5); X.money(r * 20); return { t: `Hiệp Hội Mạo Hiểm nâng bạn lên hạng ${G.ADV_RANKS[r]}.`, k: 'big' }; } },
     { id: 'ad_companion', st: ['adult'], c: S => !S.flags.companion && ['adventurer', 'hunter'].includes(S.work), w: 3, run(S, X) {
         const race = X.pick(Object.keys(G.RACES).filter(r => r !== 'skeleton')); S.flags.companion = { name: X.name(race, X.chance(.5) ? 'm' : 'f'), race };
         X.add('so', 8); return { t: `Bạn lập đội với ${S.flags.companion.name} (${J.races[race].nameVi}).`, k: 'good' }; } },

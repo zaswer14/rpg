@@ -63,7 +63,7 @@ window.LifeSim = window.LifeSim || {};
       harbors: R.harbors.slice(), roads: R.roads.map(r => r.cls), prov: R.provinces.map(p => p.nation),
       s: R.settlements.map(s => ({ tier: s.tier, urban: s.urban, rural: s.rural, nation: s.nation, race: s.race, races: s.races, faiths: s.faiths,
         bld: s.bld, buildings: s.buildings, roles: s.roles, name: s.name, was: null, dwindling: false, ruined: null, revived: null, founded: null })),
-      n: R.nations.map(n => ({ stability: n.stability, capital: n.capital, capitalCell: n.capitalCell, ruler: n.ruler, labelPos: n.labelPos, relations: { ...n.relations }, alive: true }))
+      n: R.nations.map(n => ({ stability: n.stability, tax: n.tax, capital: n.capital, capitalCell: n.capitalCell, ruler: n.ruler, labelPos: n.labelPos, relations: { ...n.relations }, alive: true }))
     };
     // Độ hoang lúc dựng: thế giới chưa đổi gì (đời mới) thì chép lại thay vì tính lại.
     Object.assign(R.base, { wild: Float32Array.from(R.wild), band: Uint8Array.from(R.band), wmin: Float32Array.from(R._wmin), src: new Map(R._src), bandCells: R.bandCells });
@@ -84,6 +84,7 @@ window.LifeSim = window.LifeSim || {};
   }
   const syncNat = (R, D) => R.nations.forEach((n, k) => {
     const d = D.nat[k]; n.alive = d.alive; n.stability = +d.stab.toFixed(3); n.ruler = d.ruler;
+    if (d.tax != null) n.tax = d.tax; else if (R.base && R.base.n[k]) n.tax = R.base.n[k].tax;   // thuế do người chơi cai trị chỉnh (js/org.js)
     if (n.capital !== d.cap && R.byId[d.cap]) { n.capital = d.cap; n.capitalCell = R.byId[d.cap].cell; }
   });
   G.bindWorld = function (W) {
@@ -274,14 +275,28 @@ window.LifeSim = window.LifeSim || {};
       const cell = X.pick(cands);
       const p = R.provOf[cell], seat = R.byId[R.provinces[p].seat], src = seat && seat.tier !== 'ruin' ? seat : liveIn(R, p)[0];
       const race = src ? src.race : n.race;
-      s = { id: 'x' + (D.nsid++), name: settlementName(R, race, 'village', X), tier: 'village', roles: ['farm'], cell, x: (cell % W + .5) * CS, y: (Math.floor(cell / W) + .5) * CS,
-        region: G.REGIONS[M.region[cell]].id, nation: k, race, urban: X.int(60, 160), rural: X.int(80, 220), races: src ? { ...src.races } : { [race]: 100 },
-        faiths: src ? { ...src.faiths } : {}, buildings: [], bld: [], province: p, founded: year, dwindling: true };
-      D.newSets.push(s); R.settlements.push(s); R.byId[s.id] = s; R._provSets[p].push(s);
+      s = newSettlement(R, D, cell, { name: settlementName(R, race, 'village', X), race, races: src ? { ...src.races } : { [race]: 100 }, faiths: src ? { ...src.faiths } : {}, urban: X.int(60, 160), rural: X.int(80, 220) }, year);
       D.n.founded++;
       hist(D, year, 'found', `Làng mới ${s.name} mọc lên ven sông ở tỉnh ${pname(R, p)} (${n.name}).`);
+      return s;
     }
     D.hp[s.id] = .4;
+    G.wildSet(R, 'S' + s.id, G.wildOfSettlement(R, s));
+    G.indexRealm(R); provPop(R);
+    touch(R, D);
+    return s;
+  }
+  // Khu dân cư mới ở ô cell (thuộc một tỉnh): làng lập mới (found), làng / thị trấn người chơi lập (js/org.js).
+  // o: name, race, races, faiths, urban, rural; tùy chọn tier (mặc định village), founder, head, hp (mặc định .4), dwindling (mặc định có), bld, buildings.
+  function newSettlement(R, D, cell, o, year) {
+    const M = G.map, W = M.W, CS = M.CS, p = R.provOf[cell];
+    const s = { id: 'x' + (D.nsid++), name: o.name, tier: o.tier || 'village', roles: ['farm'], cell, x: (cell % W + .5) * CS, y: (Math.floor(cell / W) + .5) * CS,
+      region: G.REGIONS[M.region[cell]].id, nation: p >= 0 ? D.prov[p] : NONE, race: o.race, urban: o.urban, rural: o.rural, races: o.races, faiths: o.faiths,
+      buildings: o.buildings || [], bld: o.bld || [], province: p, founded: year, dwindling: o.dwindling ?? true };
+    if (o.founder) s.founder = o.founder;
+    if (o.head) s.head = o.head;
+    D.newSets.push(s); R.settlements.push(s); R.byId[s.id] = s; if (p >= 0) R._provSets[p].push(s);
+    D.hp[s.id] = o.hp ?? .4;
     G.wildSet(R, 'S' + s.id, G.wildOfSettlement(R, s));
     G.indexRealm(R); provPop(R);
     touch(R, D);
@@ -330,11 +345,12 @@ window.LifeSim = window.LifeSim || {};
     return { title: titles.length > 1 && sex === 'f' ? titles[1] : titles[0], name: G.personName(n.race, sex, X.rnd), sex, age: X.int(Math.round(R0.adult) + 2, Math.round(R0.adult + R0.le * .3)) };
   }
   // Nước mới từ một tỉnh nổi loạn: mẫu theo chủng tộc đa số của tỉnh (ưu tiên mẫu nước nhỏ), quốc giáo theo đạo đa số của tỉnh nếu mẫu có.
-  function newNation(R, D, p, from, year, X) {
+  // Người chơi lập nước (js/org.js): from = −1 nếu tỉnh vô chủ; opt.template, opt.ruler (người chơi), opt.name.
+  function newNation(R, D, p, from, year, X, opt = {}) {
     const seat = R.byId[R.provinces[p].seat], src = seat && seat.tier !== 'ruin' ? seat : liveIn(R, p)[0];
-    const race = (src && top(src.races)) || R.nations[from].race;
+    const race = opt.template ? opt.template.race : (src && top(src.races)) || (from >= 0 ? R.nations[from].race : 'human');
     const pool = G.NATION_TEMPLATES.filter(t => t.race === race);
-    const t = X.wpick(pool, t => (t.size === 'S' ? 3 : t.size === 'M' ? 1.5 : .5) * (t.gov === 'empire' ? .2 : 1));
+    const t = opt.template || X.wpick(pool, t => (t.size === 'S' ? 3 : t.size === 'M' ? 1.5 : .5) * (t.gov === 'empire' ? .2 : 1));
     if (!t) return null;
     const k = R.nations.length, noise = () => .9 + X.rnd() * .2, [tax, army, patrol, , ambition] = t.stats;
     const lf = src && top(src.faiths), faith = lf && t.faith[lf] ? lf : X.wkey(t.faith);
@@ -350,17 +366,17 @@ window.LifeSim = window.LifeSim || {};
       capitalCell: src ? src.cell : R.byId[R.provinces[p].seat].cell, capital: src ? src.id : R.provinces[p].seat, area: 0, cells: [], name: '', ruler: null,
       relations: {}, overlord: null, labelPos: null, founded: year, from, alive: true
     };
-    n.name = nationName(R, n.race, n.gov, X);
+    n.name = opt.name || nationName(R, n.race, n.gov, X);
     for (const o of R.nations) {
       let r = 0;
       if (o.faith && n.faith && o.faith === n.faith) r += 1;
       if ((o.faith === 'light' && n.faith === 'dark') || (o.faith === 'dark' && n.faith === 'light')) r -= 2;
       if (o.wary.includes(n.race)) r -= 1; if (n.wary.includes(o.race)) r -= 1;
-      if (o.idx === from) r = -3;
+      if (from >= 0 && o.idx === from) r = -3;
       n.relations[o.idx] = r; o.relations[k] = r;
     }
     D.newNat.push(n); R.nations.push(n);
-    D.nat.push({ alive: true, stab: .5, cap: n.capital, ruler: makeRuler(n, X), peace: 0 });
+    D.nat.push({ alive: true, stab: .5, cap: n.capital, ruler: opt.ruler || makeRuler(n, X), peace: 0 });
     n.ruler = D.nat[k].ruler;
     D.n.newNat++;
     return n;
@@ -662,7 +678,7 @@ window.LifeSim = window.LifeSim || {};
       if (s.tier === 'ruin') continue;
       const p = s.province, reg = W.regions[s.region] || {}, raid = p >= 0 ? D.raid[p] : 0, war = p >= 0 ? D.war[p] : 0;
       const K = G.DYN, hitR = raid > 0 && X.chance(Math.min(.6, raid * K.raidHit)), hitW = war >= 1 && X.chance(K.warHit);
-      const loss = (hitR ? K.raidLoss : 0) + (hitW ? K.warLoss : 0) + (reg.plague > .3 ? K.plagueLoss : 0);
+      const loss = (hitR ? K.raidLoss * ((s.bld || []).includes('walls') ? .5 : 1) : 0) + (hitW ? K.warLoss : 0) + (reg.plague > .3 ? K.plagueLoss : 0);
       let hp = D.hp[s.id] ?? 1;
       hp = loss ? hp - loss * (K.frail[s.tier] || 1) * (.7 + X.rnd() * .6) : Math.min(1, hp + G.DYN.heal);
       D.hp[s.id] = +hp.toFixed(3);
@@ -680,7 +696,7 @@ window.LifeSim = window.LifeSim || {};
       d.stab = G.clamp(d.stab + .15 * (target - d.stab) - .08 * nw - (plagued(n.idx) ? .05 : 0) - .04 * Math.min(3, dw) + X.gauss() * .015, 0, 1);
       // Người cai trị già đi; băng hà thì kế vị, ổn định giảm (tranh ngôi: giảm thêm).
       const ru = d.ruler;
-      if (ru) {
+      if (ru && !ru.player) {
         ru.age++;
         const le = G.RACES[n.race].le, x = (ru.age - le * .6) / (le * .4);
         if (X.chance(x > 0 ? Math.min(.6, .004 + .25 * x * x) : .004)) {
@@ -848,4 +864,6 @@ window.LifeSim = window.LifeSim || {};
     }
     return W;
   };
+  // Cho js/org.js (người chơi lập làng, lập nước, quản lý): các hàm sửa W.dyn và G.realm cùng lúc.
+  G._dyn = { setField, touch, hist, newSettlement, newNation, setOwner, settlementName, nationName, makeRuler, provsOf, liveIn, pname, provPop, endWar, neighbors };
 })(window.LifeSim);

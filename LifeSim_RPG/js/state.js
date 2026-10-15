@@ -43,6 +43,8 @@ window.LifeSim = window.LifeSim || {};
     if (S.work === 'adventurer') m *= (bldOf(S).includes('guild') ? 1 : .6) * (n && n.laws.includes('bounties') ? 1.15 : 1);
     // Thuế cảng: tàu ghé cảng nộp phí, dân cảng giàu thêm.
     if (n && n.laws.includes('sea_toll') && G.here(S).s && G.here(S).s.roles.includes('port') && S.urban) m *= 1.1;
+    // Hội viên phường nghề đúng nghề mình (js/org.js).
+    if (G.orgIncome) m *= G.orgIncome(S);
     return m;
   };
 
@@ -65,7 +67,7 @@ window.LifeSim = window.LifeSim || {};
     if (n && n.laws.includes('caste') && w.pct[0] > G.CLASSES[S.q].pctRange[1]) return false;
     return true;
   };
-  G.workFee = (S, id) => G.WORKS[id] && G.WORKS[id].guild && G.lawHere(S, 'guild_monopoly') ? 25 : 0;
+  G.workFee = (S, id) => G.WORKS[id] && G.WORKS[id].guild && G.lawHere(S, 'guild_monopoly') && !(G.inGuildOf && G.inGuildOf(S, id)) ? 25 : 0;   // đã vào phường hội thì miễn
 
   // ── Nghề biển (research/03 mục 7.3): ngư dân ở tầng ven bờ, thủy thủ ở tầng khơi của vùng biển trước bến nhà.
   // Không sống ở bến (làng chài ven sông, ven hồ) thì không làm trên biển. Trả về { sea, zone, cell } hoặc null.

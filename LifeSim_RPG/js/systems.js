@@ -143,9 +143,11 @@ window.LifeSim = window.LifeSim || {};
       if (hunter) w = { hunt: 6, adventure: S.hl > 60 && T.bold > .5 ? T.bold * 4 : 0, train: 3, rest: S.hl < 55 ? 3 : .5, faith: S.faith ? T.pious * 1.5 : 0 };
       else w = { work: 7, train: T.bold * 2, family: T.social * 2 + (S.family.spouse ? 1 : 0), faith: S.faith ? T.pious * 2 : 0, hunt: T.bold * 1.2, study: T.studious, rest: .5 };
       if (st === 'elder') { w.rest = 3; w.family = (w.family || 0) + 2; w.adventure = 0; w.hunt = (w.hunt || 0) * .3; }
+      // Đang giữ chức (js/org.js): dành thời gian quản lý theo tính hòa đồng; người cai trị nhiều hơn.
+      if (G.hasCharge && G.hasCharge(S)) w.govern = 1.5 + T.social * 3 + (S.roles.ruler != null ? 3 : 0) + (S.roles.head != null ? 1 : 0);
     }
     if (!S.zoneSel) { w.hunt = 0; w.adventure = 0; }
-    for (const k of Object.keys(w)) if (!G.FOCUS[k] || !G.FOCUS[k].stages.includes(st)) delete w[k];
+    for (const k of Object.keys(w)) if (!G.focusOK(S, k, st)) delete w[k];
     return X.wkey(w) || 'rest';
   };
 

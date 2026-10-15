@@ -151,3 +151,9 @@ details summary { cursor: pointer; color: var(--dim); font-size: 12px; text-tran
   .zones { grid-template-columns: 1fr; }
   .brand .sub { display: none; }
 }
+/* Vai trò (js/org.js): trưởng khu, quan, người cai trị, hội; nút rời / từ chức */
+.roles { display: grid; gap: 3px; font-size: 12.5px; }
+.roles .role { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.roles .role.mgr span { color: var(--gold); }
+.roles button { font-size: 10.5px; white-space: nowrap; padding: 0 6px; border-radius: 8px; background: transparent; color: var(--dim); border: 1px solid #4a4038; cursor: pointer; }
+.roles button:hover { color: var(--text, #f3e6c8); border-color: #7a6a58; }

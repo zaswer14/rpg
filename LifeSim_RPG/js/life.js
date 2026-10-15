@@ -110,8 +110,11 @@ window.LifeSim = window.LifeSim || {};
     adventure: { nameVi:'Phiêu lưu',   icon:'🗺', stages:['adult','elder'],                 eff:{ h:3, so:-2 } },
     family:    { nameVi:'Gia đình',    icon:'🏠', stages:['teen','adult','elder'],          eff:{ so:10, h:5 } },
     faith:     { nameVi:'Tu hành',     icon:'🕯', stages:['child','teen','adult','elder'],  eff:{ h:3, sm:2 }, train:{ Spirit:3 } },
-    rest:      { nameVi:'Nghỉ ngơi',   icon:'🌙', stages:['adult','elder'],                 eff:{ hl:9, h:4 } }
+    rest:      { nameVi:'Nghỉ ngơi',   icon:'🌙', stages:['adult','elder'],                 eff:{ hl:9, h:4 } },
+    // Quản lý (js/org.js): chỉ mở khi đang giữ chức (trưởng khu, quan, người cai trị, quản sự / hội trưởng, trưởng chi nhánh).
+    govern:    { nameVi:'Quản lý',     icon:'🏛', stages:['adult','elder'],                 eff:{ so:3, h:-2, sm:1 }, need: S => G.hasCharge && G.hasCharge(S) }
   };
+  G.focusOK = (S, k, st) => { const F = G.FOCUS[k]; return !!F && F.stages.includes(st) && (!F.need || F.need(S)); };
   G.STAGES = { infant:'Sơ sinh', child:'Thơ ấu', teen:'Thiếu niên', adult:'Trưởng thành', elder:'Tuổi già' };
 
   // Bệnh/thương tật: mult nhân vào nguy cơ chết, cause gợi ý nguyên nhân.
@@ -362,7 +365,7 @@ window.LifeSim = window.LifeSim || {};
     planYear() {
       const S = this.S, st = this.stage(S);
       S.t = 0; S.queue = []; S.focusTime = {};
-      if (S.auto || !G.FOCUS[S.focus] || !G.FOCUS[S.focus].stages.includes(st)) S.focus = G.autoFocus(this);
+      if (S.auto || !G.focusOK(S, S.focus, st)) S.focus = G.autoFocus(this);
       this.ensureZone();
       const items = [];
       const nEv = 1 + (this.chance(.6) ? 1 : 0) + (this.chance(.25) ? 1 : 0);
@@ -509,6 +512,7 @@ window.LifeSim = window.LifeSim || {};
     die(cause) {
       const S = this.S; if (S.dead) return;
       S.dead = true; S.cause = cause.text; S.causeId = cause.id; S.causeSpecies = cause.species || null;
+      if (G.onDeath) G.onDeath(S, this);   // kế vị chức vụ, hội, ngai (js/org.js)
       S.world.lastDeath = S.world.year;
       S.dominant = this.dominant(S);
       // Kết quả trỗi dậy được tung ngay lúc chết (cùng seed thì cùng kết quả).

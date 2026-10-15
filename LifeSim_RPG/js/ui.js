@@ -225,6 +225,10 @@
     if (S.flags.soldier) chips.push(`<span class="chip ok">Đang làm lính (còn ${S.flags.soldier} năm)</span>`);
     if (S.flags.labor) chips.push(`<span class="chip">Khổ sai (còn ${S.flags.labor} năm)</span>`);
     $('cConds').innerHTML = chips.join('');
+    // Vai trò (js/org.js): trưởng khu, quan, người cai trị, hội; mỗi vai có nút rời / từ chức (không hướng nào bắt buộc).
+    const RLs = S.dead ? [] : G.roleList(S);
+    $('cRolesBox').hidden = !RLs.length;
+    $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : 'Từ chức'}</button></div>`).join('');
     const ms = Object.entries(S.mastery).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
     $('cMast').innerHTML = ms.map(([m, v]) => {
       const inh = S.inherited && S.inherited.skill === m;
@@ -239,11 +243,18 @@
     $('cFam').innerHTML = rows.join('') || '<span>Không ai.</span>';
   }
 
+  $('cRoles').addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b || !sim.S || sim.S.dead) return;
+    const txt = G.leaveRole(sim.S, sim, b.dataset.what, b.dataset.id || null);
+    if (txt) sim.log(txt, 'choice');
+    dirty = true;
+  });
   function renderFocus() {
     const S = sim.S, st = sim.stage(S), box = $('focusBtns');
     box.innerHTML = '';
     for (const [k, F] of Object.entries(G.FOCUS)) {
       if (!F.stages.includes(st) && !(st === 'infant' && k === 'play')) continue;
+      if (F.need && !F.need(S)) continue;   // Quản lý: chỉ khi đang giữ chức
       const b = document.createElement('button');
       b.textContent = `${F.icon} ${F.nameVi}`; b.className = S.focus === k ? 'on' : '';
       b.disabled = S.dead || st === 'infant' || ((k === 'hunt' || k === 'adventure') && !S.zoneSel);
@@ -293,7 +304,7 @@
     const big = own.slice().sort((a, b) => b.urban - a.urban).slice(0, 8).map(s => `${esc(s.name)} <span class="fam">${G.TIER_VI[s.tier].toLowerCase()} ${s.urban.toLocaleString('vi')}${s.roles.length ? ', ' + s.roles.map(r => G.ROLE_VI[r]).join(', ') : ''}</span>`).join(' · ');
     box.innerHTML = `<h4 style="color:${n.color}">${esc(n.name)}</h4>
       <div class="row"><span>${esc(rname(n.race))} · mẫu ${esc(n.label)}</span><span>${esc(gov.nameVi)}</span><span>Quốc giáo: ${n.faith ? esc(J.faiths[n.faith].nameVi) : 'không'}</span></div>
-      <div class="row">${n.ruler ? `<span>${esc(n.ruler.title)} ${esc(n.ruler.name)}, ${n.ruler.age} tuổi</span>` : '<span>Không có người cai trị</span>'}<span>Thăng tiến: ${esc(gov.promo)}</span></div>
+      <div class="row">${n.ruler ? `<span>${esc(n.ruler.title)} ${esc(n.ruler.name)}, ${n.ruler.age} tuổi${n.ruler.player ? ' (bạn)' : ''}</span>` : '<span>Không có người cai trị</span>'}<span>Thăng tiến: ${esc(gov.promo)}</span></div>
       <div class="row"><span>Thuế ${Math.round(n.tax * 100)}%</span><span>Quân ${n.army}</span><span>Tuần tra ${n.patrol}</span><span>Ổn định ${Math.round(n.stability * 100)}</span><span>Tham vọng ${Math.round(n.ambition * 100)}</span></div>
       <div class="row"><span>Luật: ${n.laws.map(l => esc(G.LAWS[l].nameVi)).join(', ') || 'không có gì đặc biệt'}</span></div>
       <div class="row"><span>Ưu ái: ${n.tolerant ? 'mọi chủng tộc' : esc(n.fav.map(rname).join(', ') || 'không')}</span><span>Dè chừng: ${esc(n.wary.length > 6 ? 'mọi chủng tộc khác' : n.wary.map(rname).join(', ') || 'không')}</span></div>
@@ -435,7 +446,7 @@
     const near = G.realm.settlements.filter(s => Math.hypot(s.x - x, s.y - y) < ({ capital: 10, city: 9, town: 8 }[s.tier] || 6)).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
     const prov = G.provinceAtCell(c.cell), nat = G.nationAtCell(c.cell);
     const gv = graves.find(g => g.world === G.realm.seed && Math.hypot(g.x - x, g.y - y) < 7);
-    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích${near.ruined != null ? ` (bỏ hoang năm ${near.ruined})` : ''}` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}${near.dwindling ? ' · <span style="color:var(--bad)">sa sút</span>' : ''}${near.founded ? ` · lập năm ${near.founded}` : near.revived ? ` · dựng lại năm ${near.revived}` : ''}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
+    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích${near.ruined != null ? ` (bỏ hoang năm ${near.ruined})` : ''}` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}${near.dwindling ? ' · <span style="color:var(--bad)">sa sút</span>' : ''}${near.founded ? ` · lập năm ${near.founded}` : near.revived ? ` · dựng lại năm ${near.revived}` : ''}${near.head ? `<br>${G.HEAD_VI[near.tier] ? G.HEAD_VI[near.tier][0].toUpperCase() + G.HEAD_VI[near.tier].slice(1) : 'Trưởng'}: ${esc(near.head.name)}${near.head.player && near.head.name === S.name ? ' (bạn)' : ''}` : ''}${near.founder ? ` · người lập: ${esc(near.founder)}` : ''}${(() => { const os = G.orgsAt ? G.orgsAt(S.world, near.id) : []; return os.length ? `<br>Hội: ${os.map(o => esc(o.name) + ' (' + o.members + ')').join(', ')}` : ''; })()}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
       + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`
