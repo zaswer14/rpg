@@ -1,6 +1,6 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `844e978` (học viện, sư đồ, quý tộc; bước 10 xong nhưng chưa commit) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `8850989` (bước 10) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
 Đang làm **bản đồ V2** theo `research/03_Thiet_ke_ban_do_Varen_V2.md` (thứ tự làm ở mục 12). Đã xong cả 10 bước (thêm học viện, sư đồ, quý tộc, xuất thân hoàng gia); **chưa có việc kế tiếp: hỏi người dùng chọn hướng ở mục 3**.
 
@@ -19,7 +19,7 @@
 | 8 | Hang ổ (mọc, lớn, sào huyệt tràn ra tầng ven, NPC dọn, trống rồi bị chiếm lại, phế tích thành hang), di tích 3 tầng, ổ chúa; quyết định Dọn hang, Xuống di tích; ký hiệu và tooltip ở chế độ Nguy hiểm; thú triều giờ đến từ sào huyệt | `d9aab09` | 03 mục 4.3 |
 | 9 | Tổ chức và lập nghiệp (`js/org.js`): vai trò tự chọn (không tham gia / thành viên / quản lý) cho khu dân cư, quốc gia, hội; lập làng, lập thẳng thị trấn, nâng làng → thị trấn → thành phố; làm quan; lập nước, dấy binh, triều chính; phường nghề, Hiệp Hội Mạo Hiểm (bảng nhiệm vụ), đoàn lính đánh thuê; focus Quản lý; kế vị; khối Vai trò trong bảng nhân vật | `baf10d4` | 03 mục 5.8 |
 | 9+ | Học viện sơ / trung / cao cấp (học phí theo tầng lớp, học bổng, thi, ngành), sư đồ (học việc thợ, đệ tử cao thủ, nhận đệ tử), quý tộc Nam → Công (kế tước, công trạng, mua tước, thái ấp) | `844e978` | 03 mục 5.9 |
-| 10 | Sự kiện cho 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng `realmev`); tác dụng thế giới của đặc tính (Quân đoàn, Bạo chúa, Kỵ binh, Lò chiến, Sổ thù, Giao thức chiến, Thập tự chinh, Lời nguyền hoàng tộc…); thăng tiến theo chính thể, thách đấu giành ngôi; xuất thân hoàng gia (dòng chính, dòng phụ, kế vị, nhiếp chính, tranh ngôi) và quý tộc (con trưởng, con thứ); chọn xuất thân ở nút Kiếp mới | (chưa commit) | 03 mục 5.10 |
+| 10 | Sự kiện cho 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng `realmev`); tác dụng thế giới của đặc tính (Quân đoàn, Bạo chúa, Kỵ binh, Lò chiến, Sổ thù, Giao thức chiến, Thập tự chinh, Lời nguyền hoàng tộc…); thăng tiến theo chính thể, thách đấu giành ngôi; xuất thân hoàng gia (dòng chính, dòng phụ, kế vị, nhiếp chính, tranh ngôi) và quý tộc (con trưởng, con thứ); chọn xuất thân ở nút Kiếp mới | `8850989` | 03 mục 5.10 |
 
 Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 40 tỉnh, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
