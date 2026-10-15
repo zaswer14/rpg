@@ -1,6 +1,6 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất:** thiên phú, chí hướng (sau `8850989` bước 10 bản đồ V2) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất:** `006dc94` thiên phú, chí hướng (bước 10 bản đồ V2: `8850989`) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
 Bản đồ V2 (`docs/03`) đã xong cả 10 bước. Vừa thêm **thiên phú (căn cốt + 40 thiên phú, 6 bậc màu Trắng → Đỏ) và chí hướng** (`js/talent.js`, `docs/06`). **Chưa có việc kế tiếp: hỏi người dùng chọn hướng ở mục 3**.
 
@@ -20,7 +20,7 @@ Bản đồ V2 (`docs/03`) đã xong cả 10 bước. Vừa thêm **thiên phú 
 | 9 | Tổ chức và lập nghiệp (`js/org.js`): vai trò tự chọn (không tham gia / thành viên / quản lý) cho khu dân cư, quốc gia, hội; lập làng, lập thẳng thị trấn, nâng làng → thị trấn → thành phố; làm quan; lập nước, dấy binh, triều chính; phường nghề, Hiệp Hội Mạo Hiểm (bảng nhiệm vụ), đoàn lính đánh thuê; focus Quản lý; kế vị; khối Vai trò trong bảng nhân vật | `baf10d4` | 03 mục 5.8 |
 | 9+ | Học viện sơ / trung / cao cấp (học phí theo tầng lớp, học bổng, thi, ngành), sư đồ (học việc thợ, đệ tử cao thủ, nhận đệ tử), quý tộc Nam → Công (kế tước, công trạng, mua tước, thái ấp) | `844e978` | 03 mục 5.9 |
 | 10 | Sự kiện cho 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng `realmev`); tác dụng thế giới của đặc tính (Quân đoàn, Bạo chúa, Kỵ binh, Lò chiến, Sổ thù, Giao thức chiến, Thập tự chinh, Lời nguyền hoàng tộc…); thăng tiến theo chính thể, thách đấu giành ngôi; xuất thân hoàng gia (dòng chính, dòng phụ, kế vị, nhiếp chính, tranh ngôi) và quý tộc (con trưởng, con thứ); chọn xuất thân ở nút Kiếp mới | `8850989` | 03 mục 5.10 |
-| Thiên phú | Căn cốt 6 bậc màu (tu luyện ×0,85–×2, nâng ở bình cảnh cấp 10–50), 40 thiên phú (0–3 lúc sinh, thức tỉnh chọn 1 trong 3), 8 chí hướng (dịch tính cách, focus, nghề ưu tiên; ô Chí hướng dưới focus); quyết định `aim_pick`, `aim_defy` (nối nghiệp nhà), `aim_job` (đổi nghề giữa đời), `aim_chance` (cơ hội theo chí hướng), `tal_awaken`, `tal_break`; hệ con `talent` | (chưa commit) | 06 mục 5 |
+| Thiên phú | Căn cốt 6 bậc màu (tu luyện ×0,85–×2, nâng ở bình cảnh cấp 10–50), 40 thiên phú (0–3 lúc sinh, thức tỉnh chọn 1 trong 3), 8 chí hướng (dịch tính cách, focus, nghề ưu tiên; ô Chí hướng dưới focus); quyết định `aim_pick`, `aim_defy` (nối nghiệp nhà), `aim_job` (đổi nghề giữa đời), `aim_chance` (cơ hội theo chí hướng), `tal_awaken`, `tal_break`; hệ con `talent` | `006dc94` | 06 mục 5 |
 
 Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 40 tỉnh, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
