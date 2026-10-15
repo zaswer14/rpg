@@ -22,6 +22,7 @@ Khi người dùng bảo commit (hoặc trước khi hỏi họ có commit khôn
 
 - Trang **LỆCH** bản đã đăng: hỏi người dùng có đăng lại không; đồng ý thì làm theo `review/README.md` mục 2 (`dung`, đăng lên đúng URL, `ghi`) và commit `review/published.txt` cùng thay đổi.
 - **Nội dung đổi mà chưa trang nào hiện** (sự kiện, hội, loài, tên mới…): nói rõ là chưa có chỗ duyệt nhanh, hỏi có thêm tab / trang không; chưa thêm thì ghi vào `review/README.md` mục 3.
+- **Thêm hệ thống mới** (sự kiện, quyết định, dữ liệu mới của Vạn Kiếp): luôn thêm tab vào trang **Duyệt Nội Dung Vạn Kiếp** trong cùng lần làm, không đợi hỏi (người dùng dặn 15/10/2026); cách làm ở `review/README.md` mục 2.
 - Máy không có trình duyệt headless (cloud): script chỉ kiểm theo file; ghi chú việc dựng lại cho phiên trên máy tính.
 
 ## Đọc tiết kiệm

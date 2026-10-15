@@ -15,12 +15,14 @@ PAGES="tree nation content bestiary"
 cover() { case $1 in
   tree)     echo "shared/schools.js shared/trunk.js shared/aspects.js shared/faiths.js shared/compose.js shared/catalog.js shared/races/ shared/archetypes/ review/tree-" ;;
   nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
-  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/data/world.js vankiep/data/nations.js review/content-" ;;
+  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/data/world.js vankiep/data/nations.js review/content-" ;;
   bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).
-CONTENT="shared/ vankiep/data/ vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js"
-NOT_CONTENT="shared/docs/ shared/tools/ shared/catalog.html shared/README.md"
+# Cả vankiep/js/: file hệ thống mới tự bị báo cho tới khi có tab trên trang Duyệt Nội Dung (CLAUDE.md: mỗi hệ thống mới thêm vào trang đó).
+CONTENT="shared/ vankiep/data/ vankiep/js/"
+# Mã máy (không phải nội dung để duyệt): lõi, bản đồ, thế giới, giao diện, vòng đời.
+NOT_CONTENT="shared/docs/ shared/tools/ shared/catalog.html shared/README.md vankiep/js/core.js vankiep/js/map.js vankiep/js/realm.js vankiep/js/ui.js vankiep/js/life.js vankiep/js/systems.js vankiep/js/dynamic.js vankiep/js/travel.js"
 
 under() { local f=$1 q; shift; for q in "$@"; do case $f in "$q"*) return 0 ;; esac; done; return 1; }
 

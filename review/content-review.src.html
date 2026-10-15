@@ -2,7 +2,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
 <style>
-/* Bố cục: tiêu đề + tiến độ → thanh tab (sự kiện quốc gia ba nhóm, hội, học viện, quý tộc, thăng tiến, sinh kế, công trình) → lưới thẻ.
+/* Bố cục: tiêu đề + tiến độ → thanh tab (sự kiện quốc gia ba nhóm, hội, học viện, quý tộc, thăng tiến, sinh kế, công trình, thiên phú, chí hướng, quyết định định hướng) → lưới thẻ.
    Chữ và nút giống Duyệt Cây Nghề, Duyệt Mẫu Quốc Gia; màu nhấn tím mận để ba trang không lẫn. */
 :root{
   --bg:#f3f1f2; --panel:#fbfafb; --ink:#211e24; --muted:#6a6470; --line:#dbd5dc; --chip:#ebe5ec;
@@ -77,12 +77,15 @@ table.mini tr:last-child td{border-bottom:0}
 textarea{width:100%;min-height:52px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
 .group-title{font-family:var(--font-display);font-weight:600;font-size:17px;margin:14px 0 8px;grid-column:1/-1}
 .empty{color:var(--muted);padding:20px 0}
+.rar{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600}
+.rar i{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.card.rarc{border-left:4px solid var(--rc)}
 code{font-family:var(--font-mono);font-size:12px}
 </style>
 
 <div class="page">
   <h1>Duyệt Nội Dung Vạn Kiếp</h1>
-  <p class="lede">Nội dung đời người của Vạn Kiếp từ bước 4 trở đi: sự kiện quốc gia, hội và tổ chức, học viện, tước quý tộc, thang thăng tiến theo chính thể, sinh kế và công trình. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa mã nguồn trong <code>vankiep/</code>.</p>
+  <p class="lede">Nội dung đời người của Vạn Kiếp từ bước 4 trở đi: sự kiện quốc gia, hội và tổ chức, học viện, tước quý tộc, thang thăng tiến theo chính thể, sinh kế và công trình; thiên phú, căn cốt, chí hướng và các quyết định định hướng đời nhân vật. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa mã nguồn trong <code>vankiep/</code>.</p>
   <div class="progress" id="progress"></div>
   <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
   <div class="bar2">
@@ -119,7 +122,8 @@ code{font-family:var(--font-mono);font-size:12px}
   const TABS = [
     ['ev_tpl', 'Sự kiện: đặc tính mẫu'], ['ev_quirk', 'Sự kiện: đặc trưng riêng'], ['ev_misc', 'Sự kiện: chung'], null,
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
-    ['work', 'Sinh kế'], ['bld', 'Công trình']
+    ['work', 'Sinh kế'], ['bld', 'Công trình'], null,
+    ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -138,7 +142,10 @@ code{font-family:var(--font-mono);font-size:12px}
     noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
     promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
     work: Object.entries(D.works).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
-    bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') }))
+    bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') })),
+    tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
+    aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
+    tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))
   };
   const allItems = Object.values(items).flat();
   const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
@@ -148,7 +155,8 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderProgress() {
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
-      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld]);
+      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld])
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]);
   }
 
   // ---- Tab ----
@@ -173,7 +181,8 @@ code{font-family:var(--font-mono);font-size:12px}
   }
   const pill = (kind, id) => { const s = rv(kind, id).status; return s ? `<span class="pill ${s}">${STATUS[s].t} ${STATUS[s].vi}</span>` : ''; };
   const cardClass = (kind, id) => { const s = rv(kind, id).status; return 'card' + (s ? ' s-' + s : ''); };
-  const card = (kind, id, title, body) => `<article class="${cardClass(kind, id)}">
+  // rc: màu bậc (thiên phú, căn cốt) vẽ thành viền trái.
+  const card = (kind, id, title, body, rc) => `<article class="${cardClass(kind, id)}${rc ? ` rarc" style="--rc:${rc}` : ''}">
       <header><h3><span class="tid">${esc(id)}</span>${esc(title)}</h3>${pill(kind, id)}</header>${body}${reviewBlock(kind, id)}</article>`;
   const grid = cards => `<div class="grid">${cards || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
   const overview = (title, text, extra = '') => `<section class="overview"><h2>${title}</h2><p>${text}</p>${extra}</section>`;
@@ -322,10 +331,43 @@ code{font-family:var(--font-mono);font-size:12px}
     return overview('Công trình', 'Công trình trong khu dân cư, tên đổi theo bậc khu; cột "Có" là xác suất khu bậc đó có công trình. Thôn không có công trình nào.') + grid(cards.join(''));
   }
 
+  // ---- Thiên phú, căn cốt, chí hướng (vankiep/js/talent.js) ----
+  const rar = r => `<span class="rar"><i style="background:${r.col}"></i>${esc(r.nameVi)}</span>`;
+  function talView() {
+    const tot = D.rarity.reduce((a, r) => a + r.w, 0);
+    const roots = D.rarity.filter(r => passes('root', r.id)).map(r => card('root', r.id, r.root, `<div class="meta">${rar(r)}</div>
+        <dl class="kv"><dt>Tu luyện</dt><dd>× ${num(r.rate)} (kinh nghiệm và mọi lần rèn kỹ năng)</dd><dt>Lúc sinh</dt><dd>${num(Math.round(r.w / tot * 1000) / 10)}% (cũng là tỉ lệ bậc của mỗi thiên phú)</dd></dl>`, r.col));
+    const tals = D.rarity.map((r, k) => {
+      const l = D.talents.filter(t => t.r === k && passes('tal', t.id));
+      return l.length ? `<h3 class="group-title">Thiên phú ${esc(r.nameVi)}</h3>` + l.map(t => card('tal', t.id, t.nameVi, `<div class="meta">${rar(r)}</div><p style="margin:0">${esc(t.d)}</p>
+        <dl class="kv"><dt>Hiệu ứng</dt><dd class="chips">${t.fx.split(' · ').map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>`, r.col)).join('') : '';
+    }).join('');
+    return overview('Thiên phú, căn cốt', 'Mỗi người một căn cốt (sáu bậc màu), là hệ số tu luyện: nhân vào kinh nghiệm và mọi lần rèn kỹ năng; nâng được một bậc ở bình cảnh cấp 10, 20, 30, 40, 50. Lúc sinh có 0 / 1 / 2 / 3 thiên phú (trọng số 30 / 40 / 22 / 8), mỗi cái bốc bậc theo cùng tỉ lệ với căn cốt; thức tỉnh thêm trong đời, tối đa 5. Thiên phú rèn trường phái mà chủng tộc bị cấm thì không ra.')
+      + grid((roots.length ? '<h3 class="group-title">Căn cốt</h3>' + roots.join('') : '') + tals);
+  }
+  const TRAITVI = { bold: 'gan', studious: 'chăm học', pious: 'mộ đạo', social: 'hòa đồng' };
+  function aimView() {
+    const cards = Object.entries(D.aims).filter(([id]) => passes('aim', id)).map(([id, a]) => card('aim', id, `${a.icon} ${a.nameVi}`, `<p style="margin:0">${esc(a.d)}</p>
+        <dl class="kv"><dt>Tính cách</dt><dd class="chips">${Object.entries(a.trait).map(([k, v]) => `<span class="chip">${TRAITVI[k] || k} ${v > 0 ? '+' : ''}${num(v)}</span>`).join('') || '<span class="chip dash">giữ nguyên</span>'}</dd>
+          <dt>Focus</dt><dd class="chips">${Object.entries(a.focus).map(([k, v]) => `<span class="chip">${esc(D.focus[k] || k)} +${num(v)}</span>`).join('') || '<span class="chip dash">không cộng</span>'}</dd>
+          <dt>Nghề ưu tiên</dt><dd>${esc(a.works.map(workVi).join(', ') || 'nghề nhà, không ép')}</dd>
+          ${a.schools.length ? `<dt>Trường phái</dt><dd>${esc(a.schools.map(s => D.schools[s].vi).join(', '))}</dd>` : ''}
+          ${a.dream ? `<dt>Mơ về</dt><dd>${esc(a.dream)}</dd>` : ''}${a.side ? `<dt>Tập lén</dt><dd>${esc(a.side)}</dd>` : ''}${a.sign ? `<dt>Báo tin</dt><dd>${esc(a.sign)}</dd>` : ''}</dl>
+        ${a.chance.length ? `<div class="meta">Cơ hội theo chí hướng (câu hỏi, lựa chọn, kết quả):</div><ul class="lines">${a.chance.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`));
+    return overview('Chí hướng', 'Người chơi đặt ở ô Chí hướng dưới focus lúc nào cũng được, hoặc chọn ở tuổi thiếu niên. Chí hướng dịch tính cách (mọi lựa chọn tự động theo tính cách nghiêng theo), cộng trọng số focus khi Tự sống (thơ ấu, tuổi già một nửa), đưa nghề ưu tiên vào lựa chọn nghề và mở các quyết định ở tab Quyết định định hướng.') + grid(cards.join(''));
+  }
+  function tdecView() {
+    const cards = D.tdecs.filter(d => passes('dec', d.id)).map(d => card('dec', d.id, d.title, `<div class="meta">ưu tiên ${d.prio} · ${d.gap >= 99 ? 'một lần một đời' : 'cách ' + d.gap + ' lượt'}</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(d.when)}</dd></dl>
+        <ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+        ${d.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${d.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`));
+    return overview('Quyết định định hướng', 'Quyết định của hệ thiên phú và chí hướng. Câu chữ trích từ mã nguồn (câu hỏi, lựa chọn và kết quả); ‹…› là chỗ game điền vào.') + grid(cards.join(''));
+  }
+
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

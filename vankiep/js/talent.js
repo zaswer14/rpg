@@ -350,6 +350,7 @@ window.LifeSim = window.LifeSim || {};
         : { title: 'Sum họp', body: 'Cả nhà định tụ về một bữa cơm cuối năm.', choices: [{ k: 'home', label: 'Về sum họp', sub: 'Tâm trạng, quan hệ tăng; tốn chút tiền quà.' }, { k: 'no', label: 'Bận, không về', sub: '' }] };
     }
   };
+  G.AIM_CHANCE = CHANCE;   // trang Duyệt Nội Dung trích câu chữ từ đây
   const fee = (S, X, k) => Math.max(3, Math.round(G.median(X.reg(S)) * k));
   const gift = (S, X) => fee(S, X, .7);
   const kneelP = S => G.clamp(.3 + S.traits.bold * .15 + S.traits.studious * .1 + (S.tal ? G.RANK[S.tal.root] : 0) * .06, .1, .8);

@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -33,7 +33,9 @@ const COND = {
 };
 // Biểu thức ${…} trong câu: thay bằng nhãn dễ đọc.
 const slot = e => /^[gfcn]$|gear/.test(e) ? '‹số›' : e === 'h.y' ? '‹năm›' : e === 'h.t' ? '‹dòng sử›' : /prophecy/.test(e) ? '‹lời tiên tri›'
-  : /nameVi/.test(e) ? '‹tên đạo›' : /ruler/.test(e) ? '‹người cai trị›' : /kid\.name/.test(e) ? '‹tên con›' : /name/.test(e) ? '‹tên›' : '‹…›';
+  : /faith/.test(e) && /nameVi/.test(e) ? '‹tên đạo›' : /WORKS|\bw\.nameVi|cur\b/.test(e) ? '‹nghề›' : /AIMS|A\.dream/.test(e) ? '‹chí hướng›'
+  : /RARITY|rarityOf|\br\.nameVi/.test(e) ? '‹bậc màu›' : /TALENTS|\bt\.nameVi/.test(e) ? '‹thiên phú›' : /\bz\b/.test(e) ? '‹khu›'
+  : /rootText/.test(e) ? '‹căn cốt›' : /talText/.test(e) ? '‹căn cốt, thiên phú›' : /homeName/.test(e) ? '‹làng›' : /ruler/.test(e) ? '‹người cai trị›' : /kid\.name/.test(e) ? '‹tên con›' : /name/.test(e) ? '‹tên›' : '‹…›';
 const STAT = { hl: 'Sinh lực', h: 'Tâm trạng', so: 'Quan hệ', sm: 'Hiểu biết' };
 function parseRun(fn) {
   const src = fn.toString(), texts = [], fx = [], tone = [];
@@ -64,6 +66,16 @@ const events = G.NATION_EVENTS.map(e => {
   return { id: e.id, kind, ref, st: e.st, w: typeof e.w === 'number' ? e.w : null, rep: !!e.rep, gap: e.gap || null,
     undead: e.undead === true ? 'only' : e.undead === 'any' ? 'any' : 'none', title: COND[e.id] ? COND[e.id][0] : null, cond: COND[e.id] ? COND[e.id][1] : null, ...parseRun(e.run) };
 });
+// Thiên phú, chí hướng (vankiep/js/talent.js): tên và điều kiện của quyết định ghi tay (build dựng câu theo trạng thái), câu chữ trích từ build + apply.
+const TDEC = {
+  aim_pick: ['Chí hướng', 'Tuổi thiếu niên, chưa đặt chí hướng (đã chọn ở ô Chí hướng thì không hỏi). Gợi ý 4 chí hướng hợp tính cách, thiên phú, xuất thân nhất.'],
+  aim_defy: ['Nối nghiệp nhà', 'Nhà Cùng khổ hoặc Nông hộ ở quê, cha mẹ còn sống, chưa có nghề, chí hướng không phải Gia đình hay Thuận theo tự nhiên. Một lần một đời.'],
+  aim_job: ['Đổi nghề?', 'Trưởng thành, nghề đang làm lệch chí hướng; hoặc chí hướng Thuận theo tự nhiên mà Tâm trạng dưới 30. Ba năm hỏi một lần.'],
+  aim_chance: ['Cơ hội theo chí hướng', 'Sự kiện báo tin (trọng số 1,5, cách 5 năm) gieo cờ, quyết định mở năm sau. Câu chữ từng chí hướng ở tab Chí hướng.'],
+  tal_awaken: ['Thiên phú thức tỉnh', 'Mỗi lượt 0,6%, cộng 1,5% nếu đêm sinh có sao chổi, 6% nếu Sinh lực dưới 22, thêm theo thời gian Tu hành / Luyện tập. Chào 3 thiên phú, bậc nghiêng lên; tối đa 5.'],
+  tal_break: ['Bình cảnh', 'Chạm cấp 10, 20, 30, 40, 50, mỗi mốc một lần, căn cốt chưa phải Đỏ. Thuốc tẩy tủy 62% (giảm 9 điểm mỗi bậc), bế quan 30% (giảm 5 điểm mỗi bậc, cộng theo tính chăm).']
+};
+const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
 const data = {
   races: pickF(L.races, r => r.nameVi),
@@ -82,7 +94,12 @@ const data = {
   nobleVi: G.NOBLE_VI, noble: G.NOBLE, nobleGovs: G.NOBLE_GOVS, originVi: G.ORIGIN_VI, dynastic: G.DYNASTIC,
   promo: pickF(G.PROMO, p => ({ names: p.names, thr: p.thr, unit: p.unit })),
   classes: G.CLASSES.slice(1).map(c => c.nameVi),
-  works: G.WORKS, buildings: G.BUILDINGS
+  works: G.WORKS, buildings: G.BUILDINGS,
+  focus: pickF(G.FOCUS, f => f.nameVi),
+  rarity: G.RARITY.map((r, i) => ({ id: r.id, nameVi: r.nameVi, col: r.col, w: r.w, rate: r.rate, root: G.ROOT_VI[i] })),
+  talents: Object.values(G.TALENTS).map(t => ({ id: t.id, r: t.r, nameVi: t.nameVi, d: t.d, fx: G.fxText(t.fx) })),
+  aims: pickF(G.AIMS, (a, k) => ({ nameVi: a.nameVi, icon: a.icon, d: a.d, trait: a.trait, focus: a.focus, works: a.works, schools: a.schools, dream: a.dream || null, side: a.side || null, sign: a.sign || null, chance: G.AIM_CHANCE[k] ? parseRun(G.AIM_CHANCE[k]).texts : [] })),
+  tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; })
 };
 document.getElementById('out').textContent = JSON.stringify(data);
 </script>
