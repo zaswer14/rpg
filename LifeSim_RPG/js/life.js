@@ -188,11 +188,10 @@ window.LifeSim = window.LifeSim || {};
     }
     cond(id) { const S = this.S; let c = S.conds.find(c => c.id === id); if (!c) { c = { id, years: 0 }; S.conds.push(c); } return c; }
     hasCond(id) { return this.S.conds.some(c => c.id === id); }
+    // Tên lấy từ kho tên (data/names.js); Bộ Xương mới trỗi dậy không có tên.
     name(race, sex) {
-      const R = G.RACES[race];
-      if (R.construct) return `${this.pick(R.pre)}-${this.int(10, 99)} «${this.pick(R.fam)}»`;
-      if (R.undead) return 'Vô Danh';
-      return this.pick(R.pre) + this.pick(sex === 'f' ? R.f : R.m) + ' ' + this.pick(R.fam);
+      if (G.RACES[race].undead) return 'Vô Danh';
+      return G.personName(race, sex, this.rnd);
     }
     given(S = this.S) { return S.name.split(' ')[0]; }
     // Câu "sổ tay" đi kèm sự kiện (tương đương dòng dữ kiện thật của 1in8b): rút từ luật họ quái của thư viện.
@@ -204,22 +203,31 @@ window.LifeSim = window.LifeSim || {};
     newLife(opt = {}) {
       G.init();
       const T = this;
-      let reg = opt.region ? G.REGION[opt.region] : T.wpick(G.REGIONS, r => r.pop * (opt.race ? (r.races[opt.race] || 0) : 1));
-      if (!reg) reg = G.REGIONS[0];
-      const race = opt.race || T.wkey(reg.races);
+      if (!G.realm) G.useWorld('varen');
+      // Nơi sinh (research/05 mục 7): bốc khu dân cư theo số người sống (đô thị + vùng quê quanh nó; Bộ Xương không sinh con),
+      // rồi bốc sinh trong khu (đô thị) hay ở vùng quê quanh khu theo tỉ lệ dân.
+      const living = s => 1 - (s.races.skeleton || 0) / 100;
+      const raceW = s => opt.race ? (s.races[opt.race] || 0) / 100 : 1;
+      const cands = G.realm.settlements.filter(s => s.tier !== 'ruin' && (!opt.region || s.region === opt.region));
+      const st = T.wpick(cands, s => G.popOf(s) * living(s) * raceW(s)) || cands[0];
+      const reg = G.REGION[st.region];
+      const urban = st.tier !== 'hamlet' && T.chance(st.urban / Math.max(1, G.popOf(st)));
+      const races = Object.fromEntries(Object.entries(st.races).filter(([k]) => !G.RACES[k].undead));
+      const race = opt.race || T.wkey(races);
       const R = G.RACES[race];
       const sex = R.sexes.length > 1 ? (T.chance(.5) ? 'm' : 'f') : R.sexes[0];
-      const st = T.wpick(reg.settlements, s => s[5]);
-      // Tầng lớp: phân phối nền dịch theo độ giàu vùng; thành lớn thêm khá giả.
-      const qw = [0, .14, .38, .28, .15, .05].map((w, k) => k ? w * Math.exp((k - 3) * (reg.wealth - .5) * 1.8) * (st[2] === 'capital' && k >= 3 ? 1.5 : 1) : 0);
+      // Tầng lớp: phân phối nền dịch theo độ giàu vùng; kinh đô, thành phố thêm khá giả; vùng quê lệch về nông hộ.
+      const rich = { capital: 1.5, city: 1.3, town: 1.1 }[st.tier] || 1;
+      const qw = [0, .14, .38, .28, .15, .05].map((w, k) => k ? w * Math.exp((k - 3) * (reg.wealth - .5) * 1.8) * (urban && k >= 3 ? rich : 1) * (!urban && k === 2 ? 1.4 : 1) * (!urban && k >= 4 ? .5 : 1) : 0);
       const q = +T.wpick([1, 2, 3, 4, 5], k => qw[k]);
       const cr = G.CLASSES[q].pctRange;
-      const faith = T.wkey(reg.faiths);
+      const faith = T.wkey(st.faiths);
       const lt = G.lifeTable(race, sex, reg.wealth);
       const mastery = Object.fromEntries(Object.keys(G.MASTERY).map(m => [m, 0]));
       const S = this.S = {
         v: 1, seed: this.seed, kiep: 1, name: '', sex, race, undead: false,
-        age: 0, t: 0, home: { region: reg.id, settlement: st[0] }, loc: reg.id, born: { region: reg.id, settlement: st[0] },
+        age: 0, t: 0, home: { region: reg.id, settlement: st.id }, loc: reg.id, born: { region: reg.id, settlement: st.id, urban },
+        urban, nation: st.nation >= 0 ? st.nation : null, worldSeed: G.realm.seed,
         q, pct: G.lerp(cr[0], cr[1], T.rnd()), gold: 0, work: null, path: null,
         hl: G.clamp(68 + reg.wealth * 18 + q * 2 + T.gauss() * 8, 25, 98), h: 62, so: 55, sm: 8 + q * 3,
         level: 1, xp: 0, mastery, job: J.races[race].origin.id, jobHist: [], faith: faith === 'none' ? null : faith, devotion: 0, gear: 0,
@@ -251,12 +259,13 @@ window.LifeSim = window.LifeSim || {};
       if (T.chance(.04)) S.flags.omen = T.pick(['fire', 'frost', 'storm', 'moon', 'light', 'dark']);
       if (T.chance(.012) && q <= 3) S.flags.bastard = true;
       // Định vị trên bản đồ.
-      const sc = st; S.pos = [sc[3], sc[4]]; S.path2.push([sc[3], sc[4]]);
+      S.pos = G.homePos(st, urban, T.rnd); S.path2.push(S.pos);
       // Lời mở đầu.
+      const where = urban ? st.name : `vùng quê quanh ${st.name}`, realmN = G.nationOf(st);
       const parentsTxt = S.flags.orphan ? 'Không ai nhận là cha mẹ bạn; bà mụ gửi bạn vào nhà tế bần.' :
-        R.construct ? `Bạn được đúc ở ${st[1]}. Thợ đúc ${S.family.parents[0].name} gõ ba lần lên vỏ bạn, lõi bắt đầu quay.` :
+        R.construct ? `Bạn được đúc ở ${st.name}. Thợ đúc ${S.family.parents[0].name} gõ ba lần lên vỏ bạn, lõi bắt đầu quay.` :
         `Mẹ bạn ${S.family.parents[0].name}, ${S.family.parents[0].age} tuổi.` + (S.family.parents[1] ? ` Cha ${S.family.parents[1].name}, ${S.family.parents[1].age} tuổi.` : ' Cha bạn không có mặt.');
-      this.log(`Năm ${S.world.year} lịch Varen. Bạn chào đời ở ${st[1]}, ${reg.nameVi}: ${J.races[race].nameVi}${sex === 'n' ? '' : sex === 'm' ? ', con trai' : ', con gái'}, nhà ${G.CLASSES[S.q].nameVi.toLowerCase()}. Tên bạn là ${S.name}.`, 'big', reg.lore);
+      this.log(`Năm ${S.world.year} lịch Varen. Bạn chào đời ở ${where} (${G.TIER_VI[st.tier].toLowerCase()}, ${reg.nameVi}${realmN ? ', ' + realmN.name : ', đất vô chủ'}): ${J.races[race].nameVi}${sex === 'n' ? '' : sex === 'm' ? ', con trai' : ', con gái'}, nhà ${G.CLASSES[S.q].nameVi.toLowerCase()}. Tên bạn là ${S.name}.`, 'big', reg.lore);
       this.log(parentsTxt + (S.family.sibs.length ? ` Bạn có ${S.family.sibs.length} anh chị.` : ''), 'info');
       if (S.faith) this.log(`Gia đình theo ${J.faiths[S.faith].nameVi}.`, 'info');
       if (S.flags.omen) this.log(`Đêm bạn sinh có sao chổi. Bà đỡ bảo đứa trẻ mang khí chất ${J.aspects[S.flags.omen].nameVi}.`, 'big');
@@ -281,6 +290,7 @@ window.LifeSim = window.LifeSim || {};
       const S = this.S = {
         v: 1, seed: this.seed, kiep: old.kiep + 1, name: `Bộ Xương của ${old.name.split(' ')[0]}`, sex: 'n', race: 'skeleton', undead: true,
         age: 0, t: 0, home: { region: reg.id, settlement: null }, loc: reg.id, born: { region: reg.id, settlement: null },
+        urban: false, nation: null, worldSeed: old.worldSeed,
         q: 1, pct: .02, gold: 0, work: null, path: dom ? G.MASTERY[dom.skill] : 'death',
         hl: 78, h: 30, so: 8, sm: Math.round(old.sm * .3),
         level: 1, xp: 0, mastery, job: J.races.skeleton.origin.id, jobHist: [], faith: null, devotion: 0, gear: 0,
@@ -294,6 +304,7 @@ window.LifeSim = window.LifeSim || {};
       };
       S.birthYear = S.world.year;
       S.pos = G.map.pointIn(reg.id, 0, this.rnd); S.path2.push(S.pos);
+      const here = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = here ? here.idx : null;
       this.log(`Năm ${S.world.year}. Đất ở ${grave.nameVi} (${reg.nameVi}) nứt ra. Một bộ xương đứng dậy, không nhớ tên mình, chỉ nhớ một điều.`, 'big');
       if (dom) this.log(`Kỹ năng chủ đạo của kiếp trước còn trong xương: ${G.mv(dom.skill)} ${dom.value}. Mọi thứ khác đã mục.`, 'big', 'Bộ Xương: không đói, không bệnh, không có con; tuổi tính bằng năm kể từ khi trỗi dậy. Hồn phai dần theo thời gian.');
       this.log('Người sống sẽ sợ bạn. Tu sĩ Quang Minh sẽ săn bạn. Hắc Giáo sẽ mời bạn.', 'info');
@@ -316,10 +327,10 @@ window.LifeSim = window.LifeSim || {};
         const sub = new Sim({ seed: this.seed + ':peer' + k, headless: true });
         sub.newLife({ noPeers: true, world: JSON.parse(JSON.stringify(S.world)) });
         sub.runToDeath();
-        const P = sub.S, reg = G.REGION[P.born.region];
-        S.peers.push({ name: P.name, race: P.race, region: P.born.region, regionName: reg.nameVi, settlement: (reg.settlements.find(s => s[0] === P.born.settlement) || [])[1],
+        const P = sub.S, reg = G.REGION[P.born.region], bs = G.SET[P.born.settlement];
+        S.peers.push({ name: P.name, race: P.race, region: P.born.region, regionName: reg.nameVi, settlement: bs ? bs.name : null,
           years: sub.years(P), diedYear: P.world.year, cause: P.cause, rose: !!P.rose, level: P.level, job: sub.jobName(P), pos: P.pos, kiep: P.kiep,
-          bornPos: (reg.settlements.find(s => s[0] === P.born.settlement) || [0, 0, 0, P.pos[0], P.pos[1]]).slice(3, 5) });
+          bornPos: P.path2[0] || P.pos });
       }
     }
 

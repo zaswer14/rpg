@@ -9,9 +9,11 @@
 window.LifeSim = window.LifeSim || {};
 (function (G) {
   const J = window.JobLibrary;
-  const home = (S, X) => { const r = X.reg(S); const s = r.settlements.find(s => s[0] === S.home.settlement); return s ? s[1] : r.nameVi; };
-  const town = (S) => { const r = G.REGION[S.loc]; const s = r.settlements.find(s => s[0] === S.home.settlement); return s && s[2] !== 'village'; };
-  const kind = (S) => { const r = G.REGION[S.loc]; const s = r.settlements.find(s => s[0] === S.home.settlement); return s ? s[2] : null; };
+  // Khu dân cư đang ở (js/realm.js). Thị trấn trở lên mà sống trong khu (không phải vùng quê) thì có nghề phố.
+  const homeS = (S) => (G.SET && S.home.settlement && G.SET[S.home.settlement]) || null;
+  const home = (S, X) => { const s = homeS(S); return s ? s.name : X.reg(S).nameVi; };
+  const town = (S) => { const s = homeS(S); return !!s && G.TIER_RANK[s.tier] <= 2 && S.urban !== false; };
+  const kind = (S) => { const s = homeS(S); return s ? s.tier : null; };
   const flesh = (S) => !S.undead && !G.RACES[S.race].construct;
   const bestCombat = S => Math.max(...['Sword', 'Axe', 'Spear', 'Shield', 'Unarmed', 'Dagger', 'Bow', 'Body'].map(m => S.mastery[m] || 0));
 
@@ -210,7 +212,7 @@ window.LifeSim = window.LifeSim || {};
     reveal: {
       prio: 6, gap: 1,
       when: (S) => S.undead && S.flags.townQ,
-      build: (S, X) => ({ title: 'Cổng làng', body: `Bạn đứng trước ${X.reg(S).settlements[0][1]}. Lính canh nhìn chiếc áo choàng của bạn.`,
+      build: (S, X) => ({ title: 'Cổng làng', body: `Bạn đứng trước ${(G.mainSettlement(S.loc) || { name: X.reg(S).nameVi }).name}. Lính canh nhìn chiếc áo choàng của bạn.`,
         choices: [{ k: 'hide', label: 'Trùm kín, giả người hành hương', sub: `Ẩn thân ${Math.round(S.mastery.Stealth)}` }, { k: 'show', label: 'Bỏ mũ trùm', sub: 'Người ta sẽ biết bạn là gì.' }, { k: 'leave', label: 'Quay đi', sub: '' }] }),
       apply(S, X, k) {
         S.flags.townQ = false;
@@ -265,14 +267,17 @@ window.LifeSim = window.LifeSim || {};
   G.moveTo = function (X, regionId) {
     const S = X.S, to = G.REGION[regionId];
     S.loc = regionId;
-    const st = to.settlements[0];
-    S.home = { region: regionId, settlement: S.undead ? null : st[0] };
-    S.pos = S.undead ? G.map.pointIn(regionId, 0, X.rnd) : [st[3], st[4]];
+    // Tới vùng mới thì ở khu dân cư lớn nhất của vùng; vùng không có khu dân cư thì sống ngoài trời.
+    const st = S.undead ? null : G.mainSettlement(regionId);
+    S.home = { region: regionId, settlement: st ? st.id : null };
+    S.urban = !!st && G.TIER_RANK[st.tier] <= 2;
+    S.pos = st ? G.homePos(st, S.urban, X.rnd) : G.map.pointIn(regionId, 0, X.rnd);
+    const nat = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = nat ? nat.idx : null;
     S.path2.push(S.pos);
     X.money(-Math.min(Math.max(S.gold, 0), 10));
     if (S.undead) S.flags.townQ = true;
     if (S.work && !S.undead) { const w = G.WORKS[S.work]; if ((w.coastal && !to.coastal) || (w.biomes && !w.biomes.includes(to.biome))) { S.work = null; S.flags.workQ = true; } }
-    let txt = `Bạn tới ${S.undead ? to.nameVi : st[1] + ', ' + to.nameVi}.`;
+    let txt = `Bạn tới ${st ? st.name + ', ' + to.nameVi : to.nameVi}${nat ? ` (${nat.name})` : ''}.`;
     // Gặp quái dọc đường: khu ven của vùng mới, vẫn chịu luật Tier.
     if (['teen', 'adult', 'elder'].includes(X.stage(S)) && X.chance(.35)) {
       const enc = X.rollEncounter(to.zones[0]);

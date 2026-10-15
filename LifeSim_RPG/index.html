@@ -19,6 +19,7 @@
     <div class="speeds" id="speeds"></div>
     <label class="toggle" title="Nhân vật tự chọn focus và tự quyết định theo tính cách"><input type="checkbox" id="autoLife"> Tự sống</label>
     <button id="btnNew" class="btn">Kiếp mới</button>
+    <button id="btnWorld" class="btn" title="Tạo một đại lục mới: quốc gia, thành phố, làng mạc khác">Thế giới mới</button>
     <span class="seed" id="seedLabel"></span>
   </div>
 </header>
@@ -48,7 +49,8 @@
       <div class="bar thin"><i id="yBar"></i></div>
     </div>
     <div class="canvasbox">
-      <canvas id="map" width="1000" height="700" aria-label="Bản đồ đại lục Varen"></canvas>
+      <canvas id="map" width="1200" height="900" aria-label="Bản đồ đại lục Varen"></canvas>
+      <div class="viewbtns" id="viewBtns" role="group" aria-label="Chế độ xem bản đồ"><button data-v="region">Vùng</button><button data-v="terrain">Địa hình</button><button data-v="political">Chính trị</button></div>
       <div class="tip" id="tip" hidden></div>
     </div>
     <div class="focus">
@@ -129,7 +131,10 @@
 <script src="data/ecology.js"></script>
 <script src="js/core.js"></script>
 <script src="data/world.js"></script>
+<script src="data/nations.js"></script>
+<script src="data/names.js"></script>
 <script src="js/map.js"></script>
+<script src="js/realm.js"></script>
 <script src="js/life.js"></script>
 <script src="js/systems.js"></script>
 <script src="js/events.js"></script>

@@ -7,7 +7,8 @@
  *   quốc gia         nation.prefix[gov] (hoặc prefixRace[race][gov]) + ' ' + nation.root[race]   ("Vương Quốc Aurel")
  *   người cai trị    ruler[gov] + ' ' + tên người + ' ' + epithet (biệt hiệu, ghép sau khi có chuyện để kể)
  *   triều đại        'Nhà ' + family
- *   khu dân cư       settlement.kind[race][kiểu] + ' ' + settlement.root[race]   ("Làng Cối Xay", "Pháo Đài Lò Đồng")
+ *   khu dân cư       settlement.kind[race][bậc hoặc vai trò] + " " + settlement.root[race]; hết gốc thì part.a + " " + part.b
+ *                    ("Làng Cối Xay", "Pháo Đài Lò Đồng", "Mỏ Đá Lửa"); bậc, vai trò: research/05
  *   địa danh         geo[x].prefix + ' ' + geo[x].root    ("Sông Lục", "Đèo Một Người", "Vịnh Hải Xà")
  *   hang ổ           lair.prefix[họ quái] + ' ' + (địa danh gần nhất hoặc settlement.root)   ("Tổ Nhện Rễ Trắng")
  *   di tích          ruin.prefix + ' ' + ruin.root        ("Lăng Vua Chôn Vùi")
@@ -110,17 +111,42 @@ window.LifeSim.NAMES = {
 
   // ── KHU DÂN CƯ ──
   settlement: {
+    // Chữ đứng trước gốc tên, theo bậc (capital, city, town, village, hamlet) hoặc vai trò (fort, port, mine, lumber, fishing, temple, market).
+    // Vai trò rõ nét thì dùng chữ của vai trò thay cho chữ của bậc (research/05 mục 10). Thiếu vai trò thì dùng chữ của bậc.
     kind: {
-      human:     { capital:['Kinh Đô','Thành'], town:['Thị Trấn','Bến','Chợ'], village:['Làng','Xóm','Thôn'], fort:['Đồn','Pháo Đài'] },
-      elf:       { capital:['Thành','Ngai'], town:['Vòng','Tán'], village:['Lối','Trảng'], fort:['Chòi Canh'] },
-      dwarf:     { capital:['Pháo Đài','Sảnh Lớn'], town:['Lò','Mỏ'], village:['Hầm','Xóm Mỏ'], fort:['Cổng','Đồn'] },
-      orc:       { capital:['Trại Lớn'], town:['Trại'], village:['Lều','Bãi'], fort:['Đồn','Cọc'] },
-      beastfolk: { capital:['Hang Lớn'], town:['Trại'], village:['Ổ','Xóm'], fort:['Chòi'] },
-      fae:       { capital:['Đình'], town:['Vòng'], village:['Ổ','Bụi'], fort:['Gác'] },
-      merfolk:   { capital:['Cảng','Thành'], town:['Bến','Cảng'], village:['Xóm','Bãi'], fort:['Tháp Canh'] },
-      dragonkin: { capital:['Ngai'], town:['Thành'], village:['Ổ','Bản'], fort:['Đài'] },
-      construct: { capital:['Lõi'], town:['Xưởng','Trạm'], village:['Kho','Trạm'], fort:['Tháp'] },
-      skeleton:  { capital:['Lăng'], town:['Thành Mộ'], village:['Nghĩa Trang','Hầm'], fort:['Tháp'] }
+      human:     { capital:['Kinh Đô'], city:['Thành','Thành Phố'], town:['Thị Trấn','Bến','Chợ'], village:['Làng'], hamlet:['Xóm','Ấp','Thôn'],
+                   fort:['Đồn','Pháo Đài'], port:['Cảng','Bến Cảng'], mine:['Mỏ'], lumber:['Trại Gỗ'], fishing:['Xóm Chài','Bến Cá'], temple:['Tu Viện','Đền'], market:['Chợ'] },
+      elf:       { capital:['Ngai','Thành'], city:['Thành'], town:['Vòng','Tán'], village:['Lối','Trảng'], hamlet:['Chòi','Tổ Lá'],
+                   fort:['Chòi Canh'], port:['Bến Lá'], lumber:['Trảng Gỗ Rụng'], fishing:['Bến'], temple:['Cội','Đền Rễ'], market:['Chợ Trăng'] },
+      dwarf:     { capital:['Pháo Đài','Sảnh Lớn'], city:['Sảnh','Pháo Đài'], town:['Lò','Hầm Lớn'], village:['Hầm','Xóm Mỏ'], hamlet:['Ngách','Hang'],
+                   fort:['Cổng','Đồn'], port:['Bến Đá'], mine:['Mỏ','Giếng Mỏ'], lumber:['Trại Than'], fishing:['Bến'], temple:['Sảnh Tổ'], market:['Chợ Đá'] },
+      orc:       { capital:['Trại Lớn','Thành Cọc'], city:['Trại Lớn'], town:['Trại'], village:['Lều','Bãi'], hamlet:['Lều','Ổ'],
+                   fort:['Đồn','Cọc'], port:['Bến Bè'], mine:['Hầm Sắt'], lumber:['Bãi Gỗ'], fishing:['Bãi Cá'], temple:['Gò Tổ'], market:['Chợ Cướp'] },
+      beastfolk: { capital:['Hang Lớn'], city:['Hang Lớn'], town:['Trại'], village:['Ổ','Xóm'], hamlet:['Ổ','Hang'],
+                   fort:['Chòi'], port:['Bến'], mine:['Hang Đá'], lumber:['Bãi Cây'], fishing:['Bãi Cá'], temple:['Cột Totem'], market:['Chợ Đổi'] },
+      fae:       { capital:['Đình'], city:['Đình Nhỏ'], town:['Vòng'], village:['Ổ','Bụi'], hamlet:['Tổ','Nụ'],
+                   fort:['Gác'], port:['Bến Lá Sen'], lumber:['Bụi Cành'], fishing:['Bến Sương'], temple:['Vòng Thiêng'], market:['Chợ Nấm'] },
+      merfolk:   { capital:['Cảng','Thành'], city:['Cảng Lớn'], town:['Bến','Cảng'], village:['Xóm','Bãi'], hamlet:['Bãi','Vũng'],
+                   fort:['Tháp Canh'], port:['Cảng','Bến'], mine:['Rạn San Hô'], lumber:['Bãi Gỗ Trôi'], fishing:['Xóm Chài','Bãi Lưới'], temple:['Đền Triều'], market:['Chợ Nổi'] },
+      dragonkin: { capital:['Ngai'], city:['Thành'], town:['Thành','Đài'], village:['Ổ','Bản'], hamlet:['Ổ'],
+                   fort:['Đài'], port:['Bến Tro'], mine:['Mỏ Lửa'], lumber:['Bãi Than'], fishing:['Bến'], temple:['Đài Lửa'], market:['Chợ Vảy'] },
+      construct: { capital:['Lõi'], city:['Xưởng Lớn'], town:['Xưởng','Trạm'], village:['Kho','Trạm'], hamlet:['Trạm Phụ'],
+                   fort:['Tháp'], port:['Bến Ray'], mine:['Mỏ Quặng'], lumber:['Trạm Than'], fishing:['Bến'], temple:['Lò Thiêng'], market:['Kho Trao Đổi'] },
+      skeleton:  { capital:['Lăng'], city:['Thành Mộ'], town:['Thành Mộ','Hầm'], village:['Nghĩa Trang','Hầm'], hamlet:['Mộ','Hố'],
+                   fort:['Tháp'], port:['Bến Đò Đêm'], mine:['Hầm Xương'], lumber:['Rừng Treo'], fishing:['Bến Đò'], temple:['Điện'], market:['Chợ Âm'] }
+    },
+    // Hết gốc tên thì ghép a + b (mỗi chủng tộc 12 × 12 = 144 tổ hợp).
+    part: {
+      human:     { a:['Cầu','Đồi','Giếng','Bờ','Gò','Cối','Lúa','Đá','Sồi','Liễu','Chuông','Muối'], b:['Đỏ','Xanh','Cũ','Mới','Ngọt','Gió','Bắc','Nam','Bạc','Vàng','Ba Nhánh','Hai Cây'] },
+      elf:       { a:['Lá','Rễ','Suối','Sương','Trăng','Sao','Cành','Hoa','Tán','Mầm','Gió','Hồ'], b:['Bạc','Trắng','Ngàn','Ngọc','Mai','Đêm','Xanh','Cổ','Hát','Lam','Rơi','Vĩnh'] },
+      dwarf:     { a:['Lò','Đe','Búa','Mạch','Cổng','Giếng','Xích','Đá','Than','Rìu','Bậc','Vách'], b:['Đồng','Sắt','Bạc','Vàng','Đen','Sâu','Lửa','Sấm','Rune','Xám','Cổ','Gãy'] },
+      orc:       { a:['Cờ','Răng','Gò','Trống','Cọc','Suối','Đồi','Lều','Hố','Cột','Vó','Giếng'], b:['Xương','Máu','Đen','Đỏ','Sọ','Lửa','Rìu','Tro','Đắng','Thét','Gió','Nanh'] },
+      beastfolk: { a:['Gốc','Suối','Đồi','Cỏ','Vết','Hồ','Ổ','Mỏm','Lối','Gò','Bờ','Cây'], b:['Đa','Hú','Cao','Cào','Trăng','Lá','Săn','Mối','Sậy','Mật','Bùn','Gió'] },
+      fae:       { a:['Vòng','Giọt','Chuông','Cây','Gương','Bụi','Mạng','Cánh','Tổ','Hang','Đá','Cầu'], b:['Nấm','Mật','Hoa','Rỗng','Nước','Gai','Sương','Mỏng','Chim','Thỏ','Thì Thầm','Vồng'] },
+      merfolk:   { a:['San','Vách','Rạn','Vỏ','Bến','Hang','Mắt','Ngọc','Đá','Sao','Cột','Bãi'], b:['Hô','Đá','Đỏ','Ốc','Muối','Bọt','Bão','Trai','Ngầm','Biển','Buồm','Rùa'] },
+      dragonkin: { a:['Ổ','Lò','Sừng','Khói','Vảy','Đài','Hang','Cột','Đá','Mắt','Suối','Tháp'], b:['Trứng','Tim','Đá','Tím','Rụng','Lửa','Ấp','Sét','Nóng','Núi','Lưu Huỳnh','Cánh'] },
+      construct: { a:['Số','Dây','Bánh','Ống','Ray','Lõi','Xích','Cổng','Trục','Bàn','Van','Kho'], b:['Ba','Bảy','Chín','Chuyền','Đà','Khói','Sắt','Phụ','Tải','Van','Quay','Lắp'] },
+      skeleton:  { a:['Mộ','Bia','Hầm','Đèn','Áo','Tro','Hố','Gò','Cổng','Tháp','Giếng','Lăng'], b:['Đá','Mòn','Xương','Xanh','Liệm','Lạnh','Sâu','Quạ','Đêm','Sọ','Câm','Gió'] }
     },
     root: {
       human: ['Cối Xay','Lau Mộc','Gỗ Bắc','Canh Mộ','Ngã Ba','Cầu Đá','Giếng Ngọt','Đồi Táo','Lúa Vàng','Chuông Đồng','Ba Cây Sồi','Cột Cờ','Đá Mài','Muối Trắng','Bờ Lau','Gió Nam','Tháp Canh','Hạt Dẻ','Cánh Buồm','Aurel','Benno','Valden','Corhal','Marrow'],

@@ -2,7 +2,7 @@
 
 **Ngày:** 14/10/2026 · **Trạng thái:** bản chơi được đầu tiên. · **Nguồn ý tưởng:** `research/01_Life_Sim_1in8b.md`.
 
-Người chơi bấm một nút và được sinh ra ở đâu đó trên đại lục Varen: vùng, khu dân cư, chủng tộc, giới, tầng lớp, giáo phái đều bốc theo trọng số của vùng. Đời chạy theo thời gian thực, mỗi năm vài giây, xen sự kiện, quyết định và các lượt săn quái, cho tới khi nhân vật chết. Lúc chết tung d100: **từ 20 trở xuống (20%) thì trỗi dậy thành Bộ Xương**, mang theo **kỹ năng chủ đạo** (mastery cao nhất) của kiếp đó; mọi thứ khác về số 0. Bộ Xương chết lại cũng tung 20% như vậy, nên có thể nối nhiều kiếp.
+Người chơi bấm một nút và được sinh ra ở đâu đó trên đại lục Varen: khu dân cư (trong một thế giới có quốc gia, thành phố, làng mạc sinh theo seed), thành thị hay nông thôn, chủng tộc, giới, tầng lớp, giáo phái đều bốc theo trọng số. Đời chạy theo thời gian thực, mỗi năm vài giây, xen sự kiện, quyết định và các lượt săn quái, cho tới khi nhân vật chết. Lúc chết tung d100: **từ 20 trở xuống (20%) thì trỗi dậy thành Bộ Xương**, mang theo **kỹ năng chủ đạo** (mastery cao nhất) của kiếp đó; mọi thứ khác về số 0. Bộ Xương chết lại cũng tung 20% như vậy, nên có thể nối nhiều kiếp.
 
 ## 1. Chạy
 
@@ -14,16 +14,24 @@ powershell -ExecutionPolicy Bypass -File LifeSim_RPG/tools/serve.ps1
 
 Rồi mở `http://localhost:8765/LifeSim_RPG/`. Trong Claude desktop: cấu hình `vankiep` trong `.claude/launch.json`.
 
-- `index.html` — game. `?seed=abc` để chơi lại đúng một đời.
-- `sim.html` — chạy N đời headless (mặc định 1000) và in phân phối: chênh Tier khi gặp quái, tỉ lệ trỗi dậy, nguyên nhân chết, tuổi thọ theo chủng tộc/sinh kế, Tier cuối đời. Dùng trước khi chỉnh số.
+- `index.html` — game. `?seed=abc` để chơi lại đúng một đời, `?world=abc` để mở đúng một thế giới.
+- `sim.html` — chạy N đời headless (mặc định 1000) và in phân phối: chênh Tier khi gặp quái, tỉ lệ trỗi dậy, nguyên nhân chết, tuổi thọ theo chủng tộc/sinh kế, Tier cuối đời. Dùng trước khi chỉnh số. Ô "Thế giới" chọn thế giới cho các đời; nút **Thử nhiều thế giới** dựng N thế giới (mặc định 100) và in phân bố mẫu quốc gia, số nước, khu dân cư, tỉ lệ đô thị, đất vô chủ, lỗi.
 
 Điều khiển: tạm dừng (Space), tốc độ ½×–8×, **Tự sống** (nhân vật tự chọn focus và tự quyết theo tính cách), **Kiếp mới**. Bấm một vùng trên bản đồ để xem khu, loài quái, tình trạng (dịch, chiến tranh, thú triều) và lên đường nếu vùng đó giáp chỗ đang ở. Tiến trình tự lưu vào bộ nhớ trình duyệt; mộ các kiếp trước hiện trên bản đồ.
 
 ## 2. Bản đồ: đại lục, vùng, khu
 
-Không dùng bản đồ thế giới thật. Đại lục Varen có **16 vùng**, mỗi vùng là một kiểu địa hình (6 vùng săn của thư viện + 10 kiểu mới trong `data/ecology.js`). Bản đồ là raster 250 × 175 ô dựng từ tâm và bán kính vùng (Voronoi có trọng số, bẻ cong bằng noise), suy hoàn toàn từ dữ liệu nên không cần lưu.
+Không dùng bản đồ thế giới thật. Đại lục Varen có **16 vùng**, mỗi vùng là một kiểu địa hình (6 vùng săn của thư viện + 10 kiểu mới trong `data/ecology.js`). Bản đồ là raster 300 × 225 ô (khung 1200 × 900, đại lục ở giữa, quanh là biển) dựng từ tâm và bán kính vùng (Voronoi có trọng số, bẻ cong bằng noise), suy hoàn toàn từ dữ liệu nên không cần lưu.
 
-Mỗi vùng chia **3 khu**: ven → sâu → lõi. Khu ven ôm khu dân cư và phía lòng đại lục; khu lõi nằm ở rìa ngoài, xa văn minh. Mỗi khu có dải Tier và bảng loài riêng (`data/world.js`). Vùng trung tâm (Đồng Kim Hà, T0–2) an toàn; càng ra rìa càng nguy hiểm (Đỉnh Lôi Vân T2–5, Vực Hắc Uyên T3–5).
+**Địa hình** (bước 1 của `research/03_Thiet_ke_ban_do_Varen_V2.md`): mỗi ô có độ cao, độ ẩm, nhiệt (noise + độ lệch theo biome trong `G.TERRAIN`), sông và hồ (priority-flood, dồn nước theo độ ẩm) và một đặc trưng trong `G.FEATURES`: đồng trống, đồi, rừng, rừng rậm, đầm, núi, hồ. Nút **Vùng / Địa hình** trên bản đồ đổi chế độ xem; tooltip ghi đặc trưng ô. Đặc trưng chưa ảnh hưởng luật chơi (đi lại, quái, sinh kế vào ở các bước sau).
+
+**Quốc gia và khu dân cư** (bước 2; `research/04_Mau_quoc_gia.md`, `research/05_Thanh_pho_lang_mac.md`, `js/realm.js`): không có nước hay làng khai tay. Mỗi **thế giới** (seed riêng, khác seed của đời) bốc 5–7 mẫu trong 50 mẫu quốc gia (`data/nations.js`, 10 chủng tộc × 5), đặt kinh đô theo chỗ hợp với mẫu, lan lãnh thổ theo chi phí đi (~75% đất có chủ), rồi dựng mạng khu dân cư phân cấp: kinh đô, thành phố, thị trấn, làng, thôn, cộng vai trò (cảng, đồn, mỏ, trại gỗ, làng chài, làng ruộng, đền, chợ biên) và phế tích ở đất vô chủ. Tỉnh = kinh đô / thành phố / thị trấn + vùng quanh nó. Dân đô thị theo bậc; dân nông thôn theo sức chứa từng ô, gom về làng gần nhất, co giãn theo tỉ lệ đô thị của chủng tộc. Mỗi nước có tên, người cai trị, quốc giáo, thuế, luật, thái độ chủng tộc, đặc tính của mẫu và 1–2 đặc trưng riêng; mọi tên lấy từ `data/names.js`. Một thế giới ~140 khu dân cư, ~35 tỉnh, dựng trong ~0,2 giây.
+
+Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành thị) hoặc **vùng quê quanh khu** (nông thôn, ~75% số đời), chủng tộc và đạo theo khu đó. Luật, thuế, công trình chưa tác động lên đời (bước 4).
+
+Nút **Vùng / Địa hình / Chính trị** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
+
+Mỗi vùng chia **3 khu**: ven → sâu → lõi, xếp theo khoảng cách tới điểm neo của vùng (`anchor`). Khu ven ôm điểm neo và phía lòng đại lục; khu lõi nằm ở rìa ngoài, xa văn minh. Mỗi khu có dải Tier và bảng loài riêng (`data/world.js`). Vùng trung tâm (Đồng Kim Hà, T0–2) an toàn; càng ra rìa càng nguy hiểm (Đỉnh Lôi Vân T2–5, Vực Hắc Uyên T3–5).
 
 ### Luật phân cấp (tránh cấp thấp gặp cấp cao)
 
@@ -87,9 +95,12 @@ LifeSim_RPG/
   index.html, style.css     giao diện
   sim.html                  cân bằng headless
   data/ecology.js           10 kiểu địa hình + 36 loài quái mới (cùng lược đồ bestiary, qua bộ kiểm tra của thư viện)
-  data/world.js             chủng tộc (tuổi thọ, ypt, tên), tầng lớp, sinh kế, 16 vùng × 3 khu, nguyên nhân chết, validateWorld
+  data/world.js             chủng tộc (tuổi thọ, ypt), tầng lớp, sinh kế, 16 vùng × 3 khu, địa hình theo biome, đặc trưng ô, nguyên nhân chết, validateWorld
+  data/nations.js           50 mẫu quốc gia, chính thể, luật, đặc trưng riêng, phong cách khu dân cư theo chủng tộc, công trình
+  data/names.js             kho tên riêng (người, nước, khu dân cư, địa danh, hang ổ, di tích…)
   js/core.js                RNG có seed, odds, Φ/Φ⁻¹, noise
-  js/map.js                 dựng và vẽ bản đồ raster
+  js/map.js                 dựng và vẽ bản đồ raster: vùng, khu, độ cao, độ ẩm, nhiệt, sông, hồ, đặc trưng, khu dân cư; ba chế độ xem
+  js/realm.js               tạo thế giới: quốc gia, lãnh thổ, mạng khu dân cư, tỉnh, dân, tên
   js/life.js                Sim: newLife, rise, planYear, tick, endYear, chết, săn quái có phân cấp
   js/systems.js             hệ con cuối năm, autoFocus, rương báu
   js/events.js              sự kiện + quyết định
@@ -101,7 +112,8 @@ Không sửa file nào trong `library/`. Loài thư viện được thả vào v
 
 ## 7. Mở rộng
 
-- **Thêm vùng:** một dòng trong `G.REGIONS` (tâm, bán kính, chỉ số, khu dân cư, 3 khu). Mở `sim.html` tới khi mục Kiểm tra dữ liệu không còn lỗi (khu dân cư phải nằm trong đất của vùng).
+- **Thêm vùng:** một dòng trong `G.REGIONS` (tâm, bán kính, điểm neo, chỉ số, 3 khu) và một dòng trong `G.TERRAIN`. Mở `sim.html` tới khi mục Kiểm tra dữ liệu không còn lỗi.
+- **Thêm mẫu quốc gia:** một dòng `T(...)` trong `G.NATION_TEMPLATES` (`data/nations.js`); thêm tên vào `data/names.js`. Bấm **Thử nhiều thế giới** để xem mẫu có ra không và có lỗi không.
 - **Thêm loài:** `data/ecology.js` (hoặc `library/bestiary/species.js` nếu muốn dùng chung), rồi đưa vào `spawns` của một khu có dải Tier chứa nó.
 - **Thêm sự kiện:** một object trong `G.EVENTS`; không phải sửa vòng lặp. `undead: true` cho sự kiện chỉ Bộ Xương gặp, `'any'` cho cả hai.
 - **Thêm quyết định:** một mục trong `G.DECISIONS` với `when` (đọc trạng thái hoặc cờ hàng đợi do sự kiện bật), `build`, `apply`, `auto`.

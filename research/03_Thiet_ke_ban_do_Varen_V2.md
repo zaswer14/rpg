@@ -1,6 +1,6 @@
 # Bản đồ Varen V2: thiết kế chi tiết
 
-**Ngày:** 15/10/2026 · **Trạng thái:** thiết kế, chưa code. · **Phương án đã chọn:** `research/02_Ban_do_quoc_gia_dia_hinh.md` (A2 hai lớp, B2 quốc gia động, C2 độ hoang theo văn minh, C3 hang ổ, D2 vùng biển có tầng, E2 lớp đặc trưng, F1 đường xá và hành trình). · **Đi kèm:** `research/04_Mau_quoc_gia.md` (50 mẫu quốc gia, luật, đặc trưng riêng, cách tạo), `LifeSim_RPG/data/names.js` (kho tên riêng).
+**Ngày:** 15/10/2026 · **Trạng thái:** thiết kế, chưa code. · **Phương án đã chọn:** `research/02_Ban_do_quoc_gia_dia_hinh.md` (A2 hai lớp, B2 quốc gia động, C2 độ hoang theo văn minh, C3 hang ổ, D2 vùng biển có tầng, E2 lớp đặc trưng, F1 đường xá và hành trình). · **Đi kèm:** `research/04_Mau_quoc_gia.md` (50 mẫu quốc gia, luật, đặc trưng riêng, cách tạo), `research/05_Thanh_pho_lang_mac.md` (mạng khu dân cư mỗi nước), `LifeSim_RPG/data/names.js` (kho tên riêng).
 
 **Đã chốt thêm (15/10/2026):** khung 1200 × 900; quốc gia sinh ngẫu nhiên từ mẫu theo chủng tộc + đặc trưng riêng; mọi tên riêng bốc từ `names.js`; người chơi lập được làng và lập được nước; có tầng thứ tư "Vùng chết".
 
@@ -38,33 +38,41 @@ Chỉ số sinh thái chuyển từ `G.REGIONS` sang `G.BIOME_STATS` (mỗi biom
 
 ### 2.2. Ba trường số
 
+Đã làm ở bước 1 (`js/map.js`). Độ lệch theo biome khai trong `G.TERRAIN` (`data/world.js`) và được làm mượt qua biên vùng (hai lượt box blur bán kính 6 ô), nên không có vách dựng đứng ở ranh hai biome. Độ cao và độ ẩm được **chuẩn hóa thành phân vị trên đất** (0 = thấp / khô nhất, 1 = cao / ẩm nhất), nên ngưỡng ở 2.4 đọc thẳng ra tỉ lệ diện tích.
+
 | Trường | Công thức | Dùng cho |
 |---|---|---|
-| `elev` độ cao 0–1 | noise 4 tầng (đã có `hN`), cộng bias theo biome: `storm_spire` +.3, `ash_peak` +.25, `crystal_cave` +.2, `frost_tundra` +.1, `venom_marsh` −.2, `golden_plains` −.1 | núi, đồi, sông, chi phí đi |
-| `moist` độ ẩm 0–1 | noise riêng + .3 × (gần biển: 1 − d_bờ/30) + .25 dọc sông, cộng bias biome: `venom_marsh` +.35, `moss_forest` / `elder_wood` / `fae_glade` +.25, `red_desert` −.45, `wind_steppe` −.2 | rừng, rừng rậm, đầm, hồ |
-| `temp` nhiệt 0–1 | 1 − y / H (bắc lạnh, nam nóng) − .4 × elev, bias `cold` −.3, `hot` +.3 | phân biệt rừng thường và rừng rậm, băng |
+| `elev` độ cao 0–1 | .55 × noise 4 tầng + .3 × độ sâu vào lục địa (smoothstep) + lệch biome (`storm_spire` +.3, `ash_peak` +.2, `crystal_cave` +.2, `venom_marsh` −.2, `golden_plains` −.1, `serpent_bay` −.1 …), rồi chuẩn hóa | núi, đồi, sông, chi phí đi |
+| `moist` độ ẩm 0–1 | noise riêng + .3 × gần biển (trong 14 ô) + lệch biome (`venom_marsh` +.35, ba biome rừng +.25, `red_desert` −.45, `wind_steppe` / `ash_peak` −.2) − .12 × elev, chuẩn hóa; sau khi có sông cộng thêm tới +.12 trong 2 ô quanh sông, hồ | rừng, rừng rậm, đầm |
+| `temp` nhiệt 0–1 | .12 + .85 × vĩ độ (bắc lạnh, nam nóng) − .35 × elev + lệch biome (`frost_tundra` −.3, `storm_spire` −.15, `ash_peak` / `red_desert` +.3 …) | rừng rậm, tuyết trên núi |
 
 ### 2.3. Sông
 
-Kiểu Red Blob Games: chọn 8–10 nguồn ở ô `elev > .7` có `moist > .5`, mỗi nguồn đi xuống ô kề thấp nhất tới khi gặp biển. Gặp hố trũng (không ô nào thấp hơn) thì lấp thành **hồ** rồi tràn ra ô bờ thấp nhất. Hai sông gặp nhau thì nhập, lưu lượng cộng dồn (`flow`). `flow` lớn thì sông vẽ to hơn và khó vượt hơn.
+Kiểu Red Blob Games, làm bằng **priority-flood**: bắt đầu từ mọi ô đất giáp biển, lần lượt mở ô thấp nhất. Mỗi ô nhận một ô hạ lưu (`recv`) và một độ cao đã lấp (`filled` ≥ độ cao thật, tăng dần về thượng nguồn), nên từ ô nào cũng có đường chảy ra biển. Khóa ưu tiên cộng một chút noise mượt (`meander`), nhờ vậy trên lòng chảo đã lấp sông uốn theo noise thay vì chạy thẳng.
+
+Mỗi ô đất góp `.15 + moist²` nước, dồn theo `recv` từ cao xuống thấp (`flow`). Ô có `flow ≥ 28` là sông; hệ sông (tính theo cửa sông) ít hơn 25 ô thì bỏ. `flow` càng lớn sông vẽ càng to. **Hồ** là chỗ trũng bị lấp sâu ≥ .02 có sông chảy qua, rộng 4–160 ô, không đè lên khu dân cư và không nằm trong biome cấm hồ.
 
 Sông nằm *trên* ô (ô có cờ `river`), không chiếm ô riêng, nên ô sông vẫn có biome và đặc trưng của nó.
 
+Varen hiện ra 19 hệ sông (3,3% ô đất có sông) và 31 hồ (2,3% đất).
+
 ### 2.4. Đặc trưng
 
-Mỗi ô đất có đúng một đặc trưng (cộng thêm cờ `river` nếu có sông):
+Mỗi ô đất có đúng một đặc trưng (cộng thêm cờ `river` nếu có sông). Biome nào cấm đặc trưng nào thì xem `no` trong `G.TERRAIN`.
 
-| Đặc trưng | Điều kiện (xét theo thứ tự) | Biome không có |
+| Đặc trưng | Điều kiện (xét theo thứ tự) | Varen |
 |---|---|---|
-| `mountain` núi | elev > .80 | `golden_plains`, `venom_marsh` |
-| `lake` hồ | sinh ra ở bước 2.3 | `red_desert`, `abyss_rift` |
-| `marsh` đầm | moist > .72 và elev < .35 | `red_desert`, `frost_tundra`, `storm_spire` |
-| `jungle` rừng rậm | moist > .62 và temp > .62 | `frost_tundra`, `red_desert`, `storm_spire`, `forge_ruins` |
-| `forest` rừng | moist > .5 (rừng biome `moss_forest`, `elder_wood`, `fae_glade` luôn ít nhất là rừng) | `red_desert`, `abyss_rift`, `forge_ruins` |
-| `hills` đồi | elev > .64 | |
-| `open` trống | còn lại | |
+| `lake` hồ | sinh ra ở bước 2.3 | 2,3% |
+| `mountain` núi | elev > .90; trong 2 ô quanh khu dân cư thì hạ thành đồi | 9,7% |
+| `marsh` đầm | moist > .86 và elev < .32 | 8,4% |
+| `jungle` rừng rậm | moist > .62 và temp > .64 | 5,1% |
+| `forest` rừng | moist > .52 (ba biome rừng: moist > .30) | 29,1% |
+| `hills` đồi | elev > .72 | 11,5% |
+| `open` trống | còn lại | 33,8% |
 
-Với bản đồ Varen hiện tại, rừng rậm sẽ mọc ở dải nam ẩm: rìa Đầm Lục Chướng, phía nam Rừng Rêu Thầm, ven Quần Đảo Hải Xà. Nếu chạy ra quá ít, hạ ngưỡng `temp` cho tới khi có 3–6% diện tích đất.
+Ngưỡng nằm trong `G.MAP_TH` (`js/map.js`); `G.map.stats` in tỉ lệ mỗi lần dựng.
+
+Trên Varen, rừng rậm mọc ở dải nam ẩm (quanh Đầm Lục Chướng, Đồi Mộ Tro Tàn, Trảng Mộng Ảo); núi gom thành dãy ở Băng Nguyên, Núi Thạch Lâm, Đỉnh Lôi Vân, Núi Hỏa Diệm.
 
 Tác dụng của đặc trưng:
 
@@ -87,12 +95,7 @@ Tác dụng của đặc trưng:
 
 Khu dân cư không đặt tay nữa: mỗi thế giới tự chọn chỗ, đặt tên và gán cho quốc gia. 21 khu dân cư có tên trong `world.js` hiện tại bỏ đi; tên của chúng đã chuyển vào `names.js` nên vẫn có thể xuất hiện lại.
 
-Chọn chỗ:
-
-1. Chấm điểm mọi ô đất: +3 có sông, +2 ven biển, +1 ven hồ, +1 đặc trưng `open` hoặc `hills`; −3 `marsh`, −2 `jungle`; loại ô `mountain`, `lake`. Nhân hệ số ở được của biome (đồng 1,0 … vực .2).
-2. Bốc ~30 điểm theo Poisson-disc: điểm cao trước, cách nhau ≥ 90px.
-3. Thủ đô các nước chọn trong số điểm này theo mẫu quốc gia (`research/04` mục 6). Các điểm còn lại thành town (gần thủ đô, trên sông hoặc ven biển), fort (giáp tầng lõi / chết hoặc biên nước) hoặc village.
-4. Tên: `settlement.kind[chủng tộc chủ][kiểu] + settlement.root[chủng tộc chủ]` trong `names.js`. Khu dân cư vô chủ lấy chủng tộc đông nhất của biome.
+Mỗi nước có một **mạng khu dân cư phân cấp**: kinh đô, thành phố, thị trấn, làng, thôn, cộng vai trò (cảng, đồn, mỏ, trại gỗ, làng chài, đền, chợ biên); khoảng 140 khu có dân mỗi thế giới. Bậc, số lượng theo cỡ nước, phong cách theo chủng tộc, dân nông thôn, công trình, cách đặt, lớn lên / suy tàn và tên: xem **`research/05_Thanh_pho_lang_mac.md`**.
 
 Mỗi khu dân cư có trạng thái động:
 
@@ -128,7 +131,7 @@ w(ô) = min qua mọi nguồn s ( chiPhíĐi(ô, s) / R_s )  +  biome.wild  +  �
 ```
 
 - `chiPhíĐi` là khoảng cách Dijkstra trên lưới chi phí 2.4. Núi và rừng rậm vì vậy "xa" văn minh hơn đồng bằng dù gần bằng thước đo.
-- Nguồn `s` là khu dân cư không phải phế tích, bán kính `R_s` = theo kiểu (capital 120, town 85, fort 70, village 55) × `patrol` của quốc gia chủ × (state `dwindling` thì × 0,6).
+- Nguồn `s` là khu dân cư không phải phế tích, bán kính `R_s` = theo bậc (kinh đô 120, thành phố 100, thị trấn 80, làng 50, thôn 25; vai trò đồn 70) × `patrol` của quốc gia chủ × (state `dwindling` thì × 0,6).
 - Ô đường cũng là nguồn, `R` = 30 × `patrol`. Đường là hành lang an toàn.
 - `biome.wild`: `golden_plains` 0, `wind_steppe` .1, `moss_forest` / `elder_wood` / `mist_coast` .2, `fae_glade` / `grave_hills` .3, `crystal_cave` / `red_desert` / `forge_ruins` / `venom_marsh` .4, `frost_tundra` / `serpent_bay` / `ash_peak` .5, `storm_spire` .7, `abyss_rift` .8. Không biome nào quá .8, để sát khu dân cư vẫn còn một vành tầng ven.
 - Vô chủ (không quốc gia) thì `patrol` = 0,6.
@@ -220,7 +223,7 @@ Phế tích của khu dân cư bị bỏ thì 40% thành hang ổ họ `undead` 
 
 ### 5.1. Tỉnh
 
-**Mỗi khu dân cư là thủ phủ của một tỉnh** (~30 tỉnh), tỉnh mang tên khu dân cư thủ phủ. Đất chia bằng Dijkstra nhiều nguồn trên lưới chi phí, nguồn càng lớn càng "rẻ" (chi phí chia cho 1 + pop / 10). Biên tỉnh vì vậy chạy theo sông, núi, rìa rừng rậm. Ô xa mọi thủ phủ quá chi phí 260 là **đất hoang vô chủ**, thường là vùng chết (giữa sa mạc, đáy vực, đỉnh núi). Làng mới lập trong đất hoang thì tách thành tỉnh mới.
+**Mỗi kinh đô, thành phố, thị trấn là thủ phủ của một tỉnh** (~30 tỉnh); làng và thôn thuộc tỉnh của thủ phủ gần nhất theo chi phí đi (`research/05` mục 3). Tỉnh mang tên khu dân cư thủ phủ. Đất chia bằng Dijkstra nhiều nguồn trên lưới chi phí, nguồn càng lớn càng "rẻ" (chi phí chia cho 1 + pop / 10). Biên tỉnh vì vậy chạy theo sông, núi, rìa rừng rậm. Ô xa mọi thủ phủ quá chi phí 260 là **đất hoang vô chủ**, thường là vùng chết (giữa sa mạc, đáy vực, đỉnh núi). Làng mới lập trong đất hoang thì tách thành tỉnh mới.
 
 Chỉ số tỉnh, theo kiểu 1in8b, suy ra chứ không khai tay:
 
@@ -500,10 +503,10 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 
 | Bước | Việc | Người chơi thấy |
 |---|---|---|
-| 1 | Mở khung 1200 × 900; lớp địa hình, sông, hồ, đặc trưng; chế độ xem Địa hình | bản đồ có sông, rừng, núi; chưa đổi luật chơi |
-| 2 | Nạp `names.js`; khu dân cư tự chọn chỗ và tự đặt tên; seed thế giới | mỗi thế giới có làng, tên khác nhau |
-| 3 | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ khu dân cư; encounter đọc theo ô | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
-| 4 | Tỉnh; 50 mẫu quốc gia vào `data/nations.js`; tạo quốc gia từ mẫu + đặc trưng riêng; thuế, luật, thái độ chủng tộc; chế độ xem Chính trị, màn tạo thế giới | sinh ra ở một nước có luật, mỗi thế giới một bộ nước |
+| 1 ✓ | Mở khung 1200 × 900; lớp địa hình, sông, hồ, đặc trưng; chế độ xem Địa hình (15/10/2026) | bản đồ có sông, rừng, núi; chưa đổi luật chơi |
+| 2 ✓ | Nạp `names.js`; 50 mẫu quốc gia vào `data/nations.js`; seed thế giới; kinh đô, lãnh thổ, mạng khu dân cư phân cấp, vai trò, công trình, dân, tỉnh, tên (`research/05`); quốc gia tĩnh; chế độ xem Chính trị, màn tạo thế giới | mỗi thế giới một bộ nước, thành phố, làng; sinh ra ở thành thị hoặc nông thôn |
+| 3 | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
+| 4 | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời | sinh ra ở một nước có luật |
 | 5 | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống | đi lại có quãng đường |
 | 6 | Vùng biển 4 tầng, loài biển mới, tàu, hải trình | đi biển |
 | 7 | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên | thế giới đổi qua các kiếp |

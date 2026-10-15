@@ -14,7 +14,7 @@ Bản đồ V2 không có sẵn quốc gia. Mỗi lần tạo thế giới, máy
 | `faith` | trọng số quốc giáo, ví dụ `{ light:80, none:20 }`; bốc một lần khi tạo |
 | `biomes` | biome ưa thích, dùng để chấm điểm chỗ đặt thủ đô |
 | `needs` | điều kiện bắt buộc: `coast` (thủ đô ven biển), `mountain`, `river` |
-| `size` | S (2–3 tỉnh), M (4–5), L (6–8): cỡ lãnh thổ mục tiêu khi lan |
+| `size` | S (2–3 tỉnh, ~12 khu dân cư), M (4–5, ~24), L (6–8, ~38): cỡ lãnh thổ và mạng khu dân cư (`research/05` mục 3) |
 | `stats` | `tax · army · patrol · stability · ambition`, mỗi số được cộng nhiễu ±10% khi tạo |
 | `laws` | luật cố định của mẫu (mục 3) |
 | `lawPool` | luật có thể có, bốc 0–1 cái |
@@ -213,11 +213,11 @@ Khi tạo, mỗi nước bốc 1 đặc trưng (35% bốc 2). Đặc trưng có 
 
 ## 6. Cách tạo thế giới
 
-1. **Số nước:** 5–7 (thường 6) trên ~30 khu dân cư. 15–25% tỉnh để vô chủ.
+1. **Số nước:** 5–7 (thường 6). 15–25% diện tích đất để vô chủ.
 2. **Bốc mẫu.** Trọng số theo chủng tộc: Nhân Loại 1,4; Orc, Người Lùn, Tiên Tộc, Người Thú 1,0; Hải Tộc .8; Long Nhân .7; Yêu Tinh .6; Cơ Nhân .5; Bộ Xương .35. Mỗi mẫu nhân thêm điểm hợp bản đồ (có đủ biome ưa thích và `needs` không). Ràng buộc: ít nhất 4 chủng tộc khác nhau; tối đa 2 nước cùng chủng tộc (hai nước Nhân Loại thì phải khác `gov`); tối đa 1 nước Bộ Xương và 1 nước Cơ Nhân.
-3. **Đặt thủ đô.** Với mỗi mẫu đã bốc, chọn điểm khu dân cư có điểm cao nhất theo `biomes` và `needs`, cách thủ đô khác ≥ 220px.
-4. **Lan lãnh thổ.** Các nước lần lượt nhận tỉnh giáp mình rẻ nhất (chi phí theo địa hình, biome ngoài danh sách ưa thích × 1,5) tới khi đủ cỡ `size`. Tỉnh không ai lấy là vô chủ.
-5. **Dân.** Mỗi tỉnh: chủng tộc chủ của nước 50–85% (nước `fav` nhiều chủng tộc thì thấp), phần còn lại chia cho chủng tộc bản địa của biome và chủng tộc `fav`. Tỉnh vô chủ dùng bảng bản địa của biome.
+3. **Đặt thủ đô.** Với mỗi mẫu đã bốc, chọn ô có điểm phù hợp cao nhất theo `biomes`, `needs` và chủng tộc (`research/05` mục 4, 8), cách thủ đô khác ≥ 220px.
+4. **Lan lãnh thổ, đặt mạng khu dân cư.** Lãnh thổ lan từ kinh đô theo chi phí đi (biome ngoài danh sách ưa thích × 1,5) tới khi đủ diện tích theo `size`; trong lãnh thổ đặt thành phố, thị trấn, làng, thôn theo `research/05` mục 3, 8. Tỉnh = thủ phủ + làng vệ tinh.
+5. **Dân.** Dân đô thị và nông thôn theo `research/05` mục 5. Chủng tộc mỗi tỉnh: chủng tộc chủ của nước 50–85% (nước `fav` nhiều chủng tộc thì thấp), phần còn lại chia cho chủng tộc bản địa của biome và chủng tộc `fav`. Tỉnh vô chủ dùng bảng bản địa của biome.
 6. **Chỉ số.** Lấy `stats` của mẫu, nhân nhiễu ±10%, rồi áp đặc trưng riêng.
 7. **Bốc đặc trưng riêng** (mục 5).
 8. **Đặt tên** (từ `names.js`): tên nước = tiền tố theo `gov` + gốc theo chủng tộc; thủ đô và khu dân cư theo chủng tộc chủ; người cai trị và triều đại theo chủng tộc; nếu trùng tên đã dùng thì bốc lại.

@@ -43,9 +43,9 @@ window.LifeSim = window.LifeSim || {};
       // Chiến tranh giảm dần.
       if (rs.war > 0) rs.war = Math.max(0, rs.war - .25);
     }
-    // Chiến tranh mới giữa hai vùng kề có thành/đồn.
+    // Chiến tranh mới giữa hai vùng kề có kinh đô / thành phố / đồn (quốc gia động: bước 7 của research/03).
     if (X.chance(.035)) {
-      const cands = G.REGIONS.filter(r => r.settlements.some(s => ['capital', 'fort'].includes(s[2])));
+      const cands = G.REGIONS.filter(r => G.settlementsIn(r.id).some(s => s.tier === 'capital' || s.tier === 'city' || s.roles.includes('fort')));
       const a = X.pick(cands), nb = adjOf(a.id).filter(id => cands.some(c => c.id === id));
       if (nb.length) {
         const b = X.pick(nb); W.regions[a.id].war = 1; W.regions[b].war = 1;
@@ -129,11 +129,10 @@ window.LifeSim = window.LifeSim || {};
   };
 
   G.placeYear = function (S, X) {
-    const reg = X.reg(S);
-    const home = reg.settlements.find(s => s[0] === S.home.settlement);
+    const home = S.home.settlement && G.SET[S.home.settlement];
     let pos;
     if ((S.focus === 'hunt' || S.focus === 'adventure') && S.zoneSel && G.ZONE[S.zoneSel]) pos = G.map.pointIn(S.loc, G.ZONE[S.zoneSel].index, X.rnd);
-    else if (home) pos = [home[3] + X.int(-4, 4), home[4] + X.int(-4, 4)];
+    else if (home) pos = G.homePos(home, S.urban, X.rnd);
     else pos = G.map.pointIn(S.loc, 0, X.rnd);
     S.pos = pos;
     S.huntPos = S.zoneSel && G.ZONE[S.zoneSel] && G.ZONE[S.zoneSel].region.id === S.loc ? G.map.pointIn(S.loc, G.ZONE[S.zoneSel].index, X.rnd) : null;

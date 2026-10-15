@@ -29,7 +29,10 @@
   <div class="bar2">
     <label>Số đời <input type="number" id="n" value="1000" min="10" max="20000"></label>
     <label>Seed gốc <input type="text" id="seed" value="can-bang" style="width:140px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px"></label>
+    <label>Thế giới <input type="text" id="world" value="can-bang" style="width:120px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px"></label>
     <button class="btn" id="run">Chạy</button>
+    <label>Số thế giới <input type="number" id="nw" value="100" min="5" max="1000"></label>
+    <button class="btn" id="runWorlds">Thử nhiều thế giới</button>
     <span class="note" id="status"></span>
   </div>
   <div class="panel" id="checks"></div>
@@ -58,7 +61,10 @@
 <script src="data/ecology.js"></script>
 <script src="js/core.js"></script>
 <script src="data/world.js"></script>
+<script src="data/nations.js"></script>
+<script src="data/names.js"></script>
 <script src="js/map.js"></script>
+<script src="js/realm.js"></script>
 <script src="js/life.js"></script>
 <script src="js/systems.js"></script>
 <script src="js/events.js"></script>
@@ -66,10 +72,22 @@
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-$('checks').innerHTML = `<h2>Kiểm tra dữ liệu</h2>` +
-  (G.check.errors.length ? G.check.errors.map(e => `<div class="no">✗ ${esc(e)}</div>`).join('') : '<div class="ok">✓ Không có lỗi (bestiary + compose + đại lục).</div>') +
-  G.check.warnings.map(w => `<div class="note">⚠ ${esc(w)}</div>`).join('') +
-  `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 3} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>`;
+// Kiểm tra dữ liệu + tóm tắt thế giới đang chọn (js/realm.js).
+function showChecks() {
+  const RL = G.useWorld($('world').value || 'can-bang'), st = RL.stats;
+  const nrow = n => { const own = RL.settlements.filter(s => s.nation === n.idx && s.tier !== 'ruin'), pop = RL.provinces.filter(p => p.nation === n.idx).reduce((a, p) => a + p.pop, 0), urb = own.reduce((a, s) => a + s.urban, 0);
+    return `<tr><td><span style="color:${n.color}">■</span> ${esc(n.name)}</td><td>${n.template} ${esc(n.label)}</td><td class="n">${n.size}</td><td class="n">${RL.provinces.filter(p => p.nation === n.idx).length}</td><td class="n">${own.length}</td><td class="n">${pop.toLocaleString('vi')}</td><td class="n">${(urb / Math.max(1, pop) * 100).toFixed(0)}%</td></tr>`; };
+  $('checks').innerHTML = `<h2>Kiểm tra dữ liệu</h2>` +
+    (G.check.errors.length ? G.check.errors.map(e => `<div class="no">✗ ${esc(e)}</div>`).join('') : '<div class="ok">✓ Không có lỗi (bestiary + compose + đại lục).</div>') +
+    G.check.warnings.map(w => `<div class="note">⚠ ${esc(w)}</div>`).join('') +
+    (RL.check.errors.length ? RL.check.errors.map(e => `<div class="no">✗ thế giới: ${esc(e)}</div>`).join('') : `<div class="ok">✓ Thế giới "${esc(RL.seed)}" không có lỗi.</div>`) +
+    RL.check.warnings.map(w => `<div class="note">⚠ thế giới: ${esc(w)}</div>`).join('') +
+    `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 3} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>` +
+    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}%</div>` +
+    `<table><tr><th>Nước</th><th>Mẫu</th><th class="n">Cỡ</th><th class="n">Tỉnh</th><th class="n">Khu</th><th class="n">Dân</th><th class="n">Đô thị</th></tr>${RL.nations.map(nrow).join('')}</table>`;
+}
+showChecks();
+$('world').onchange = showChecks;
 
 function table(title, rows, cols, opt = {}) {
   const max = Math.max(...rows.map(r => +r[opt.barCol ?? 1] || 0), 1);
@@ -79,10 +97,11 @@ function table(title, rows, cols, opt = {}) {
 
 $('run').onclick = () => {
   const N = Math.max(10, +$('n').value || 1000), base = $('seed').value || 'can-bang';
+  showChecks();
   $('status').textContent = 'Đang chạy…';
   setTimeout(() => {
     const t0 = performance.now();
-    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {} };
+    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {} };
     for (let i = 0; i < N; i++) {
       const sim = new G.Sim({ seed: base + ':' + i, headless: true });
       sim.newLife({ noPeers: true }); sim.runToDeath();
@@ -96,6 +115,8 @@ $('run').onclick = () => {
       A.maxTier[rec.tier] = (A.maxTier[rec.tier] || 0) + 1;
       A.jobTier[rec.job] = (A.jobTier[rec.job] || 0) + 1;
       A.region[S.born.region] = (A.region[S.born.region] || 0) + 1;
+      { const bs = G.SET[S.born.settlement], key = bs ? (S.born.urban ? G.TIER_VI[bs.tier] + ' (trong khu)' : 'vùng quê quanh ' + G.TIER_VI[bs.tier].toLowerCase()) : '?'; A.bornTier[key] = (A.bornTier[key] || 0) + 1;
+        const nk = bs && bs.nation >= 0 ? G.realm.nations[bs.nation].name : 'đất vô chủ'; A.bornNation[nk] = (A.bornNation[nk] || 0) + 1; }
       if (S.rose) {
         A.rose++;
         // Chạy luôn kiếp Bộ Xương để đo đời thứ hai.
@@ -123,8 +144,37 @@ $('run').onclick = () => {
     out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
+    out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu research/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
+    out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
     $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;
+  }, 30);
+};
+// Tạo nhiều thế giới (chỉ dựng, chưa sống) để xem phân bố mẫu quốc gia, số nước, khu dân cư, tỉ lệ đô thị (research/04 mục 6, research/05 mục 12).
+$('runWorlds').onclick = () => {
+  const NW = Math.max(5, +$('nw').value || 100), base = $('world').value || 'can-bang';
+  $('status').textContent = `Đang tạo ${NW} thế giới…`;
+  setTimeout(() => {
+    const t0 = performance.now(), tpl = Object.fromEntries(G.NATION_TEMPLATES.map(t => [t.id, 0])), nN = {}, races = {};
+    let errs = 0, warns = 0, sets = 0, urb = 0, unc = 0, prov = 0;
+    for (let w = 0; w < NW; w++) {
+      const RL = G.buildRealm(G.map, base + ':w' + w);
+      for (const n of RL.nations) { tpl[n.template]++; races[n.race] = (races[n.race] || 0) + 1; }
+      nN[RL.nations.length] = (nN[RL.nations.length] || 0) + 1;
+      errs += RL.check.errors.length; warns += RL.check.warnings.length;
+      sets += RL.stats.settlements; urb += RL.stats.urbanShare; unc += RL.stats.unclaimed; prov += RL.stats.provinces;
+    }
+    const ms = Math.round(performance.now() - t0), pct = (a, b) => (a / b * 100).toFixed(1) + '%';
+    const out = [];
+    out.push(table(`${NW} thế giới`, [['Lỗi', errs], ['Cảnh báo', warns], ['Khu dân cư / thế giới', (sets / NW).toFixed(1)], ['Tỉnh / thế giới', (prov / NW).toFixed(1)], ['Tỉ lệ đô thị', pct(urb, NW)], ['Đất vô chủ', pct(unc, NW)], ['ms / thế giới', Math.round(ms / NW)]], ['', '']));
+    out.push(table('Số nước', Object.entries(nN).map(([k, v]) => [k + ' nước', v, pct(v, NW)]), ['', 'Thế giới', '%'], { bar: true }));
+    out.push(table('Chủng tộc làm chủ', Object.entries(races).sort((a, b) => b[1] - a[1]).map(([r, v]) => [J.races[r].nameVi, v, pct(v, NW)]), ['Chủng tộc', 'Nước', '% thế giới'], { bar: true }));
+    const never = Object.entries(tpl).filter(([, v]) => !v).map(([k]) => k);
+    out.push(table('Mẫu quốc gia', Object.entries(tpl).sort((a, b) => b[1] - a[1]).map(([id, v]) => [id + ' ' + G.NATION_TEMPLATES.find(t => t.id === id).label, v, pct(v, NW)]), ['Mẫu', 'Lần', '% thế giới'],
+      { bar: true, note: never.length ? `Chưa bao giờ ra: ${never.join(', ')}` : 'Mẫu nào cũng ra ít nhất một lần.' }));
+    $('out').innerHTML = out.join('');
+    $('status').textContent = `${NW} thế giới trong ${ms} ms.`;
+    G.useWorld($('world').value || 'can-bang');
   }, 30);
 };
 $('run').click();
