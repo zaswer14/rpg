@@ -8,8 +8,10 @@ Trang trên claude.ai để người dùng lướt nội dung và đánh dấu t
 |---|---|---|---|---|
 | Duyệt Cây Nghề | https://claude.ai/artifact/K36G3cQRbzHMALuN7q3SaK | cây T0–T5 của 10 chủng tộc: nghề thân chung, ngọn riêng, ngọn tín ngưỡng, nghề ẩn, dạng đề xuất từ kho khuôn nghề | `shared/` (schools, trunk, aspects, faiths, races, archetypes, compose, catalog) | `<race>__<jobId>`, đề xuất `<race>__cand:<variantId>` |
 | Duyệt Mẫu Quốc Gia | https://claude.ai/artifact/1FQFmmAroJsyVzVkgwp8W2 | 50 mẫu quốc gia (10 chủng tộc × 5), 31 đặc trưng riêng, 22 luật, 14 chính thể; tên nước mẫu | `vankiep/data/nations.js`, tên nước trong `shared/names/names.js`, tên biome | `<kind>__<id>`, kind `tpl` / `quirk` / `law` / `gov` |
+| Duyệt Nội Dung Vạn Kiếp | https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY | 90 sự kiện quốc gia (đặc tính mẫu, đặc trưng riêng, chung: câu chữ và tác dụng trích từ mã), 6 loại hội + Hiệp Hội Mạo Hiểm + lập nghiệp, 3 cấp học + 5 ngành, 5 tước + 3 xuất thân, 9 thang thăng tiến, 15 sinh kế, 8 công trình | `vankiep/js/realmev.js`, `org.js`, `edu.js`, `noble.js`, `vankiep/data/world.js`, `nations.js` | `<kind>__<id>`, kind `ev` / `org` / `edu` / `track` / `noble` / `origin` / `promo` / `work` / `bld` |
+| Duyệt Quái và Địa hình | https://claude.ai/artifact/EAQXqvNeqpS36378wdaaFN | 12 họ quái (luật họ) với 87 loài, 16 biome (địa hình, bảng sinh quái theo Tier), 7 đặc trưng ô, kho tên theo 42 nhóm | `shared/bestiary/`, `shared/terrain/`, `shared/names/names.js` | `<kind>__<id>`, kind `fam` / `sp` / `biome` / `feat` / `names` (id nhóm tên dạng `person.elf`, `geo.river`) |
 
-Mỗi trang có hai file: `<trang>-data.html` (nạp dữ liệu, in JSON vào `pre#out`) và `<trang>-review.src.html` (giao diện, chỗ `/*DATA*/null` là nơi chèn JSON). Tên ngắn dùng trong lệnh: `tree`, `nation`.
+Mỗi trang có hai file: `<trang>-data.html` (nạp dữ liệu, in JSON vào `pre#out`) và `<trang>-review.src.html` (giao diện, chỗ `/*DATA*/null` là nơi chèn JSON). Tên ngắn dùng trong lệnh: `tree`, `nation`, `content`, `bestiary`.
 
 `published.txt` ghi dấu dữ liệu (sha256 16 ký tự của JSON) của bản đang đăng. `tools/duyet.sh` so dấu này với dữ liệu hiện tại.
 
@@ -38,19 +40,13 @@ Kết quả có hai phần:
 
 ## 3. Nội dung chưa có trang duyệt
 
-Ghi ngày 15/10/2026, khi tách lại kho. Hai trang ở mục 1 khớp dữ liệu hiện tại từng byte, nhưng các nội dung sau chưa có chỗ duyệt nhanh:
+Ghi ngày 15/10/2026. Hai trang Duyệt Nội Dung Vạn Kiếp và Duyệt Quái và Địa hình đã phủ sự kiện quốc gia, hội, học viện, quý tộc, thăng tiến, sinh kế, công trình, loài quái, biome, đặc trưng ô và kho tên. Còn thiếu:
 
 | Nội dung | Ở đâu | Số lượng |
 |---|---|---|
-| Sự kiện quốc gia (đặc tính mẫu, đặc trưng riêng, sự kiện chung) | `vankiep/js/realmev.js` `G.NATION_EVENTS` | 90 |
 | Sự kiện đời người, quyết định | `vankiep/js/events.js`, `state.js`, `org.js`, `edu.js`, `noble.js` (`G.EVENTS`, `G.DECISIONS`) | 75 sự kiện, 37 quyết định |
-| Hội, tổ chức | `vankiep/js/org.js` `G.ORG_KINDS` | 6 loại |
-| Học viện, ngành học | `vankiep/js/edu.js` `G.EDU`, `G.TRACKS` | 3 cấp, 5 ngành |
-| Tước quý tộc, thang thăng tiến theo chính thể, xuất thân hoàng gia | `vankiep/js/noble.js` `G.NOBLE_VI`, `G.PROMO`, `G.DYNASTIC` | Nam → Công, 9 thang, 5 xuất thân |
-| Sinh kế, công trình | `vankiep/data/world.js` `G.WORKS`, `vankiep/data/nations.js` `G.BUILDINGS` | 15, 8 |
-| Vùng, vùng biển, tàu, nguyên nhân chết | `vankiep/data/world.js` | 16, 7, 3, 21 |
-| Loài quái, biome | `shared/bestiary/species.js`, `shared/terrain/ecology.js` | 87 loài, 16 biome |
-| Địa hình, đặc trưng ô | `shared/terrain/terrain.js` | 16 biome, 7 đặc trưng |
-| Kho tên (người, khu dân cư, địa danh, hang ổ, di tích, chiến tranh, tàu, đoàn thuê, cướp biển, biệt hiệu) | `shared/names/names.js` | ~1.200 tên; trang quốc gia chỉ hiện tên nước |
+| Vùng, vùng biển, tàu, nguyên nhân chết | `vankiep/data/world.js` (`G.REGIONS`, `G.SEAS`, `G.SHIPS`, `G.CAUSES`) | 16, 7, 3, 21 |
+| Cấp quái, biến tố tinh anh, trạng thái quái gây ra | `shared/bestiary/rules.js` (`grades`, `affixes`, `playerStatuses`) | 4, 8, 7 |
+| Cấu hình game Skeleton Codex | `shared/games/skeleton-codex.js` | 1 |
 
-Hướng đề xuất: một trang **Duyệt Nội Dung Vạn Kiếp** với tab Sự kiện quốc gia, Hội, Học viện, Quý tộc, Sinh kế và công trình; một trang **Duyệt Quái và Địa hình** (phần chung) với tab theo họ quái và theo biome; kho tên duyệt theo nhóm trong một trong hai trang.
+Các file `org.js`, `edu.js`, `noble.js`, `world.js`, `rules.js` đã nằm trong phạm vi một trang, nên `duyet.sh` chỉ báo "chưa trang nào hiện" khi file đổi mà dữ liệu trang không đổi (tức là phần đổi thuộc các dòng trên).

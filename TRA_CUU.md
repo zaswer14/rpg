@@ -52,5 +52,7 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 |---|---|---|
 | Duyệt Mẫu Quốc Gia | https://claude.ai/artifact/1FQFmmAroJsyVzVkgwp8W2 | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/data/nations.js` |
 | Duyệt Cây Nghề | https://claude.ai/artifact/K36G3cQRbzHMALuN7q3SaK | db `reviews`, id `<race>__<jobId>` |
+| Duyệt Nội Dung Vạn Kiếp | https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/js/realmev.js`, `org.js`, `edu.js`, `noble.js`, `G.WORKS`, `G.BUILDINGS` |
+| Duyệt Quái và Địa hình | https://claude.ai/artifact/EAQXqvNeqpS36378wdaaFN | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `shared/bestiary/`, `shared/terrain/`, `shared/names/` |
 
 Kiểm, dựng lại, đăng lại, thêm trang: `review/README.md` mục 2. Nội dung chưa có trang duyệt: mục 3 của file đó.

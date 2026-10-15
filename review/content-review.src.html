@@ -1,0 +1,377 @@
+<title>Duyệt Nội Dung Vạn Kiếp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Bố cục: tiêu đề + tiến độ → thanh tab (sự kiện quốc gia ba nhóm, hội, học viện, quý tộc, thăng tiến, sinh kế, công trình) → lưới thẻ.
+   Chữ và nút giống Duyệt Cây Nghề, Duyệt Mẫu Quốc Gia; màu nhấn tím mận để ba trang không lẫn. */
+:root{
+  --bg:#f3f1f2; --panel:#fbfafb; --ink:#211e24; --muted:#6a6470; --line:#dbd5dc; --chip:#ebe5ec;
+  --accent:#6b3f8a; --accent-ink:#ffffff;
+  --ok:#2f7d4a; --fix:#b07a12; --drop:#b0352f;
+  --font-display:"Spectral SC", Georgia, serif; --font-body:"Be Vietnam Pro", system-ui, sans-serif; --font-mono:"JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151317; --panel:#1d1a20; --ink:#ebe7ee; --muted:#a29aa8; --line:#342f39; --chip:#28242c;
+  --accent:#c39be0; --accent-ink:#1a1020; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#151317; --panel:#1d1a20; --ink:#ebe7ee; --muted:#a29aa8; --line:#342f39; --chip:#28242c;
+  --accent:#c39be0; --accent-ink:#1a1020; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+.page{padding-inline:16px;padding-block:16px 48px;max-width:1500px;margin:0 auto}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 12px;max-width:72ch}
+.progress{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-bottom:12px;font-size:13px;font-variant-numeric:tabular-nums}
+.progress .grp{display:inline-flex;gap:6px;align-items:center}
+.progress b{font-weight:600}
+.n-ok{color:var(--ok)} .n-fix{color:var(--fix)} .n-drop{color:var(--drop)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;min-width:96px}
+.tabs button small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button[aria-selected="true"] small{color:inherit;opacity:.85}
+.tabs .sep{width:1px;background:var(--line);margin:2px 4px}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:13px}
+.bar2 select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.save{color:var(--muted);font-size:12px}
+.overview{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.overview h2{font-family:var(--font-display);font-weight:600;font-size:21px;margin:0 0 2px}
+.overview p{margin:2px 0 6px;color:var(--muted);max-width:80ch}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{background:var(--chip);border-radius:5px;padding:1px 7px;font-size:12px;white-space:nowrap}
+.chip.dash{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.chip.good{color:var(--ok)} .chip.bad{color:var(--drop)} .chip.big{color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.s-ok{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.card.s-fix{border-color:color-mix(in srgb,var(--fix) 60%,var(--line))}
+.card.s-drop{border-color:color-mix(in srgb,var(--drop) 55%,var(--line));opacity:.8}
+.card header{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.card h3{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.tid{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.pill{flex:none;font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;line-height:1.7}
+.pill.ok{background:var(--ok);color:var(--panel)} .pill.fix{background:var(--fix);color:var(--panel)} .pill.drop{background:var(--drop);color:var(--panel)}
+.meta{color:var(--muted);font-size:13px;margin-top:-4px}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 10px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0}
+.trait{background:var(--chip);border-radius:8px;padding:7px 10px;font-size:13px}
+.trait b{font-weight:600}
+.lines{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.lines li{border-left:3px solid color-mix(in srgb,var(--accent) 45%,var(--line));padding:2px 0 2px 9px;font-size:13.5px}
+.ladder{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px}
+.ladder .step{background:var(--chip);border-radius:5px;padding:1px 7px}
+.ladder .step small{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px}
+.ladder .arr{color:var(--muted)}
+table.mini{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;width:100%}
+table.mini th{text-align:left;color:var(--muted);font-weight:500;padding:2px 6px 2px 0;border-bottom:1px solid var(--line)}
+table.mini td{padding:2px 6px 2px 0;border-bottom:1px solid var(--line)}
+table.mini tr:last-child td{border-bottom:0}
+.review{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.review .row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.btn.fix[aria-pressed="true"]{background:var(--fix);border-color:var(--fix);color:var(--panel)}
+.btn.drop[aria-pressed="true"]{background:var(--drop);border-color:var(--drop);color:var(--panel)}
+textarea{width:100%;min-height:52px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.group-title{font-family:var(--font-display);font-weight:600;font-size:17px;margin:14px 0 8px;grid-column:1/-1}
+.empty{color:var(--muted);padding:20px 0}
+code{font-family:var(--font-mono);font-size:12px}
+</style>
+
+<div class="page">
+  <h1>Duyệt Nội Dung Vạn Kiếp</h1>
+  <p class="lede">Nội dung đời người của Vạn Kiếp từ bước 4 trở đi: sự kiện quốc gia, hội và tổ chức, học viện, tước quý tộc, thang thăng tiến theo chính thể, sinh kế và công trình. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa mã nguồn trong <code>vankiep/</code>.</p>
+  <div class="progress" id="progress"></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
+  <div class="bar2">
+    <label for="filter">Hiện</label>
+    <select id="filter">
+      <option value="all">tất cả</option><option value="todo">chưa duyệt</option><option value="ok">đã giữ</option><option value="fix">cần sửa</option><option value="drop">bỏ</option>
+    </select>
+    <span class="save" id="saveState" aria-live="polite"></span>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+(function () {
+  const D = /*DATA*/null;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
+  const STAGE = { child: 'thơ ấu', teen: 'thiếu niên', adult: 'trưởng thành', elder: 'già' };
+  const TONE = { good: 'tốt', bad: 'xấu', info: 'tin', big: 'lớn' };
+  const TIER = { hamlet: 'thôn', village: 'làng', town: 'thị trấn', city: 'thành phố', capital: 'kinh đô' };
+  const ROLE = { fishing: 'làng chài', port: 'cảng', mine: 'mỏ', lumber: 'trại gỗ', fort: 'đồn', temple: 'đền', market: 'chợ' };
+  const QGROUP = { throne: 'Ngôi vua', economy: 'Kinh tế', army: 'Quân sự', faith: 'Tôn giáo', diplo: 'Ngoại giao', history: 'Lịch sử', culture: 'Văn hóa' };
+  const pct = v => Math.round(v * 100) + '%';
+  const num = v => String(v).replace('.', ',');
+  const raceVi = r => D.races[r] || r;
+  const mv = m => D.mastery[m] || m;
+  const tplOf = id => D.templates.find(t => t.id === id);
+  const quirkOf = id => D.quirks.find(q => q.id === id);
+  const workVi = w => D.works[w] ? D.works[w].nameVi : w;
+
+  const reviews = {}, drafts = {};
+  let db = null, dbState = 'connecting';
+  const TABS = [
+    ['ev_tpl', 'Sự kiện: đặc tính mẫu'], ['ev_quirk', 'Sự kiện: đặc trưng riêng'], ['ev_misc', 'Sự kiện: chung'], null,
+    ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
+    ['work', 'Sinh kế'], ['bld', 'Công trình']
+  ];
+  const state = { tab: 'ev_tpl', filter: 'all' };
+  try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
+  try { const f = localStorage.getItem('contentReview.filter'); if (f) state.filter = f; } catch (e) {}
+  const key = (kind, id) => kind + '__' + id;
+  const rv = (kind, id) => reviews[key(kind, id)] || {};
+
+  // ---- Danh sách mục duyệt theo tab ----
+  const evName = e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
+  const items = {
+    ev_tpl: D.events.filter(e => e.kind === 'tpl').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
+    ev_quirk: D.events.filter(e => e.kind === 'quirk').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
+    ev_misc: D.events.filter(e => e.kind === 'misc').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
+    org: [...Object.entries(D.orgKinds).map(([id, o]) => ({ kind: 'org', id, name: o.nameVi })), { kind: 'org', id: 'adv', name: 'Hiệp Hội Mạo Hiểm' }, { kind: 'org', id: 'found', name: 'Lập nghiệp, chức vụ' }],
+    edu: [...D.edu.map((l, i) => ({ kind: 'edu', id: String(i + 1), name: l.nameVi })), ...Object.entries(D.tracks).map(([id, t]) => ({ kind: 'track', id, name: t.nameVi }))],
+    noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
+    promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
+    work: Object.entries(D.works).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') }))
+  };
+  const allItems = Object.values(items).flat();
+  const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
+  const passes = (kind, id) => { const s = rv(kind, id).status; return state.filter === 'all' || (state.filter === 'todo' ? !s : s === state.filter); };
+
+  // ---- Tiến độ ----
+  function renderProgress() {
+    const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
+    $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
+      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld]);
+  }
+
+  // ---- Tab ----
+  function renderTabs() {
+    $('tabs').innerHTML = TABS.map(t => {
+      if (!t) return '<span class="sep" aria-hidden="true"></span>';
+      const [id, label] = t, c = count(items[id]), done = c.ok + c.fix + c.drop;
+      return `<button role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${esc(label)}<small>${done}/${c.n}${c.fix ? ` · ✎ ${c.fix}` : ''}${c.drop ? ` · ✕ ${c.drop}` : ''}</small></button>`;
+    }).join('');
+  }
+
+  // ---- Khối duyệt dùng chung ----
+  function reviewBlock(kind, id) {
+    const r = rv(kind, id), k = key(kind, id), note = drafts[k] != null ? drafts[k] : (r.note || ''), off = db ? '' : 'disabled';
+    return `<div class="review" data-kind="${kind}" data-id="${esc(id)}">
+      <div class="row" role="group" aria-label="Quyết định">
+        ${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}
+      </div>
+      <textarea id="note-${esc(k)}" data-note placeholder="Ghi chú: đổi câu chữ, đổi số, đổi điều kiện, ý tưởng…" ${off}>${esc(note)}</textarea>
+      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div>
+    </div>`;
+  }
+  const pill = (kind, id) => { const s = rv(kind, id).status; return s ? `<span class="pill ${s}">${STATUS[s].t} ${STATUS[s].vi}</span>` : ''; };
+  const cardClass = (kind, id) => { const s = rv(kind, id).status; return 'card' + (s ? ' s-' + s : ''); };
+  const card = (kind, id, title, body) => `<article class="${cardClass(kind, id)}">
+      <header><h3><span class="tid">${esc(id)}</span>${esc(title)}</h3>${pill(kind, id)}</header>${body}${reviewBlock(kind, id)}</article>`;
+  const grid = cards => `<div class="grid">${cards || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+  const overview = (title, text, extra = '') => `<section class="overview"><h2>${title}</h2><p>${text}</p>${extra}</section>`;
+  const chips = list => `<span class="chips">${list.join('')}</span>`;
+
+  // ---- Sự kiện quốc gia ----
+  function evMeta(e) {
+    const who = e.undead === 'only' ? 'chỉ Bộ Xương' : e.undead === 'any' ? 'người sống và Bộ Xương' : 'người sống';
+    const st = e.st.length === 4 ? 'mọi tuổi' : e.st.map(s => STAGE[s]).join(', ');
+    return `${st} · ${who} · trọng số ${e.w != null ? num(e.w) : 'theo hàm'}${e.rep ? ` · lặp lại, cách ${e.gap || 1} lượt` : ' · một lần một đời'}`;
+  }
+  function evCard(e) {
+    let head = '';
+    if (e.kind === 'tpl') { const t = tplOf(e.ref) || {}; head = `<dl class="kv"><dt>Khi nào</dt><dd>Sống ở nước theo mẫu <code>${esc(e.ref)}</code> ${esc(t.label)} (${esc(raceVi(t.race))})</dd></dl>${t.trait ? `<div class="trait"><b>${esc(t.trait.nameVi)}.</b> ${esc(t.trait.desc)}</div>` : ''}`; }
+    else if (e.kind === 'quirk') { const q = quirkOf(e.ref) || {}; head = `<dl class="kv"><dt>Khi nào</dt><dd>Sống ở nước có đặc trưng ${esc(q.nameVi || e.ref)}${q.group ? ` (nhóm ${esc(QGROUP[q.group] || q.group)})` : ''}</dd></dl>`; }
+    else head = `<dl class="kv"><dt>Khi nào</dt><dd>${esc(e.cond || 'không ghi')}</dd></dl>`;
+    return card('ev', e.id, evName(e),`<div class="meta">${esc(evMeta(e))}</div>${head}
+      <ul class="lines">${e.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+      <dl class="kv"><dt>Tác dụng</dt><dd class="chips">${e.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('') || '<span class="chip dash">chỉ là tin</span>'}</dd>
+        <dt>Kết quả</dt><dd class="chips">${e.tone.map(t => `<span class="chip ${t}">${TONE[t] || t}</span>`).join('')}</dd></dl>`);
+  }
+  function evView(kind) {
+    const list = D.events.filter(e => e.kind === kind && passes('ev', e.id));
+    if (kind === 'tpl') {
+      const races = [...new Set(D.templates.map(t => t.race))];
+      const html = races.map(r => { const l = list.filter(e => (tplOf(e.ref) || {}).race === r); return l.length ? `<h3 class="group-title">${esc(raceVi(r))}</h3>${l.map(evCard).join('')}` : ''; }).join('');
+      return overview('Sự kiện theo đặc tính mẫu', 'Mỗi mẫu quốc gia có một sự kiện về đặc tính của nó, chỉ xảy ra khi nhân vật sống ở nước theo mẫu đó. Sự kiện quốc gia chạy ở kênh riêng: mỗi lượt 35% có một sự kiện, bốc theo trọng số trong số các sự kiện hợp điều kiện. Câu chữ trích từ mã nguồn; ‹số›, ‹tên› là chỗ game điền vào.') + grid(html);
+    }
+    if (kind === 'quirk') {
+      const groups = Object.keys(QGROUP);
+      const html = groups.map(g => { const l = list.filter(e => (quirkOf(e.ref) || {}).group === g); return l.length ? `<h3 class="group-title">${QGROUP[g]}</h3>${l.map(evCard).join('')}` : ''; }).join('');
+      return overview('Sự kiện theo đặc trưng riêng', 'Mỗi đặc trưng riêng của nước (31 cái, duyệt ở trang Mẫu Quốc Gia) có một sự kiện cho người sống ở nước đó.') + grid(html);
+    }
+    return overview('Sự kiện chung', 'Sự kiện của mục 8 thiết kế bản đồ: ân xá, lễ quốc giáo, nhắc lại sử, xóm bên xin nhập (khi là trưởng khu), sứ thần, con đòi kế vị, quan tham, tỉnh đòi tách (khi là người cai trị), quê cũ đổi chủ (Bộ Xương).') + grid(list.map(evCard).join(''));
+  }
+
+  // ---- Hội, tổ chức ----
+  const ladder = (names, sub) => `<div class="ladder">${names.map((n, i) => `${i ? '<span class="arr">→</span>' : ''}<span class="step">${esc(n)}${sub && sub[i] != null ? `<small>${esc(sub[i])}</small>` : ''}</span>`).join('')}</div>`;
+  function orgView() {
+    const cards = [];
+    for (const [id, o] of Object.entries(D.orgKinds)) {
+      if (!passes('org', id)) continue;
+      const seat = Object.entries(o.seat).map(([t, p]) => `<span class="chip">${TIER[t] || t} ${pct(p)}</span>`);
+      cards.push(card('org', id, o.nameVi, `
+        <dl class="kv"><dt>Ai vào</dt><dd>${o.works ? esc(o.works.map(workVi).join(', ')) : 'mọi nghề'}</dd>
+          <dt>Có ở</dt><dd>${chips(seat)}</dd></dl>
+        ${ladder(o.ranks, o.inc.some(v => v) ? o.inc.map(v => '+' + pct(v)) : null)}
+        <div class="meta">${o.inc.some(v => v) ? 'Số nhỏ: thu nhập thêm theo hạng.' : 'Thu nhập từ hợp đồng chiến tranh và hộ tống, không cộng theo hạng.'}</div>`));
+    }
+    if (passes('org', 'adv')) cards.push(card('org', 'adv', 'Hiệp Hội Mạo Hiểm', `<p style="margin:0">Mọi nghề vào được; nhận nhiệm vụ trên bảng, hạng lên theo danh vọng (mỗi 15 danh vọng một hạng). Người quản lý là trưởng chi nhánh.</p>
+        ${ladder(D.advRanks, D.advRanks.map((_, i) => i * 15))}`));
+    if (passes('org', 'found')) {
+      const C = D.orgCosts;
+      cards.push(card('org', 'found', 'Lập nghiệp, chức vụ', `<dl class="kv">
+        <dt>Lập làng</dt><dd>${C.villageCost} bạc trở lên (cộng phí theo nơi đặt)</dd>
+        <dt>Lập thị trấn</dt><dd>${C.townCost} bạc, ${C.townMen} người theo, danh vọng 45</dd>
+        <dt>Lên thị trấn</dt><dd>${C.upTown.urban} dân, ${C.upTown.cost} bạc</dd>
+        <dt>Lên thành phố</dt><dd>${C.upCity.urban} dân, ${C.upCity.cost} bạc, danh vọng ${C.upCity.fame}</dd>
+        <dt>Trần dân</dt><dd>${Object.entries(C.cap).map(([t, v]) => `${TIER[t]} ${v}`).join(', ')}</dd>
+        <dt>Lập nước</dt><dd>${C.nationCost} bạc (tỉnh vô chủ)</dd>
+        <dt>Dấy binh</dt><dd>${C.rebelCost} bạc</dd>
+        <dt>Trưởng khu</dt><dd>${esc(Object.entries(D.headVi).map(([t, v]) => `${TIER[t]}: ${v}`).join(', '))}</dd>
+        <dt>Làm quan</dt><dd>${ladder(D.officeVi.slice(1))}</dd></dl>`));
+    }
+    return overview('Hội, tổ chức', 'Ba hướng đều tự chọn: không tham gia, làm thành viên hoặc làm người quản lý. Phường hội theo sinh kế, Hiệp Hội Mạo Hiểm cho mọi nghề, đoàn lính đánh thuê nhận hợp đồng chiến tranh. Tỉ lệ ở "Có ở" là xác suất một khu bậc đó có hội lúc tạo thế giới.') + grid(cards.join(''));
+  }
+
+  // ---- Học viện ----
+  function eduView() {
+    const school = D.buildings.find(b => b.id === 'school') || { name: {} };
+    const lv = D.edu.map((l, i) => [String(i + 1), l]).filter(([id]) => passes('edu', id)).map(([id, l]) => card('edu', id, l.nameVi, `<dl class="kv">
+        <dt>Thời gian</dt><dd>${l.need} lượt</dd>
+        <dt>Học phí</dt><dd>${num(l.fee)} × thu nhập trung vị vùng mỗi lượt (đi học xa × 1,5)</dd>
+        <dt>Điều kiện</dt><dd>Hiểu biết ≥ ${l.sm}${l.exam ? ', qua kỳ thi đầu vào' : ', không thi'}</dd>
+        <dt>Trường</dt><dd>${chips(l.tiers.map(t => `<span class="chip">${esc(school.name[t] || '?')} (${TIER[t]})</span>`))}</dd>
+        <dt>Mỗi lượt</dt><dd>Hiểu biết +${num(l.gain)} × (0,5 + phần thời gian dành cho học)</dd></dl>`));
+    const tr = Object.entries(D.tracks).filter(([id]) => passes('track', id)).map(([id, t]) => {
+      const ms = [...(t.masteries || []), ...(t.schools || []).flatMap(s => D.schools[s].masteries)];
+      return card('track', id, 'Ngành ' + t.nameVi, `<dl class="kv">
+        ${t.schools ? `<dt>Trường phái</dt><dd>${esc(t.schools.map(s => D.schools[s].vi).join(', '))}</dd>` : ''}
+        <dt>Rèn</dt><dd class="chips">${ms.map(m => `<span class="chip">${esc(mv(m))}</span>`).join('') || '<span class="chip dash">không rèn kỹ năng; thêm thu nhập nghề trí óc</span>'}</dd></dl>`);
+    });
+    return overview('Học viện', 'Ba cấp, đều tự chọn và tốn học phí. Gia đình trả theo tầng lớp khi cha mẹ còn sống, không thì tự trả, không nữa thì học bổng nếu giỏi và chăm. Cao cấp chọn một trong năm ngành.')
+      + grid((lv.length ? '<h3 class="group-title">Cấp học</h3>' + lv.join('') : '') + (tr.length ? '<h3 class="group-title">Ngành ở cao cấp</h3>' + tr.join('') : ''));
+  }
+
+  // ---- Quý tộc ----
+  const ORIGIN = {
+    royal_main: 'Sinh ở kinh đô nước cha truyền con nối, cùng chủng tộc với vua: 15% là hoàng gia, trong đó 45% dòng chính. Cha hoặc mẹ là vua; đứng đầu hoặc gần đầu hàng kế vị.',
+    royal_side: 'Phần còn lại của hoàng gia ở kinh đô, hoặc 3% người sinh ở thành phố. Họ hàng của vua, đứng thứ 4 đến 9 (cộng số anh chị) trong hàng kế vị.',
+    noble: 'Ở nước ban tước: kinh đô 7%, thành phố 6%, thị trấn 4%, làng 1,2%. Nhà có tước Nam đến Hầu; con trưởng kế tước, con thứ tự lập thân.'
+  };
+  function nobleView() {
+    const N = D.noble;
+    const ranks = D.nobleVi.slice(1).map((n, i) => [String(i + 1), n, i + 1]).filter(([id]) => passes('noble', id)).map(([id, n, r]) => card('noble', id, n, `<dl class="kv">
+        <dt>Được phong</dt><dd>công trạng ≥ ${N.merit[r]}, danh vọng ≥ ${N.fame[r]}</dd>
+        <dt>Bổng lộc</dt><dd>${num(N.stipend[r])} × thu nhập trung vị mỗi năm${r >= 3 ? ', có thái ấp (thu thuế một làng hoặc thị trấn)' : ''}</dd>
+        ${N.buy[r] ? `<dt>Mua tước</dt><dd>góp ${N.buy[r]} × thu nhập trung vị vào quốc khố</dd>` : ''}</dl>`));
+    const org = Object.entries(D.originVi).filter(([id]) => passes('origin', id)).map(([id, n]) => card('origin', id, n, `<p style="margin:0">${esc(ORIGIN[id] || '')}</p>`));
+    const govs = l => l.map(g => `<span class="chip">${esc((D.govs[g] || {}).vi || g)}</span>`).join('');
+    return overview('Tước quý tộc và xuất thân', 'Năm bậc tước, chỉ nước có chính thể ban tước mới phong. Có tước bằng ba đường: sinh trong nhà quý tộc và kế tước, công trạng với nước, hoặc quyên góp quốc khố (chỉ Nam, Tử). Sống ở nước khác thì không nhận bổng lộc.',
+      `<dl class="kv"><dt>Ban tước</dt><dd class="chips">${govs(D.nobleGovs)}</dd><dt>Có hoàng tộc</dt><dd class="chips">${govs(D.dynastic)}</dd></dl>`)
+      + grid((ranks.length ? '<h3 class="group-title">Bậc tước</h3>' + ranks.join('') : '') + (org.length ? '<h3 class="group-title">Xuất thân</h3>' + org.join('') : ''));
+  }
+
+  // ---- Thăng tiến theo chính thể ----
+  function promoView() {
+    const cards = Object.entries(D.promo).filter(([id]) => passes('promo', id)).map(([id, p]) => {
+      const g = D.govs[id] || {};
+      return card('promo', id, g.vi || id, `<div class="meta">${esc(g.promo || '')}</div>
+        ${ladder(p.names, p.thr)}
+        <dl class="kv"><dt>Xét theo</dt><dd>${esc(p.unit)} (số nhỏ là ngưỡng mỗi bậc)</dd><dt>Danh vọng</dt><dd>bậc 1 không cần; ${[15, 30, 50].slice(0, p.names.length - 1).map((v, i) => `bậc ${i + 2} ≥ ${v}`).join(', ')}</dd></dl>`);
+    });
+    return overview('Thăng tiến theo chính thể', 'Nước không ban tước có thang bậc riêng; đủ chỉ số thì được mời lên một bậc, nhận hay không tùy người chơi. Bộ lạc, hãn quốc và nước có Ngai thách đấu: đủ danh vọng thì có thể thách đấu người cai trị.') + grid(cards.join(''));
+  }
+
+  // ---- Sinh kế ----
+  function workView() {
+    const cards = Object.entries(D.works).filter(([id]) => passes('work', id)).map(([id, w]) => {
+      const bld = id => { const b = D.buildings.find(x => x.id === id); return b ? Object.values(b.name)[0] : id; };
+      const need = [
+        w.land ? 'sống ở làng, thôn hoặc vùng quê' : '', w.town ? 'sống ở thị trấn trở lên' : '',
+        w.role ? 'khu có ' + w.role.map(r => ROLE[r] || r).join(' hoặc ') : '', w.bld ? 'khu có ' + w.bld.map(bld).join(' hoặc ') : '',
+        w.biomes ? 'vùng ' + w.biomes.map(b => D.biomes[b] || b).join(', ') : '', w.needSm ? `Hiểu biết ≥ ${w.needSm}` : '',
+        w.needFaith ? 'có đạo' : '', w.adventurer ? 'nhận nhiệm vụ của Hiệp Hội Mạo Hiểm' : ''
+      ].filter(Boolean);
+      const law = [w.guild ? 'phải vào phường hội nếu nước có luật độc quyền' : '', w.banLaw ? `bị cấm nếu nước có luật ${D.laws[w.banLaw] || w.banLaw}` : ''].filter(Boolean);
+      return card('work', id, w.nameVi, `<dl class="kv">
+        <dt>Thu nhập</dt><dd>phân vị ${pct(w.pct[0])} đến ${pct(w.pct[1])}</dd>
+        <dt>Rủi ro</dt><dd>× ${num(w.risk)}${w.cause ? `, chết vì ${esc(D.causes[w.cause] || w.cause)}` : ''}${w.seaBand != null ? `, làm ở biển tầng ${w.seaBand ? 'khơi' : 'ven bờ'}` : ''}</dd>
+        <dt>Rèn</dt><dd class="chips">${Object.entries(w.trains).map(([m, v]) => `<span class="chip">${esc(mv(m))} ${v}</span>`).join('') || '<span class="chip dash">không</span>'}</dd>
+        <dt>Cần</dt><dd>${esc(need.join('; ') || 'không')}</dd>
+        ${law.length ? `<dt>Luật</dt><dd>${esc(law.join('; '))}</dd>` : ''}</dl>`);
+    });
+    return overview('Sinh kế', 'Nghề sống của nhân vật, khác nghề chiến đấu của thư viện. Thu nhập là khoảng phân vị trong vùng; rủi ro nhân xác suất tai nạn; mỗi năm làm thì rèn các kỹ năng ghi ở đây.') + grid(cards.join(''));
+  }
+
+  // ---- Công trình ----
+  function bldView() {
+    const order = ['village', 'town', 'city', 'capital'];
+    const cards = D.buildings.filter(b => passes('bld', b.id)).map(b => card('bld', b.id, Object.values(b.name).slice(-1)[0], `
+      <table class="mini"><thead><tr><th>Bậc khu</th><th>Tên</th><th>Có</th></tr></thead><tbody>
+        ${order.filter(t => b.name[t]).map(t => `<tr><td>${TIER[t]}</td><td>${esc(b.name[t])}</td><td>${pct(b.p[t] || 0)}</td></tr>`).join('')}
+      </tbody></table>
+      <div class="meta">Sinh kế cần: ${esc(Object.entries(D.works).filter(([, w]) => (w.bld || []).includes(b.id)).map(([, w]) => w.nameVi).join(', ') || 'không')}</div>`));
+    return overview('Công trình', 'Công trình trong khu dân cư, tên đổi theo bậc khu; cột "Có" là xác suất khu bậc đó có công trình. Thôn không có công trình nào.') + grid(cards.join(''));
+  }
+
+  function renderContent() {
+    const t = state.tab;
+    $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : bldView();
+    if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
+  }
+  function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
+
+  // ---- Lưu ----
+  async function write(kind, id, status, note) {
+    if (!db) return;
+    const it = allItems.find(x => x.kind === kind && x.id === id), k = key(kind, id);
+    $('saveState').textContent = 'Đang lưu…';
+    try {
+      const ref = db.collection('reviews').doc(k);
+      if (status === null) await ref.delete();
+      else await ref.set({ kind, id, name: it ? it.name : id, status, note: note || '', updatedAt: new Date().toISOString() });
+      delete drafts[k];
+      $('saveState').textContent = 'Đã lưu';
+    } catch (e) {
+      $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.';
+    }
+  }
+
+  // ---- Sự kiện giao diện ----
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; try { history.replaceState(null, '', '#' + state.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); });
+  $('filter').addEventListener('change', e => { state.filter = e.target.value; try { localStorage.setItem('contentReview.filter', state.filter); } catch (x) {} renderContent(); });
+  $('content').addEventListener('input', e => { if (!e.target.matches('[data-note]')) return; const box = e.target.closest('.review'); drafts[key(box.dataset.kind, box.dataset.id)] = e.target.value; });
+  $('content').addEventListener('click', e => {
+    const box = e.target.closest('.review'); if (!box) return;
+    const kind = box.dataset.kind, id = box.dataset.id, note = box.querySelector('[data-note]').value, cur = rv(kind, id).status;
+    const st = e.target.closest('[data-status]');
+    if (st) { write(kind, id, cur === st.dataset.status ? null : st.dataset.status, note); return; }
+    if (e.target.closest('[data-clear]')) { write(kind, id, null); return; }
+    if (e.target.closest('[data-savenote]')) write(kind, id, cur || 'fix', note);
+  });
+
+  render();
+
+  (async () => {
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { dbState = 'off'; renderContent(); return; }
+    dbState = 'ready'; $('saveState').textContent = 'Quyết định được lưu chung cho trang này; Claude đọc lại được.'; renderContent();
+    db.collection('reviews').onSnapshot(snap => {
+      for (const k of Object.keys(reviews)) delete reviews[k];
+      for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
+      const act = document.activeElement, focusId = act && act.matches && act.matches('[data-note]') ? act.id : null, pos = focusId ? act.selectionStart : 0;
+      renderProgress(); renderTabs(); renderContent();
+      if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } }
+    }, () => { dbState = 'off'; renderContent(); });
+  })();
+})();
+</script>

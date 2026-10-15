@@ -3,18 +3,20 @@
 #   bash tools/duyet.sh              đầy đủ: sinh lại dữ liệu từng trang (trình duyệt headless) so với bản đã đăng
 #                                    + file nội dung đã đổi mà chưa trang nào hiện
 #   bash tools/duyet.sh nhanh        chỉ phần git, không cần trình duyệt (sync.sh gọi lúc đầu phiên)
-#   bash tools/duyet.sh dung TRANG   dựng trang để đăng: review/out/TRANG.html (TRANG = tree | nation)
+#   bash tools/duyet.sh dung TRANG   dựng trang để đăng: review/out/TRANG.html (TRANG = tree | nation | content | bestiary)
 #   bash tools/duyet.sh ghi TRANG    sau khi đã đăng lại TRANG lên claude.ai: ghi dấu dữ liệu vào review/published.txt
 # Mốc so: lần cuối review/published.txt được commit. Danh sách trang, URL, phạm vi: review/README.md.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 PUB=review/published.txt
-PAGES="tree nation"
+PAGES="tree nation content bestiary"
 
 # File mỗi trang hiện ra (đổi thì trang có thể phải đăng lại).
 cover() { case $1 in
-  tree)   echo "shared/schools.js shared/trunk.js shared/aspects.js shared/faiths.js shared/compose.js shared/catalog.js shared/races/ shared/archetypes/ review/tree-" ;;
-  nation) echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
+  tree)     echo "shared/schools.js shared/trunk.js shared/aspects.js shared/faiths.js shared/compose.js shared/catalog.js shared/races/ shared/archetypes/ review/tree-" ;;
+  nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
+  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/data/world.js vankiep/data/nations.js review/content-" ;;
+  bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).
 CONTENT="shared/ vankiep/data/ vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js"
@@ -40,7 +42,7 @@ pub_field() { tr -d '\r' < "$PUB" | awk -F'\t' -v p="$1" -v n="$2" '$1 == p { pr
 mode=${1:-full}; page=${2:-}
 case $mode in
   dung|ghi)
-    case " $PAGES " in *" $page "*) ;; *) echo "Trang: tree | nation"; exit 1 ;; esac
+    case " $PAGES " in *" $page "*) ;; *) echo "Trang: $PAGES"; exit 1 ;; esac
     BR=$(browser) || { echo "Không có trình duyệt headless (Edge / Chrome / Chromium)."; exit 1; }
     json=$(data_of "$page"); [ -n "$json" ] || { echo "review/$page-data.html không ra dữ liệu (lỗi script?)."; exit 1; }
     if [ "$mode" = dung ]; then

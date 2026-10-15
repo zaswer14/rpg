@@ -1,0 +1,357 @@
+<title>Duyệt Quái và Địa hình</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Bố cục: tiêu đề + tiến độ → thanh tab (12 họ quái, biome, đặc trưng ô, bốn nhóm kho tên) → lưới thẻ; mỗi thẻ có nút duyệt riêng.
+   Chữ và nút giống các trang duyệt khác; màu nhấn xanh rêu đá để không lẫn với Cây Nghề, Mẫu Quốc Gia, Nội Dung Vạn Kiếp. */
+:root{
+  --bg:#f0f2f1; --panel:#fafbfb; --ink:#1d2322; --muted:#626b6a; --line:#d4dbda; --chip:#e4eae9;
+  --accent:#1f6f73; --accent-ink:#ffffff;
+  --ok:#2f7d4a; --fix:#b07a12; --drop:#b0352f;
+  --font-display:"Spectral SC", Georgia, serif; --font-body:"Be Vietnam Pro", system-ui, sans-serif; --font-mono:"JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121617; --panel:#1a1f20; --ink:#e5ebea; --muted:#98a3a2; --line:#2e3638; --chip:#242b2c;
+  --accent:#6cc6c9; --accent-ink:#0b1a1b; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#121617; --panel:#1a1f20; --ink:#e5ebea; --muted:#98a3a2; --line:#2e3638; --chip:#242b2c;
+  --accent:#6cc6c9; --accent-ink:#0b1a1b; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+.page{padding-inline:16px;padding-block:16px 48px;max-width:1500px;margin:0 auto}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 12px;max-width:72ch}
+.progress{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-bottom:12px;font-size:13px;font-variant-numeric:tabular-nums}
+.progress .grp{display:inline-flex;gap:6px;align-items:center}
+.progress b{font-weight:600}
+.n-ok{color:var(--ok)} .n-fix{color:var(--fix)} .n-drop{color:var(--drop)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;min-width:88px}
+.tabs button small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button[aria-selected="true"] small{color:inherit;opacity:.85}
+.tabs .sep{width:1px;background:var(--line);margin:2px 4px}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:13px}
+.bar2 select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.save{color:var(--muted);font-size:12px}
+.overview{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px}
+.overview h2{font-family:var(--font-display);font-weight:600;font-size:21px;margin:0}
+.overview p{margin:0;color:var(--muted);max-width:80ch}
+.overview.s-ok{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.overview.s-fix{border-color:color-mix(in srgb,var(--fix) 60%,var(--line))}
+.overview.s-drop{border-color:color-mix(in srgb,var(--drop) 55%,var(--line))}
+.overview .review{max-width:640px}
+.warn{color:var(--fix);font-size:13px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{background:var(--chip);border-radius:5px;padding:1px 7px;font-size:12px;white-space:nowrap}
+.chip.dash{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.chip i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-right:4px;vertical-align:baseline}
+.chip small{color:var(--muted);margin-left:3px;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.s-ok{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.card.s-fix{border-color:color-mix(in srgb,var(--fix) 60%,var(--line))}
+.card.s-drop{border-color:color-mix(in srgb,var(--drop) 55%,var(--line));opacity:.8}
+.card header{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.card h3{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.tid{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.en{color:var(--muted);font-size:13px;font-weight:400;font-family:var(--font-body)}
+.pill{flex:none;font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;line-height:1.7}
+.pill.ok{background:var(--ok);color:var(--panel)} .pill.fix{background:var(--fix);color:var(--panel)} .pill.drop{background:var(--drop);color:var(--panel)}
+.meta{color:var(--muted);font-size:13px;margin-top:-4px}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 10px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0}
+.trait{background:var(--chip);border-radius:8px;padding:7px 10px;font-size:13px}
+.trait b{font-weight:600}
+.swatch{display:flex;height:16px;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.swatch span{flex:1}
+.tiers{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.tiers .t{display:grid;grid-template-columns:2.4em minmax(0,1fr);gap:6px;align-items:baseline}
+.tiers .t b{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-weight:400}
+.names-list{font-size:13px;line-height:1.6}
+.names-list span+span::before{content:" · ";color:var(--muted)}
+.sample{font-size:12px;color:var(--muted)}
+table.mini{border-collapse:collapse;font-size:12.5px;width:100%}
+table.mini td{padding:2px 6px 2px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.mini td:first-child{color:var(--muted);white-space:nowrap}
+table.mini tr:last-child td{border-bottom:0}
+.review{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.review .row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.btn.fix[aria-pressed="true"]{background:var(--fix);border-color:var(--fix);color:var(--panel)}
+.btn.drop[aria-pressed="true"]{background:var(--drop);border-color:var(--drop);color:var(--panel)}
+textarea{width:100%;min-height:52px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.group-title{font-family:var(--font-display);font-weight:600;font-size:17px;margin:14px 0 8px;grid-column:1/-1}
+.empty{color:var(--muted);padding:20px 0}
+code{font-family:var(--font-mono);font-size:12px}
+</style>
+
+<div class="page">
+  <h1>Duyệt Quái và Địa hình</h1>
+  <p class="lede">Phần chung mọi game đọc: loài quái phụ theo họ, biome và bảng sinh quái, đặc trưng ô của bản đồ, kho tên riêng. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa <code>shared/bestiary/</code>, <code>shared/terrain/</code>, <code>shared/names/</code>. Sửa ở đây thì cả Vạn Kiếp lẫn Skeleton Codex cùng đổi.</p>
+  <div class="progress" id="progress"></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
+  <div class="bar2">
+    <label for="filter">Hiện</label>
+    <select id="filter">
+      <option value="all">tất cả</option><option value="todo">chưa duyệt</option><option value="ok">đã giữ</option><option value="fix">cần sửa</option><option value="drop">bỏ</option>
+    </select>
+    <span class="save" id="saveState" aria-live="polite"></span>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+(function () {
+  const D = /*DATA*/null;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
+  const RACE = { human: 'Nhân Loại', elf: 'Tiên Tộc', dwarf: 'Người Lùn', orc: 'Orc', beastfolk: 'Người Thú', fae: 'Yêu Tinh', merfolk: 'Hải Tộc', dragonkin: 'Long Nhân', construct: 'Cơ Nhân', skeleton: 'Bộ Xương' };
+  const SLOT = { capital: 'kinh đô', city: 'thành phố', town: 'thị trấn', village: 'làng', hamlet: 'thôn', fort: 'đồn', port: 'cảng', mine: 'mỏ', lumber: 'trại gỗ', fishing: 'làng chài', temple: 'đền', market: 'chợ' };
+  const GEO = { river: 'Sông', mountain: 'Núi', pass: 'Đèo', forest: 'Rừng', jungle: 'Rừng rậm', marsh: 'Đầm', lake: 'Hồ', hills: 'Đồi', desert: 'Sa mạc', sea: 'Biển', island: 'Đảo' };
+  const SEX = { m: 'nam', f: 'nữ', n: 'không giới', code: 'mã' };
+  const FAMS = Object.keys(D.families);
+  const num = v => String(v).replace('.', ',');
+  const pct = v => Math.round(v * 100) + '%';
+  const biomeVi = b => D.biomes[b] ? D.biomes[b].nameVi : b;
+  const spOf = id => D.species.find(s => s.id === id);
+  const aspectChip = a => a ? `<span class="chip"><i style="--c:${D.aspects[a] ? D.aspects[a].color : '#888'}"></i>${esc(D.aspects[a] ? D.aspects[a].vi : a)}</span>` : '<span class="chip dash">không khí chất</span>';
+  const N = D.names;
+  const strCount = v => Array.isArray(v) ? v.filter(x => typeof x === 'string').length : v && typeof v === 'object' ? Object.values(v).reduce((a, x) => a + strCount(x), 0) : 0;
+
+  const reviews = {}, drafts = {};
+  let db = null, dbState = 'connecting';
+
+  // ---- Mục duyệt theo tab ----
+  const nameItems = {
+    n_person: [...Object.keys(N.person).map(r => ({ kind: 'names', id: 'person.' + r, name: 'Tên người ' + (RACE[r] || r) })), { kind: 'names', id: 'epithet', name: 'Biệt hiệu' }],
+    n_place: [...['prefix', 'prefixRace', 'root', 'ruler'].map(k => ({ kind: 'names', id: 'nation.' + k, name: { prefix: 'Tiền tố tên nước', prefixRace: 'Tiền tố riêng theo chủng tộc', root: 'Gốc tên nước', ruler: 'Tước người cai trị' }[k] })),
+      ...Object.keys(N.settlement.kind).map(r => ({ kind: 'names', id: 'settlement.' + r, name: 'Khu dân cư ' + (RACE[r] || r) }))],
+    n_geo: Object.keys(N.geo).map(k => ({ kind: 'names', id: 'geo.' + k, name: 'Địa danh: ' + (GEO[k] || k) })),
+    n_misc: [{ kind: 'names', id: 'lair', name: 'Hang ổ' }, { kind: 'names', id: 'ruin', name: 'Di tích' }, { kind: 'names', id: 'war', name: 'Chiến tranh' }, { kind: 'names', id: 'ship', name: 'Tàu' }, { kind: 'names', id: 'mercenary', name: 'Đoàn lính đánh thuê' }, { kind: 'names', id: 'pirate', name: 'Băng cướp biển' }]
+  };
+  const items = {
+    ...Object.fromEntries(FAMS.map(f => [f, [{ kind: 'fam', id: f, name: D.families[f].vi }, ...D.species.filter(s => s.family === f).map(s => ({ kind: 'sp', id: s.id, name: s.nameVi }))]])),
+    biomes: Object.entries(D.biomes).map(([id, b]) => ({ kind: 'biome', id, name: b.nameVi })),
+    feats: D.features.map(f => ({ kind: 'feat', id: f.id, name: f.nameVi })),
+    ...nameItems
+  };
+  const TABS = [...FAMS.map(f => [f, D.families[f].vi]), null, ['biomes', 'Biome'], ['feats', 'Đặc trưng ô'], null,
+    ['n_person', 'Tên người'], ['n_place', 'Tên nước, khu dân cư'], ['n_geo', 'Địa danh'], ['n_misc', 'Hang ổ, di tích, khác']];
+  const allItems = Object.values(items).flat();
+  const state = { tab: FAMS[0], filter: 'all' };
+  try { const h = location.hash.slice(1); if (items[h]) state.tab = h; } catch (e) {}
+  try { const f = localStorage.getItem('bestiaryReview.filter'); if (f) state.filter = f; } catch (e) {}
+  const key = (kind, id) => kind + '__' + id;
+  const rv = (kind, id) => reviews[key(kind, id)] || {};
+  const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
+  const passes = (kind, id) => { const s = rv(kind, id).status; return state.filter === 'all' || (state.filter === 'todo' ? !s : s === state.filter); };
+
+  // ---- Tiến độ, tab ----
+  function renderProgress() {
+    const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
+    $('progress').innerHTML = part('Loài', allItems.filter(i => i.kind === 'sp')) + part('Họ', allItems.filter(i => i.kind === 'fam')) + part('Biome', items.biomes) + part('Đặc trưng ô', items.feats)
+      + part('Kho tên', allItems.filter(i => i.kind === 'names'));
+  }
+  function renderTabs() {
+    $('tabs').innerHTML = TABS.map(t => {
+      if (!t) return '<span class="sep" aria-hidden="true"></span>';
+      const [id, label] = t, c = count(items[id]), done = c.ok + c.fix + c.drop;
+      return `<button role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${esc(label)}<small>${done}/${c.n}${c.fix ? ` · ✎ ${c.fix}` : ''}${c.drop ? ` · ✕ ${c.drop}` : ''}</small></button>`;
+    }).join('');
+  }
+
+  // ---- Khối duyệt dùng chung ----
+  function reviewBlock(kind, id) {
+    const r = rv(kind, id), k = key(kind, id), note = drafts[k] != null ? drafts[k] : (r.note || ''), off = db ? '' : 'disabled';
+    return `<div class="review" data-kind="${kind}" data-id="${esc(id)}">
+      <div class="row" role="group" aria-label="Quyết định">
+        ${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}
+      </div>
+      <textarea id="note-${esc(k)}" data-note placeholder="Ghi chú: đổi tên, đổi số, đổi đòn, thêm hay bỏ tên…" ${off}>${esc(note)}</textarea>
+      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div>
+    </div>`;
+  }
+  const pill = (kind, id) => { const s = rv(kind, id).status; return s ? `<span class="pill ${s}">${STATUS[s].t} ${STATUS[s].vi}</span>` : ''; };
+  const sCls = (kind, id) => { const s = rv(kind, id).status; return s ? ' s-' + s : ''; };
+  const card = (kind, id, title, body) => `<article class="card${sCls(kind, id)}">
+      <header><h3><span class="tid">${esc(id)}</span>${title}</h3>${pill(kind, id)}</header>${body}${reviewBlock(kind, id)}</article>`;
+  const grid = cards => `<div class="grid">${cards || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+
+  // ---- Họ quái và loài ----
+  function spCard(s) {
+    const bh = D.behaviors[s.behavior] || {};
+    const mult = [['máu', s.hp], ['sát thương', s.dmg], ['tốc độ', s.speed]].filter(([, v]) => v != null && v !== 1).map(([k, v]) => `${k} ×${num(v)}`);
+    const group = s.group && (s.group[0] > 1 || s.group[1] > 1) ? `${s.group[0]}–${s.group[1]} con một ổ` : 'đi lẻ';
+    return card('sp', s.id, `${esc(s.nameVi)} <span class="en">${esc(s.nameEn)}</span>`, `
+      <div class="meta">Tier ${s.tier} · ${esc(D.sizes[s.size] || s.size)} · ${esc(group)}${s.spawn === false ? ' · không sinh ngẫu nhiên (chúa vùng, sự kiện)' : ''}</div>
+      <dl class="kv">
+        <dt>Kiểu</dt><dd title="${esc(bh.note)}">${esc(bh.vi || s.behavior)} <span class="sample">(báo trước: ${esc(bh.telegraph || '')})</span></dd>
+        <dt>Khí chất</dt><dd class="chips">${aspectChip(s.aspect)}</dd>
+        ${mult.length ? `<dt>Chỉ số</dt><dd>${esc(mult.join(', '))}</dd>` : ''}
+        <dt>Đòn</dt><dd>${esc(s.attack)}</dd>
+        <dt>Nhận diện</dt><dd>${esc(s.marker)}</dd>
+        <dt>Rơi</dt><dd class="chips">${(s.loot || []).map(l => `<span class="chip">${esc(l)}</span>`).join('')}</dd>
+        <dt>Sống ở</dt><dd class="chips">${(s.habitat || []).map(b => `<span class="chip">${esc(biomeVi(b))}</span>`).join('')}</dd>
+        ${s.note ? `<dt>Ghi chú</dt><dd>${esc(s.note)}</dd>` : ''}
+      </dl>
+      <div class="sample">Nguồn: ${s.src === 'species' ? 'shared/bestiary/species.js' : 'shared/terrain/ecology.js'}</div>`);
+  }
+  function famView(f) {
+    const F = D.families[f], list = D.species.filter(s => s.family === f), shown = list.filter(s => passes('sp', s.id)).sort((a, b) => a.tier - b.tier);
+    const ov = passes('fam', f) ? `<section class="overview${sCls('fam', f)}">
+        <header style="display:flex;gap:8px;align-items:baseline;justify-content:space-between"><h2><span class="tid">${f}</span>${esc(F.vi)} <span class="en">${esc(F.en)}</span></h2>${pill('fam', f)}</header>
+        <div class="trait"><b>Luật họ.</b> ${esc(F.ruleVi)}</div>
+        <p>Nhận diện: ${esc(F.tell)} Rơi chung: ${esc((F.loot || []).join(', '))}. ${list.length} loài, Tier ${Math.min(...list.map(s => s.tier))}–${Math.max(...list.map(s => s.tier))}.</p>
+        ${reviewBlock('fam', f)}
+      </section>` : '';
+    return ov + grid(shown.map(spCard).join(''));
+  }
+
+  // ---- Biome ----
+  const FEAT_VI = Object.fromEntries(D.features.map(f => [f.id, f.nameVi]));
+  const sign = v => (v > 0 ? '+' : v < 0 ? '−' : '') + num(Math.abs(v));
+  function biomeCard([id, b]) {
+    const tr = b.terrain, w = b.weights || {};
+    const byTier = [0, 1, 2, 3, 4, 5].map(t => [t, b.spawn.map(spOf).filter(s => s && s.tier === t)]).filter(([, l]) => l.length);
+    const lord = b.lord ? spOf(b.lord) : null;
+    return card('biome', id, `${esc(b.nameVi)} <span class="en">${esc(b.nameEn)}</span>`, `
+      <div class="meta">Tier ${b.tiers[0]}–${b.tiers[1]} · tinh anh ${pct(b.eliteChance)} · thủ lĩnh ${pct(b.alphaChance)} · ${b.src === 'biomes' ? 'vùng săn của bestiary' : 'biome đại lục (ecology.js)'}</div>
+      <p style="margin:0">${esc(b.mood)}</p>
+      <div class="swatch" title="Bảng màu nền: trời, xa, đất, viền">${['sky', 'far', 'ground', 'edge'].map(k => `<span style="background:${esc(b.palette[k])}"></span>`).join('')}</div>
+      ${tr ? `<dl class="kv"><dt>Địa hình</dt><dd>độ cao ${sign(tr.elev)}, độ ẩm ${sign(tr.moist)}, nhiệt ${sign(tr.temp)}, độ hoang nền ${num(tr.wild)}${tr.forest ? ', ô ẩm vừa cũng thành rừng' : ''}</dd>
+        ${tr.no.length ? `<dt>Không có</dt><dd>${esc(tr.no.map(x => FEAT_VI[x] || x).join(', '))}</dd>` : ''}</dl>` : '<p class="warn">Chưa có dòng địa hình trong terrain.js.</p>'}
+      <div class="tiers">${byTier.map(([t, l]) => `<div class="t"><b>T${t}</b><span class="chips">${l.map(s => `<span class="chip">${esc(s.nameVi)}${w[s.id] != null && w[s.id] !== 10 ? `<small>×${w[s.id]}</small>` : ''}</span>`).join('')}</span></div>`).join('') || '<span class="warn">Không có loài nào sinh ở đây.</span>'}</div>
+      ${lord ? `<dl class="kv"><dt>Chúa vùng</dt><dd>${esc(lord.nameVi)} (Tier ${lord.tier}, không sinh ngẫu nhiên)</dd></dl>` : ''}`);
+  }
+  function biomesView() {
+    const list = Object.entries(D.biomes).filter(([id]) => passes('biome', id));
+    const own = list.filter(([, b]) => b.src === 'biomes'), eco = list.filter(([, b]) => b.src !== 'biomes');
+    const chk = [...D.check.errors.map(e => `<p class="warn">Lỗi: ${esc(e)}</p>`), ...D.check.warnings.map(w => `<p class="warn">Lưu ý: ${esc(w)}</p>`)].join('');
+    return `<section class="overview"><h2>Biome</h2><p>Sáu vùng săn của bestiary và mười biome của đại lục Varen. Loài sinh ở biome suy từ nơi sống của loài; số nhỏ ×n là trọng số riêng (mặc định 10). Nhân vật Tier t chỉ gặp loài Tier ≤ t + 1.</p>${chk}</section>`
+      + grid((own.length ? '<h3 class="group-title">Vùng săn (bestiary/biomes.js)</h3>' + own.map(biomeCard).join('') : '') + (eco.length ? '<h3 class="group-title">Biome đại lục (terrain/ecology.js)</h3>' + eco.map(biomeCard).join('') : ''));
+  }
+
+  // ---- Đặc trưng ô ----
+  function featsView() {
+    const famVi = f => D.families[f] ? D.families[f].vi : f, bhVi = b => D.behaviors[b] ? D.behaviors[b].vi : b;
+    const geoKey = { forest: 'forest', jungle: 'jungle', marsh: 'marsh', lake: 'lake', hills: 'hills', mountain: 'mountain' };
+    const cards = D.features.filter(f => passes('feat', f.id)).map(f => {
+      const sp = D.featureSpawn[f.id], banned = Object.entries(D.biomes).filter(([, b]) => b.terrain && b.terrain.no.includes(f.id)).map(([, b]) => b.nameVi);
+      const mult = sp ? [...Object.entries(sp.behavior || {}).map(([k, v]) => `${bhVi(k)} ×${num(v)}`), ...Object.entries(sp.family || {}).map(([k, v]) => `${famVi(k)} ×${num(v)}`)] : [];
+      const g = geoKey[f.id] && N.geo[geoKey[f.id]];
+      return card('feat', f.id, esc(f.nameVi), `<dl class="kv">
+        <dt>Đi bộ</dt><dd>${f.cost == null ? 'không đi được' : `chi phí ${num(f.cost)}`}</dd>
+        <dt>Độ hoang</dt><dd>${f.wild ? '+' + num(f.wild) : 'không thêm'}</dd>
+        <dt>Quái</dt><dd class="chips">${mult.map(m => `<span class="chip">${esc(m)}</span>`).join('') || '<span class="chip dash">không đổi trọng số</span>'}</dd>
+        ${banned.length ? `<dt>Không có ở</dt><dd>${esc(banned.join(', '))}</dd>` : ''}
+        ${g ? `<dt>Tên</dt><dd>${esc(g.prefix.join(' / '))} + ${g.root.length} gốc (tab Địa danh)</dd>` : ''}</dl>`);
+    });
+    return `<section class="overview"><h2>Đặc trưng ô</h2><p>Bảy đặc trưng ô của bản đồ: chi phí đi bộ (dùng khi chia lãnh thổ, tỉnh, tính độ hoang), độ hoang cộng thêm và cách đặc trưng nhân trọng số loài đã có trong bảng sinh quái (không thêm loài mới, nên không phá luật Tier).</p></section>` + grid(cards.join(''));
+  }
+
+  // ---- Kho tên ----
+  const list = arr => `<div class="names-list">${arr.map(x => `<span>${esc(x)}</span>`).join('')}</div>`;
+  const nCard = (id, title, body, n) => passes('names', id) ? card('names', id, esc(title) + ` <span class="en">${n} tên</span>`, body) : '';
+  function personCard(r) {
+    const P = N.person[r], id = 'person.' + r;
+    const rows = Object.entries(P).filter(([k]) => k !== 'family').map(([k, v]) => `<dt>${SEX[k] || k}</dt><dd>${list(v)}</dd>`).join('');
+    const given = P.m || P.n || P.code || [], fam = P.family || [];
+    const sample = P.code ? [0, 1, 2].map(i => `${P.code[i * 3 % P.code.length]}-${(i * 37 + 7) % 99 + 1} ${fam[i * 5 % fam.length]}`)
+      : [0, 1, 2, 3].map(i => `${(i % 2 && P.f ? P.f : given)[i * 5 % (i % 2 && P.f ? P.f : given).length]} ${fam[i * 7 % fam.length]}`);
+    return nCard(id, 'Tên người ' + (RACE[r] || r), `<dl class="kv">${rows}<dt>họ</dt><dd>${list(fam)}</dd></dl><div class="sample">Ví dụ: ${esc(sample.join(' · '))}</div>`, strCount(P));
+  }
+  function personView() {
+    return `<section class="overview"><h2>Tên người</h2><p>Người: tên + họ ("Aldric Hollin"); Cơ Nhân: mã-số + họ ("KT-17 Bánh Răng"); Bộ Xương giữ tên kiếp trước, danh sách này cho Bộ Xương sinh trong nước Bộ Xương. Triều đại là "Nhà" + họ.</p></section>`
+      + grid(Object.keys(N.person).map(personCard).join('') + nCard('epithet', 'Biệt hiệu', `<p class="sample" style="margin:0">Ghép sau tên người cai trị, anh hùng, người trong biên niên.</p>${list(N.epithet)}`, N.epithet.length));
+  }
+  const table = obj => `<table class="mini"><tbody>${Object.entries(obj).map(([k, v]) => `<tr><td>${esc(SLOT[k] || RACE[k] || k)}</td><td>${esc(Array.isArray(v) ? v.join(', ') : Object.entries(v).map(([a, b]) => `${a}: ${b.join(', ')}`).join('; '))}</td></tr>`).join('')}</tbody></table>`;
+  function placeView() {
+    const NA = N.nation, S = N.settlement;
+    const nation = nCard('nation.prefix', 'Tiền tố tên nước', `<p class="sample" style="margin:0">Theo chính thể; ghép trước gốc tên nước ("Vương Quốc Aurel").</p>${table(NA.prefix)}`, strCount(NA.prefix))
+      + nCard('nation.prefixRace', 'Tiền tố riêng theo chủng tộc', `<p class="sample" style="margin:0">Thay tiền tố chung cho một số chủng tộc và chính thể.</p>${table(NA.prefixRace)}`, strCount(NA.prefixRace))
+      + nCard('nation.root', 'Gốc tên nước', table(NA.root), strCount(NA.root))
+      + nCard('nation.ruler', 'Tước người cai trị', `<p class="sample" style="margin:0">Theo chính thể; ghép trước tên người cai trị.</p>${table(NA.ruler)}`, strCount(NA.ruler));
+    const settle = Object.keys(S.kind).map(r => {
+      const K = S.kind[r], roots = S.root[r] || [], P = S.part[r] || { a: [], b: [] };
+      const sample = [['village', 0], ['town', 3], ['port', 6], ['mine', 9]].filter(([k]) => K[k]).map(([k, i]) => `${K[k][0]} ${roots[i % roots.length]}`);
+      return nCard('settlement.' + r, 'Khu dân cư ' + (RACE[r] || r), `${table(K)}
+        <dl class="kv"><dt>gốc</dt><dd>${list(roots)}</dd><dt>ghép a</dt><dd>${list(P.a)}</dd><dt>ghép b</dt><dd>${list(P.b)}</dd></dl>
+        <div class="sample">Ví dụ: ${esc(sample.join(' · '))}; hết gốc thì ghép a + b ("${esc(P.a[0])} ${esc(P.b[0])}")</div>`, strCount(K) + roots.length + strCount(P));
+    }).join('');
+    return `<section class="overview"><h2>Tên nước, khu dân cư</h2><p>Tên nước = tiền tố theo chính thể (hoặc tiền tố riêng của chủng tộc) + gốc theo chủng tộc; trang Mẫu Quốc Gia hiện vài tên ghép sẵn cho từng mẫu. Khu dân cư = chữ theo bậc hoặc vai trò + gốc tên theo chủng tộc.</p></section>`
+      + grid((nation ? '<h3 class="group-title">Quốc gia</h3>' + nation : '') + (settle ? '<h3 class="group-title">Khu dân cư</h3>' + settle : ''));
+  }
+  function geoView() {
+    const cards = Object.entries(N.geo).map(([k, g]) => nCard('geo.' + k, 'Địa danh: ' + (GEO[k] || k), `<dl class="kv"><dt>chữ đầu</dt><dd>${list(g.prefix)}</dd><dt>gốc</dt><dd>${list(g.root)}</dd></dl>
+      <div class="sample">Ví dụ: ${esc([0, 1, 2].map(i => `${g.prefix[i % g.prefix.length]} ${g.root[i * 4 % g.root.length]}`).join(' · '))}</div>`, g.prefix.length + g.root.length)).join('');
+    return `<section class="overview"><h2>Địa danh</h2><p>Sông núi, rừng đầm, biển đảo: chữ đầu + gốc ("Sông Lục", "Đèo Một Người"). Trận đánh lấy tên địa danh nơi đánh.</p></section>` + grid(cards);
+  }
+  function miscView() {
+    const lairs = Object.entries(N.lair.prefix).map(([f, v]) => [D.families[f] ? D.families[f].vi : f, v]);
+    const cards = nCard('lair', 'Hang ổ', `<p class="sample" style="margin:0">Chữ đầu theo họ quái + địa danh gần nhất hoặc gốc tên khu dân cư ("Tổ Nhện Rễ Trắng").</p>${table(Object.fromEntries(lairs))}`, strCount(N.lair))
+      + nCard('ruin', 'Di tích', `<dl class="kv"><dt>chữ đầu</dt><dd>${list(N.ruin.prefix)}</dd><dt>gốc</dt><dd>${list(N.ruin.root)}</dd></dl>`, strCount(N.ruin))
+      + nCard('war', 'Chiến tranh', `<p class="sample" style="margin:0">"Chiến Tranh" + tên.</p>${list(N.war)}`, N.war.length)
+      + nCard('ship', 'Tàu', list(N.ship), N.ship.length)
+      + nCard('mercenary', 'Đoàn lính đánh thuê', list(N.mercenary), N.mercenary.length)
+      + nCard('pirate', 'Băng cướp biển', list(N.pirate), N.pirate.length);
+    return `<section class="overview"><h2>Hang ổ, di tích, khác</h2><p>Khi bốc: bỏ tên đã dùng trong cùng thế giới; hết tên thì cho trùng gốc và thêm "Tân", "Hạ", "Thượng".</p></section>` + grid(cards);
+  }
+
+  function renderContent() {
+    const t = state.tab;
+    $('content').innerHTML = D.families[t] ? famView(t) : t === 'biomes' ? biomesView() : t === 'feats' ? featsView()
+      : t === 'n_person' ? personView() : t === 'n_place' ? placeView() : t === 'n_geo' ? geoView() : miscView();
+    if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
+  }
+  function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
+
+  // ---- Lưu ----
+  async function write(kind, id, status, note) {
+    if (!db) return;
+    const it = allItems.find(x => x.kind === kind && x.id === id), k = key(kind, id);
+    $('saveState').textContent = 'Đang lưu…';
+    try {
+      const ref = db.collection('reviews').doc(k);
+      if (status === null) await ref.delete();
+      else await ref.set({ kind, id, name: it ? it.name : id, status, note: note || '', updatedAt: new Date().toISOString() });
+      delete drafts[k];
+      $('saveState').textContent = 'Đã lưu';
+    } catch (e) {
+      $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.';
+    }
+  }
+
+  // ---- Sự kiện giao diện ----
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; try { history.replaceState(null, '', '#' + state.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); });
+  $('filter').addEventListener('change', e => { state.filter = e.target.value; try { localStorage.setItem('bestiaryReview.filter', state.filter); } catch (x) {} renderContent(); });
+  $('content').addEventListener('input', e => { if (!e.target.matches('[data-note]')) return; const box = e.target.closest('.review'); drafts[key(box.dataset.kind, box.dataset.id)] = e.target.value; });
+  $('content').addEventListener('click', e => {
+    const box = e.target.closest('.review'); if (!box) return;
+    const kind = box.dataset.kind, id = box.dataset.id, note = box.querySelector('[data-note]').value, cur = rv(kind, id).status;
+    const st = e.target.closest('[data-status]');
+    if (st) { write(kind, id, cur === st.dataset.status ? null : st.dataset.status, note); return; }
+    if (e.target.closest('[data-clear]')) { write(kind, id, null); return; }
+    if (e.target.closest('[data-savenote]')) write(kind, id, cur || 'fix', note);
+  });
+
+  render();
+
+  (async () => {
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { dbState = 'off'; renderContent(); return; }
+    dbState = 'ready'; $('saveState').textContent = 'Quyết định được lưu chung cho trang này; Claude đọc lại được.'; renderContent();
+    db.collection('reviews').onSnapshot(snap => {
+      for (const k of Object.keys(reviews)) delete reviews[k];
+      for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
+      const act = document.activeElement, focusId = act && act.matches && act.matches('[data-note]') ? act.id : null, pos = focusId ? act.selectionStart : 0;
+      renderProgress(); renderTabs(); renderContent();
+      if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } }
+    }, () => { dbState = 'off'; renderContent(); });
+  })();
+})();
+</script>

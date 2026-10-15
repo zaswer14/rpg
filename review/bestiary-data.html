@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<!-- Sinh dữ liệu cho bestiary-review.src.html (Duyệt Quái và Địa hình, phần chung):
+     msedge --headless --allow-file-access-from-files --dump-dom file:///<repo>/review/bestiary-data.html
+     lấy khối pre#out, thay /*DATA*/null trong bestiary-review.src.html (bash tools/duyet.sh dung bestiary). -->
+<script src="../shared/aspects.js"></script>
+<script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script>
+<script>window.__base = { species: JobLibrary.species.map(s => s.id), biomes: Object.keys(JobLibrary.biomes) };</script>
+<script src="../shared/bestiary/bestiary.js"></script><script src="../shared/terrain/ecology.js"></script><script src="../shared/terrain/terrain.js"></script>
+<script src="../shared/names/names.js"></script>
+<pre id="out"></pre>
+<script>
+const L = JobLibrary, R = L.bestiaryRules, B = L.bestiary(), T = L.terrain;
+const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
+const data = {
+  check: { errors: B.errors, warnings: B.warnings },
+  aspects: pickF(L.aspects, a => ({ vi: a.nameVi, color: a.color })),
+  families: pickF(R.families, f => ({ vi: f.nameVi, en: f.nameEn, ruleVi: f.ruleVi, loot: f.loot, tell: f.tell })),
+  behaviors: pickF(R.behaviors, b => ({ vi: b.nameVi, note: b.note, telegraph: b.telegraph })),
+  sizes: pickF(R.sizes, s => s.nameVi),
+  species: L.species.map(s => ({ ...s, src: window.__base.species.includes(s.id) ? 'species' : 'ecology' })),
+  biomes: pickF(L.biomes, (b, k) => ({ ...b, src: window.__base.biomes.includes(k) ? 'biomes' : 'ecology', terrain: T.biomes[k] || null, spawn: (B.byBiome[k] || []).map(s => s.id) })),
+  features: T.features.map(f => ({ ...f, cost: f.cost === Infinity ? null : f.cost })),
+  featureSpawn: T.featureSpawn,
+  names: L.names
+};
+document.getElementById('out').textContent = JSON.stringify(data);
+</script>
+</body></html>
