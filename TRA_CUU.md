@@ -6,7 +6,7 @@
 
 | Lúc | Lệnh | Ghi chú |
 |---|---|---|
-| Đầu phiên | `bash tools/sync.sh` | fetch + tóm tắt ~10 dòng: thiếu / dư commit, file đổi, nhánh `claude/*` chưa gộp, trạng thái Vạn Kiếp |
+| Đầu phiên | tự động (hook `SessionStart` chạy `bash tools/sync.sh`) | fetch + tóm tắt ~10 dòng: thiếu / dư commit, file đổi, nhánh `claude/*` chưa gộp, trạng thái Vạn Kiếp; chạy tay khi hook không chạy |
 | Có commit mới | `bash tools/sync.sh pull` | chỉ fast-forward; lệch hai phía thì dừng và hỏi |
 | Cuối phiên | `bash tools/sync.sh push` | chỉ sau khi người dùng đồng ý commit / push |
 

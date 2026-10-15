@@ -11,7 +11,7 @@ Kho chung của các dự án game nhập vai (tài liệu tiếng Việt). Bả
 
 Người dùng làm trên máy tính (Claude Code) và điện thoại (Claude cloud) qua GitHub (`github` = github.com/zaswer14/rpg, `main` theo dõi `github/main`).
 
-- Đầu phiên: `bash tools/sync.sh` (có commit mới thì `bash tools/sync.sh pull`). Kết quả đã gồm trạng thái Vạn Kiếp; đừng chạy thêm lệnh git để xem lại.
+- Đầu phiên: hook `SessionStart` (`.claude/settings.json`) tự chạy `bash tools/sync.sh`; kết quả nằm sẵn trong ngữ cảnh (dòng `== main ↔ github/main ...`), gồm cả trạng thái Vạn Kiếp. Đừng chạy lại nó hay thêm lệnh git để xem lại. Báo thiếu commit thì `bash tools/sync.sh pull`. Không thấy kết quả (hook không chạy) thì tự chạy `bash tools/sync.sh` một lần.
 - Cuối phiên: nhắc commit, người dùng đồng ý thì `bash tools/sync.sh push`.
 - `origin` là máy chủ công ty, chỉ push khi được bảo.
 

@@ -6,5 +6,20 @@
       "Bash(bash tools/muc_luc.sh)",
       "Bash(bash tools/muc_luc.sh:*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/tools/sync.sh\" 2>&1 || true",
+            "timeout": 30,
+            "statusMessage": "Đồng bộ GitHub..."
+          }
+        ]
+      }
+    ]
   }
 }
