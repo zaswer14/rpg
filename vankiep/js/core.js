@@ -27,6 +27,12 @@ window.LifeSim = window.LifeSim || {};
 
   G.clamp = (x, a, b) => x < a ? a : x > b ? b : x;
   G.lerp = (a, b, t) => a + (b - a) * t;
+  // Tiền: một con số theo bạc (giữ tới 0,01); 100 đồng = 1 bạc, 100 bạc = 1 vàng (docs/07 mục 4.5).
+  G.coin = n => {
+    const c = Math.round(Math.abs(n || 0) * 100), v = Math.floor(c / 10000), b = Math.floor(c / 100) % 100, d = c % 100, p = [];
+    if (v) p.push(v.toLocaleString('vi') + ' vàng'); if (b) p.push(b + ' bạc'); if (d && !v) p.push(d + ' đồng');
+    return (n < 0 ? '−' : '') + (p.join(' ') || 'không đồng nào');
+  };
 
   // Bộ công cụ ngẫu nhiên gắn vào một nguồn rnd().
   G.tools = function (rnd) {

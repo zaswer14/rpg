@@ -166,10 +166,10 @@ window.LifeSim = window.LifeSim || {};
     if (plan.fail) return `Không tới được: ${plan.fail}.`;
     if (plan.sea) {
       const p = plan.sea, ship = G.SHIPS[p.sea.ship];
-      return `${p.days} ngày: ${ship.nameVi} từ ${p.sea.from.name} tới ${p.sea.to.name} (${p.sea.days} ngày biển${p.legA.days + p.legB.days ? `, ${p.legA.days + p.legB.days} ngày bộ` : ''}), vé ${plan.fee} bạc`
+      return `${p.days} ngày: ${ship.nameVi} từ ${p.sea.from.name} tới ${p.sea.to.name} (${p.sea.days} ngày biển${p.legA.days + p.legB.days ? `, ${p.legA.days + p.legB.days} ngày bộ` : ''}), vé ${G.coin(plan.fee)}`
         + (plan.escort ? '; hải trình qua tầng quá sức, giá đã gồm lính hộ tống' : '') + '.';
     }
-    return `${plan.route.days} ngày đường, ${Math.round(plan.route.onRoad * 100)}% trên đường` + (plan.escort ? `; phải qua vùng quá sức, thuê hộ tống ${plan.fee} bạc` : '') + '.';
+    return `${plan.route.days} ngày đường, ${Math.round(plan.route.onRoad * 100)}% trên đường` + (plan.escort ? `; phải qua vùng quá sức, thuê hộ tống ${G.coin(plan.fee)}` : '') + '.';
   };
 
   const fights = X => ['teen', 'adult', 'elder'].includes(X.stage(X.S));
@@ -193,7 +193,7 @@ window.LifeSim = window.LifeSim || {};
             else { S.flags.onRoad = false; G.caught(X, n, 'trốn nghĩa vụ'); return { ok: false, lines: [...lines, `Bị nhận mặt ở trạm ${n.name}.`] }; }
           } else if (!S.undead) {
             const toll = Math.max(1, Math.round(n.tax * 40)); X.money(-toll);
-            lines.push(`Qua trạm ${n.name}: phí ${toll} bạc.`);
+            lines.push(`Qua trạm ${n.name}: phí ${G.coin(toll)}.`);
           }
         }
       }
@@ -285,14 +285,14 @@ window.LifeSim = window.LifeSim || {};
       S.flags.pirates = (S.flags.pirates || 0) + 1;
       const who = pir.length ? `Cướp biển của ${X.pick(pir).name}` : 'Một tàu cướp biển';
       if (canFight && X.power(S) > 1 + X.rnd()) { S.fame += 1; lines.push(`${who} áp mạn. Bạn cùng thủy thủ đẩy lui chúng.`); }
-      else { const loss = Math.min(Math.max(0, S.gold), X.int(15, 60)); X.money(-loss); X.add('hl', -X.int(3, 10)); lines.push(`${who} áp mạn, lấy ${loss} bạc của bạn.`); }
+      else { const loss = Math.min(Math.max(0, S.gold), X.int(15, 60)); X.money(-loss); X.add('hl', -X.int(3, 10)); lines.push(`${who} áp mạn, lấy ${G.coin(loss)} của bạn.`); }
     }
     S.flags.atSea = false;
     // Bến đến: cấm cập vì dịch (cách ly trên tàu), thuế cảng.
     const to = route.to, rsTo = S.world.regions[to.region];
     if (rsTo && rsTo.plague > 0) { days += 3; lines.push(`${to.name} đang có dịch, cấm cập bến. Tàu neo ngoài khơi ba ngày mới cho lên.`); }
     const nTo = to.nation >= 0 ? R.nations[to.nation] : null;
-    if (nTo && nTo.laws.includes('sea_toll') && !S.undead) { const toll = Math.max(2, Math.round(nTo.tax * 30)); X.money(-toll); lines.push(`Thuế cảng ${to.name}: ${toll} bạc.`); }
+    if (nTo && nTo.laws.includes('sea_toll') && !S.undead) { const toll = Math.max(2, Math.round(nTo.tax * 30)); X.money(-toll); lines.push(`Thuế cảng ${to.name}: ${G.coin(toll)}.`); }
     lines.push(`Tàu cập ${to.name}.`);
     return { ok: true, lines, days };
   }
@@ -315,9 +315,9 @@ window.LifeSim = window.LifeSim || {};
     let to = G.REGION[regionId], lines = [], days = 0, go = !plan.fail, st = plan.st, pos = null;
     if (plan.fail) { if (!opt.force) return `Không tới được ${to.nameVi}: ${plan.fail}.`; go = false; }
     else if (plan.escort) {
-      if (opt.escort !== false && S.gold >= plan.fee) { X.money(-plan.fee); S.flags.escorts = (S.flags.escorts || 0) + 1; lines.push(plan.sea ? `Bạn trả ${plan.fee} bạc đi tàu có lính hộ tống.` : `Bạn thuê hộ tống ${plan.fee} bạc.`); }
+      if (opt.escort !== false && S.gold >= plan.fee) { X.money(-plan.fee); S.flags.escorts = (S.flags.escorts || 0) + 1; lines.push(plan.sea ? `Bạn trả ${G.coin(plan.fee)} đi tàu có lính hộ tống.` : `Bạn thuê hộ tống ${G.coin(plan.fee)}.`); }
       else if (opt.force) go = false;   // bị áp giải: lính đưa đi, không tự đi qua vùng quá sức
-      else return `Đường tới ${to.nameVi} phải qua vùng quá sức bạn; thuê hộ tống cần ${plan.fee} bạc.`;
+      else return `Đường tới ${to.nameVi} phải qua vùng quá sức bạn; thuê hộ tống cần ${G.coin(plan.fee)}.`;
     } else if (plan.sea && !S.undead) {
       // Vé tàu; không đủ bạc thì làm công trên tàu trả phần còn thiếu.
       const pay = Math.min(Math.max(0, S.gold), plan.fee); X.money(-pay);

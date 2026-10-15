@@ -138,8 +138,8 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const r = nextRank(S), cost = Math.round(G.NOBLE.buy[r] * G.median(X.reg(S))), n = G.realm.nations[S.nation];
-      return { title: 'Quyên góp quốc khố', body: `Quan thu ngân của ${n.name} ngỏ ý: ai góp ${cost} bạc vào quốc khố sẽ được phong ${G.NOBLE_VI[r]}.`,
-        choices: [{ k: 'yes', label: `Góp ${cost} bạc`, sub: `Thành ${G.NOBLE_VI[r]}. Quý tộc cũ sẽ gọi bạn là "tước mua".`, cost }, { k: 'no', label: 'Giữ tiền', sub: '' }] };
+      return { title: 'Quyên góp quốc khố', body: `Quan thu ngân của ${n.name} ngỏ ý: ai góp ${G.coin(cost)} vào quốc khố sẽ được phong ${G.NOBLE_VI[r]}.`,
+        choices: [{ k: 'yes', label: `Góp ${G.coin(cost)}`, sub: `Thành ${G.NOBLE_VI[r]}. Quý tộc cũ sẽ gọi bạn là "tước mua".`, cost }, { k: 'no', label: 'Giữ tiền', sub: '' }] };
     },
     apply(S, X, k, c) {
       if (k !== 'yes') return null;
@@ -311,8 +311,8 @@ window.LifeSim = window.LifeSim || {};
     confederacy: { names: ['Trưởng nhóm', 'Thủ lĩnh nhóm', 'Thủ lĩnh liên minh'],               val: S => S.fame,                                              thr: [25, 45, 70], unit: 'danh vọng' },
     magocracy:   { names: ['Pháp sư tập sự', 'Pháp sư', 'Đại pháp sư', 'Tháp chủ'],             val: S => Math.max(...J.schools.arcane.masteries.map(m => S.mastery[m] || 0)), thr: [20, 40, 60, 80], unit: 'kỹ năng Huyền thuật' },
     military:    { names: ['Đội trưởng', 'Đô úy', 'Tướng quân', 'Nguyên soái'],                val: (S, n) => (S.merit || {})[n.idx] || 0,                     thr: [10, 30, 60, 100], unit: 'công trạng' },
-    tribal:      { names: ['Chiến binh', 'Đầu lĩnh', 'Phó thủ lĩnh'],                           val: S => S.fame + S.level * .5,                               thr: [25, 45, 65], unit: 'danh vọng và cấp' },
-    horde:       { names: ['Kỵ sĩ', 'Bách phu trưởng', 'Vạn phu trưởng'],                      val: S => S.fame + S.level * .5,                               thr: [25, 45, 65], unit: 'danh vọng và cấp' }
+    tribal:      { names: ['Chiến binh', 'Đầu lĩnh', 'Phó thủ lĩnh'],                           val: S => S.fame + S.level * 1.3,                               thr: [25, 45, 65], unit: 'danh vọng và cấp' },
+    horde:       { names: ['Kỵ sĩ', 'Bách phu trưởng', 'Vạn phu trưởng'],                      val: S => S.fame + S.level * 1.3,                               thr: [25, 45, 65], unit: 'danh vọng và cấp' }
   };
   const J = window.JobLibrary;
   const promoOf = S => { const k = S.nation; if (k == null || k < 0) return null; const n = G.realm.nations[k]; return n && n.alive !== false && G.PROMO[n.gov] ? { k, n, P: G.PROMO[n.gov] } : null; };

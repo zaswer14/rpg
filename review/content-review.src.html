@@ -123,7 +123,8 @@ code{font-family:var(--font-mono);font-size:12px}
     ['ev_tpl', 'Sự kiện: đặc tính mẫu'], ['ev_quirk', 'Sự kiện: đặc trưng riêng'], ['ev_misc', 'Sự kiện: chung'], null,
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
     ['work', 'Sinh kế'], ['bld', 'Công trình'], null,
-    ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng']
+    ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
+    ['cult', 'Cảnh giới, kỹ năng']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -132,7 +133,8 @@ code{font-family:var(--font-mono);font-size:12px}
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
   // ---- Danh sách mục duyệt theo tab ----
-  const evName = e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
+  const CULTRULES = [['skill', 'Kỹ năng, cấp, hạn mức'], ['teach', 'Người dạy'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
+  const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
   const items = {
     ev_tpl: D.events.filter(e => e.kind === 'tpl').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
     ev_quirk: D.events.filter(e => e.kind === 'quirk').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
@@ -145,7 +147,8 @@ code{font-family:var(--font-mono);font-size:12px}
     bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') })),
     tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
     aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
-    tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))
+    tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title })),
+    cult: [...D.cult.ranks.map(k => ({ kind: 'realm', id: String(k.r), name: k.war })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), { kind: 'dec', id: 'cv_saint', name: 'Ngưỡng Thánh Vực' }]
   };
   const allItems = Object.values(items).flat();
   const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
@@ -156,7 +159,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Cảnh giới', items.cult);
   }
 
   // ---- Tab ----
@@ -342,7 +345,7 @@ code{font-family:var(--font-mono);font-size:12px}
       return l.length ? `<h3 class="group-title">Thiên phú ${esc(r.nameVi)}</h3>` + l.map(t => card('tal', t.id, t.nameVi, `<div class="meta">${rar(r)}</div><p style="margin:0">${esc(t.d)}</p>
         <dl class="kv"><dt>Hiệu ứng</dt><dd class="chips">${t.fx.split(' · ').map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>`, r.col)).join('') : '';
     }).join('');
-    return overview('Thiên phú, căn cốt', 'Mỗi người một căn cốt (sáu bậc màu), là hệ số tu luyện: nhân vào kinh nghiệm và mọi lần rèn kỹ năng; nâng được một bậc ở bình cảnh cấp 10, 20, 30, 40, 50. Lúc sinh có 0 / 1 / 2 / 3 thiên phú (trọng số 30 / 40 / 22 / 8), mỗi cái bốc bậc theo cùng tỉ lệ với căn cốt; thức tỉnh thêm trong đời, tối đa 5. Thiên phú rèn trường phái mà chủng tộc bị cấm thì không ra.')
+    return overview('Thiên phú, căn cốt', 'Mỗi người một căn cốt (sáu bậc màu), là hệ số tu luyện: nhân vào kinh nghiệm và mọi lần rèn kỹ năng; nâng được một bậc ở bình cảnh mỗi Tier cảnh giới. Lúc sinh có 0 / 1 / 2 / 3 thiên phú (trọng số 30 / 40 / 22 / 8), mỗi cái bốc bậc theo cùng tỉ lệ với căn cốt; thức tỉnh thêm trong đời, tối đa 5. Thiên phú rèn trường phái mà chủng tộc bị cấm thì không ra.')
       + grid((roots.length ? '<h3 class="group-title">Căn cốt</h3>' + roots.join('') : '') + tals);
   }
   const TRAITVI = { bold: 'gan', studious: 'chăm học', pious: 'mộ đạo', social: 'hòa đồng' };
@@ -364,10 +367,44 @@ code{font-family:var(--font-mono);font-size:12px}
     return overview('Quyết định định hướng', 'Quyết định của hệ thiên phú và chí hướng. Câu chữ trích từ mã nguồn (câu hỏi, lựa chọn và kết quả); ‹…› là chỗ game điền vào.') + grid(cards.join(''));
   }
 
+  // ---- Cảnh giới, kỹ năng, thọ nguyên, tiền tệ (vankiep/js/cult.js, docs/07 mục 4) ----
+  function cultView() {
+    const C = D.cult, monster = t => t >= 5 ? 'ma thú cấp 9, Thánh Vực' : t ? `ma thú cấp ${2 * t - 1}–${2 * t}` : 'quái Tier 0';
+    const ranks = C.ranks.filter(k => passes('realm', String(k.r))).map(k => card('realm', String(k.r), k.r === 0 ? 'Phàm nhân / Ma pháp học đồ' : k.war.replace('Chiến sĩ ', 'Cảnh giới '), `<div class="meta">Tier ${k.tier} · ${monster(k.tier)}</div>
+        <dl class="kv"><dt>Cấp (số kỹ năng tính cấp)</dt><dd>${esc(k.lv)}</dd><dt>Tên gọi</dt><dd>${esc(k.war)} · ${esc(k.mage)}</dd>
+          <dt>Nghề tối thiểu</dt><dd>${k.r ? 'Tier ' + k.tier + ' (hạn mức cấp ' + C.caps[k.tier] + ')' : 'nghề gốc'}</dd>
+          ${k.tier ? `<dt>Thọ nguyên</dt><dd>× ${num(Math.round((1 + C.cfg.life * k.tier) * 100) / 100)}</dd>` : ''}</dl>`));
+    const RULE = {
+      skill: `<p style="margin:0">Mỗi nghề có nhiều kỹ năng, mỗi kỹ năng 5 bậc. Cấp = số kỹ năng đã max có Tier không quá Tier nghề, nhưng chỉ tới hạn mức của nghề; kỹ năng max vượt hạn mức chỉ cộng sức (+${num(C.cfg.extraPow)} mỗi cái, tối đa +${num(C.cfg.extraPowMax)}).</p>
+        <dl class="kv"><dt>Hạn mức cấp theo Tier nghề</dt><dd class="chips">${C.caps.map((c, t) => `<span class="chip">T${t}: ${c}</span>`).join('')}</dd>
+          <dt>Số kỹ năng mỗi Tier</dt><dd class="chips">${C.slots.map((s, t) => `<span class="chip">T${t}: ${s}</span>`).join('')}</dd>
+          <dt>Điểm rèn để max một kỹ năng</dt><dd class="chips">${C.cost.map((c, t) => `<span class="chip">T${t}: ${c.toLocaleString('vi')}</span>`).join('')}</dd>
+          <dt>Chuyển nghề Tier t</dt><dd>max 2 kỹ năng Tier t − 1, đủ mastery của nghề đích, qua thử thách</dd>
+          <dt>Thứ tự rèn</dt><dd>dưới hạn mức: kỹ năng Tier thấp nhất còn chỗ; chạm hạn mức: kỹ năng gate của nghề kế tiếp, rồi kỹ năng thừa</dd>
+          <dt>Điểm rèn</dt><dd>luyện tập, săn quái, làm nghề, học, sự kiện × căn cốt, thiên phú × ma lực vùng đang ở (0,7 + 0,6 × ma lực)</dd>
+          <dt>Luyện ngoài giờ</dt><dd>ai cũng tu: mỗi năm từ tuổi thiếu niên ${C.cfg.base} điểm rèn và ${num(C.cfg.baseMastery)} mastery (nhắm vào chỗ nghề kế tiếp còn thiếu); chí hướng Thuận theo tự nhiên, Gia đình × 0,6; tuổi già một nửa</dd></dl>`,
+      teach: `<p style="margin:0">Người dạy Tier c: học được kỹ năng tới Tier c và được nhận vào nghề tới Tier c. Tự học thì dừng ở nghề Tier 1 (Chiến sĩ cấp 2). Không có tông môn: học viện, sư phụ, gia tộc, giáo hội, hội. Giáo hội chỉ dạy người trong hàng tu sĩ (sinh kế Tu sĩ hoặc nghề tín ngưỡng).</p>
+        <dl class="kv"><dt>Tier 2 (tới cấp 4)</dt><dd>học viện trung cấp; phường nghề, đoàn lính đánh thuê; từng đi lính; Hiệp Hội Mạo Hiểm từ hạng Bạc; đệ tử cao thủ Tier 3; tu sĩ Devotion từ 40</dd>
+          <dt>Tier 3 (tới cấp 6)</dt><dd>học viện cao cấp; đệ tử cao thủ Tier 4; nhà quý tộc (sinh ra hoặc có tước); tu sĩ Devotion từ 75</dd>
+          <dt>Tier 4 (tới cấp 8)</dt><dd>học viện cao cấp ngành Võ bị, Pháp thuật; nhà từ Bá tước; tu sĩ Devotion từ 95</dd>
+          <dt>Tier 5 (cấp 9, Thánh Vực)</dt><dd>hoàng tộc; đệ tử cao thủ Tier 5; kỳ ngộ (bước sau)</dd></dl>`,
+      life: `<p style="margin:0">Tuổi thọ kỳ vọng nhân (1 + ${num(C.cfg.life)} × Tier cảnh giới), tuổi già cũng lùi theo. Phần trẻ em của bảng sống giữ nguyên.</p>
+        <dl class="kv"><dt>Người (62 năm)</dt><dd class="chips">${[0, 1, 2, 3, 4, 5].map(t => `<span class="chip">Tier ${t}: ~${Math.round(62 * (1 + C.cfg.life * t))}</span>`).join('')}</dd></dl>`,
+      coin: `<p style="margin:0">100 đồng = 1 bạc, 100 bạc = 1 vàng. Trong mã vẫn là một con số theo bạc, chỉ đổi cách hiện.</p>
+        <dl class="kv"><dt>Ví dụ</dt><dd class="chips">${C.coin.map(([n, s]) => `<span class="chip">${num(n)} bạc → ${esc(s)}</span>`).join('')}</dd></dl>`
+    };
+    const rules = CULTRULES.filter(([id]) => passes('cultrule', id)).map(([id, name]) => card('cultrule', id, name, RULE[id]));
+    const sv = C.saint, saint = passes('dec', 'cv_saint') ? [card('dec', 'cv_saint', 'Ngưỡng Thánh Vực', `<div class="meta">ưu tiên ${sv.prio} · mỗi lượt</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>Nghề Tier 5, ${C.caps[5] - 1} kỹ năng tính cấp trở lên, chưa vào Thánh Vực. Mỗi lượt ${num(C.cfg.saintBase * 100)}% cộng theo Hiểu biết, căn cốt, tính chăm, trong khoảng 0,03–0,5%.</dd></dl>
+        <ul class="lines">${sv.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`)] : [];
+    return overview('Cảnh giới, kỹ năng', 'Định hướng xã hội tu luyện kiểu Bàn Long (docs/07): cảnh giới cấp 1–9 và Thánh Vực suy từ cấp theo luật của thư viện nghề; chiến sĩ và ma pháp sư cùng thang, ma thú cũng vậy. Bản đầu kỹ năng chưa có tên.')
+      + grid((ranks.length ? '<h3 class="group-title">Cảnh giới</h3>' + ranks.join('') : '') + (rules.length ? '<h3 class="group-title">Luật</h3>' + rules.join('') : '') + (saint.length ? '<h3 class="group-title">Quyết định</h3>' + saint.join('') : ''));
+  }
+
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

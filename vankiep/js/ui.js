@@ -78,6 +78,7 @@
       if (d.world && d.world !== G.realm.seed) useWorld(d.world);
       sim = new G.Sim({ seed: d.seed, hook: hook() });
       sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
+      G.skMigrate(d.S);   // bản lưu trước kỹ năng 5 bậc: cấp 1–60 cũ quy ra số kỹ năng max (js/cult.js)
       G.bindWorld(d.S.world);
       clearLog(); for (const e of d.S.log) appendLog(e, true);
       selRegion = d.S.loc;
@@ -138,10 +139,10 @@
     const kills = Object.values(S.kills).reduce((a, b) => a + b, 0);
     const topKill = Object.entries(S.kills).sort((a, b) => b[1] - a[1])[0];
     const items = [
-      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Cấp', `${S.level} · Tier ${sim.ctier(S)}`],
+      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Cảnh giới', `${G.realmName(S)} · cấp ${S.level} · Tier ${sim.ctier(S)}`],
       ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
       ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
-      ['Bạc để lại', S.gold], ['Con cháu', S.family.kids.length || '—'],
+      ['Tiền để lại', G.coin(S.gold)], ['Con cháu', S.family.kids.length || '—'],
       ['Căn cốt', G.rootText(S) || '—'], ['Thiên phú', S.tal && S.tal.list.length ? S.tal.list.map(id => G.TALENTS[id].nameVi).join(', ') : '—'],
       ['Chí hướng', (G.AIMS[S.aim] || G.AIMS.free).nameVi],
       ['Trận săn', `${S.hunts.won} thắng · ${S.hunts.lost} thua`], ['Kiếp', S.kiep]
@@ -186,8 +187,8 @@
       ys.forEach((r, i) => i ? c.lineTo(x(i), y(r[k])) : c.moveTo(x(i), y(r[k]))); c.stroke();
     }
     c.setLineDash([4, 4]); c.strokeStyle = '#e8c26a'; c.lineWidth = 1.5; c.beginPath();
-    ys.forEach((r, i) => i ? c.lineTo(x(i), y(r.level / G.MAX_LEVEL * 100)) : c.moveTo(x(i), y(r.level / G.MAX_LEVEL * 100))); c.stroke(); c.setLineDash([]);
-    $('chartLegend').innerHTML = series.map(([k, n]) => `<span><i style="background:var(--${k})"></i>${n}</span>`).join('') + '<span><i style="background:#e8c26a"></i>Cấp (0–60)</span>';
+    ys.forEach((r, i) => i ? c.lineTo(x(i), y(r.level / G.MAX_LV * 100)) : c.moveTo(x(i), y(r.level / G.MAX_LV * 100))); c.stroke(); c.setLineDash([]);
+    $('chartLegend').innerHTML = series.map(([k, n]) => `<span><i style="background:var(--${k})"></i>${n}</span>`).join('') + '<span><i style="background:#e8c26a"></i>Cấp (0–22)</span>';
   }
 
   // ───────── Bảng nhân vật ─────────
@@ -203,20 +204,21 @@
       : `lang thang ở ${reg.nameVi}${nat ? ' · ' + nat.name : ''}`;
     const kv = [
       ['Nghề', `${X.jobName(S)} · T${j ? j.tier : 0}`],
-      ['Sức mạnh', `${X.power(S).toFixed(2)} Tier · cấp Tier ${X.ctier(S)}`],
+      ['Cảnh giới', `${G.realmName(S)} · cấp ${S.level} · Tier ${X.ctier(S)}`],
+      ['Sức mạnh', `${X.power(S).toFixed(2)} Tier`],
       ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
-      ['Bạc', S.gold], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
+      ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
       ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
       // Nước đang sống: thuế thật phải nộp và thái độ của nước với chủng tộc mình (js/state.js).
       ['Nước', nat ? `${nat.name} · thuế ${Math.round(G.taxRate(S) * 100)}%${{ fav: ' · được ưu ái', wary: ' · bị dè chừng' }[G.attitude(S)] || ''}` : 'đất vô chủ']
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
-    const need = G.xpNeed(S.level);
-    $('xpBar').style.width = (S.level >= G.MAX_LEVEL ? 100 : S.xp / need * 100) + '%';
-    $('xpTxt').textContent = `Cấp ${S.level}`;
+    const sp = G.skProgress(S);   // bậc của kỹ năng đang rèn (js/cult.js)
+    $('xpBar').style.width = (sp.t == null ? 100 : sp.r / 5 * 100) + '%'; $('xpBar').parentElement.title = G.skText(S);
+    $('xpTxt').textContent = `Cấp ${S.level}` + (sp.t == null ? ' · hết kỹ năng học được' : ` · rèn kỹ năng T${sp.t} bậc ${Math.floor(sp.r)}/5`);
     // Căn cốt, thiên phú (js/talent.js): viền theo bậc màu; di chuột xem hiệu ứng.
     $('cTal').innerHTML = G.talChips(S).map((c, i) => `<span class="tchip${i ? '' : ' root'}" style="border-color:${c.col};color:${c.col}" title="${esc(c.title)}">${esc(c.text)}</span>`).join('') || '<span class="fam">Bản lưu cũ: chưa có thiên phú.</span>';
     $('cStats').innerHTML = STAT.map(([k, n]) => `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${S[k]}%;background:var(--${k})"></i></div><span>${Math.round(S[k])}</span></div>`).join('');
@@ -374,7 +376,7 @@
       ${zones}
       ${R.lord ? `<div class="rz" style="color:var(--risky)">Chúa vùng: ${esc(G.B.byId[R.lord.species].nameVi)} (ngủ ở ${esc(G.ZONE[R.lord.zone].zone.nameVi)})</div>` : ''}
       ${tripTxt ? `<div class="row"><span>${esc(tripTxt)}</span></div>` : ''}
-      <div class="act">${S.dead ? '' : R.id === S.loc ? '<span class="fam">Bạn đang ở đây.</span>' : canGo ? `<button class="btn" id="goBtn">${plan.escort ? 'Thuê hộ tống, lên đường' : 'Lên đường tới đây'}</button>` : `<span class="fam">${!able ? 'Trẻ con chưa tự đi xa được.' : moved ? 'Năm nay đã đi một chuyến.' : plan && plan.escort && !plan.fail ? 'Chưa đủ bạc thuê hộ tống.' : ''}</span>`}</div>`;
+      <div class="act">${S.dead ? '' : R.id === S.loc ? '<span class="fam">Bạn đang ở đây.</span>' : canGo ? `<button class="btn" id="goBtn">${plan.escort ? 'Thuê hộ tống, lên đường' : 'Lên đường tới đây'}</button>` : `<span class="fam">${!able ? 'Trẻ con chưa tự đi xa được.' : moved ? 'Năm nay đã đi một chuyến.' : plan && plan.escort && !plan.fail ? 'Chưa đủ tiền thuê hộ tống.' : ''}</span>`}</div>`;
     box.hidden = false;
     const go = $('goBtn');
     if (go) go.onclick = () => { S.flags.movedAge = S.age; tripCache.key = null; const t = G.moveTo(sim, R.id, { escort: true }); if (t) sim.log(t, 'info'); dirty = true; save(); };

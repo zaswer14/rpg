@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -73,7 +73,7 @@ const TDEC = {
   aim_job: ['Đổi nghề?', 'Trưởng thành, nghề đang làm lệch chí hướng; hoặc chí hướng Thuận theo tự nhiên mà Tâm trạng dưới 30. Ba năm hỏi một lần.'],
   aim_chance: ['Cơ hội theo chí hướng', 'Sự kiện báo tin (trọng số 1,5, cách 5 năm) gieo cờ, quyết định mở năm sau. Câu chữ từng chí hướng ở tab Chí hướng.'],
   tal_awaken: ['Thiên phú thức tỉnh', 'Mỗi lượt 0,6%, cộng 1,5% nếu đêm sinh có sao chổi, 6% nếu Sinh lực dưới 22, thêm theo thời gian Tu hành / Luyện tập. Chào 3 thiên phú, bậc nghiêng lên; tối đa 5.'],
-  tal_break: ['Bình cảnh', 'Chạm cấp 10, 20, 30, 40, 50, mỗi mốc một lần, căn cốt chưa phải Đỏ. Thuốc tẩy tủy 62% (giảm 9 điểm mỗi bậc), bế quan 30% (giảm 5 điểm mỗi bậc, cộng theo tính chăm).']
+  tal_break: ['Bình cảnh', 'Chạm mỗi Tier cảnh giới (1 → 5, js/cult.js), mỗi mốc một lần, căn cốt chưa phải Đỏ. Thuốc tẩy tủy 62% (giảm 9 điểm mỗi bậc), bế quan 30% (giảm 5 điểm mỗi bậc, cộng theo tính chăm).']
 };
 const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
@@ -99,6 +99,10 @@ const data = {
   rarity: G.RARITY.map((r, i) => ({ id: r.id, nameVi: r.nameVi, col: r.col, w: r.w, rate: r.rate, root: G.ROOT_VI[i] })),
   talents: Object.values(G.TALENTS).map(t => ({ id: t.id, r: t.r, nameVi: t.nameVi, d: t.d, fx: G.fxText(t.fx) })),
   aims: pickF(G.AIMS, (a, k) => ({ nameVi: a.nameVi, icon: a.icon, d: a.d, trait: a.trait, focus: a.focus, works: a.works, schools: a.schools, dream: a.dream || null, side: a.side || null, sign: a.sign || null, chance: G.AIM_CHANCE[k] ? parseRun(G.AIM_CHANCE[k]).texts : [] })),
+  // Kỹ năng, cấp, cảnh giới, thọ nguyên, tiền tệ (vankiep/js/cult.js, docs/07 mục 4.1–4.5).
+  cult: { slots: G.SK_SLOTS, cost: G.SK_COST, cfg: G.CULT, caps: [0, 1, 2, 3, 4, 5].map(G.lvCap),
+    ranks: [...Array(11).keys()].map(r => ({ r, war: G.rankName(r, false), mage: G.rankName(r, true), lv: r === 0 ? '0–2' : r === 10 ? '21–22, rồi đột phá' : `${2 * r + 1}–${2 * r + 2}`, tier: r ? Math.min(5, Math.ceil(r / 2)) : 0 })),
+    saint: { prio: G.DECISIONS.cv_saint.prio, ...parseRun(both(G.DECISIONS.cv_saint.build, G.DECISIONS.cv_saint.apply)) }, coin: [0.35, 12.5, 245, 12000].map(n => [n, G.coin(n)]) },
   tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; })
 };
 document.getElementById('out').textContent = JSON.stringify(data);

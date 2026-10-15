@@ -596,7 +596,7 @@ window.LifeSim = window.LifeSim || {};
     if (bonus) X.money(bonus);
     G.clearLair(W, l, X, S.name);
     S.flags.lairs = (S.flags.lairs || 0) + 1;
-    return `Dọn sạch ${l.name} sau ${n} trận. +${loot} bạc${bonus ? `, quan ${G.realm.nations[k].name} thưởng thêm ${bonus}` : ''}.`;
+    return `Dọn sạch ${l.name} sau ${n} trận. +${G.coin(loot)}${bonus ? `, quan ${G.realm.nations[k].name} thưởng thêm ${bonus}` : ''}.`;
   };
   // Di tích (docs/03 mục 4.2): tĩnh, đặt từ seed (G.realm.dungeons); W.dyn.dg[id][k] = năm dọn xong tầng k, sau 25 năm quái về lại.
   G.DG_REFILL = 25;
@@ -623,7 +623,7 @@ window.LifeSim = window.LifeSim || {};
     cnt(D, 'dgFloors');
     hist(D, W.year, 'dungeon', `${S.name} xuống tới ${zone.nameVi.toLowerCase()} của ${d.name}${first ? ', lần đầu có người sống sót trở về' : ''}.`);
     S.flags.dgFloors = (S.flags.dgFloors || 0) + 1;
-    return `Dọn sạch ${zone.nameVi.toLowerCase()} của ${d.name}. +${loot} bạc.`;
+    return `Dọn sạch ${zone.nameVi.toLowerCase()} của ${d.name}. +${G.coin(loot)}.`;
   };
 
   // ═════════ Mật độ quái theo tỉnh × tầng (docs/03 mục 3.5) ═════════

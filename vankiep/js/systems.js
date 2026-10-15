@@ -47,7 +47,7 @@ window.LifeSim = window.LifeSim || {};
         p.alive = false;
         X.add('h', -12);
         let txt = `${p.role[0].toUpperCase() + p.role.slice(1)} bạn, ${p.name}, qua đời ở tuổi ${p.age}.`;
-        if (S.q >= 3 && X.stage(S) !== 'child') { const inh = Math.round(G.median(reg) * (S.q - 2) * .8); X.money(inh); txt += ` Bạn được thừa kế ${inh} bạc.`; }
+        if (S.q >= 3 && X.stage(S) !== 'child') { const inh = Math.round(G.median(reg) * (S.q - 2) * .8); X.money(inh); txt += ` Bạn được thừa kế ${G.coin(inh)}.`; }
         X.log(txt, 'bad');
       }
     }
@@ -136,7 +136,7 @@ window.LifeSim = window.LifeSim || {};
       if (yrs < 6 && !R.construct) return 'play';
       w = { play: 3, study: 1 + T.studious * 4, train: T.bold * 4, chores: S.q <= 2 ? 3 : 1, faith: S.faith ? T.pious * 2 : 0 };
     } else if (st === 'teen') {
-      w = { train: 1 + T.bold * 5, study: 1 + T.studious * 4, work: S.q <= 2 ? 3 : 1, hunt: T.bold > .55 && S.level >= 3 ? 3 : 0, faith: S.faith ? T.pious * 2 : 0, family: T.social * 1.5 };
+      w = { train: 1 + T.bold * 5, study: 1 + T.studious * 4, work: S.q <= 2 ? 3 : 1, hunt: T.bold > .55 && S.level >= 1 ? 3 : 0, faith: S.faith ? T.pious * 2 : 0, family: T.social * 1.5 };
     } else {
       if (S.hl < 35) return 'rest';
       const hunter = S.work === 'adventurer' || S.undead || S.work === 'hunter' && T.bold > .5;
@@ -157,7 +157,7 @@ window.LifeSim = window.LifeSim || {};
   // Rương báu khi phiêu lưu.
   G.treasure = function (X, zone) {
     const S = X.S, r = X.rnd();
-    if (r < .4) { const g = X.int(20, 60) * (1 + zone.tier[0]); X.money(g); X.log(`Tìm được rương cũ ở ${zone.nameVi}: ${g} bạc.`, 'good'); }
+    if (r < .4) { const g = X.int(20, 60) * (1 + zone.tier[0]); X.money(g); X.log(`Tìm được rương cũ ở ${zone.nameVi}: ${G.coin(g)}.`, 'good'); }
     else if (r < .75) { S.gear = Math.min(10, S.gear + 1); X.log(`Nhặt được món trang bị tốt hơn ở ${zone.nameVi}. Trang bị ${S.gear}/10.`, 'good'); }
     else {
       const school = X.pick(Object.keys(J.schools)), m = X.pick(J.schools[school].masteries);

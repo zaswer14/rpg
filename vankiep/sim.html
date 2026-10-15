@@ -79,6 +79,7 @@
 <script src="js/noble.js"></script>
 <script src="js/realmev.js"></script>
 <script src="js/talent.js"></script>
+<script src="js/cult.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -140,7 +141,8 @@ $('run').onclick = () => {
         b[0]++; b[1] += S.level; b[2] += sim.years(S); if (sim.ctier(S) >= 3) b[3]++; T.end[r1] = (T.end[r1] || 0) + 1;
         const ak = S.aim || 'free', a = T.aim[ak] || (T.aim[ak] = [0, 0, 0]); a[0]++; if (S.work === 'adventurer') a[1]++; a[2] += S.level;
         T.nTal += S.tal ? S.tal.list.length : 0; for (const k of TALK) if (F[k]) { T.k[k] = (T.k[k] || 0) + 1; T.n[k] = (T.n[k] || 0) + (typeof F[k] === 'number' ? F[k] : 1); } }
-      const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts };
+      const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
+        rank: G.rankOf(S), adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachCap(S), extra: G.skExtra(S) };   // cảnh giới, người dạy (js/cult.js)
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
       for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
@@ -181,6 +183,10 @@ $('run').onclick = () => {
       ['Sinh kế', 'Đời', 'Tuổi TB', 'Cấp TB', 'Chết vì quái']));
     out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
+    { const ad = A.lives.filter(r => r.adult), cnt = new Array(11).fill(0); for (const r of ad) cnt[r.rank]++;   // docs/07 mục 6: mục tiêu theo Tier, chia đều 2 bậc
+      const tierRow = t => { const ks = t === 0 ? [0] : t === 5 ? [9, 10] : [2 * t - 1, 2 * t]; const n = ks.reduce((a, k) => a + cnt[k], 0); return [`Tier ${t}`, n, pct(n, Math.max(1, ad.length)), [35, 30, 18, 10, 5, 2][t] + '%']; };
+      out.push(table('Cảnh giới cuối đời (đời đầu sống tới tuổi trưởng thành)', [...cnt.map((n, r) => [G.rankName(r, false).replace('Chiến sĩ ', ''), n, pct(n, Math.max(1, ad.length)), '']), ...[0, 1, 2, 3, 4, 5].map(tierRow)], ['Cảnh giới', 'Đời', '%', 'Mục tiêu'],
+        { bar: true, note: `docs/07 mục 6. ${ad.length} đời trưởng thành. Kỹ năng thừa (chỉ cộng sức) trung bình ${avg(ad, r => r.extra).toFixed(1)}. Người dạy cuối đời: ${[1, 2, 3, 5].map(c => `tới Tier ${c} ${pct(ad.filter(r => r.teach === c).length, Math.max(1, ad.length))}`).join(', ')}.` })); }
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu docs/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
     out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'docs/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));

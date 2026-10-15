@@ -268,17 +268,17 @@ window.LifeSim = window.LifeSim || {};
         const cost = Math.round(G.ORG.villageCost * (1 + st.w)) + st.fee;
         if (S.gold < cost) continue;
         const name = Dn().settlementName(G.realm, race, 'village', X);
-        ch.push({ k: 'v' + st.cell, label: `Lập ${name}`, sub: `${where(st)}; độ hoang ${st.w.toFixed(1)}; ${cost} bạc${st.fee ? ` (gồm ${st.fee} phí xin phép)` : ''}.`, st, name, cost, tier: 'village' });
+        ch.push({ k: 'v' + st.cell, label: `Lập ${name}`, sub: `${where(st)}; độ hoang ${st.w.toFixed(1)}; ${G.coin(cost)}${st.fee ? ` (gồm ${st.fee} phí xin phép)` : ''}.`, st, name, cost, tier: 'village' });
       }
       const men = G.manpower(S);
       if (men >= G.ORG.townMen && S.fame >= 45) for (const st of G.siteChoices(S, X, 0, 1.6, 1)) {
         const cost = G.ORG.townCost + st.fee * 3;
         if (S.gold < cost) continue;
         const name = Dn().settlementName(G.realm, race, 'town', X);
-        ch.push({ k: 't' + st.cell, label: `Lập thị trấn ${name}`, sub: `${where(st)}; ${cost} bạc; đưa theo ${men} người.`, st, name, cost, tier: 'town', men });
+        ch.push({ k: 't' + st.cell, label: `Lập thị trấn ${name}`, sub: `${where(st)}; ${G.coin(cost)}; đưa theo ${men} người.`, st, name, cost, tier: 'town', men });
       }
       if (!ch.length) { S.recentDec.found_settle = S.age; return null; }
-      return { title: 'Lập nghiệp', body: `Bạn có ${S.gold} bạc, danh vọng ${Math.round(S.fame)}${men ? `, nhân lực ${men} người` : ''}. Có chỗ đất dựng được ${ch.some(c => c.tier === 'town') ? 'cả một thị trấn' : 'một làng'}. Bạn sẽ là ${ch[0].tier === 'town' ? 'thị trưởng' : 'trưởng làng'}.`,
+      return { title: 'Lập nghiệp', body: `Bạn có ${G.coin(S.gold)}, danh vọng ${Math.round(S.fame)}${men ? `, nhân lực ${men} người` : ''}. Có chỗ đất dựng được ${ch.some(c => c.tier === 'town') ? 'cả một thị trấn' : 'một làng'}. Bạn sẽ là ${ch[0].tier === 'town' ? 'thị trưởng' : 'trưởng làng'}.`,
         choices: [...ch, { k: 'no', label: 'Thôi', sub: 'Không phải ai cũng muốn làm trưởng.' }] };
     },
     apply(S, X, k, c) {
@@ -337,11 +337,11 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const h = G.SET[roles(S).head], U = G.ORG, ch = [], wc = Math.round(G.median(X.reg(S)) * 4);
-      if ((h.tier === 'village' || h.tier === 'hamlet') && h.urban >= U.upTown.urban && S.gold >= U.upTown.cost) ch.push({ k: 'town', label: 'Lên thị trấn', sub: `${U.upTown.cost} bạc: mở chợ, dựng rào cọc, lập đồn lính. Bạn thành thị trưởng.` });
-      if (h.tier === 'town' && h.urban >= U.upCity.urban && S.gold >= U.upCity.cost && S.fame >= U.upCity.fame) ch.push({ k: 'city', label: 'Lên thành phố', sub: `${U.upCity.cost} bạc: tường đá, trường, doanh trại. Bạn thành thành chủ.` });
-      if (h.tier === 'village' && !(h.bld || []).includes('walls') && S.gold >= wc) ch.push({ k: 'walls', label: 'Dựng rào gỗ', sub: `${wc} bạc: quái và thú triều phá ít hơn một nửa.` });
+      if ((h.tier === 'village' || h.tier === 'hamlet') && h.urban >= U.upTown.urban && S.gold >= U.upTown.cost) ch.push({ k: 'town', label: 'Lên thị trấn', sub: `${G.coin(U.upTown.cost)}: mở chợ, dựng rào cọc, lập đồn lính. Bạn thành thị trưởng.` });
+      if (h.tier === 'town' && h.urban >= U.upCity.urban && S.gold >= U.upCity.cost && S.fame >= U.upCity.fame) ch.push({ k: 'city', label: 'Lên thành phố', sub: `${G.coin(U.upCity.cost)}: tường đá, trường, doanh trại. Bạn thành thành chủ.` });
+      if (h.tier === 'village' && !(h.bld || []).includes('walls') && S.gold >= wc) ch.push({ k: 'walls', label: 'Dựng rào gỗ', sub: `${G.coin(wc)}: quái và thú triều phá ít hơn một nửa.` });
       if (!ch.length) return null;
-      return { title: h.name, body: `${h.name} có ${h.urban.toLocaleString('vi')} người trong khu. Bạn có ${S.gold} bạc.`, choices: [...ch, { k: 'no', label: 'Để sau', sub: '' }] };
+      return { title: h.name, body: `${h.name} có ${h.urban.toLocaleString('vi')} người trong khu. Bạn có ${G.coin(S.gold)}.`, choices: [...ch, { k: 'no', label: 'Để sau', sub: '' }] };
     },
     apply(S, X, k) {
       const h = G.SET[roles(S).head], D = S.world.dyn, U = G.ORG, old = h.name;
@@ -383,7 +383,7 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const h = G.SET[roles(S).head], ts = templatesFor(S).slice().sort((a, b) => (a.size === 'L') - (b.size === 'L') || X.rnd() - .5).slice(0, 3);
-      return { title: 'Lập nước', body: `Tỉnh ${G.realm.provinces[h.province].name} không thuộc nước nào. Các trưởng làng muốn ${h.name} đứng đầu. Chọn thể chế (${G.ORG.nationCost} bạc).`,
+      return { title: 'Lập nước', body: `Tỉnh ${G.realm.provinces[h.province].name} không thuộc nước nào. Các trưởng làng muốn ${h.name} đứng đầu. Chọn thể chế (${G.coin(G.ORG.nationCost)}).`,
         choices: [...ts.map(t => ({ k: t.id, label: `${t.label} (${G.GOVS[t.gov].nameVi.toLowerCase()})`, sub: `${t.trait.nameVi}: ${t.trait.desc}`, tpl: t.id })), { k: 'no', label: 'Chưa', sub: '' }] };
     },
     apply(S, X, k) {
@@ -414,7 +414,7 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const D = S.world.dyn, p = rebelProv(S), k = D.prov[p], n = G.realm.nations[k], ch = G.rebelChance(S);
       return { title: 'Dấy binh', body: `${n.name} đang rối ren (ổn định ${Math.round(D.nat[k].stab * 100)}). Người tỉnh ${G.realm.provinces[p].name} hỏi bạn có dám đứng lên không. Ước chừng ${Math.round(ch * 100)}% thành công.`,
-        choices: [{ k: 'go', label: 'Dấy binh', sub: `${G.ORG.rebelCost} bạc mua giáo mác. Thua thì mất hết, có khi mất đầu.` }, { k: 'no', label: 'Giữ phận', sub: '' }] };
+        choices: [{ k: 'go', label: 'Dấy binh', sub: `${G.coin(G.ORG.rebelCost)} mua giáo mác. Thua thì mất hết, có khi mất đầu.` }, { k: 'no', label: 'Giữ phận', sub: '' }] };
     },
     apply(S, X, k) {
       if (k !== 'go') return null;
@@ -488,18 +488,18 @@ window.LifeSim = window.LifeSim || {};
   };
   // ── Vào hội (phường nghề theo sinh kế, đoàn lính đánh thuê theo sức) — hội có trụ sở trong tỉnh nhà
   const orgsHere = (S, f) => { const h = homeS(S), W = S.world; if (!live(h)) return []; return orgs(W).filter(o => !o.gone && G.SET[o.seat] && G.SET[o.seat].province === h.province && f(o)); };
-  const canJoin = (S, X, o) => !roles(S).orgs[o.id] && (o.kind === 'merc' ? S.level >= 10 && X.stage(S) === 'adult' : (G.ORG_KINDS[o.kind].works || []).includes(S.work));
+  const canJoin = (S, X, o) => !roles(S).orgs[o.id] && (o.kind === 'merc' ? S.level >= 4 && X.stage(S) === 'adult' : (G.ORG_KINDS[o.kind].works || []).includes(S.work));
   DEC.org_join = {
     prio: 4, gap: 3,
     when(S, X) {
       if (!adultish(S, X)) return false;
       const r = roles(S);
-      return (!r.adv && S.level >= 3) || orgsHere(S, o => canJoin(S, X, o) && !Object.keys(r.orgs).some(id => { const m = G.orgById(S.world, id); return m && m.kind === o.kind; })).length > 0;
+      return (!r.adv && S.level >= 1) || orgsHere(S, o => canJoin(S, X, o) && !Object.keys(r.orgs).some(id => { const m = G.orgById(S.world, id); return m && m.kind === o.kind; })).length > 0;
     },
     build(S, X) {
       const r = roles(S), ch = [], fee = Math.round(G.median(X.reg(S)) * .3);
-      if (!r.adv && S.level >= 3) ch.push({ k: 'adv', label: 'Ghi tên Hiệp Hội Mạo Hiểm', sub: 'Mọi nghề đều nhận. Bảng nhiệm vụ, tiền thưởng, hạng theo danh vọng.' });
-      for (const o of orgsHere(S, o => canJoin(S, X, o)).slice(0, 2)) ch.push({ k: o.id, label: `Vào ${o.name}`, sub: `${o.members} người, ${o.kind === 'merc' ? 'nhận hợp đồng đánh thuê và hộ tống' : `thu nhập +${Math.round(G.ORG_KINDS[o.kind].inc[0] * 100)}%`}; lệ phí ${fee} bạc. ${G.ORG_KINDS[o.kind].ranks[2][0].toUpperCase() + G.ORG_KINDS[o.kind].ranks[2].slice(1)}: ${o.leader.name}.`, fee });
+      if (!r.adv && S.level >= 1) ch.push({ k: 'adv', label: 'Ghi tên Hiệp Hội Mạo Hiểm', sub: 'Mọi nghề đều nhận. Bảng nhiệm vụ, tiền thưởng, hạng theo danh vọng.' });
+      for (const o of orgsHere(S, o => canJoin(S, X, o)).slice(0, 2)) ch.push({ k: o.id, label: `Vào ${o.name}`, sub: `${o.members} người, ${o.kind === 'merc' ? 'nhận hợp đồng đánh thuê và hộ tống' : `thu nhập +${Math.round(G.ORG_KINDS[o.kind].inc[0] * 100)}%`}; lệ phí ${G.coin(fee)}. ${G.ORG_KINDS[o.kind].ranks[2][0].toUpperCase() + G.ORG_KINDS[o.kind].ranks[2].slice(1)}: ${o.leader.name}.`, fee });
       if (!ch.length) return null;
       return { title: 'Hội, đoàn', body: 'Người trong nghề rủ bạn vào hội. Vào thì có chỗ dựa; không vào thì không ai đòi hội phí.', choices: [...ch, { k: 'no', label: 'Không vào', sub: '' }] };
     },
@@ -555,7 +555,7 @@ window.LifeSim = window.LifeSim || {};
     const out = [];
     for (const [kind, K] of Object.entries(G.ORG_KINDS)) {
       if (has(kind)) continue;
-      if (kind === 'merc') { if (S.level >= 15 && S.fame >= 30 && S.gold >= 500 && G.TIER_RANK[h.tier] <= 3) out.push(kind); continue; }
+      if (kind === 'merc') { if (S.level >= 6 && S.fame >= 30 && S.gold >= 500 && G.TIER_RANK[h.tier] <= 3) out.push(kind); continue; }
       if (K.works.includes(S.work) && S.fame >= 20 && S.gold >= 300 && (G.TIER_RANK[h.tier] <= 2 || kind === 'craft' || kind === 'farm')) out.push(kind);
     }
     return out;
@@ -566,7 +566,7 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const h = homeS(S);
       return { title: 'Lập hội', body: `${h.name} chưa có hội cho người như bạn.`,
-        choices: [...foundable(S, X).map(kind => ({ k: kind, label: kind === 'merc' ? 'Lập đoàn lính đánh thuê' : `Lập ${G.ORG_KINDS[kind].nameVi} ${G.rootName(h.name)}`, sub: `${kind === 'merc' ? 500 : 300} bạc; bạn là ${G.ORG_KINDS[kind].ranks[2]}.` })), { k: 'no', label: 'Thôi', sub: '' }] };
+        choices: [...foundable(S, X).map(kind => ({ k: kind, label: kind === 'merc' ? 'Lập đoàn lính đánh thuê' : `Lập ${G.ORG_KINDS[kind].nameVi} ${G.rootName(h.name)}`, sub: `${G.coin(kind === 'merc' ? 500 : 300)}; bạn là ${G.ORG_KINDS[kind].ranks[2]}.` })), { k: 'no', label: 'Thôi', sub: '' }] };
     },
     apply(S, X, k) {
       if (k === 'no') return null;
@@ -586,27 +586,27 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const ct = X.ctier(S), ch = [], pay = n => Math.round(n * Math.pow(1 + ct, 2));
       const l = G.lairChoices(S, X)[0];
-      if (l) ch.push({ k: 'lair', label: `Dọn ${l.name}`, sub: `${G.LAIR_VI[l.lv]}, ${G.LAIR_FIGHTS[l.lv]} trận; Hiệp Hội thưởng thêm ${pay(40) * l.lv} bạc.`, lair: l.id, bonus: pay(40) * l.lv });
-      const z = X.recommendedZone(S); if (z) ch.push({ k: 'escort', label: 'Hộ tống đoàn buôn', sub: `Qua ${z.zone.nameVi}, 1–3 trận; ${pay(18)} bạc mỗi trận.`, zone: z.zone.id, per: pay(18) });
+      if (l) ch.push({ k: 'lair', label: `Dọn ${l.name}`, sub: `${G.LAIR_VI[l.lv]}, ${G.LAIR_FIGHTS[l.lv]} trận; Hiệp Hội thưởng thêm ${G.coin(pay(40) * l.lv)}.`, lair: l.id, bonus: pay(40) * l.lv });
+      const z = X.recommendedZone(S); if (z) ch.push({ k: 'escort', label: 'Hộ tống đoàn buôn', sub: `Qua ${z.zone.nameVi}, 1–3 trận; ${G.coin(pay(18))} mỗi trận.`, zone: z.zone.id, per: pay(18) });
       if (!S.flags.bounty && z) ch.push({ k: 'bounty', label: 'Nhận lệnh săn thủ lĩnh', sub: 'Lệnh treo thưởng ghi tên bạn.' });
-      ch.push({ k: 'gather', label: 'Tìm đồ thất lạc, hái thuốc', sub: `Không phải đánh; ${pay(8)} bạc nếu tìm được.`, pay: pay(8) });
+      ch.push({ k: 'gather', label: 'Tìm đồ thất lạc, hái thuốc', sub: `Không phải đánh; ${G.coin(pay(8))} nếu tìm được.`, pay: pay(8) });
       return { title: 'Bảng nhiệm vụ', body: `Hạng ${G.ADV_RANKS[G.advRank(S)]}. Sức bạn ${X.power(S).toFixed(1)}.`, choices: [...ch, { k: 'no', label: 'Không nhận', sub: '' }] };
     },
     apply(S, X, k, c) {
       if (k === 'no') return null;
       flag(S, 'quests');
       const W = S.world;
-      if (k === 'lair') { const l = (W.dyn.lairs || []).find(x => x.id === c.lair && x.empty == null); if (!l) return null; const out = G.raidLair(X, l); if (S.dead) return null; if (l.empty != null) { X.money(c.bonus); S.fame = Math.min(100, S.fame + 1); return out + ` Hiệp Hội thưởng ${c.bonus} bạc.`; } return out; }
+      if (k === 'lair') { const l = (W.dyn.lairs || []).find(x => x.id === c.lair && x.empty == null); if (!l) return null; const out = G.raidLair(X, l); if (S.dead) return null; if (l.empty != null) { X.money(c.bonus); S.fame = Math.min(100, S.fame + 1); return out + ` Hiệp Hội thưởng ${G.coin(c.bonus)}.`; } return out; }
       if (k === 'escort') {
         const z = G.ZONE[c.zone].zone, n = X.int(1, 3); let won = 0;
         for (let i = 0; i < n; i++) { const enc = X.rollEncounter(z); if (!enc) break; const rec = X.fight(enc, false); if (S.dead) return null; if (!rec.win) break; won++; }
         X.money(won * c.per); S.fame = Math.min(100, S.fame + won * .5);
-        return won === n ? `Đoàn buôn tới nơi an toàn. +${won * c.per} bạc.` : `Đoàn buôn mất mấy xe hàng. +${won * c.per} bạc.`;
+        return won === n ? `Đoàn buôn tới nơi an toàn. +${G.coin(won * c.per)}.` : `Đoàn buôn mất mấy xe hàng. +${G.coin(won * c.per)}.`;
       }
       if (k === 'bounty') { const z = G.ZONE[X.recommendedZone(S).zone.id].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null; const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(40 * Math.pow(1 + sp.tier, 2)) }; return `Lệnh săn ${sp.nameVi} thủ lĩnh ở ${z.nameVi}.`; }
       if (k === 'gather') {
         const sk = Math.max(S.mastery.Stealth || 0, S.mastery.Alchemy || 0, S.mastery.Nature || 0);
-        if (X.chance(.45 + sk / 200)) { X.money(c.pay); S.fame = Math.min(100, S.fame + .3); return `Tìm được. +${c.pay} bạc.`; }
+        if (X.chance(.45 + sk / 200)) { X.money(c.pay); S.fame = Math.min(100, S.fame + .3); return `Tìm được. +${G.coin(c.pay)}.`; }
         X.add('hl', -X.int(2, 6)); return 'Lội cả tuần không thấy gì.';
       }
       return null;
@@ -630,10 +630,10 @@ window.LifeSim = window.LifeSim || {};
       const med = G.median(X.reg(S)), ch = [];
       for (const w of D.wars) if (near.has(w.a) || near.has(w.b)) for (const side of [w.a, w.b]) {
         if (S.flags.wanted && S.flags.wanted[side]) continue;
-        ch.push({ k: 'w' + side + ':' + (side === w.a ? w.b : w.a), label: `Đánh thuê cho ${R.nations[side].name}`, sub: `chống ${R.nations[side === w.a ? w.b : w.a].name}; ${Math.round(med * (1.5 + rank))} bạc.`, side, w: D.wars.indexOf(w) });
+        ch.push({ k: 'w' + side + ':' + (side === w.a ? w.b : w.a), label: `Đánh thuê cho ${R.nations[side].name}`, sub: `chống ${R.nations[side === w.a ? w.b : w.a].name}; ${G.coin(Math.round(med * (1.5 + rank)))}.`, side, w: D.wars.indexOf(w) });
         if (ch.length >= 2) break;
       }
-      if (!ch.length) ch.push({ k: 'escort', label: 'Nhận việc hộ tống', sub: `Đi cùng đoàn buôn, 1–2 trận; ${Math.round(med * .8)} bạc.` });
+      if (!ch.length) ch.push({ k: 'escort', label: 'Nhận việc hộ tống', sub: `Đi cùng đoàn buôn, 1–2 trận; ${G.coin(Math.round(med * .8))}.` });
       return { title: o.name, body: `Đoàn có ${o.members} người. Bạn là ${G.ORG_KINDS.merc.ranks[rank]}.`, choices: [...ch, { k: 'no', label: 'Nghỉ năm nay', sub: '' }], org: o.id, rank };
     },
     apply(S, X, k, c) {
@@ -655,7 +655,7 @@ window.LifeSim = window.LifeSim || {};
       const pay = Math.round(med * (1.5 + rank)); X.money(pay); S.fame = Math.min(100, S.fame + 1 + rank);
       X.add('hl', -X.int(3, 12)); X.addXp(40 * (1 + X.ctier(S)));
       o.rep = Math.min(1, o.rep + .02);
-      return `Bạn theo ${o.name} đánh một mùa cho ${R.nations[c.side].name}. +${pay} bạc.`;
+      return `Bạn theo ${o.name} đánh một mùa cho ${R.nations[c.side].name}. +${G.coin(pay)}.`;
     },
     auto(S, X, d) { const w = d.choices.find(c => c.k[0] === 'w'); if (w && S.hl > 55) return w.k; return d.choices[0].k === 'escort' && S.hl > 45 ? 'escort' : 'no'; }
   };

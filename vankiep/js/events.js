@@ -51,9 +51,9 @@ window.LifeSim = window.LifeSim || {};
         const want = G.aimWorks(S).filter(id => id !== 'adventurer' && (!land || id !== land[0])).map(id => shuffled.find(e => e[0] === id)).filter(Boolean).slice(0, 2);
         const pick = [...(land ? [land] : []), ...want, ...shuffled.filter(e => e !== land && !want.includes(e))].slice(0, 3);
         pick.push(['adventurer', G.WORKS.adventurer]);
-        return { title: 'Kiếm sống bằng gì?', body: `Bạn đã trưởng thành ở ${home(S, X)}. Thu nhập tính theo phân vị trong vùng (${reg.nameVi}, trung vị ${Math.round(G.median(reg))} bạc/năm).`,
+        return { title: 'Kiếm sống bằng gì?', body: `Bạn đã trưởng thành ở ${home(S, X)}. Thu nhập tính theo phân vị trong vùng (${reg.nameVi}, trung vị ${G.coin(Math.round(G.median(reg)))}/năm).`,
           choices: pick.map(([id, w]) => { const m = G.incomeMult({ ...S, work: id }), fee = G.workFee(S, id);
-            return { k: id, label: w.nameVi, sub: w.adventurer ? 'Sống bằng săn quái; thu nhập theo danh vọng; nguy hiểm.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${Math.round(G.incomeAt(reg, w.pct[1]) * m)} bạc/năm sau thuế` + (w.risk > 1.4 ? ' · nguy hiểm' : '') + (fee ? ` · phí phường hội ${fee} bạc` : '') }; }) };
+            return { k: id, label: w.nameVi, sub: w.adventurer ? 'Sống bằng săn quái; thu nhập theo danh vọng; nguy hiểm.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${G.coin(Math.round(G.incomeAt(reg, w.pct[1]) * m))}/năm sau thuế` + (w.risk > 1.4 ? ' · nguy hiểm' : '') + (fee ? ` · phí phường hội ${G.coin(fee)}` : '') }; }) };
       },
       apply(S, X, k) { const fee = G.workFee(S, k); if (fee) X.money(-fee); S.work = k; S.flags.workQ = false; const w = G.WORKS[k]; if (!w.adventurer) S.pct = Math.max(S.pct * .6, w.pct[0]); return w.adventurer ? 'Bạn ghi tên vào Hội Mạo Hiểm.' : 'Năm đầu học việc, lương thấp.'; },
       auto(S, X, d) {
@@ -83,7 +83,7 @@ window.LifeSim = window.LifeSim || {};
         if (k === 'wait') return 'Bạn chờ thêm.';
         const j = G.jobs.byId[k], p = G.clamp(.5 + (X.power(S) - j.tier) * .25 + S.hl / 400, .2, .95);
         if (X.rnd() < p) {
-          S.jobHist.push(S.job); S.job = k; S.fame = Math.min(100, S.fame + j.tier * 2); X.add('h', 6);
+          S.jobHist.push(S.job); S.job = k; G.skSync(X); S.fame = Math.min(100, S.fame + j.tier * 2); X.add('h', 6);
           return `Vượt qua. Bạn trở thành ${X.jobName(S)}.` + (j.marker ? ` Dấu hiệu nghề: ${j.marker}.` : '');
         }
         X.add('hl', -6); X.add('h', -4);
@@ -141,7 +141,7 @@ window.LifeSim = window.LifeSim || {};
       when: (S, X) => S.gear < 10 && S.gold >= G.gearCost(S.gear + 1) && ['adult', 'elder', 'teen'].includes(X.stage(S)) && (S.work === 'adventurer' || S.undead || S.work === 'hunter' || S.work === 'guard'),
       build(S, X) {
         const c = G.gearCost(S.gear + 1);
-        return { title: 'Tiệm rèn', body: `Bộ trang bị cấp ${S.gear + 1} giá ${c} bạc. Bạn có ${S.gold}.`,
+        return { title: 'Tiệm rèn', body: `Bộ trang bị cấp ${S.gear + 1} giá ${G.coin(c)}. Bạn có ${S.gold}.`,
           choices: [{ k: 'buy', label: 'Mua', sub: 'Sức mạnh +0,05 Tier.' }, { k: 'skip', label: 'Để dành', sub: '' }] };
       },
       apply(S, X, k) { if (k !== 'buy') return null; S.gold -= G.gearCost(S.gear + 1); S.gear++; return `Trang bị ${S.gear}/10.`; },
@@ -153,7 +153,7 @@ window.LifeSim = window.LifeSim || {};
       build(S, X) {
         const b = S.flags.bounty, sp = G.B.byId[b.species], z = G.ZONE[b.zone].zone;
         const thr = X.threat({ s: sp, grade: 'alpha', affixes: ['frenzied', 'armored'], count: 1 });
-        return { title: 'Lệnh treo thưởng', body: `Hội Mạo Hiểm treo ${b.reward} bạc cho đầu ${sp.nameVi} thủ lĩnh ở ${z.nameVi}. Đe dọa ước tính ${thr.toFixed(1)} Tier; sức bạn ${X.power(S).toFixed(1)}.`,
+        return { title: 'Lệnh treo thưởng', body: `Hội Mạo Hiểm treo ${G.coin(b.reward)} cho đầu ${sp.nameVi} thủ lĩnh ở ${z.nameVi}. Đe dọa ước tính ${thr.toFixed(1)} Tier; sức bạn ${X.power(S).toFixed(1)}.`,
           fact: `${sp.nameVi}: ${sp.attack}. ${X.factOf(sp)}`,
           choices: [{ k: 'go', label: 'Nhận lệnh', sub: 'Đánh một trận với thủ lĩnh.' }, { k: 'no', label: 'Bỏ qua', sub: '' }] };
       },
@@ -163,7 +163,7 @@ window.LifeSim = window.LifeSim || {};
         const sp = G.B.byId[b.species], zone = G.ZONE[b.zone].zone;
         const rec = X.fight({ s: sp, grade: 'alpha', affixes: ['frenzied', 'armored'], count: 1, zone });
         if (S.dead) return null;
-        if (rec && rec.win) { X.money(b.reward); S.fame = Math.min(100, S.fame + 6); return `Bạn mang đầu nó về. +${b.reward} bạc.`; }
+        if (rec && rec.win) { X.money(b.reward); S.fame = Math.min(100, S.fame + 6); return `Bạn mang đầu nó về. +${G.coin(b.reward)}.`; }
         return 'Thủ lĩnh còn sống.';
       },
       auto(S, X) { const b = S.flags.bounty, sp = G.B.byId[b.species]; return X.power(S) >= X.threat({ s: sp, grade: 'alpha', affixes: ['a', 'b'], count: 1 }) - .1 ? 'go' : 'no'; }
@@ -214,7 +214,7 @@ window.LifeSim = window.LifeSim || {};
       build(S, X) {
         const c = S.conds.find(c => G.CONDS[c.id].mult >= 1.5 && G.CONDS[c.id].heal > 0), cost = Math.round(G.median(X.reg(S)) * .6);
         return { title: 'Bệnh không dứt', body: `${G.CONDS[c.id].nameVi} hành bạn ${c.years + 1} năm nay.`,
-          choices: [{ k: 'pay', label: `Mời thầy thuốc (${cost} bạc)`, sub: '70% khỏi' }, ...(S.faith ? [{ k: 'pray', label: 'Cầu nguyện', sub: `${Math.round((.3 + S.devotion / 200) * 100)}% khỏi` }] : []), { k: 'wait', label: 'Chịu đựng', sub: '' }],
+          choices: [{ k: 'pay', label: `Mời thầy thuốc (${G.coin(cost)})`, sub: '70% khỏi' }, ...(S.faith ? [{ k: 'pray', label: 'Cầu nguyện', sub: `${Math.round((.3 + S.devotion / 200) * 100)}% khỏi` }] : []), { k: 'wait', label: 'Chịu đựng', sub: '' }],
           cond: c.id, cost };
       },
       apply(S, X, k) {
@@ -238,7 +238,7 @@ window.LifeSim = window.LifeSim || {};
     tournament: {
       prio: 4, gap: 3,
       when: (S, X) => S.flags.tourney && ['adult', 'teen'].includes(X.stage(S)),
-      build: (S, X) => ({ title: 'Đại hội võ thuật', body: `Kinh Đô Aurel mở giải đấu. Ba vòng; người thắng nhận 200 bạc.`,
+      build: (S, X) => ({ title: 'Đại hội võ thuật', body: `Kinh Đô Aurel mở giải đấu. Ba vòng; người thắng nhận 2 vàng.`,
         choices: [{ k: 'go', label: 'Ghi danh', sub: `Sức bạn ${X.power(S).toFixed(1)} Tier` }, { k: 'no', label: 'Đứng xem', sub: '' }] }),
       apply(S, X, k) {
         S.flags.tourney = false; if (k !== 'go') return null;
@@ -376,13 +376,13 @@ window.LifeSim = window.LifeSim || {};
     // ── Trưởng thành ──
     { id: 'ad_harvest', st: ['adult', 'elder'], c: S => ['farmer', 'herder'].includes(S.work), w: 5, rep: true, gap: 2, run(S, X) {
         const g = Math.round(G.median(X.reg(S)) * (X.chance(.5) ? .4 : -.3)); X.money(g);
-        return g > 0 ? { t: `Được mùa. Bạn bán thêm ${g} bạc.`, k: 'good' } : { t: `Mất mùa; bạn lỗ ${-g} bạc.`, k: 'bad' }; } },
+        return g > 0 ? { t: `Được mùa. Bạn bán thêm ${G.coin(g)}.`, k: 'good' } : { t: `Mất mùa; bạn lỗ ${G.coin(-g)}.`, k: 'bad' }; } },
     { id: 'ad_bandits', st: ['adult', 'elder'], w: S => 1 + X0(S).danger * 3 + X0(S).gini * 2, rep: true, gap: 3, run(S, X) {
         if (X.power(S) > 1.1 + X.rnd()) { X.money(X.int(10, 40)); S.fame += 1; return { t: 'Cướp chặn đường. Bạn đánh đuổi chúng và lấy luôn túi tiền của tên cầm đầu.', k: 'good' }; }
         const loss = Math.min(Math.max(0, S.gold), X.int(10, 60)); X.money(-loss); X.add('hl', -X.int(3, 12));
         if (X.chance(.01)) { X.die({ id: 'bandit', text: 'bị cướp đường giết' }); return null; }
-        return { t: `Cướp chặn đường lấy ${loss} bạc.`, k: 'bad' }; } },
-    { id: 'ad_inherit', st: ['adult'], c: S => !S.undead, w: .6, run(S, X) { const g = X.int(30, 200); X.money(g); return { t: `Một người họ xa bạn chưa gặp bao giờ để lại ${g} bạc.`, k: 'good' }; } },
+        return { t: `Cướp chặn đường lấy ${G.coin(loss)}.`, k: 'bad' }; } },
+    { id: 'ad_inherit', st: ['adult'], c: S => !S.undead, w: .6, run(S, X) { const g = X.int(30, 200); X.money(g); return { t: `Một người họ xa bạn chưa gặp bao giờ để lại ${G.coin(g)}.`, k: 'good' }; } },
     { id: 'ad_trinket', st: ['adult', 'elder'], w: S => .5 + X0(S).magic * 2, run(S, X) {
         if (X.chance(.4 + X0(S).magic * .2)) { X.cond('curse'); return { t: 'Bạn mua chiếc nhẫn bạc ở chợ đêm. Từ hôm đó bạn mơ cùng một giấc mơ.', k: 'bad' }; }
         S.gear = Math.min(10, S.gear + 1); return { t: 'Món đồ cũ mua rẻ ở chợ đêm hóa ra là đồ tốt.', k: 'good' }; } },
@@ -403,10 +403,10 @@ window.LifeSim = window.LifeSim || {};
         if (rr.construct) return null;
         S.flags.suitor = { name: X.name(race, X.chance(.5) ? 'm' : 'f'), race, work: G.WORKS[X.pick(Object.keys(G.WORKS))].nameVi.toLowerCase(), age: X.years(S) + X.int(-4, 4) };
         return { t: `Bạn hay gặp ${S.flags.suitor.name} ở giếng làng.`, k: 'info' }; } },
-    { id: 'ad_tax', st: ['adult', 'elder'], c: S => !S.undead && S.gold > 20, w: 2, rep: true, gap: 3, run(S, X) { const t = Math.round(S.gold * .15); X.money(-t); X.add('h', -3); return { t: `Lãnh chúa tăng thuế chiến tranh. Bạn nộp ${t} bạc.`, k: 'bad' }; } },
-    { id: 'ad_dice', st: ['adult', 'teen'], c: S => S.gold > 10, w: S => 1 + S.traits.bold, rep: true, gap: 2, run(S, X) { const g = Math.round(Math.min(S.gold, 30) * (X.chance(.45) ? 1 : -1)); X.money(g); return { t: g > 0 ? `Đánh xúc xắc thắng ${g} bạc.` : `Đánh xúc xắc thua ${-g} bạc.`, k: g > 0 ? 'good' : 'bad' }; } },
+    { id: 'ad_tax', st: ['adult', 'elder'], c: S => !S.undead && S.gold > 20, w: 2, rep: true, gap: 3, run(S, X) { const t = Math.round(S.gold * .15); X.money(-t); X.add('h', -3); return { t: `Lãnh chúa tăng thuế chiến tranh. Bạn nộp ${G.coin(t)}.`, k: 'bad' }; } },
+    { id: 'ad_dice', st: ['adult', 'teen'], c: S => S.gold > 10, w: S => 1 + S.traits.bold, rep: true, gap: 2, run(S, X) { const g = Math.round(Math.min(S.gold, 30) * (X.chance(.45) ? 1 : -1)); X.money(g); return { t: g > 0 ? `Đánh xúc xắc thắng ${G.coin(g)}.` : `Đánh xúc xắc thua ${G.coin(-g)}.`, k: g > 0 ? 'good' : 'bad' }; } },
     { id: 'ad_map', st: ['adult'], c: S => !S.flags.map, w: 1.2, run(S, X) { S.flags.map = true; return { t: 'Một lão say rượu bán cho bạn tấm bản đồ kho báu với giá một vại bia.', k: 'info' }; } },
-    { id: 'ad_map_found', st: ['adult', 'elder'], undead: 'any', c: S => S.flags.map === true && (S.focusTime.adventure || 0) > 0, w: 5, run(S, X) { S.flags.map = 'used'; const g = X.int(80, 300); X.money(g); S.gear = Math.min(10, S.gear + 1); return { t: `Tấm bản đồ là thật. Bạn đào được ${g} bạc và một thanh kiếm cũ.`, k: 'big' }; } },
+    { id: 'ad_map_found', st: ['adult', 'elder'], undead: 'any', c: S => S.flags.map === true && (S.focusTime.adventure || 0) > 0, w: 5, run(S, X) { S.flags.map = 'used'; const g = X.int(80, 300); X.money(g); S.gear = Math.min(10, S.gear + 1); return { t: `Tấm bản đồ là thật. Bạn đào được ${G.coin(g)} và một thanh kiếm cũ.`, k: 'big' }; } },
     { id: 'ad_prophet', st: ['adult'], w: 1, run(S, X) { const lt = X.lt(S); const y = Math.round((lt.leT + X.gauss() * 6) * X.R(S).ypt); return { t: `Bà đồng mù nắm tay bạn: "Ngươi sẽ chết năm ${y} tuổi." Bà ấy nói câu đó với mọi người.`, k: 'info' }; } },
     { id: 'ad_mine', st: ['adult'], c: S => S.work === 'miner' || X0(S).id === 'thach_lam', w: S => S.work === 'miner' ? 3 : .6, rep: true, gap: 4, run(S, X) {
         if (X.chance(S.work === 'miner' ? .04 : .015)) { X.die({ id: 'mine', text: 'sập hầm mỏ' }); return null; }
@@ -430,16 +430,16 @@ window.LifeSim = window.LifeSim || {};
         const z = G.ZONE[S.zoneSel].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null;
         const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(30 * Math.pow(1 + sp.tier, 2)) };
         return { t: `Bảng tin Hội có lệnh mới: thủ lĩnh ${sp.nameVi} ở ${z.nameVi}.`, k: 'info' }; } },
-    { id: 'ad_lord', st: ['adult', 'elder'], undead: 'any', c: S => { const R = X0(S); return R.lord && !S.world.lordSeen[R.lord.species] && S.level >= 40; }, w: 4, run(S, X) {
+    { id: 'ad_lord', st: ['adult', 'elder'], undead: 'any', c: S => { const R = X0(S); return R.lord && !S.world.lordSeen[R.lord.species] && S.level >= 16; }, w: 4, run(S, X) {
         S.flags.lordQ = { ...X0(S).lord }; return { t: `Mặt đất ở ${X0(S).nameVi} rung. Chúa vùng đang thức.`, k: 'big' }; } },
-    { id: 'ad_lord_far', st: ['child', 'teen', 'adult', 'elder'], c: S => { const R = X0(S); return R.lord && S.level < 40; }, w: .8, rep: true, gap: 15, run(S, X) {
+    { id: 'ad_lord_far', st: ['child', 'teen', 'adult', 'elder'], c: S => { const R = X0(S); return R.lord && S.level < 16; }, w: .8, rep: true, gap: 15, run(S, X) {
         const sp = G.B.byId[X0(S).lord.species]; X.add('h', -4); return { t: `${sp.nameVi} nổi lên ở rìa ${X0(S).nameVi}. Ba làng bị xóa khỏi bản đồ. Người ta đếm xác cả tháng.`, k: 'bad', f: sp.note }; } },
     { id: 'ad_war', st: ['adult'], c: S => G.local(S).war > 0 && !S.undead, w: 6, rep: true, gap: 1, run(S, X) {
         if (['guard', 'adventurer'].includes(S.work) || S.traits.bold > .7) {
           if (X.rnd() > G.clamp(.82 + (X.power(S) - 1) * .1, .6, .97)) { X.die({ id: 'war', text: 'tử trận trong chiến tranh' }); return null; }
           X.gain('Spear', 4); X.gain('Shield', 3); S.fame += 3; X.add('h', -6); X.money(30);
           return { t: 'Bạn bị gọi nhập ngũ. Một mùa hành quân, hai trận đánh, một vết sẹo.', k: 'big' }; }
-        const g = Math.min(Math.max(S.gold, 0), 40); X.money(-g); return { t: `Lính mộ phu về làng. Bạn nộp ${g} bạc để khỏi đi.`, k: 'bad' }; } },
+        const g = Math.min(Math.max(S.gold, 0), 40); X.money(-g); return { t: `Lính mộ phu về làng. Bạn nộp ${G.coin(g)} để khỏi đi.`, k: 'bad' }; } },
     { id: 'ad_preacher', st: ['teen', 'adult'], c: S => !S.faith && !S.undead && !S.flags.preacher, w: 2, run(S, X) { S.flags.preacher = true; return { t: 'Có người truyền giáo ghé làng.', k: 'info' }; } },
     { id: 'ad_tourney', st: ['adult', 'teen'], c: S => !S.undead && bestCombat(S) >= 25 && !S.flags.tourney, w: 1.5, rep: true, gap: 4, run(S, X) { S.flags.tourney = true; return { t: 'Sứ giả loan tin: Kinh Đô mở đại hội võ thuật.', k: 'info' }; } },
     { id: 'ad_restless', st: ['adult'], c: S => !S.flags.migrateQ, w: S => .8 + S.traits.bold + (S.q <= 2 ? 1 : 0) + G.local(S).war * 3 + G.local(S).plague * 3, rep: true, gap: 5, run(S, X) {

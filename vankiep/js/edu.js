@@ -66,7 +66,7 @@ window.LifeSim = window.LifeSim || {};
       const payer = fam >= fee ? 'family' : S.gold >= fee * L.need ? 'self' : G.grantOK(S, X, lv) ? 'grant' : null;
       const where = `${sc.s.name}${sc.far ? ' (ở trọ xa nhà)' : ''}`, ex = G.examChance(S, lv);
       const ch = [];
-      const how = { family: `gia đình trả ${fee} bạc mỗi năm`, self: `tự trả ${fee} bạc mỗi năm (bạn có ${S.gold})`, grant: 'học bổng: bạn học giỏi nên trường miễn học phí' }[payer];
+      const how = { family: `gia đình trả ${G.coin(fee)} mỗi năm`, self: `tự trả ${G.coin(fee)} mỗi năm (bạn có ${S.gold})`, grant: 'học bổng: bạn học giỏi nên trường miễn học phí' }[payer];
       if (payer && lv < 3) ch.push({ k: 'go', label: `Vào ${L.nameVi.toLowerCase()} ở ${where}`, sub: `${L.need} năm; ${how}.${L.exam ? ` Phải thi đầu vào, khả năng đỗ ~${Math.round(ex * 100)}%.` : ''}`, payer, fee, school: sc.s.id });
       if (payer && lv === 3) for (const [t, T] of Object.entries(G.TRACKS).slice(0, 5)) ch.push({ k: 'go:' + t, label: `Học viện ${where}, ngành ${T.nameVi}`, sub: `${L.need} năm; ${how}. Thi đầu vào ~${Math.round(ex * 100)}%.`, payer, fee, school: sc.s.id, track: t });
       if (!ch.length) { flag(S, 'eduPoor'); S.recentDec.school = S.age + 1; return null; }
@@ -173,11 +173,11 @@ window.LifeSim = window.LifeSim || {};
       const works = [S.work, ...Object.keys(G.WORKS)].filter((w, i, a) => w && a.indexOf(w) === i && !G.WORKS[w].adventurer && G.workOK(S, w));
       if (works.length) {
         const w = S.work && works.includes(S.work) ? S.work : X.pick(works), fee = Math.round(med * .3), nm = X.name(race, X.chance(.5) ? 'm' : 'f');
-        ch.push({ k: 'craft', name: nm, label: `Theo ${G.WORKS[w].nameVi.toLowerCase()} ${nm}`, sub: `Thợ lành nghề nhất vùng nhận bạn học việc 4 năm; ${S.gold >= fee ? fee + ' bạc lễ nhập môn' : 'làm không công thay học phí'}.`, kind: 'craft', work: w, fee: S.gold >= fee ? fee : 0, need: 4 });
+        ch.push({ k: 'craft', name: nm, label: `Theo ${G.WORKS[w].nameVi.toLowerCase()} ${nm}`, sub: `Thợ lành nghề nhất vùng nhận bạn học việc 4 năm; ${S.gold >= fee ? G.coin(fee) + ' lễ nhập môn' : 'làm không công thay học phí'}.`, kind: 'craft', work: w, fee: S.gold >= fee ? fee : 0, need: 4 });
       }
       // Cao thủ: chỉ để ý người có năng khiếu (một kỹ năng ≥ 15, hoặc cấp ≥ 8).
       const top = Object.entries(S.mastery).sort((a, b) => b[1] - a[1])[0];
-      if (top && (top[1] >= 15 || S.level >= 8)) {
+      if (top && (top[1] >= 15 || S.level >= 3)) {
         const school = G.MASTERY[top[0]], tier = X.int(3, 5), nm = X.name(X.pick(Object.keys(G.RACES).filter(r => !G.RACES[r].undead && !G.RACES[r].construct)), X.chance(.5) ? 'm' : 'f');
         ch.push({ k: 'martial', label: `Bái ${nm} làm thầy`, sub: `Cao thủ ${J.schools[school].nameVi.toLowerCase()} (Tier ${tier}) để ý tới bạn. Phải qua một trận thử tay; theo thầy 5 năm.`, kind: 'martial', school, tier, name: nm, need: 5 });
       }

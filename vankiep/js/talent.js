@@ -1,6 +1,6 @@
 /* Vạn Kiếp — THIÊN PHÚ và CHÍ HƯỚNG (docs/06_Thien_phu_chi_huong.md).
  * Căn cốt: mỗi người một bậc (Trắng → Lục → Lam → Tím → Vàng → Đỏ), quyết định tốc độ tu luyện: G.gainMult nhân vào mọi lần rèn kỹ năng,
- *   G.cultRate nhân vào kinh nghiệm (life.js gain, addXp). Nâng được một bậc ở bình cảnh cấp 10, 20, 30, 40, 50 (quyết định tal_break).
+ *   G.cultRate nhân vào kinh nghiệm (life.js gain, addXp). Nâng được một bậc ở bình cảnh mỗi Tier cảnh giới (quyết định tal_break).
  * Thiên phú: 0–3 cái lúc sinh, mỗi cái một bậc màu, hiệu ứng khai trong fx; thức tỉnh thêm trong đời (quyết định tal_awaken, chọn 1 trong 3).
  * Chí hướng S.aim: người chơi đặt lúc nào cũng được (ô Chí hướng dưới focus) hoặc qua quyết định aim_pick tuổi thiếu niên.
  *   Chí hướng và thiên phú dịch tính cách: S.traits = S.traitsBase + thiên phú + chí hướng, nên mọi lựa chọn tự động theo tính cách
@@ -300,7 +300,7 @@ window.LifeSim = window.LifeSim || {};
       const opts = [...mine, ...rest].slice(0, 3), A = G.AIMS[S.aim], cur = G.WORKS[S.work].nameVi.toLowerCase(), reg = X.reg(S);
       return { title: 'Đổi nghề?', body: mine.length ? `Làm ${cur} đã lâu, mà bạn vẫn nghĩ tới ${A.dream || A.nameVi.toLowerCase()}.` : `Bạn chán nghề ${cur}. Ngày nào cũng như ngày nào.`,
         choices: [...opts.map(id => { const w = G.WORKS[id], fee = G.workFee(S, id), m = G.incomeMult({ ...S, work: id });
-          return { k: id, label: w.nameVi, sub: w.adventurer ? 'Ghi tên Hội Mạo Hiểm; sống bằng săn quái và tiền thưởng, thu nhập theo danh vọng.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${Math.round(G.incomeAt(reg, w.pct[1]) * m)} bạc/năm; năm đầu học việc, lương thấp` + (fee ? ` · phí phường hội ${fee} bạc` : '') }; }),
+          return { k: id, label: w.nameVi, sub: w.adventurer ? 'Ghi tên Hội Mạo Hiểm; sống bằng săn quái và tiền thưởng, thu nhập theo danh vọng.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${G.coin(Math.round(G.incomeAt(reg, w.pct[1]) * m))}/năm; năm đầu học việc, lương thấp` + (fee ? ` · phí phường hội ${G.coin(fee)}` : '') }; }),
           { k: 'keep', label: `Giữ nghề ${cur}`, sub: '' }] };
     },
     apply(S, X, k) {
@@ -329,20 +329,20 @@ window.LifeSim = window.LifeSim || {};
     // Cao nhân chỉ nhận một lần; đã được dạy thì về sau là lên thăm sư phụ, chỉ điểm thêm ít nhiều.
     martial: (S, X) => S.flags.hermit ? { title: 'Thư trên núi', body: 'Sư phụ trên núi nhắn bạn lên chơi.', choices: [{ k: 'visit', label: 'Lên thăm', sub: 'Được chỉ điểm thêm vài đường.' }, { k: 'no', label: 'Bận, hẹn dịp khác', sub: '' }] } : ({ title: 'Cao nhân ẩn cư', body: 'Trên núi sau làng có một người tập võ một mình. Người ta bảo ông không nhận ai.',
       choices: [{ k: 'kneel', label: 'Quỳ trước cửa ba ngày', sub: `Không tốn bạc; khoảng ${Math.round(kneelP(S) * 100)}% được nhận. Không được thì ốm một trận.` },
-        ...(S.gold >= gift(S, X) ? [{ k: 'pay', label: `Mang lễ vật xin học (${gift(S, X)} bạc)`, sub: '60% được nhận.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
+        ...(S.gold >= gift(S, X) ? [{ k: 'pay', label: `Mang lễ vật xin học (${G.coin(gift(S, X))})`, sub: '60% được nhận.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
     scholar: (S, X) => ({ title: 'Thư viện cũ', body: 'Thư viện của một dòng tu cho người ngoài vào đọc, mỗi mùa thu một ít bạc.',
-      choices: [...(S.gold >= fee(S, X, .4) ? [{ k: 'read', label: `Mua thẻ đọc (${fee(S, X, .4)} bạc)`, sub: 'Hiểu biết tăng mạnh, rèn Huyền thuật, Luyện kim.' }] : []),
+      choices: [...(S.gold >= fee(S, X, .4) ? [{ k: 'read', label: `Mua thẻ đọc (${G.coin(fee(S, X, .4))})`, sub: 'Hiểu biết tăng mạnh, rèn Huyền thuật, Luyện kim.' }] : []),
         { k: 'copy', label: 'Chép sách thuê', sub: 'Có tiền công, đọc được ít nhiều.' }, { k: 'no', label: 'Thôi', sub: '' }] }),
     wealth(S, X) {
       const big = Math.round(Math.min(S.gold * .5, G.median(X.reg(S)) * 2)), small = Math.round(Math.min(S.gold * .2, G.median(X.reg(S)) * .6));
       return { title: 'Mối hàng', body: `Một thương nhân rủ bạn góp vốn chở một chuyến hàng. Ước chừng ${Math.round(tradeP(S) * 100)}% có lãi.`,
-        choices: [...(big >= 10 ? [{ k: 'big', label: `Góp lớn (${big} bạc)`, sub: 'Lãi thì được 120%, lỗ thì mất trắng.', v: big }] : []), ...(small >= 5 ? [{ k: 'small', label: `Góp nhỏ (${small} bạc)`, sub: 'Lãi 80%, lỗ mất trắng.', v: small }] : []),
+        choices: [...(big >= 10 ? [{ k: 'big', label: `Góp lớn (${G.coin(big)})`, sub: 'Lãi thì được 120%, lỗ thì mất trắng.', v: big }] : []), ...(small >= 5 ? [{ k: 'small', label: `Góp nhỏ (${G.coin(small)})`, sub: 'Lãi 80%, lỗ mất trắng.', v: small }] : []),
           { k: 'help', label: 'Đi theo làm phụ', sub: 'Không góp vốn; có tiền công và học cách buôn.' }, { k: 'no', label: 'Thôi', sub: '' }] };
     },
     faith: (S, X) => ({ title: 'Hành hương', body: `Đoàn hành hương${S.faith ? ' ' + window.JobLibrary.faiths[S.faith].nameVi : ''} rủ bạn đi cùng tới đền lớn.`,
-      choices: [{ k: 'go', label: 'Đi cùng đoàn', sub: 'Devotion tăng mạnh, lòng nhẹ đi; đường xa có thể ốm.' }, ...(S.gold >= fee(S, X, .2) ? [{ k: 'give', label: `Gửi lễ (${fee(S, X, .2)} bạc)`, sub: 'Devotion tăng ít, được người trong đạo quý.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
+      choices: [{ k: 'go', label: 'Đi cùng đoàn', sub: 'Devotion tăng mạnh, lòng nhẹ đi; đường xa có thể ốm.' }, ...(S.gold >= fee(S, X, .2) ? [{ k: 'give', label: `Gửi lễ (${G.coin(fee(S, X, .2))})`, sub: 'Devotion tăng ít, được người trong đạo quý.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
     power: (S, X) => ({ title: 'Yến tiệc quyền quý', body: `Một chức sắc ở ${homeName(S, X)} mở tiệc. Ai có chút tiếng tăm đều được mời.`,
-      choices: [...(S.gold >= gift(S, X) ? [{ k: 'gift', label: `Mang lễ (${gift(S, X)} bạc)`, sub: 'Quan hệ, danh vọng tăng; được ghi công với nước.' }] : []),
+      choices: [...(S.gold >= gift(S, X) ? [{ k: 'gift', label: `Mang lễ (${G.coin(gift(S, X))})`, sub: 'Quan hệ, danh vọng tăng; được ghi công với nước.' }] : []),
         { k: 'ask', label: 'Xin một chân việc', sub: `Khoảng ${Math.round(askP(S) * 100)}% được nhận; không thì bẽ mặt.` }, { k: 'no', label: 'Thôi', sub: '' }] }),
     family(S, X) {
       const single = X.stage(S) === 'adult' && !(S.family.spouse && S.family.spouse.alive) && !S.flags.suitor && !S.undead && !G.RACES[S.race].construct;
@@ -384,7 +384,7 @@ window.LifeSim = window.LifeSim || {};
             S.fame = Math.min(100, S.fame + won); X.add('so', 3);
             return won === 2 ? 'Chuyến đi trót lọt. Đoàn mời bạn lần sau đi tiếp.' : won ? 'Một thắng một thua; cả đoàn về đủ người.' : 'Chuyến đi hỏng. Cả đoàn lếch thếch quay về.';
           }
-        case 'porter': X.addXp(35 * (1 + S.level * .05)); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cả tháng, nghe hết chuyện của dân mạo hiểm.';
+        case 'porter': X.addXp(35 * (1 + S.level * .14)); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cả tháng, nghe hết chuyện của dân mạo hiểm.';
         case 'kneel': if (X.chance(kneelP(S))) return hermit(S, X); X.add('hl', -8); X.add('h', -4); return 'Cửa không mở. Bạn xuống núi với hai đầu gối sưng.';
         case 'pay': X.money(-gift(S, X)); if (X.chance(.6)) return hermit(S, X); return 'Ông nhận lễ, uống một chén trà rồi tiễn bạn về.';
         case 'visit': X.trainYear(.35); X.add('h', 4); return 'Sư phụ xem bạn đánh một bài, sửa đúng hai chỗ.';
@@ -392,7 +392,7 @@ window.LifeSim = window.LifeSim || {};
         case 'copy': X.money(Math.round(med * .12)); X.add('sm', 3 * G.tfx(S).learn); return 'Chép sách mỏi tay, nhưng chữ nào cũng đọng lại một ít.';
         case 'big': case 'small': {
           const v = c.v || 0; X.money(-v);
-          if (X.chance(tradeP(S))) { const g = Math.round(v * (k === 'big' ? 2.2 : 1.8)); X.money(g); X.add('h', 5); cnt(S, 'tradeWin'); return `Chuyến hàng về đủ. Bạn nhận ${g} bạc.`; }
+          if (X.chance(tradeP(S))) { const g = Math.round(v * (k === 'big' ? 2.2 : 1.8)); X.money(g); X.add('h', 5); cnt(S, 'tradeWin'); return `Chuyến hàng về đủ. Bạn nhận ${G.coin(g)}.`; }
           X.add('h', -6); return 'Hàng bị cướp giữa đường. Bạn mất trắng phần góp.'; }
         case 'help': X.money(Math.round(med * .1)); X.add('so', 3); X.add('sm', 1); return 'Bạn học được cách mặc cả và cách nhìn người.';
         case 'give': X.money(-fee(S, X, .2)); S.devotion = Math.min(100, S.devotion + 5 * G.tfx(S).dev); X.add('so', 3); return 'Tên bạn được đọc trong buổi lễ.';
@@ -442,9 +442,9 @@ window.LifeSim = window.LifeSim || {};
     }
   };
 
-  // ── Bình cảnh: chạm cấp 10, 20, 30, 40, 50 thì có cơ hội tẩy tủy, nâng căn cốt một bậc
+  // ── Bình cảnh: chạm mỗi Tier cảnh giới (1 → 5, js/cult.js) thì có cơ hội tẩy tủy, nâng căn cốt một bậc. Khóa cờ giữ số cũ 10 × Tier để bản lưu cũ không bị hỏi lại.
   const BREAKS = [10, 20, 30, 40, 50];
-  const nextBreak = S => BREAKS.find(L => S.level >= L && !(S.flags.brk || {})[L]);
+  const nextBreak = S => BREAKS.find(L => G.tierOf(S.level) * 10 >= L && !(S.flags.brk || {})[L]);
   const elixir = (S, X) => Math.round(G.median(X.reg(S)) * 1.5 * (1 + G.RANK[S.tal.root]));
   const pElixir = S => .62 - G.RANK[S.tal.root] * .09;
   const pSeclude = S => G.clamp(.3 - G.RANK[S.tal.root] * .05 + S.traits.studious * .1, .05, .5);
@@ -453,8 +453,8 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !!S.tal && G.RANK[S.tal.root] < 5 && ['teen', 'adult', 'elder'].includes(X.stage(S)) && nextBreak(S) != null,
     build(S, X) {
       const L = nextBreak(S), rk = G.RANK[S.tal.root], c = elixir(S, X);
-      return { title: `Bình cảnh cấp ${L}`, body: `Lên tới cấp ${L}, bạn thấy mình chững lại. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
-        choices: [...(S.gold >= c ? [{ k: 'elixir', label: `Mua thuốc tẩy tủy (${c} bạc)`, sub: `${Math.round(pElixir(S) * 100)}% thành công.` }] : []),
+      return { title: `Bình cảnh Tier ${L / 10}`, body: `Lên tới ${G.realmName(S)}, bạn thấy mình chững lại. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
+        choices: [...(S.gold >= c ? [{ k: 'elixir', label: `Mua thuốc tẩy tủy (${G.coin(c)})`, sub: `${Math.round(pElixir(S) * 100)}% thành công.` }] : []),
           { k: 'seclude', label: 'Bế quan tự ngộ', sub: `${Math.round(pSeclude(S) * 100)}% thành công; hỏng thì tổn thương.` }, { k: 'no', label: 'Thuận theo tự nhiên', sub: 'Không thử lần này.' }] };
     },
     apply(S, X, k) {

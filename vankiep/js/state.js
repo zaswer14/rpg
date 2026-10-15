@@ -87,7 +87,7 @@ window.LifeSim = window.LifeSim || {};
     const c = S.flags.crimes;
     if (c === 1) {
       const f = Math.max(10, Math.round(Math.max(0, S.gold) * .3)); X.money(-f); X.add('so', -4);
-      X.log(`Lính ${n.name} bắt được bạn vì ${what}. Nộp phạt ${f} bạc.`, 'bad'); return;
+      X.log(`Lính ${n.name} bắt được bạn vì ${what}. Nộp phạt ${G.coin(f)}.`, 'bad'); return;
     }
     if (n.laws.includes('penal_labor')) {
       X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', -12); S.flags.labor = 2;
@@ -105,7 +105,7 @@ window.LifeSim = window.LifeSim || {};
     const to = X.pick(out.length ? out : adj);
     const f = Math.round(Math.max(0, S.gold) * .2); X.money(-f); X.add('h', -8);
     S.flags.migrateQ = null; S.flags.outsider = 0;
-    X.log(`Lính ${n.name} áp giải bạn ra khỏi biên giới vì ở quá hạn. Phạt ${f} bạc.`, 'bad');
+    X.log(`Lính ${n.name} áp giải bạn ra khỏi biên giới vì ở quá hạn. Phạt ${G.coin(f)}.`, 'bad');
     const t = G.moveTo(X, to, { force: true, escort: false }); if (t) X.log(t, 'info');
   };
 
@@ -130,7 +130,7 @@ window.LifeSim = window.LifeSim || {};
         if (n.laws.includes('ban_arcane')) { if (X.chance(.04)) G.caught(X, n, 'luyện phép'); }
         else if (n.laws.includes('mage_license') && !(n.template === 'E2' && S.race === n.race)) {
           const fee = 8 * (1 + X.ctier(S));
-          if (S.gold >= fee) { X.money(-fee); if (S.flags.license == null || S.age - S.flags.license >= 5) { S.flags.license = S.age; X.log(`Nộp ${fee} bạc gia hạn giấy phép pháp sư của ${n.name}.`, 'info'); } }
+          if (S.gold >= fee) { X.money(-fee); if (S.flags.license == null || S.age - S.flags.license >= 5) { S.flags.license = S.age; X.log(`Nộp ${G.coin(fee)} gia hạn giấy phép pháp sư của ${n.name}.`, 'info'); } }
           else if (X.chance(.04)) G.caught(X, n, 'hành nghề phép không giấy phép');
         }
       }
@@ -193,20 +193,20 @@ window.LifeSim = window.LifeSim || {};
         return { t: `Một Cơ Nhân lạ để lại tờ truyền đơn của ${L.name} dưới cửa xưởng.`, k: 'info', f: G.LAWS.liberation.desc }; } },
     { id: 'law_duel', st: ['adult', 'elder'], c: S => !S.undead && G.lawHere(S, 'duel_law'), w: 1.5, rep: true, gap: 4, run(S, X) {
         const p = G.clamp(.45 + (X.power(S) - 1) * .2 + Math.max(S.mastery.Sword, S.mastery.Axe, S.mastery.Unarmed) / 250, .1, .92);
-        if (X.rnd() < p) { const g = X.int(10, 40); X.money(g); S.fame += 2; return { t: `Tranh chấp ranh đất được xử bằng quyết đấu theo luật ${G.here(S).n.name}. Bạn thắng và giữ được đất, thêm ${g} bạc tiền cược.`, k: 'good', f: G.LAWS.duel_law.desc }; }
+        if (X.rnd() < p) { const g = X.int(10, 40); X.money(g); S.fame += 2; return { t: `Tranh chấp ranh đất được xử bằng quyết đấu theo luật ${G.here(S).n.name}. Bạn thắng và giữ được đất, thêm ${G.coin(g)} tiền cược.`, k: 'good', f: G.LAWS.duel_law.desc }; }
         X.add('hl', -X.int(8, 18)); X.money(-Math.min(Math.max(0, S.gold), 30));
         return { t: 'Bạn thua trận quyết đấu xử tranh chấp. Mất phần đất tranh chấp và một chiếc răng.', k: 'bad', f: G.LAWS.duel_law.desc }; } },
     { id: 'law_raid', st: ['child', 'teen', 'adult', 'elder'], c: S => !S.undead && !!raidNeighbor(S), w: 2, rep: true, gap: 2, run(S, X) {
         const o = raidNeighbor(S);
         if (['adult', 'elder'].includes(X.stage(S)) && X.power(S) > 1 + X.rnd()) { S.fame += 1; return { t: `Toán cướp của ${o.name} tràn qua biên. Bạn cùng dân làng đánh lui chúng.`, k: 'good', f: G.LAWS.raid_law.desc }; }
         const loss = Math.min(Math.max(0, S.gold), X.int(10, 50)); X.money(-loss); X.add('hl', -X.int(2, 8)); X.add('h', -5);
-        return { t: `Toán cướp của ${o.name} đốt kho thóc làng bên và lấy ${loss} bạc của nhà bạn. Bên kia biên giới gọi đó là luật.`, k: 'bad', f: G.LAWS.raid_law.desc }; } },
+        return { t: `Toán cướp của ${o.name} đốt kho thóc làng bên và lấy ${G.coin(loss)} của nhà bạn. Bên kia biên giới gọi đó là luật.`, k: 'bad', f: G.LAWS.raid_law.desc }; } },
     { id: 'law_contract', st: ['adult', 'elder'], c: S => !S.undead && G.lawHere(S, 'contract_law'), w: 1, rep: true, gap: 6, run(S, X) {
         if (X.chance(.6)) { X.add('so', 5); return { t: 'Bạn giữ đúng lời hứa trả nợ trước tiết đông chí. Khế ước tự cháy thành tro.', k: 'good', f: G.LAWS.contract_law.desc }; }
         X.cond('curse'); X.add('h', -6);
         return { t: 'Bạn lỡ hẹn trả một món nợ nhỏ. Sáng hôm sau, khế ước đã khắc vào da tay bạn.', k: 'bad', f: G.LAWS.contract_law.desc }; } },
     { id: 'law_tax_up', st: ['adult', 'elder'], c: S => flesh(S) && !!G.here(S).n && G.here(S).n.tax >= .2, w: 1, rep: true, gap: 4, run(S, X) {
         const n = G.here(S).n, t = Math.round(Math.max(0, S.gold) * .1); X.money(-t); X.add('h', -3);
-        return { t: `${n.name} thu thêm một khoản thuế đầu người. Bạn nộp ${t} bạc.`, k: 'bad' }; } }
+        return { t: `${n.name} thu thêm một khoản thuế đầu người. Bạn nộp ${G.coin(t)}.`, k: 'bad' }; } }
   );
 })(window.LifeSim);

@@ -12,9 +12,7 @@ window.LifeSim = window.LifeSim || {};
 (function (G) {
   const J = window.JobLibrary;
   G.REINCARNATE_P = 0.20;
-  G.LEVEL_FOR_TIER = { 1: 3, 2: 12, 3: 24, 4: 36, 5: 48 };
-  G.MAX_LEVEL = 60;
-  G.tierOf = level => Math.min(5, Math.floor(level / 10));
+  // Cấp, Tier, cảnh giới, kỹ năng: js/cult.js (G.tierOf, G.lvPow, G.skTrain, G.lifeF).
   // Tên Việt của mastery (id trong thư viện là tiếng Anh).
   G.MASTERY_VI = { Sword:"Kiếm", Axe:"Rìu", Spear:"Thương", Shield:"Khiên", Throwing:"Ném", Bow:"Cung", Crossbow:"Nỏ", Firearm:"Hỏa khí", Stealth:"Ẩn thân", Dagger:"Dao găm", Trap:"Bẫy", Fire:"Hỏa thuật", Frost:"Băng thuật", Lightning:"Lôi thuật", Arcane:"Huyền thuật", Necromancy:"Tử linh thuật", Soul:"Linh hồn", Curse:"Nguyền rủa", Engineering:"Cơ khí", Alchemy:"Luyện kim", Construct:"Chế tạo", Riding:"Cưỡi thú", Taming:"Thuần thú", Unarmed:"Tay không", Body:"Thân thể", Spirit:"Tâm linh" };
   G.mv = m => G.MASTERY_VI[m] || m;
@@ -67,11 +65,11 @@ window.LifeSim = window.LifeSim || {};
 
   // ── Bảng sống: Gompertz theo lượt, tìm nhị phân B để tuổi thọ kỳ vọng khớp le (cache theo chủng tộc/giới/độ giàu) ──
   const LT = {};
-  G.lifeTable = function (race, sex, wealth) {
-    const key = race + sex + Math.round(wealth * 10);
+  G.lifeTable = function (race, sex, wealth, f = 1) {   // f: thọ nguyên theo cảnh giới (js/cult.js G.lifeF)
+    const key = race + sex + Math.round(wealth * 10) + ":" + f;
     if (LT[key]) return LT[key];
     const R = G.RACES[race], w = Math.round(wealth * 10) / 10;
-    const leT = R.le / R.ypt * (R.undead || R.construct ? 1 : (.86 + .26 * w) * (sex === 'f' ? 1.03 : .97));
+    const leT = f * R.le / R.ypt * (R.undead || R.construct ? 1 : (.86 + .26 * w) * (sex === 'f' ? 1.03 : .97));
     const adultT = Math.max(1, Math.round(R.adult / R.ypt));
     const maxT = Math.ceil(leT * 1.9), g = .088 * 60 / leT, A = .002;
     const im = R.im * (1.5 - w);
@@ -150,7 +148,7 @@ window.LifeSim = window.LifeSim || {};
     R(S = this.S) { return G.RACES[S.race]; }
     reg(S = this.S) { return G.REGION[S.loc]; }
     years(S = this.S) { return Math.round(S.age * this.R(S).ypt); }
-    lt(S = this.S) { return G.lifeTable(S.race, S.sex, G.REGION[S.home.region].wealth); }
+    lt(S = this.S) { return G.lifeTable(S.race, S.sex, G.REGION[S.home.region].wealth, G.lifeF(S)); }
     stage(S = this.S) {
       const R = this.R(S), y = S.age * R.ypt, t = this.lt(S);
       if (R.undead) return S.age >= t.leT * .8 ? 'elder' : 'adult';
@@ -178,7 +176,7 @@ window.LifeSim = window.LifeSim || {};
       let m = 0;
       for (const [k, v] of Object.entries(S.mastery)) if (schools.includes(G.MASTERY[k]) || (S.inherited && S.inherited.skill === k)) m = Math.max(m, v);
       // Thiên phú (js/talent.js) cộng thẳng vào sức; boost: đồng đội gánh bớt trong một chuyến (cơ hội theo chí hướng).
-      let p = .35 + S.level / 10 + (j ? j.tier : 0) * .12 + m / 220 + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
+      let p = .35 + G.lvPow(S) + (j ? j.tier : 0) * .12 + m / 220 + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
       for (const c of S.conds) p += (G.CONDS[c.id].power || 0);
       if (st === 'elder') p -= .25 + (S.age - this.lt(S).leT * .78) * .02;
       if (st === 'teen') p -= .15;
@@ -193,7 +191,7 @@ window.LifeSim = window.LifeSim || {};
       return e;
     }
     add(stat, n) { const S = this.S; S[stat] = G.clamp(S[stat] + n, 0, 100); }
-    money(n) { this.S.gold = Math.round(this.S.gold + n); }
+    money(n) { this.S.gold = Math.round((this.S.gold + n) * 100) / 100; }   // tính theo bạc, giữ tới đồng (G.coin)
     gain(m, amount) {
       const S = this.S; if (!(m in S.mastery)) return 0;
       const acc = this.access(S, G.MASTERY[m]);
@@ -205,15 +203,8 @@ window.LifeSim = window.LifeSim || {};
       S.mastery[m] = Math.min(100, cur + d);
       return d;
     }
-    addXp(n) {
-      const S = this.S; S.xp += Math.round(n * G.cultRate(S));
-      let up = 0;
-      while (S.level < G.MAX_LEVEL && S.xp >= G.xpNeed(S.level)) { S.xp -= G.xpNeed(S.level); S.level++; up++; }
-      if (up) {
-        const t0 = G.tierOf(S.level - up), t1 = G.tierOf(S.level);
-        this.log(`Lên cấp ${S.level}.` + (t1 > t0 ? ` Sức mạnh chạm Tier ${t1}: những khu nguy hiểm hơn đã mở.` : ''), t1 > t0 ? 'big' : 'good');
-      }
-    }
+    // Điểm rèn kỹ năng (js/cult.js): căn cốt × thiên phú × ma lực nơi ở, dồn vào kỹ năng; cấp = số kỹ năng max tới hạn mức nghề.
+    addXp(n) { G.skTrain(this, n * G.cultRate(this.S)); }
     cond(id) { const S = this.S; let c = S.conds.find(c => c.id === id); if (!c) { c = { id, years: 0 }; S.conds.push(c); } return c; }
     hasCond(id) { return this.S.conds.some(c => c.id === id); }
     // Tên lấy từ kho tên (shared/names/names.js); Bộ Xương mới trỗi dậy không có tên.
@@ -264,7 +255,7 @@ window.LifeSim = window.LifeSim || {};
         urban, nation: st.nation >= 0 ? st.nation : null, worldSeed: G.realm.seed,
         q, pct: G.lerp(cr[0], cr[1], T.rnd()), gold: 0, work: null, path: null,
         hl: G.clamp(68 + reg.wealth * 18 + q * 2 + T.gauss() * 8, 25, 98), h: 62, so: 55, sm: 8 + q * 3,
-        level: 1, xp: 0, mastery, job: J.races[race].origin.id, jobHist: [], faith: faith === 'none' ? null : faith, devotion: 0, gear: 0,
+        level: 0, xp: 0, sk: null, mastery, job: J.races[race].origin.id, jobHist: [], faith: faith === 'none' ? null : faith, devotion: 0, gear: 0,
         focus: 'play', auto: true, focusTime: {}, zoneSel: null, reckless: false,
         traits: { bold: T.rnd(), studious: T.rnd(), pious: T.rnd(), social: T.rnd() },
         family: { parents: [], sibs: [], spouse: null, kids: [] },
@@ -333,7 +324,7 @@ window.LifeSim = window.LifeSim || {};
         urban: false, nation: null, worldSeed: old.worldSeed,
         q: 1, pct: .02, gold: 0, work: null, path: dom ? G.MASTERY[dom.skill] : 'death',
         hl: 78, h: 30, so: 8, sm: Math.round(old.sm * .3),
-        level: 1, xp: 0, mastery, job: J.races.skeleton.origin.id, jobHist: [], faith: null, devotion: 0, gear: 0,
+        level: 0, xp: 0, sk: null, mastery, job: J.races.skeleton.origin.id, jobHist: [], faith: null, devotion: 0, gear: 0,
         focus: 'train', auto: old.auto, focusTime: {}, zoneSel: null, reckless: false,
         traits: { ...old.traits, social: old.traits.social * .4 },
         family: { parents: [], sibs: [], spouse: null, kids: [] },
@@ -626,7 +617,7 @@ window.LifeSim = window.LifeSim || {};
         if (pWin < .85) this.add('hl', -this.int(1, 6));
         S.fame = Math.min(100, S.fame + { normal: .3, elite: 1.5, alpha: 3, lord: 20 }[grade] * (1 + s.tier * .3));
         if (grade !== 'normal' || pWin < .5 || s.tier > ct || adventure && this.chance(.4))
-          this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: hạ ${what}. +${loot} bạc.`, grade !== 'normal' ? 'big' : 'good', grade !== 'normal' || this.chance(.3) ? this.factOf(s) : null);
+          this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: hạ ${what}. +${G.coin(loot)}.`, grade !== 'normal' ? 'big' : 'good', grade !== 'normal' || this.chance(.3) ? this.factOf(s) : null);
         if (adventure && this.chance(.12)) G.treasure(this, enc.zone);
       } else {
         S.hunts.lost++;
@@ -660,7 +651,7 @@ window.LifeSim = window.LifeSim || {};
       const pool = [...new Set([...ms, ...Object.keys(want)])];
       for (let k = 0; k < 4; k++) { const m = this.wpick(pool, m => 1 + (want[m] || 0) * 2); this.gain(m, 3.2 * share * (.8 + S.traits.bold * .4)); }
       if (S.inherited) this.gain(S.inherited.skill, 1.5 * share);
-      this.addXp(70 * share * (1 + S.level * .04));
+      this.addXp(70 * share * (1 + S.level * .11));
     }
     workYear(share) {
       const S = this.S, reg = this.reg(S), W = G.WORKS[S.work];
@@ -686,7 +677,6 @@ window.LifeSim = window.LifeSim || {};
   }
   G.Sim = Sim;
 
-  G.xpNeed = lv => Math.round(40 * Math.pow(lv, 1.25));
 
   // Chỉ số trôi về mục tiêu.
   G.driftStats = function (X) {
@@ -717,7 +707,7 @@ window.LifeSim = window.LifeSim || {};
       if (j.faith && J.faiths[j.faith]) { const g = J.faiths[j.faith].devotion.gates[j.tier] || 0; if (!ignoreReq && S.devotion < g + ((J.faiths[j.faith].races.wary || []).includes(S.race) ? 15 : 0)) continue; }
       const bonus = a === 'foreign' ? 15 : 0;
       const missing = Object.entries(j.req || {}).filter(([m, v]) => (S.mastery[m] || 0) < v + bonus);
-      const lvOk = S.level >= (G.LEVEL_FOR_TIER[j.tier] || 0);
+      const lvOk = G.skMaxed(S, j.tier - 1) >= 2 && G.teachCap(S) >= j.tier;   // gate: max 2 kỹ năng Tier trước (luật thư viện nghề), có người dạy tới Tier đó (js/cult.js)
       if (!ignoreReq && (missing.length || !lvOk)) continue;
       out.push({ job: j, access: a, missing, lvOk });
     }
