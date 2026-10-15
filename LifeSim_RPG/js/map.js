@@ -368,11 +368,30 @@ window.LifeSim = window.LifeSim || {};
     }
   }
 
+  // Lớp đường (vẽ một lần mỗi thế giới): đường cái, đường mòn, lối nhỏ theo đường đi đã lưu; cầu trên sông, dấu đèo trên núi.
+  G.renderRoads = function (map, realm) {
+    const { W, H, CS } = map, cv = document.createElement('canvas'); cv.width = W * CS; cv.height = H * CS;
+    const ctx = cv.getContext('2d'), cx = i => (i % W + .5) * CS, cy = i => (Math.floor(i / W) + .5) * CS;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const STYLE = { 1: { under: 0, w: 1, c: 'rgba(196,170,120,.55)', dash: [2, 3] }, 2: { under: 2.6, w: 1.3, c: '#c9aa72' }, 3: { under: 3.6, w: 2, c: '#e2c588' } };
+    const line = (cells, w, c, dash) => { ctx.setLineDash(dash || []); ctx.strokeStyle = c; ctx.lineWidth = w; ctx.beginPath(); cells.forEach((i, k) => k ? ctx.lineTo(cx(i), cy(i)) : ctx.moveTo(cx(i), cy(i))); ctx.stroke(); };
+    for (const cls of [1, 2, 3]) {
+      const list = realm.roads.filter(r => r.cls === cls), st = STYLE[cls];
+      if (st.under) for (const r of list) line(r.cells, st.under, 'rgba(30,20,10,.65)');
+      for (const r of list) line(r.cells, st.w, st.c, st.dash);
+    }
+    ctx.setLineDash([]);
+    for (const i of realm.bridges) { if (realm.road[i] < 2) continue; ctx.fillStyle = 'rgba(30,20,10,.85)'; ctx.fillRect(cx(i) - 3, cy(i) - 3, 6, 6); ctx.fillStyle = '#d9c9a6'; ctx.fillRect(cx(i) - 2, cy(i) - 2, 4, 4); }
+    for (const i of realm.passes) { if (realm.road[i] < 2 || (i % 3)) continue; ctx.strokeStyle = 'rgba(245,235,215,.85)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(cx(i) - 4, cy(i) + 2); ctx.lineTo(cx(i), cy(i) - 3); ctx.lineTo(cx(i) + 4, cy(i) + 2); ctx.stroke(); }
+    return cv;
+  };
+
   // Lớp phủ: khu dân cư, tên vùng, mộ các kiếp trước, đường đời, nhân vật, vùng đang chọn.
   G.drawMap = function (ctx, map, base, o = {}) {
     const R = G.REGIONS;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(base, 0, 0);
+    if (o.roads) ctx.drawImage(o.roads, 0, 0);
     if (o.selected) {
       const k = map.idx[o.selected], { W, CS, zone } = map;
       ctx.fillStyle = 'rgba(255,240,180,.10)';

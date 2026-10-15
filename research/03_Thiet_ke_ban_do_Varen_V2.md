@@ -398,6 +398,22 @@ Nhờ vậy nhân vật Tier 0 sinh ở thủ đô một nước trên đồng b
 | Nước đến có `hunt_undead`, nhân vật là Bộ Xương | bị chặn; vượt lén thì gặp sự kiện Thánh Kỵ Sĩ |
 | Nước đến có `no_outsiders` | cho qua, đếm ngày ở lại |
 
+### 6.5. Kết quả bước 5 (15/10/2026)
+
+Đã làm: mạng đường (đường cái theo cây khung nhỏ nhất giữa kinh đô / thành phố / thị trấn, đường mòn cho làng và đồn, lối nhỏ cho thôn), cầu, đèo, đường làm nguồn văn minh cho độ hoang, hành trình (`LifeSim_RPG/js/travel.js`), trạm biên giới, thuê hộ tống, đi thuyền ra đảo theo tuyến biển cũ; bảng vùng xem trước chuyến đi và đi được tới mọi vùng.
+
+Khác với thiết kế ở trên:
+
+- Đường cái không thêm cạnh phụ "đường hiện có dài hơn 1,5 lần đường thẳng"; cây khung + đường mòn đã đủ nối mọi khu.
+- Núi không cấm hẳn: đường và người đi qua ô núi với chi phí 8, nên đèo là chỗ đường cắt qua núi chứ không chọn ô thấp nhất của dãy.
+- Lội sông không cầu +6 khi đi; khi dựng đường chỉ +1,5 (để đường vẫn bắc cầu ở chỗ cần).
+- Phí trạm = thuế của nước đến × 40 bạc (thiết kế ghi × 5, quá nhỏ). Đường xuống cấp khi làng bỏ hoang để bước quốc gia động.
+- Ngày đi chưa trừ vào thời gian focus của năm; thay bằng tiền ăn ở 0,3 bạc / ngày.
+
+Đo bằng `sim.html` (thế giới `can-bang`): 692 ô đường cái, 488 ô đường mòn, 166 ô lối nhỏ, 56 ô cầu, 15 ô đèo; tầng ven tăng từ 20% lên 27% diện tích nhờ đường. 1000 đời: 42.591 trận, 0 trận vượt Tier + 1, 70% đời có đi xa (~1.580 chuyến), chết dọc đường 0,1% số đời (mục tiêu < 8% số cái chết), 5 lần thuê hộ tống. 100 thế giới: 0 lỗi, ~0,45 giây mỗi thế giới.
+
+Lỗi gặp khi làm: phép loang độ hoang từ đường trộn nhiều bán kính (mỗi nước một tuần tra) trong một hàng đợi làm nhãn bị sửa lại gần như vô tận ở vài thế giới (treo); đã tách mỗi nhóm bán kính một lần loang.
+
 ## 7. Lớp 5: biển
 
 ### 7.1. Vùng biển
@@ -531,7 +547,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 2 ✓ | Nạp `names.js`; 50 mẫu quốc gia vào `data/nations.js`; seed thế giới; kinh đô, lãnh thổ, mạng khu dân cư phân cấp, vai trò, công trình, dân, tỉnh, tên (`research/05`); quốc gia tĩnh; chế độ xem Chính trị, màn tạo thế giới | mỗi thế giới một bộ nước, thành phố, làng; sinh ra ở thành thị hoặc nông thôn |
 | 3 ✓ | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô (15/10/2026, xem mục 3.6) | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
 | 4 ✓ | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời (15/10/2026, xem mục 5.6) | sinh ra ở một nước có luật |
-| 5 | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống | đi lại có quãng đường |
+| 5 ✓ | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống (15/10/2026, xem mục 6.5) | đi lại có quãng đường |
 | 6 | Vùng biển 4 tầng, loài biển mới, tàu, hải trình | đi biển |
 | 7 | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên | thế giới đổi qua các kiếp |
 | 8 | Hang ổ, di tích | dọn hang, thú triều có nguồn |

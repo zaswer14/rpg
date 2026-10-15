@@ -73,6 +73,7 @@ h3 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: v
 .zone .band { display: block; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
 .rz.absent { opacity: .5; }
 .maplegend { position: absolute; left: 8px; bottom: 8px; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px 10px; background: rgba(14,12,16,.82); border: 1px solid var(--line); border-radius: 8px; padding: 4px 9px; font-size: 11px; color: var(--ink); max-width: calc(100% - 16px); }
+.maplegend[hidden] { display: none; }
 .maplegend span { display: inline-flex; align-items: center; gap: 5px; }
 .maplegend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .zone { text-align: left; background: var(--panel2); border: 1px solid var(--line); border-left: 4px solid var(--c, var(--line)); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 12px; }

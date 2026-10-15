@@ -69,6 +69,7 @@
 <script src="js/systems.js"></script>
 <script src="js/events.js"></script>
 <script src="js/state.js"></script>
+<script src="js/travel.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -84,7 +85,7 @@ function showChecks() {
     (RL.check.errors.length ? RL.check.errors.map(e => `<div class="no">✗ thế giới: ${esc(e)}</div>`).join('') : `<div class="ok">✓ Thế giới "${esc(RL.seed)}" không có lỗi.</div>`) +
     RL.check.warnings.map(w => `<div class="note">⚠ thế giới: ${esc(w)}</div>`).join('') +
     `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 4} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>` +
-    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}% · tầng (diện tích đất): ${st.bands.map((v, b) => `${G.BAND_VI[b].toLowerCase()} ${(v * 100).toFixed(0)}%`).join(', ')}</div>` +
+    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}% · đường: ${st.roads[2]} ô đường cái, ${st.roads[1]} ô đường mòn, ${st.roads[0]} ô lối nhỏ, ${st.bridges} ô cầu, ${st.passes} ô đèo · tầng (diện tích đất): ${st.bands.map((v, b) => `${G.BAND_VI[b].toLowerCase()} ${(v * 100).toFixed(0)}%`).join(', ')}</div>` +
     `<table><tr><th>Nước</th><th>Mẫu</th><th class="n">Cỡ</th><th class="n">Tỉnh</th><th class="n">Khu</th><th class="n">Dân</th><th class="n">Đô thị</th></tr>${RL.nations.map(nrow).join('')}</table>`;
 }
 showChecks();
@@ -102,7 +103,7 @@ $('run').onclick = () => {
   $('status').textContent = 'Đang chạy…';
   setTimeout(() => {
     const t0 = performance.now();
-    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 } };
+    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 } };
     for (let i = 0; i < N; i++) {
       const sim = new G.Sim({ seed: base + ':' + i, headless: true });
       sim.newLife({ noPeers: true }); sim.runToDeath();
@@ -118,6 +119,7 @@ $('run').onclick = () => {
       A.region[S.born.region] = (A.region[S.born.region] || 0) + 1;
       { const F = S.flags, L = A.law; if (F.crimes) L.crimes++; if (S.causeId === 'hanged') L.hanged++; if (F.served) L.served++; if (F.wanted) L.fled++; if (F.expelled) L.expelled++;
         const n = S.nation != null ? G.realm.nations[S.nation] : null; if (n && n.wary.includes(S.race)) L.wary++; if (n && n.fav.includes(S.race)) L.fav++; }
+      { const T = A.trip, F = S.flags; if (F.trips) { T.lives++; T.trips += F.trips; } if (F.onRoad && S.dead) T.roadDeaths++; T.escorts += F.escorts || 0; }
       { const bs = G.SET[S.born.settlement], key = bs ? (S.born.urban ? G.TIER_VI[bs.tier] + ' (trong khu)' : 'vùng quê quanh ' + G.TIER_VI[bs.tier].toLowerCase()) : '?'; A.bornTier[key] = (A.bornTier[key] || 0) + 1;
         const nk = bs && bs.nation >= 0 ? G.realm.nations[bs.nation].name : 'đất vô chủ'; A.bornNation[nk] = (A.bornNation[nk] || 0) + 1; }
       if (S.rose) {
@@ -148,6 +150,7 @@ $('run').onclick = () => {
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu research/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
+    out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'research/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));
     out.push(table('Luật và thái độ (đời đầu)', [['Từng bị bắt', A.law.crimes, pct(A.law.crimes, N)], ['Bị treo cổ', A.law.hanged, pct(A.law.hanged, N)], ['Đi lính nghĩa vụ', A.law.served, pct(A.law.served, N)], ['Trốn lính', A.law.fled, pct(A.law.fled, N)], ['Bị lệnh trục xuất', A.law.expelled, pct(A.law.expelled, N)], ['Chết ở nước dè chừng mình', A.law.wary, pct(A.law.wary, N)], ['Chết ở nước ưu ái mình', A.law.fav, pct(A.law.fav, N)]], ['', 'Đời', '%'], { note: 'Đếm trên đời đầu (trước khi trỗi dậy). research/04 mục 3.' }));
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
@@ -158,10 +161,12 @@ $('run').onclick = () => {
 $('runWorlds').onclick = () => {
   const NW = Math.max(5, +$('nw').value || 100), base = $('world').value || 'can-bang';
   $('status').textContent = `Đang tạo ${NW} thế giới…`;
-  setTimeout(() => {
+  // Chạy từng đợt 5 thế giới rồi nhả luồng, để trang không treo và hiện được tiến độ.
+  setTimeout(async () => {
     const t0 = performance.now(), tpl = Object.fromEntries(G.NATION_TEMPLATES.map(t => [t.id, 0])), nN = {}, races = {};
     let errs = 0, warns = 0, sets = 0, urb = 0, unc = 0, prov = 0;
     for (let w = 0; w < NW; w++) {
+      if (w % 5 === 4) { $('status').textContent = `Đang tạo thế giới ${w + 1}/${NW}…`; await new Promise(r => setTimeout(r, 0)); }
       const RL = G.buildRealm(G.map, base + ':w' + w);
       for (const n of RL.nations) { tpl[n.template]++; races[n.race] = (races[n.race] || 0) + 1; }
       nN[RL.nations.length] = (nN[RL.nations.length] || 0) + 1;

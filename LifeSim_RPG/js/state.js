@@ -91,7 +91,7 @@ window.LifeSim = window.LifeSim || {};
     const f = Math.round(Math.max(0, S.gold) * .2); X.money(-f); X.add('h', -8);
     S.flags.migrateQ = null; S.flags.outsider = 0;
     X.log(`Lính ${n.name} áp giải bạn ra khỏi biên giới vì ở quá hạn. Phạt ${f} bạc.`, 'bad');
-    const t = G.moveTo(X, to); if (t) X.log(t, 'info');
+    const t = G.moveTo(X, to, { force: true, escort: false }); if (t) X.log(t, 'info');
   };
 
   // ── Hệ con "law": chạy cuối mỗi năm, sau career ──

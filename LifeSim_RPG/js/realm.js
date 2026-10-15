@@ -10,7 +10,8 @@
  *   6. Tỉnh = thủ phủ (kinh đô / thành phố / thị trấn; làng ở đất vô chủ) + vùng quanh nó theo chi phí đi.
  *   7. Dân đô thị theo bậc; dân nông thôn theo sức chứa ô, gom về làng / thôn gần nhất, co giãn để khớp tỉ lệ đô thị của chủng tộc.
  *   8. Chủng tộc, đạo của từng khu; người cai trị, đặc trưng riêng, quan hệ giữa các nước.
- *   9. Độ hoang từng ô (khoảng cách đi bộ tới khu dân cư + biome + địa hình) → tầng ven / sâu / lõi / vùng chết (research/03 mục 3.3).
+ *   9. Đường: đường cái nối kinh đô / thành phố / thị trấn (cây khung nhỏ nhất), đường mòn cho làng, lối nhỏ cho thôn; cầu, đèo.
+ *  10. Độ hoang từng ô (khoảng cách đi bộ tới khu dân cư hoặc đường + biome + địa hình) → tầng ven / sâu / lõi / vùng chết (research/03 mục 3.3).
  */
 window.LifeSim = window.LifeSim || {};
 (function (G) {
@@ -458,6 +459,58 @@ window.LifeSim = window.LifeSim || {};
       n.labelPos = [px(bi), py(bi)];
     }
 
+    // ── 9b. Đường xá (research/03 mục 3.2) ──
+    // Đường cái: nối kinh đô / thành phố / thị trấn thành cây khung nhỏ nhất (Prim, mỗi bước loang từ cả mạng tới khu chưa nối gần nhất).
+    // Đường mòn: mỗi làng, đồn nối vào mạng gần nhất. Lối nhỏ: mỗi thôn nối vào mạng gần nhất.
+    // Loang 8 hướng trên lưới chi phí; ô đã là đường × 0,3 nên các tuyến tự gộp thành trục. Đảo có mạng riêng.
+    // Cầu = ô đường trên sông; đèo = ô đường trên núi.
+    const D8 = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [-1, 1, 1.414], [1, -1, 1.414], [-1, -1, 1.414]];
+    const road = new Uint8Array(N), roads = [], linked = new Uint8Array(N), netCells = [];
+    const rdist = new Float32Array(N).fill(Infinity), rprev = new Int32Array(N).fill(-1);
+    const grow = (sources, isGoal, maxCost) => {
+      const touched = [], q = G.minHeap(1024);
+      for (const i of sources) { rdist[i] = 0; rprev[i] = -1; touched.push(i); q.push(0, i); }
+      let hit = -1;
+      while (q.size) {
+        const i = q.pop(), d = q.lastKey;
+        if (d > rdist[i]) continue;
+        if (isGoal(i)) { hit = i; break; }
+        if (d > maxCost) break;
+        const x = i % W, y = (i - x) / W;
+        for (const [dx, dy, m] of D8) {
+          const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          const j = ny * W + nx; if (region[j] === SEA || !isFinite(cost[j])) continue;
+          const nd = d + cost[j] * m * (road[j] ? .3 : 1);
+          if (nd < rdist[j]) { if (rdist[j] === Infinity) touched.push(j); rdist[j] = nd; rprev[j] = i; q.push(nd, j); }
+        }
+      }
+      let path = null;
+      if (hit >= 0) { path = []; for (let c = hit; c >= 0; c = rprev[c]) path.push(c); }
+      for (const i of touched) { rdist[i] = Infinity; rprev[i] = -1; }
+      return path;
+    };
+    const addNet = i => { if (!linked[i]) { linked[i] = 1; netCells.push(i); } };
+    const lay = (path, cls) => { for (const c of path) { if (road[c] < cls) road[c] = cls; addNet(c); } roads.push({ cls, cells: path }); };
+    const live = settlements.filter(s => s.tier !== 'ruin');
+    const left = new Set(live.filter(s => RANK[s.tier] <= 2).map(s => s.cell));
+    while (left.size) {
+      const path = netCells.length ? grow(netCells, i => left.has(i), Infinity) : null;
+      if (!path) { const c0 = left.values().next().value; left.delete(c0); addNet(c0); continue; }   // mạng mới (đảo)
+      left.delete(path[0]); lay(path, 3);
+    }
+    for (const s of live.filter(s => s.tier === 'village').sort((a, b) => b.urban - a.urban)) {
+      if (linked[s.cell]) continue;
+      const path = grow([s.cell], i => linked[i] === 1, 160);
+      if (path) lay(path, 2); else addNet(s.cell);
+    }
+    for (const s of live.filter(s => s.tier === 'hamlet')) {
+      if (linked[s.cell]) continue;
+      const path = grow([s.cell], i => linked[i] === 1, 60);
+      if (path) lay(path, 1); else addNet(s.cell);
+    }
+    const bridges = [], passes = [];
+    for (const i of land) if (road[i]) { if (river[i]) bridges.push(i); if (feat[i] === FE.mountain) passes.push(i); }
+
     // ── 10. Độ hoang và tầng nguy hiểm (research/03 mục 3.3–3.4) ──
     // w(ô) = min qua khu dân cư (chi phí đi bộ / bán kính) + độ hoang biome + độ hoang địa hình.
     // Bán kính (ô) = theo bậc (kinh đô 120px … thôn 25px; đồn ít nhất 70px) / 4 × tuần tra của nước (vô chủ .6).
@@ -481,6 +534,26 @@ window.LifeSim = window.LifeSim || {};
       }
       for (const i of touched) dd[i] = Infinity;
     }
+    // Đường cái, đường mòn cũng là nguồn văn minh: bán kính 30px × tuần tra của nước sở hữu ô đường (vô chủ .6).
+    // Mỗi nhóm bán kính (một nước, hoặc đất vô chủ) loang Dijkstra riêng theo chi phí đi bộ; trộn các bán kính trong một hàng đợi
+    // làm nhãn bị sửa lại gần như vô tận ở vài địa hình.
+    { const groups = new Map();
+      for (const i of land) if (road[i] >= 2) { const k = owner[i]; (groups.get(k) || groups.set(k, []).get(k)).push(i); }
+      for (const [k, src] of groups) {
+        const rc = 30 / CS * (k >= 0 ? nations[k].patrol : .6), lim = 3.5 * rc, touched = [], q = G.minHeap(4096);
+        for (const i of src) { dd[i] = 0; touched.push(i); q.push(0, i); }
+        while (q.size) {
+          const i = q.pop(), d = q.lastKey;
+          if (d > dd[i]) continue;
+          if (d / rc < wmin[i]) wmin[i] = d / rc;
+          for (const j of nbrs(i)) {
+            if (region[j] === SEA || !isFinite(cost[j])) continue;
+            const nd = d + cost[j];
+            if (nd < dd[j] && nd <= lim) { if (dd[j] === Infinity) touched.push(j); dd[j] = nd; q.push(nd, j); }
+          }
+        }
+        for (const i of touched) dd[i] = Infinity;
+      } }
     const BW = G.BAND_W, wild = new Float32Array(N), band = new Uint8Array(N).fill(SEA);
     for (const i of land) {
       if (feat[i] === FE.lake) continue;
@@ -508,10 +581,11 @@ window.LifeSim = window.LifeSim || {};
       byTier: Object.fromEntries([...TIERS, 'ruin'].map(t => [t, settlements.filter(s => s.tier === t).length])),
       pop: urbanTot + ruralTot, urban: urbanTot, urbanShare: urbanTot / Math.max(1, urbanTot + ruralTot),
       unclaimed: land.filter(i => owner[i] === NONE).length / land.length,
-      bands: [0, 1, 2, 3].map(b => land.filter(i => feat[i] !== FE.lake && band[i] === b).length / land.length)
+      bands: [0, 1, 2, 3].map(b => land.filter(i => feat[i] !== FE.lake && band[i] === b).length / land.length),
+      roads: [1, 2, 3].map(c => land.filter(i => road[i] === c).length), bridges: bridges.length, passes: passes.length
     };
     const byId = Object.fromEntries(settlements.map(s => [s.id, s]));
-    return { seed, nations, settlements, provinces, owner, provOf, wild, band, bandCells, byId, stats, check: { errors, warnings } };
+    return { seed, nations, settlements, provinces, owner, provOf, wild, band, bandCells, road, roads, bridges, passes, byId, stats, check: { errors, warnings } };
   };
 
   // ── Thế giới đang dùng ──

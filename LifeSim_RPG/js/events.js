@@ -272,32 +272,7 @@ window.LifeSim = window.LifeSim || {};
 
   G.gearCost = n => Math.round(40 * Math.pow(n, 1.7));
 
-  // Di chuyển sang vùng khác (dùng cho quyết định và nút trên bản đồ).
-  G.moveTo = function (X, regionId) {
-    const S = X.S, to = G.REGION[regionId];
-    S.loc = regionId;
-    // Tới vùng mới: dân thành thị vào khu lớn nhất của vùng; dân quê về vùng quê của một làng / thôn (bốc theo dân quê);
-    // vùng không có khu dân cư thì sống ngoài trời.
-    const wasRural = S.urban === false, villages = G.settlementsIn(regionId).filter(s => s.tier === 'village' || s.tier === 'hamlet');
-    const st = S.undead ? null : wasRural && villages.length ? X.wpick(villages, s => s.rural + 1) : G.mainSettlement(regionId);
-    S.home = { region: regionId, settlement: st ? st.id : null };
-    S.urban = !!st && !(wasRural && villages.includes(st)) && G.TIER_RANK[st.tier] <= 2;
-    S.pos = st ? G.homePos(st, S.urban, X.rnd) : G.map.pointIn(regionId, 0, X.rnd);
-    const nat = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = nat ? nat.idx : null;
-    S.path2.push(S.pos);
-    X.money(-Math.min(Math.max(S.gold, 0), 10));
-    if (S.undead) S.flags.townQ = true;
-    if (S.work && !S.undead && !G.workOK(S, S.work)) { S.work = null; S.flags.workQ = true; }   // nơi mới không có công trình / vai trò cho nghề cũ
-    let txt = `Bạn tới ${st ? st.name + ', ' + to.nameVi : to.nameVi}${nat ? ` (${nat.name})` : ''}.`;
-    // Gặp quái dọc đường: khu ven của vùng mới, vẫn chịu luật Tier.
-    if (['teen', 'adult', 'elder'].includes(X.stage(S)) && X.chance(.35)) {
-      const enc = X.rollEncounter(G.firstZone(regionId));
-      if (enc) { const rec = X.fight(enc, false); if (S.dead) return null; txt += rec.win ? ` Dọc đường hạ ${enc.s.nameVi}.` : ` Dọc đường bị ${enc.s.nameVi} tấn công.`; }
-    }
-    S.zoneManual = false;
-    X.ensureZone();
-    return txt;
-  };
+  // Di chuyển sang vùng khác: G.moveTo ở js/travel.js (hành trình có đường đi, gặp quái dọc đường, trạm biên giới).
 
   G.scheduledDecisions = function (X) {
     const S = X.S;

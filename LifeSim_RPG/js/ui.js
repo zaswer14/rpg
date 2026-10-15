@@ -19,6 +19,9 @@
   // Ảnh nền mỗi chế độ xem dựng lần đầu khi cần rồi giữ lại (Vùng, Chính trị, Nguy hiểm dựng lại khi đổi thế giới).
   // Nguy hiểm dựng lại khi Tier nhân vật hoặc Liều mạng đổi (chỉ giữ một bản).
   const bases = {};
+  // Lớp đường: dựng một lần mỗi thế giới.
+  let roadsLayer = null, roadsSeed = null;
+  const roadsFor = () => { if (roadsSeed !== G.realm.seed) { roadsSeed = G.realm.seed; roadsLayer = G.renderRoads(G.map, G.realm); } return roadsLayer; };
   function baseFor(v, ct, cap) {
     const k = v === 'danger' ? `danger:${ct}:${cap}` : v;
     if (!bases[k]) { if (v === 'danger') for (const o of Object.keys(bases)) if (o.startsWith('danger:')) delete bases[o]; bases[k] = G.renderMapBase(G.map, v, G.realm, { ct, cap }); }
@@ -292,14 +295,21 @@
     box.hidden = false;
   }
 
+  const tripCache = { key: null, plan: null };
   function renderRegion() {
     const box = $('regionPanel');
     if (pref.view === 'political' && selNation != null) return renderNation(box);
     if (!selRegion) { box.hidden = true; return; }
     const S = sim.S, R = G.REGION[selRegion], rs = S.world.regions[R.id], bio = J.biomes[R.biome];
     const top = (o, f) => Object.entries(o).filter(([k]) => k !== 'none').sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => f(k)).join(', ');
-    const adj = G.map.adj[G.map.idx[S.loc]].includes(R.id);
-    const canGo = adj && !S.dead && ['teen', 'adult', 'elder'].includes(sim.stage(S)) && S.flags.movedAge !== S.age;
+    // Chuyến đi tới vùng này (js/travel.js): số ngày, phần trên đường, có phải thuê hộ tống không. Tính lại khi đổi vị trí / vùng / Tier.
+    const able = !S.dead && ['teen', 'adult', 'elder'].includes(sim.stage(S)) && R.id !== S.loc;
+    const tkey = `${S.pos}|${R.id}|${G.capOf(S)}`;
+    if (able && tripCache.key !== tkey) { tripCache.key = tkey; tripCache.plan = G.planTrip(S, R.id); }
+    const plan = able ? tripCache.plan : null, moved = S.flags.movedAge === S.age;
+    const canGo = plan && !plan.fail && !moved && (!plan.escort || S.gold >= plan.fee);
+    const tripTxt = !plan ? '' : plan.fail ? `Không tới được: ${plan.fail}.` : plan.boat ? `Tuyến thuyền, ${plan.days} ngày.`
+      : `${plan.route.days} ngày đường, ${Math.round(plan.route.onRoad * 100)}% trên đường` + (plan.escort ? `; phải qua vùng quá sức, thuê hộ tống ${plan.fee} bạc` : '') + '.';
     // Tỉ lệ diện tích từng tầng của vùng ở thế giới này (độ hoang theo khu dân cư).
     const bc = G.realm.bandCells[G.map.idx[R.id]], btot = bc.reduce((a, c) => a + c.length, 0) || 1;
     const zones = R.zones.map((z, i) => {
@@ -315,10 +325,11 @@
       <div class="row"><span>${G.settlementsIn(R.id).slice(0, 8).map(s => `${esc(s.name)} <span class="fam">${G.TIER_VI[s.tier].toLowerCase()}</span>`).join(' · ') || 'Không có khu dân cư'}</span></div>
       ${zones}
       ${R.lord ? `<div class="rz" style="color:var(--risky)">Chúa vùng: ${esc(G.B.byId[R.lord.species].nameVi)} (ngủ ở ${esc(G.ZONE[R.lord.zone].zone.nameVi)})</div>` : ''}
-      <div class="act">${S.dead ? '' : R.id === S.loc ? '<span class="fam">Bạn đang ở đây.</span>' : canGo ? '<button class="btn" id="goBtn">Lên đường tới đây</button>' : `<span class="fam">${adj ? 'Năm nay đã đi một chuyến.' : 'Không giáp vùng bạn đang ở.'}</span>`}</div>`;
+      ${tripTxt ? `<div class="row"><span>${esc(tripTxt)}</span></div>` : ''}
+      <div class="act">${S.dead ? '' : R.id === S.loc ? '<span class="fam">Bạn đang ở đây.</span>' : canGo ? `<button class="btn" id="goBtn">${plan.escort ? 'Thuê hộ tống, lên đường' : 'Lên đường tới đây'}</button>` : `<span class="fam">${!able ? 'Trẻ con chưa tự đi xa được.' : moved ? 'Năm nay đã đi một chuyến.' : plan && plan.escort && !plan.fail ? 'Chưa đủ bạc thuê hộ tống.' : ''}</span>`}</div>`;
     box.hidden = false;
     const go = $('goBtn');
-    if (go) go.onclick = () => { S.flags.movedAge = S.age; const t = G.moveTo(sim, R.id); if (t) sim.log(t, 'info'); dirty = true; save(); };
+    if (go) go.onclick = () => { S.flags.movedAge = S.age; tripCache.key = null; const t = G.moveTo(sim, R.id, { escort: true }); if (t) sim.log(t, 'info'); dirty = true; save(); };
   }
 
   function renderSide() {
@@ -349,7 +360,7 @@
     G.drawMap(ctx, G.map, baseFor(pref.view, ct, cap), {
       selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
-      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null
+      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null
     });
   }
   function canvasPoint(ev) {
@@ -367,7 +378,7 @@
     const gv = graves.find(g => g.world === G.realm.seed && Math.hypot(g.x - x, g.y - y) < 7);
     const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
-      + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}`
+      + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`
       + nearTxt + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '');
     const r = canvas.getBoundingClientRect();
