@@ -36,7 +36,7 @@ window.LifeSim = window.LifeSim || {};
     cap: { hamlet: 400, village: 2000, town: 8000, city: 20000 }
   };
 
-  const roles = S => S.roles || (S.roles = { head: null, office: null, ruler: null, orgs: {}, adv: null });
+  const roles = S => S.roles || (S.roles = { head: null, office: null, ruler: null, orgs: {}, adv: null, noble: null });
   const adultish = (S, X) => ['adult', 'elder'].includes(X.stage(S));
   const share = (S, f) => (S.focusTime[f] || 0) / (Object.values(S.focusTime).reduce((a, b) => a + b, 0) || 1);
   const flag = (S, k, v = 1) => { S.flags[k] = (S.flags[k] || 0) + v; };
@@ -146,7 +146,7 @@ window.LifeSim = window.LifeSim || {};
       }
       if (lost) { X.log(`Bạn mất chức ${G.OFFICE_VI[of.rank].toLowerCase()} của ${n.name}: ${lost}.`, 'bad'); r.office = null; }
       else {
-        if (of.rank === 1 && year - of.since >= 6 && (S.fame >= 40 || S.sm >= 70) && X.chance(.12 * (.5 + gov) * ypt)) {
+        if (of.rank === 1 && year - of.since >= (G.eduLv && G.eduLv(S) >= 3 ? 4 : 6) && (S.fame >= 40 || S.sm >= 70 || (r.noble && r.noble.rank >= 3)) && X.chance(.12 * (.5 + gov) * ypt)) {
           of.rank = 2; flag(S, 'office2'); X.log(`Bạn được triệu về kinh làm Đại thần của ${n.name}.`, 'big');
           Dn().hist(D, year, 'office', `${S.name} được phong Đại thần của ${n.name}.`);
         }
@@ -357,7 +357,7 @@ window.LifeSim = window.LifeSim || {};
     prio: 4, gap: 5,
     when(S, X) {
       const r = roles(S), h = homeS(S);
-      return tierOK(S, X) && !r.office && r.ruler == null && S.nation != null && live(h) && h.nation === S.nation && h.province >= 0 && ((S.sm >= 55 && S.q >= 3) || S.sm >= 70 || S.fame >= 40) && !(S.flags.wanted && S.flags.wanted[S.nation]);
+      return tierOK(S, X) && !r.office && r.ruler == null && S.nation != null && live(h) && h.nation === S.nation && h.province >= 0 && ((S.sm >= 55 && S.q >= 3) || S.sm >= 70 || S.fame >= 40 || (G.eduLv && (G.eduLv(S) >= 3 || (G.eduLv(S) >= 2 && S.sm >= 45))) || (r.noble && r.noble.k === S.nation && r.noble.rank >= 2)) && !(S.flags.wanted && S.flags.wanted[S.nation]);
     },
     build(S, X) {
       const n = G.realm.nations[S.nation], p = homeS(S).province;
@@ -420,6 +420,7 @@ window.LifeSim = window.LifeSim || {};
       if (k !== 'go') return null;
       const W = S.world, R = G.bindWorld(W), D = W.dyn, p = rebelProv(S), from = D.prov[p], old = R.nations[from];
       S.gold -= G.ORG.rebelCost;
+      if (G.stripTitle) G.stripTitle(S, from, `làm phản ${old.name}`);
       if (!X.chance(G.rebelChance(S))) {
         flag(S, 'rebelFail'); D.nat[from].stab = Math.min(1, D.nat[from].stab + .05);
         Dn().hist(D, W.year, 'riot', `${S.name} dấy binh ở tỉnh ${R.provinces[p].name} chống ${old.name}, thất bại.`);
@@ -650,6 +651,7 @@ window.LifeSim = window.LifeSim || {};
       const pw = X.power(S), size = G.clamp(o.members / 60, .5, 2), pDie = G.clamp(.07 - .012 * pw - .01 * rank, .008, .07);
       if (X.chance(pDie)) { X.die({ id: 'war', text: `tử trận khi đánh thuê cho ${R.nations[c.side].name}` }); return null; }
       w.score += (c.side === w.a ? 1 : -1) * .05 * (1 + rank) * size;
+      if (G.addMerit) G.addMerit(S, c.side, 3);   // công trạng với nước thuê mình (js/noble.js)
       const pay = Math.round(med * (1.5 + rank)); X.money(pay); S.fame = Math.min(100, S.fame + 1 + rank);
       X.add('hl', -X.int(3, 12)); X.addXp(40 * (1 + X.ctier(S)));
       o.rep = Math.min(1, o.rep + .02);
@@ -674,6 +676,7 @@ window.LifeSim = window.LifeSim || {};
     if (what === 'adv') { if (r.adv && r.adv.branch) { r.adv.branch = null; return 'Bạn giao lại chi nhánh, vẫn giữ thẻ hội.'; } r.adv = null; return 'Bạn trả thẻ Hiệp Hội.'; }
     if (what === 'head') { const h = G.SET[r.head]; if (live(h)) Dn().setField(D, h, 'head', { name: G.personName(h.race || 'human', 'm', X.rnd), player: false, since: W.year }); r.head = null; return 'Bạn giao lại việc chung cho người khác.'; }
     if (what === 'office') { r.office = null; return 'Bạn treo ấn từ quan.'; }
+    if (what === 'noble') return G.renounceTitle ? G.renounceTitle(S) : null;
     if (what === 'ruler') {
       const k = r.ruler, n = G.realm.nations[k], nr = Dn().makeRuler(n, X);
       if (nr) { D.nat[k].ruler = nr; n.ruler = nr; } D.nat[k].stab = Math.max(0, D.nat[k].stab - .08);
@@ -712,8 +715,9 @@ window.LifeSim = window.LifeSim || {};
       o.leader = { name: G.personName(S.race === 'skeleton' ? 'human' : S.race, X.chance(.5) ? 'm' : 'f', X.rnd), player: false };
       Dn().hist(D, year, 'org', `${o.name} mất ${G.ORG_KINDS[o.kind].ranks[2]} ${S.name}; ${o.leader.name} lên thay.`);
     }
+    if (G.nobleDeath) G.nobleDeath(S, X);
     S.rolesAtDeath = JSON.parse(JSON.stringify(r));
-    S.roles = { head: null, office: null, ruler: null, orgs: {}, adv: null };
+    S.roles = { head: null, office: null, ruler: null, orgs: {}, adv: null, noble: null };
   };
 
   // ═════════ Mô tả vai trò (giao diện, nhật ký đời) ═════════
@@ -722,6 +726,7 @@ window.LifeSim = window.LifeSim || {};
     const r = S.roles, W = S.world, out = [];
     if (!r) return out;
     if (r.ruler != null) { const n = G.realm.nations[r.ruler], d = W.dyn.nat[r.ruler]; out.push({ what: 'ruler', text: `${d && d.ruler ? d.ruler.title : 'Người cai trị'} ${n.name}`, mgr: true }); }
+    if (r.noble && G.nobleText) out.push({ what: 'noble', text: G.nobleText(S), mgr: false });
     if (r.office) out.push({ what: 'office', text: `${G.OFFICE_VI[r.office.rank]} ${G.realm.nations[r.office.k].name}${r.office.rank === 1 ? ' · tỉnh ' + G.realm.provinces[r.office.p].name : ''}`, mgr: true });
     if (r.head != null && G.SET[r.head]) { const h = G.SET[r.head]; out.push({ what: 'head', text: `${cap(G.HEAD_VI[h.tier] || 'trưởng')} ${h.name}${h.founder === S.name ? ' (bạn lập)' : ''}`, mgr: true }); }
     if (r.adv) out.push({ what: 'adv', text: `Hiệp Hội Mạo Hiểm · hạng ${G.ADV_RANKS[G.advRank(S)]}${r.adv.branch && G.SET[r.adv.branch] ? ' · trưởng chi nhánh ' + G.SET[r.adv.branch].name : ''}`, mgr: !!r.adv.branch });

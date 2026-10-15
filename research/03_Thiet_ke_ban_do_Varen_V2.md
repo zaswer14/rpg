@@ -478,6 +478,53 @@ Khác với thiết kế ở 5.5:
 
 Trỗi dậy 21,2%; chết vì quái 10,2%; khu dân cư sụp / lập 2,4 / 2,3 mỗi 100 năm; hang ổ 7,1. Thế giới động 50 × 300 năm (không có người chơi) vẫn như bước 8: nước còn sống trung vị 6 (4–8), tỉnh đổi chủ 6,4, khu sụp 1,9 / lập 2,1 mỗi 100 năm. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước.
 
+### 5.9. Học viện, sư đồ, quý tộc (15/10/2026, người dùng yêu cầu thêm sau bước 9)
+
+Đã làm (`LifeSim_RPG/js/edu.js`, `js/noble.js`). Cả ba đều tự chọn: mỗi bước đến dưới dạng quyết định, chế độ Tự sống chọn theo tính cách.
+
+**Học viện** ba cấp (`G.EDU`), học ở trường của khu dân cư (công trình `school`: Trường làng ở thị trấn, Trường ở thành phố, Học viện ở kinh đô). Không có trường ở khu nhà thì học ở khu có trường trong tỉnh, không nữa thì ở kinh đô của nước; học xa nhà thì học phí × 1,5.
+
+| Cấp | Tuổi | Điều kiện | Nơi | Số năm | Học phí / năm |
+|---|---|---|---|---|---|
+| Sơ cấp | thơ ấu (≥ 35% tuổi trưởng thành) | | thị trấn trở lên | 4 | .25 × trung vị |
+| Trung cấp | thiếu niên | xong sơ cấp, Hiểu biết ≥ 25, thi đầu vào | thành phố, kinh đô | 3 | .8 × trung vị |
+| Cao cấp | thiếu niên hoặc mới trưởng thành | xong trung cấp, Hiểu biết ≥ 45, thi đầu vào; chọn ngành (Võ bị, Pháp thuật, Y dược, Văn chính, Cơ khí) | Học viện ở kinh đô | 3 | 2 × trung vị |
+
+- **Ai trả**: gia đình (cha mẹ còn sống) có ngân sách học mỗi năm theo tầng lớp, .05 / .3 / 1 / 3 / 9 × trung vị từ Cùng khổ tới Quý tộc, nên nhà Thương gia, Quý tộc cho con học tới cao cấp còn nhà Thợ thuyền chỉ lo được sơ cấp. Không đủ thì tự trả bằng tiền mình, không nữa thì **học bổng** (ít suất: Hiểu biết vượt ngưỡng 0 / 10 / 20 / 25, chăm học, bốc một lần cho mỗi cấp với xác suất .6 / .45 / .4). Hết tiền giữa chừng hoặc trường mất thì bỏ dở.
+- **Thi đầu vào**: .3 + (Hiểu biết − ngưỡng) / 50 + chăm học × .3 (+.1 nhà giàu có thầy kèm), kẹp .05–.95.
+- Mỗi năm đi học: Hiểu biết + 2,5 / 3,5 / 4,5 × (.5 + thời gian focus Học chữ), kinh nghiệm; ngành ở cao cấp rèn kỹ năng của ngành. Học ít hơn 25% thời gian thì năm đó chỉ tính nửa năm.
+- **Tác dụng**: nghề trí óc (học giả, thầy thuốc, tu sĩ, thương nhân) thu nhập + 8% mỗi cấp, nghề khác + 2%; trung cấp kèm Hiểu biết ≥ 45, hoặc cao cấp, đủ điều kiện ra làm quan; tốt nghiệp cao cấp thì lên Đại thần sau 4 năm thay vì 6.
+
+**Sư đồ**:
+
+- *Làm đệ tử* (thiếu niên hoặc mới trưởng thành, mỗi đời một lần được nhận): **thợ lành nghề** dạy một sinh kế làm được ở nơi mình ở (4 năm; lễ nhập môn .3 × trung vị, không có tiền thì làm không công), mỗi năm rèn mạnh các kỹ năng của nghề, đang làm nghề đó thì thu nhập tăng dần; **cao thủ** Tier 3–5 để ý người có năng khiếu (một kỹ năng ≥ 15 hoặc cấp ≥ 8), phải thắng một trận thử tay (qua luật Tier như mọi trận), theo thầy 5 năm, rèn cả trường phái và kinh nghiệm. Xuất sư được quà (đồ nghề; hoặc tuyệt kỹ + 8 một kỹ năng và danh vọng). Thầy có thể mất giữa chừng.
+- *Nhận đệ tử* (thay quyết định "Học trò" cũ chỉ dành cho tuổi già): trưởng thành trở lên, kỹ năng chủ đạo ≥ 60, tối đa 2 đệ tử đang học; mỗi năm có lễ, danh vọng, quan hệ; đệ tử học 5 năm rồi xuất sư, 15% thành danh (sử biên niên ghi), 5% bỏ đi mang theo bí kíp.
+
+**Quý tộc** năm bậc (`G.NOBLE_VI`): Nam tước, Tử tước, Bá tước, Hầu tước, Công tước. Chỉ nước có chính thể quân chủ, đế chế, triều đình Yêu Tinh, tử quyền mới ban tước (ở `can-bang` là 2 / 7 nước). Mỗi nước ban tước có sẵn 16 nhà quý tộc NPC (1 Công, 2 Hầu, 3 Bá, 4 Tử, 6 Nam), hiện ở bảng quốc gia cùng người chơi.
+
+- *Sinh ra*: tầng lớp Quý tộc ở nước ban tước thì 60% là con một nhà có tước (Nam : Tử : Bá : Hầu = 4 : 3 : 2 : 1), một nửa là người thừa kế: cha (không có cha thì mẹ) mất thì kế tước.
+- *Công trạng* với nước đang sống (`S.merit`): đi lính +1 mỗi năm, Quan tỉnh +1,5, Đại thần +3, trưởng khu +.5 (thị trấn trở lên +1), dọn hang +2, tầng di tích +1, lập làng +4, lập thị trấn +8, nâng làng +6, nâng thành phố +12, đánh thuê cho nước +3, hạ chúa vùng +30. Đủ 25 / 45 / 70 / 100 / 140 công trạng và 20 / 30 / 40 / 55 / 75 danh vọng thì được sắc phong lên bậc kế tiếp (nhận hoặc từ chối).
+- *Mua tước*: góp 40 × trung vị vào quốc khố được Nam tước, 100 × được Tử tước.
+- *Tác dụng*: bổng lộc mỗi năm 1 / 2 / 3,5 / 6 / 10 × trung vị; từ Bá tước có **thái ấp** (làng hoặc thị trấn của nước gần nhà, Hầu và Công có thể là thành phố; thu thuế ở đó, bản đồ ghi "thái ấp của …"); tầng lớp lên Thương gia (Nam, Tử) hoặc Quý tộc (Bá trở lên); Tử tước trở lên đủ điều kiện làm quan, Bá tước lên Đại thần dễ hơn. Sống ở nước khác thì bổng lộc tạm dừng.
+- *Mất tước*: nước mất hoặc đổi sang chính thể không ban tước; dấy binh chống nước ban tước (thành hay bại đều mất); tự từ bỏ (nút trong khối Vai trò). Chết thì con trưởng thành kế tước và thái ấp, không có con thì tước về triều đình.
+
+Đo bằng `sim.html` (1000 đời, % mọi đời):
+
+| Số đo | Kết quả |
+|---|---|
+| Vào / tốt nghiệp sơ cấp | 54,4% / 53,3% |
+| Vào / tốt nghiệp trung cấp | 18,6% / 17,8% |
+| Vào / tốt nghiệp cao cấp | 10,5% / 8,6% |
+| Học bổng / bỏ dở / trượt thi trung cấp, cao cấp | 18,8% / 1,7% / 1,2%, 1,0% |
+| Tốt nghiệp sơ / trung / cao cấp theo tầng lớp lúc sinh | Cùng khổ 37 / 5 / 0%; Nông hộ 29 / 7 / 1%; Thợ thuyền 87 / 14 / 3%; Thương gia 84 / 68 / 48%; Quý tộc 91 / 74 / 56% |
+| Học việc thợ lành nghề / đệ tử cao thủ / xuất sư / nhận đệ tử | 27,2% / 15,1% / 37,1% / 13,6% |
+| Sinh trong nhà quý tộc / kế tước / phong vì công trạng / mua tước | 1,0% / 0,5% / 4,1% / 1,9% |
+| Tước cao nhất từng có | Nam 41, Tử 14, Bá 2, Hầu 6, Công 1 đời |
+
+Trận vượt Tier + 1: 0 / 48.440. Trỗi dậy 20,4%, chết vì quái 10,5%, lập làng 10,0%, ra làm quan 12,4% (bước 9: 10,6%; thêm đường vào bằng học vấn và tước).
+
+Còn để ý: nhà Cùng khổ đi học sơ cấp nhiều hơn nhà Nông hộ (37% so với 29%) vì học bổng sơ cấp xét theo Hiểu biết và tính chăm, không xét nghèo; Hầu tước (6) nhiều hơn Bá tước (2), chưa xem kỹ vì sao (nhà Hầu tước lúc sinh, hoặc người leo liền nhiều bậc khi công trạng dồn sẵn). Chưa làm: người chơi làm vua phong tước cho người khác, hôn nhân giữa các nhà quý tộc, ngành học mở nghề mới.
+
 ## 6. Đường đi và hành trình
 
 ### 6.1. Lưới chi phí
@@ -702,7 +749,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 6 ✓ | Vùng biển 4 tầng, loài biển mới, tàu, hải trình (15/10/2026, xem mục 7.4) | đi biển |
 | 7 ✓ | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên (15/10/2026, xem mục 5.7) | thế giới đổi qua các kiếp |
 | 8 ✓ | Hang ổ, di tích, ổ chúa (15/10/2026, xem mục 4.3) | dọn hang, thú triều có nguồn |
-| 9 ✓ | Lập làng, lập thị trấn, lập nước, hội, làm quan, focus Quản lý (15/10/2026, xem mục 5.8) | người chơi để lại dấu trên bản đồ |
+| 9 ✓ | Lập làng, lập thị trấn, lập nước, hội, làm quan, focus Quản lý (15/10/2026, xem mục 5.8); thêm học viện, sư đồ, quý tộc (mục 5.9) | người chơi để lại dấu trên bản đồ |
 | 10 | Sự kiện cho luật, đặc tính, đặc trưng riêng; quyết định; đường thăng tiến theo chính thể | |
 
 ## 13. Còn phải chốt

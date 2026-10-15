@@ -218,6 +218,8 @@
     const chips = S.conds.map(c => `<span class="chip">${esc(G.CONDS[c.id].nameVi)}</span>`);
     if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
     if (S.flags.pet) chips.push(`<span class="chip ok">Nuôi ${esc(S.flags.pet)}</span>`);
+    // Học vấn, sư đồ (js/edu.js).
+    { const e = G.eduText && G.eduText(S); if (e) chips.push(`<span class="chip ok">${esc(e)}</span>`); for (const t of (G.mentorText ? G.mentorText(S) : [])) chips.push(`<span class="chip ok">${esc(t)}</span>`); }
     if (S.flags.lordSlayer) chips.push(`<span class="chip ok">Kẻ hạ ${esc(S.flags.lordSlayer)}</span>`);
     // Pháp lý: truy nã, tiền án, nghĩa vụ, khổ sai.
     for (const k of Object.keys(S.flags.wanted || {})) chips.push(`<span class="chip">Bị ${esc(G.realm.nations[k] ? G.realm.nations[k].name : '?')} truy nã</span>`);
@@ -228,7 +230,7 @@
     // Vai trò (js/org.js): trưởng khu, quan, người cai trị, hội; mỗi vai có nút rời / từ chức (không hướng nào bắt buộc).
     const RLs = S.dead ? [] : G.roleList(S);
     $('cRolesBox').hidden = !RLs.length;
-    $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : 'Từ chức'}</button></div>`).join('');
+    $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : r.what === 'noble' ? 'Từ bỏ' : 'Từ chức'}</button></div>`).join('');
     const ms = Object.entries(S.mastery).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
     $('cMast').innerHTML = ms.map(([m, v]) => {
       const inh = S.inherited && S.inherited.skill === m;
@@ -314,6 +316,7 @@
       <div class="row"><span>Dân ${pop.toLocaleString('vi')} · đô thị ${Math.round(urban / Math.max(1, pop) * 100)}%</span><span>${cnt}</span></div>
       <div class="rz"><b>Tỉnh</b> · ${provs}</div>
       <div class="rz"><b>Khu dân cư lớn</b> · ${big}</div>
+      ${G.grantsTitles && G.grantsTitles(n.idx) ? `<div class="rz"><b>Quý tộc</b> · ${G.noblesOf(sim.S.world, n.idx).slice(0, 10).map(x => `${G.NOBLE_VI[x.rank]} ${esc(x.name)}${x.player && x.name === sim.S.name ? ' (bạn)' : ''}`).join(' · ')}</div>` : ''}
       <div class="rz"><b>Quan hệ</b> · ${rel}</div>
       ${wars ? `<div class="rz" style="color:var(--bad)"><b>Đang chiến tranh</b> · ${wars}</div>` : ''}${truce ? `<div class="rz"><b>Hưu chiến</b> · ${truce}</div>` : ''}`;
     box.hidden = false;
@@ -446,7 +449,7 @@
     const near = G.realm.settlements.filter(s => Math.hypot(s.x - x, s.y - y) < ({ capital: 10, city: 9, town: 8 }[s.tier] || 6)).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
     const prov = G.provinceAtCell(c.cell), nat = G.nationAtCell(c.cell);
     const gv = graves.find(g => g.world === G.realm.seed && Math.hypot(g.x - x, g.y - y) < 7);
-    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích${near.ruined != null ? ` (bỏ hoang năm ${near.ruined})` : ''}` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}${near.dwindling ? ' · <span style="color:var(--bad)">sa sút</span>' : ''}${near.founded ? ` · lập năm ${near.founded}` : near.revived ? ` · dựng lại năm ${near.revived}` : ''}${near.head ? `<br>${G.HEAD_VI[near.tier] ? G.HEAD_VI[near.tier][0].toUpperCase() + G.HEAD_VI[near.tier].slice(1) : 'Trưởng'}: ${esc(near.head.name)}${near.head.player && near.head.name === S.name ? ' (bạn)' : ''}` : ''}${near.founder ? ` · người lập: ${esc(near.founder)}` : ''}${(() => { const os = G.orgsAt ? G.orgsAt(S.world, near.id) : []; return os.length ? `<br>Hội: ${os.map(o => esc(o.name) + ' (' + o.members + ')').join(', ')}` : ''; })()}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
+    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích${near.ruined != null ? ` (bỏ hoang năm ${near.ruined})` : ''}` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}${near.dwindling ? ' · <span style="color:var(--bad)">sa sút</span>' : ''}${near.founded ? ` · lập năm ${near.founded}` : near.revived ? ` · dựng lại năm ${near.revived}` : ''}${near.head ? `<br>${G.HEAD_VI[near.tier] ? G.HEAD_VI[near.tier][0].toUpperCase() + G.HEAD_VI[near.tier].slice(1) : 'Trưởng'}: ${esc(near.head.name)}${near.head.player && near.head.name === S.name ? ' (bạn)' : ''}` : ''}${near.founder ? ` · người lập: ${esc(near.founder)}` : ''}${near.fief ? `<br>Thái ấp của ${G.NOBLE_VI[near.fief.rank]} ${esc(near.fief.name)}` : ''}${(() => { const os = G.orgsAt ? G.orgsAt(S.world, near.id) : []; return os.length ? `<br>Hội: ${os.map(o => esc(o.name) + ' (' + o.members + ')').join(', ')}` : ''; })()}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
       + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`

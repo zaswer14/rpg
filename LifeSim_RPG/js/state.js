@@ -45,6 +45,7 @@ window.LifeSim = window.LifeSim || {};
     if (n && n.laws.includes('sea_toll') && G.here(S).s && G.here(S).s.roles.includes('port') && S.urban) m *= 1.1;
     // Hội viên phường nghề đúng nghề mình (js/org.js).
     if (G.orgIncome) m *= G.orgIncome(S);
+    if (G.eduIncome) m *= G.eduIncome(S);   // học vấn (js/edu.js)
     return m;
   };
 
