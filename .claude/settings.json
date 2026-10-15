@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash tools/sync.sh)",
+      "Bash(bash tools/sync.sh pull)",
+      "Bash(bash tools/muc_luc.sh)",
+      "Bash(bash tools/muc_luc.sh:*)"
+    ]
+  }
+}
