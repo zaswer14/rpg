@@ -1,6 +1,6 @@
 # Vạn Kiếp — mô phỏng một đời ở đại lục Varen
 
-**Ngày:** 14/10/2026 · **Trạng thái:** bản chơi được đầu tiên. · **Nguồn ý tưởng:** `research/01_Life_Sim_1in8b.md`.
+**Ngày:** 14/10/2026, cập nhật 15/10/2026 · **Trạng thái:** bản đồ V2 xong bước 1–5 (địa hình, quốc gia, khu dân cư, tầng nguy hiểm, luật, đường xá); tiếp theo là biển. Tiến độ và việc tiếp theo: **`TIEN_DO.md`**. · **Nguồn ý tưởng:** `research/01_Life_Sim_1in8b.md`; thiết kế bản đồ V2: `research/03_Thiet_ke_ban_do_Varen_V2.md`.
 
 Người chơi bấm một nút và được sinh ra ở đâu đó trên đại lục Varen: khu dân cư (trong một thế giới có quốc gia, thành phố, làng mạc sinh theo seed), thành thị hay nông thôn, chủng tộc, giới, tầng lớp, giáo phái đều bốc theo trọng số. Đời chạy theo thời gian thực, mỗi năm vài giây, xen sự kiện, quyết định và các lượt săn quái, cho tới khi nhân vật chết. Lúc chết tung d100: **từ 20 trở xuống (20%) thì trỗi dậy thành Bộ Xương**, mang theo **kỹ năng chủ đạo** (mastery cao nhất) của kiếp đó; mọi thứ khác về số 0. Bộ Xương chết lại cũng tung 20% như vậy, nên có thể nối nhiều kiếp.
 
@@ -131,6 +131,7 @@ Không sửa file nào trong `library/`. Loài thư viện được thả vào v
 
 ## 8. Còn thiếu
 
+- Bản đồ V2 còn bước 6–10 (biển, quốc gia động, hang ổ và di tích, lập làng / lập nước, sự kiện cho đặc tính và đặc trưng): xem `TIEN_DO.md`.
 - Chưa có bản dịch; mọi văn bản viết thẳng tiếng Việt.
 - Con cái chỉ là danh sách tên/tuổi; chưa chơi tiếp đời con.
 - Nghề ẩn (`hidden`) của thư viện chưa mở được trong game.
