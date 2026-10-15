@@ -525,6 +525,85 @@ Trận vượt Tier + 1: 0 / 48.440. Trỗi dậy 20,4%, chết vì quái 10,5%,
 
 Còn để ý: nhà Cùng khổ đi học sơ cấp nhiều hơn nhà Nông hộ (37% so với 29%) vì học bổng sơ cấp xét theo Hiểu biết và tính chăm, không xét nghèo; Hầu tước (6) nhiều hơn Bá tước (2), chưa xem kỹ vì sao (nhà Hầu tước lúc sinh, hoặc người leo liền nhiều bậc khi công trạng dồn sẵn). Chưa làm: người chơi làm vua phong tước cho người khác, hôn nhân giữa các nhà quý tộc, ngành học mở nghề mới.
 
+### 5.10. Kết quả bước 10 (15/10/2026)
+
+Đã làm (`LifeSim_RPG/js/realmev.js`, `js/noble.js`, phần chính trị ở `js/dynamic.js`): sự kiện cho đặc tính mẫu, đặc trưng riêng và các sự kiện mục 8 còn thiếu; tác dụng thế giới của các đặc tính, đặc trưng còn treo; đường thăng tiến theo chính thể; thêm theo yêu cầu của người dùng **xuất thân hoàng gia** (dòng chính, dòng phụ) và **xuất thân quý tộc** (con trưởng kế tước, con thứ thì không). Trang Duyệt Mẫu Quốc Gia lúc làm chưa có đánh dấu nào, nên làm trên bộ mẫu hiện tại.
+
+**Xuất thân** (`G.birthOrigin`, gọi trong `newLife` trước lời mở đầu; nút **Kiếp mới** có ô chọn xuất thân: ngẫu nhiên, hoàng gia dòng chính, hoàng gia dòng phụ, quý tộc):
+
+- *Hoàng gia* chỉ có ở chính thể cha truyền con nối (`G.DYNASTIC`: quân chủ, đế chế, triều đình Yêu Tinh, bộ lạc, hãn quốc) và cùng chủng tộc với vua. Tự nhiên: sinh ở kinh đô thì 15% là hoàng gia (45% dòng chính), sinh ở thành phố 3% là dòng phụ. Trẻ mồ côi thì không (trừ khi chọn).
+- *Dòng chính*: vua là cha hoặc mẹ; thứ tự kế vị = số anh chị + 1. Vua băng hà (`polityYear` gọi `G.royalSucceed`, hoặc vua cha mất trong nhà) thì người kế vị số 1 lên ngôi, còn nhỏ thì có nhiếp chính; không phải số 1 thì anh chị cả lên ngôi và con của vua mới đứng trước mình (thứ tự = thứ tự − 1 + 0–3). Anh chị trước mình có thể mất (thứ tự lên một bậc).
+- *Dòng phụ*: họ hàng của vua, thứ 4–9 + số anh chị trong hàng kế vị.
+- Hoàng tộc nhận trợ cấp (4 / 2 × trung vị mỗi năm khi sống trong nước); trưởng thành ở nước ban tước mà không lên ngôi thì được phong Công tước (dòng chính) hoặc Hầu tước (dòng phụ); nước mất thì lưu vong. **Tranh ngôi**: hoàng tộc chưa phải người kế vị số 1, khi triều vừa tranh ngôi (2 năm) hoặc ổn định < .35, danh vọng ≥ 25; thành công với xác suất .1 + danh vọng / 300 (+.15 dòng chính) + (.4 − ổn định) × .8 (+.1 nếu vừa tranh ngôi) − thứ tự × .01, kẹp .05–.7; thua thì 50% bị xử tử, còn lại lưu vong và bị truy nã.
+- *Quý tộc*: ở nước ban tước, kinh đô 7%, thành phố 6%, thị trấn 4%, làng 1,2% số người sinh ra là con một nhà có tước (Nam : Tử : Bá : Hầu = 4 : 3 : 2 : 1). Không có anh chị thì là con trưởng, cha (không có cha thì mẹ) mất thì kế tước; có anh chị thì là con thứ, không kế tước, nhưng thành người thừa kế nếu mọi anh chị đều mất. Nhà quý tộc nào cũng thuộc tầng lớp Quý tộc (tiền học, sức khỏe).
+
+**Thăng tiến theo chính thể** (`G.PROMO`, quyết định `gov_rank`, nhận hay không; xét theo nước đang sống; bậc 2 / 3 / 4 cần thêm danh vọng 15 / 30 / 50; bổng lộc .8 × bậc × trung vị mỗi năm):
+
+| Chính thể | Bậc | Xét theo |
+|---|---|---|
+| Quân chủ, đế chế, triều đình, tử quyền | tước quý tộc (mục 5.9) | công trạng |
+| Thần quyền | Tu sĩ → Linh mục → Giám mục → Hồng y | Devotion (phải cùng quốc giáo) |
+| Hội dòng | Tập sinh → Hiệp sĩ dòng → Bề trên → Đại sư dòng | Devotion và danh vọng |
+| Hội đồng | Thư ký hội đồng → Nghị viên → Trưởng ban → Chủ tịch hội đồng | Hiểu biết và danh vọng |
+| Cộng hòa thương nhân | Hội viên thương hội → Nghị viên → Đại thương gia → Chủ tịch thương hội | tài sản |
+| Liên minh lỏng | Trưởng nhóm → Thủ lĩnh nhóm → Thủ lĩnh liên minh | danh vọng |
+| Pháp quyền | Pháp sư tập sự → Pháp sư → Đại pháp sư → Tháp chủ | kỹ năng Huyền thuật |
+| Quân quản | Đội trưởng → Đô úy → Tướng quân → Nguyên soái | công trạng |
+| Bộ lạc, hãn quốc | Chiến binh → Đầu lĩnh → Phó thủ lĩnh; Kỵ sĩ → Bách phu trưởng → Vạn phu trưởng | danh vọng và cấp |
+| Tập thể | không có | |
+
+**Thách đấu giành ngôi** (bộ lạc, hãn quốc, mẫu B5 Ngai thách đấu): danh vọng ≥ 45 và đã lên bậc 2 (hoặc danh vọng ≥ 65); thắng với xác suất logistic(3,2 × (sức − (2,2 + quân × .6))); thua thì 40% chết.
+
+**Sự kiện** (90 cái, `js/realmev.js`): 50 đặc tính mẫu, 31 đặc trưng riêng, 9 sự kiện mục 8 (ân xá, lễ quốc giáo, nhắc lại sử từ trước khi sinh, xóm bên xin nhập vào khu mình làm trưởng, sứ thần, con đòi kế vị, quan tham, tỉnh đòi tách, Bộ Xương về quê cũ đổi chủ). Chạy ở **kênh riêng**: mỗi lượt 35% một sự kiện quốc gia hợp với nơi đang sống, không lẫn vào bể sự kiện thường.
+
+**Tác dụng thế giới** (`polityYear`, tắt được bằng `G.DYN.traitFx = false` để so):
+
+| Đặc tính / đặc trưng | Tác dụng |
+|---|---|
+| H4 Quân đoàn | thắng thế thì chiếm tỉnh mỗi năm (thay vì 50%), mỗi tỉnh chiếm được ổn định −.03 |
+| R4 Bạo chúa | chiếm tỉnh thì ổn định −.05; nổi loạn × 1,5 |
+| O1 Kỵ binh | năm đầu chiến tranh +.3 điểm |
+| O3 Lò chiến | sức mạnh +1% mỗi năm hòa bình, tối đa +30% |
+| D2 Sổ thù | chỉ tuyên chiến để đòi tỉnh đã tách; mất tỉnh thì chiến tranh kéo dài |
+| C3 Giao thức chiến | chiến tranh tới điểm ±1,5 hoặc 10 năm (thay vì ±1 hoặc 6) |
+| B1 Bầy | bên bị đánh +.08 điểm mỗi năm |
+| M2 Hải quân, Thủy quân mạnh | đánh nước có kinh đô ven biển +.1 điểm mỗi năm |
+| H1 Thập tự chinh | ổn định > .6 thì tuyên chiến với nước Hắc Giáo, Bộ Xương × 3 |
+| S2 Sám hối | nước Quang Minh không tuyên chiến với nước này |
+| E1 Ký ức dài | nổi loạn × .2 |
+| E2 Tháp pháp sư, Pháp sư cung đình | sức mạnh +5% |
+| E5 Ẩn trong bóng, Hội ám sát | đối phương trong chiến tranh ổn định −.03 mỗi năm |
+| Hai dòng tranh ngôi, O2 Kẻ mạnh nhất | vua băng hà thì tranh ngôi 45% (thay vì 20%); Hai dòng còn nổi loạn × 1,5 |
+| Đế chế suy tàn | nổi loạn × 1,5 |
+| Lời nguyền hoàng tộc | người cai trị băng hà nhanh gấp đôi |
+| Thù truyền kiếp | tuyên chiến với nước bị thù × 3 |
+| Liên minh hôn nhân | không tuyên chiến với nước liên minh |
+| luật Giải phóng | tuyên chiến × 2 với nước không có luật Cơ Nhân là công dân |
+
+Đặc tính, đặc trưng khác chỉ có sự kiện (chưa có tác dụng cơ chế): ví dụ D1 Đường hầm, E4 Tàu lá, C4 Giờ chính xác, F4 Đường đổi hướng, M3 Tiếng gọi, R5 Canh giấc rồng.
+
+**Một lỗi đã sửa trong lúc đo**: quyết định thăng tiến lúc đầu đặt tên `promote`, trùng với quyết định lên bậc nghề có sẵn ở `js/events.js`, nên nhân vật không lên nghề được: cấp trung bình của mạo hiểm giả tụt từ ~26 xuống ~21, chết vì quái lên 13–14%. Đổi tên thành `gov_rank` thì về như cũ. Đã kiểm 20 quyết định mới (bước 9 tới nay) không còn trùng tên nào.
+
+Đo bằng `sim.html` (thế giới `can-bang`):
+
+| Số đo | Kết quả |
+|---|---|
+| Trận vượt Tier + 1 | 0 / 48.216 |
+| Trỗi dậy / chết vì quái | 19,1% / 9,8% (mạo hiểm giả 37,7%, cấp trung bình 26,3) |
+| Lập làng / làm quan / tốt nghiệp cao cấp / phong tước vì công trạng | 10,3% / 13,1% / 9,1% / 4,5% |
+| Hoàng gia dòng chính / dòng phụ (tự nhiên) | 0,1% / 0,1% |
+| Con nhà quý tộc / con trưởng / kế tước | 1,0% / 0,3% / 0,4% |
+| Lên một bậc thăng tiến theo chính thể | 33,7% (bậc cao nhất: 1: 195, 2: 85, 3: 34, 4: 23 đời) |
+| Thách đấu giành ngôi / thắng | 1,1% / 0,8% |
+| Chọn xuất thân hoàng gia dòng chính (15 đời) | 5 đời lên ngôi |
+| Chọn xuất thân quý tộc (12 đời) | 4 con trưởng, 3 đời kế tước |
+| Thế giới động 50 × 300 năm | nước còn sống trung vị 6 (ít nhất 3, nhiều nhất 9), tỉnh đổi chủ 6,8, chiến tranh 5,6, nước diệt vong 2,7, khu sụp / lập 1,8 / 1,9 mỗi 100 năm |
+| Thế giới động trong 1000 đời | tỉnh đổi chủ 6,0, khu sụp / lập 2,3 / 2,2 mỗi 100 năm; 16,5% đời thấy quê đổi chủ |
+
+So với bước 9, nước diệt vong nhiều hơn (2,7 so với 2,4 mỗi 100 năm ở 50 × 300) và có thế giới chỉ còn 3 nước (bước 9: ít nhất 4), chủ yếu vì Quân đoàn chiếm nhanh; vẫn trong mục tiêu "không dưới 3".
+
+Chưa làm: người chơi làm vua phong tước, hôn nhân giữa các nhà quý tộc, hoàng gia; tác dụng cơ chế cho các đặc tính còn lại; quốc giáo đồng hóa tỉnh chiếm được.
+
 ## 6. Đường đi và hành trình
 
 ### 6.1. Lưới chi phí
@@ -750,7 +829,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 7 ✓ | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên (15/10/2026, xem mục 5.7) | thế giới đổi qua các kiếp |
 | 8 ✓ | Hang ổ, di tích, ổ chúa (15/10/2026, xem mục 4.3) | dọn hang, thú triều có nguồn |
 | 9 ✓ | Lập làng, lập thị trấn, lập nước, hội, làm quan, focus Quản lý (15/10/2026, xem mục 5.8); thêm học viện, sư đồ, quý tộc (mục 5.9) | người chơi để lại dấu trên bản đồ |
-| 10 | Sự kiện cho luật, đặc tính, đặc trưng riêng; quyết định; đường thăng tiến theo chính thể | |
+| 10 ✓ | Sự kiện cho đặc tính, đặc trưng riêng; tác dụng thế giới của đặc tính; đường thăng tiến theo chính thể; xuất thân hoàng gia, quý tộc (15/10/2026, xem mục 5.10) | sinh ra trong hoàng tộc, tranh ngôi, mỗi nước một nét riêng |
 
 ## 13. Còn phải chốt
 

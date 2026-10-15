@@ -76,6 +76,7 @@
 <script src="js/org.js"></script>
 <script src="js/edu.js"></script>
 <script src="js/noble.js"></script>
+<script src="js/realmev.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -111,9 +112,10 @@ $('run').onclick = () => {
   // Chạy từng đợt 25 đời rồi nhả luồng: trang không treo, hiện được tiến độ.
   setTimeout(async () => {
     const t0 = performance.now();
+    const ORIGK = ['royalMain', 'royalSide', 'royalCrown', 'royalExile', 'claimWin', 'claimFail', 'nobleHeirBorn', 'nobleInherit', 'nobleRoyal', 'promo', 'duel', 'duelWin'];
     const EDUK = ['edu1', 'grad1', 'edu2', 'grad2', 'edu3', 'grad3', 'eduGrant', 'eduDrop', 'eduFail2', 'eduFail3', 'mentorCraft', 'mentorMartial', 'mentorDone', 'discipleTake', 'discipleDone', 'nobleBorn', 'nobleInherit', 'nobleMerit', 'nobleBuy', 'nobleLost'];
     const ORGK = ['advJoin', 'quests', 'advBranch', 'orgJoin', 'mercJoin', 'mercC', 'orgOfficer', 'orgLead', 'orgFound', 'headElect', 'foundVillage', 'foundTown', 'upTown', 'upCity', 'office', 'office2', 'foundNation', 'rebelOK', 'rebelFail'];
-    const A = { dyn: { years: 0, wars: 0, flips: 0, ruins: 0, founded: 0, rebel: 0, newNat: 0, fell: 0, warDeaths: 0, soldiers: 0, soldierDeaths: 0, homeFlip: 0 }, org: { adults: 0, k: {} }, edu: { k: {}, byQ: {}, rank: {} }, lair: { sum: 0, yrs: 0, made: 0, npc: 0, raid: 0, prov: 0, lives: 0, tries: 0, cleared: 0, dgLives: 0, dgTries: 0, floors: 0, fights: 0, over: 0, deaths: 0 }, lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 }, sea: { lives: 0, voyages: 0, fights: 0, storms: 0, wrecks: 0, pirates: 0, deaths: 0 } };
+    const A = { dyn: { years: 0, wars: 0, flips: 0, ruins: 0, founded: 0, rebel: 0, newNat: 0, fell: 0, warDeaths: 0, soldiers: 0, soldierDeaths: 0, homeFlip: 0 }, org: { adults: 0, k: {} }, edu: { k: {}, byQ: {}, rank: {} }, orig: { k: {}, promo: {}, ev: {} }, lair: { sum: 0, yrs: 0, made: 0, npc: 0, raid: 0, prov: 0, lives: 0, tries: 0, cleared: 0, dgLives: 0, dgTries: 0, floors: 0, fights: 0, over: 0, deaths: 0 }, lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 }, sea: { lives: 0, voyages: 0, fights: 0, storms: 0, wrecks: 0, pirates: 0, deaths: 0 } };
     for (let i = 0; i < N; i++) {
       if (i % 25 === 24) { $('status').textContent = `Đang chạy đời ${i + 1}/${N}…`; await new Promise(r => setTimeout(r, 0)); }
       const sim = new G.Sim({ seed: base + ':' + i, headless: true });
@@ -125,6 +127,7 @@ $('run').onclick = () => {
       // Thế giới động trong đời này (mỗi đời một thế giới mới từ seed): đếm theo năm thế giới đã trôi (research/03 mục 5.7).
       { const D = A.dyn, n = S.world.dyn.n; D.years += S.world.year - y0; D.wars += n.wars; D.flips += n.kept + n.rebel + n.join; D.ruins += n.ruins; D.founded += n.founded + n.revived; D.rebel += n.rebel; D.newNat += n.newNat; D.fell += n.fell;
         if (S.causeId === 'war') D.warDeaths++; if (S.flags.served) { D.soldiers++; if (S.causeId === 'war') D.soldierDeaths++; } if (S.flags.homeFlip) D.homeFlip++; }
+      { const O = A.orig, F = S.flags; for (const k of ORIGK) if (F[k]) O.k[k] = (O.k[k] || 0) + 1; if (F.promoMax) O.promo[F.promoMax] = (O.promo[F.promoMax] || 0) + 1; for (const id of Object.keys(S.recent)) { const g = id.split('_')[0]; if (['tpl', 'qk', 'nt', 'rl', 'vl'].includes(g)) O.ev[g] = (O.ev[g] || 0) + 1; } }
       { const E = A.edu, F = S.flags; for (const k of EDUK) if (F[k]) E.k[k] = (E.k[k] || 0) + 1; const b = E.byQ[q0] || (E.byQ[q0] = [0, 0, 0, 0]); b[0]++; for (let l = 1; l <= (S.edu ? S.edu.lv : 0); l++) b[l]++; if (F.nobleMax) E.rank[F.nobleMax] = (E.rank[F.nobleMax] || 0) + 1; }
       { const O = A.org, F = S.flags; if (sim.years(S) >= G.RACES[S.race].adult) O.adults++; for (const k of ORGK) if (F[k]) O.k[k] = (O.k[k] || 0) + 1; }
       { const H = A.lair, n = S.world.dyn.n, F = S.flags; H.sum += n.lairSum || 0; H.yrs += n.lairYrs || 0; H.made += n.lairs || 0; H.npc += n.lairNpc || 0; H.raid += n.raidYrs || 0; H.prov += n.provYrs || 0;
@@ -195,6 +198,10 @@ $('run').onclick = () => {
         row('Học việc thợ lành nghề', 'mentorCraft'), row('Đệ tử cao thủ', 'mentorMartial'), row('Xuất sư', 'mentorDone'), row('Nhận đệ tử', 'discipleTake'), row('Sinh trong nhà quý tộc', 'nobleBorn'), row('Kế tước', 'nobleInherit'), row('Được phong vì công trạng', 'nobleMerit'), row('Mua tước', 'nobleBuy'), row('Mất tước', 'nobleLost')], ['', 'Đời', '% mọi đời'],
         { note: 'research/03 mục 5.9. Tước cao nhất từng có: ' + Object.entries(E.rank).sort((a, b) => a[0] - b[0]).map(([r, n]) => `${G.NOBLE_VI[r]} ${n}`).join(', ') + '.' }));
       out.push(table('Học vấn theo tầng lớp lúc sinh', Object.entries(E.byQ).sort((a, b) => a[0] - b[0]).map(([q, b]) => [G.CLASSES[q].nameVi, b[0], pct(b[1], b[0]), pct(b[2], b[0]), pct(b[3], b[0])]), ['Tầng lớp', 'Đời', 'Sơ cấp', 'Trung cấp', 'Cao cấp'], { note: 'Học phí do gia đình trả theo tầng lớp; nhà nghèo chỉ học được bằng học bổng hoặc tự đi làm trả.' })); }
+    { const O = A.orig, row = (t, k) => [t, O.k[k] || 0, pct(O.k[k] || 0, N)], ev = { tpl: 'đặc tính mẫu', qk: 'đặc trưng riêng', nt: 'quốc gia (ân xá, lễ, sử)', rl: 'nước của mình', vl: 'làng của mình' };
+      out.push(table('Xuất thân, thăng tiến (đời đầu)', [row('Hoàng gia, dòng chính', 'royalMain'), row('Hoàng gia, dòng phụ', 'royalSide'), row('Lên ngôi theo kế vị', 'royalCrown'), row('Giành ngôi thành công', 'claimWin'), row('Giành ngôi thất bại', 'claimFail'), row('Hoàng tộc lưu vong (nước mất)', 'royalExile'),
+        row('Con trưởng nhà quý tộc', 'nobleHeirBorn'), row('Kế tước', 'nobleInherit'), row('Hoàng tộc được phong Công / Hầu tước', 'nobleRoyal'), row('Lên bậc thăng tiến của chính thể', 'promo'), row('Thách đấu giành ngôi', 'duel'), row('Thắng thách đấu, lên ngôi', 'duelWin')], ['', 'Đời', '% mọi đời'],
+        { note: 'research/03 mục 5.10. Bậc thăng tiến cao nhất: ' + Object.entries(O.promo).sort((a, b) => a[0] - b[0]).map(([r, n]) => `bậc ${r}: ${n}`).join(', ') + '. Sự kiện quốc gia đã xảy ra (mỗi sự kiện tính một lần mỗi đời): ' + Object.entries(ev).map(([g, t]) => `${t} ${O.ev[g] || 0}`).join(', ') + '.' })); }
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
     $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;

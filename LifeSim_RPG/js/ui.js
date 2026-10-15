@@ -50,13 +50,13 @@
     };
   }
   // Kiếp mới sinh vào thế giới của kiếp trước (cùng seed thế giới): năm, nước, khu dân cư, sử biên niên nối tiếp.
-  function start(seed) {
+  function start(seed, origin) {
     const prev = sim && sim.S && sim.S.world && sim.S.worldSeed === G.realm.seed ? sim.S.world : null;
     sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() });
     sim.autoDecide = pref.auto;
     clearLog();
     deathShown = false; $('deathModal').hidden = true; $('decModal').hidden = true;
-    sim.newLife(prev ? { world: prev } : {});
+    sim.newLife({ ...(prev ? { world: prev } : {}), ...(origin ? { origin } : {}) });   // origin: xuất thân chọn ở nút Kiếp mới (js/noble.js)
     sim.S.auto = pref.auto;
     selRegion = sim.S.loc;
     dirty = true; save();
@@ -219,6 +219,7 @@
     if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
     if (S.flags.pet) chips.push(`<span class="chip ok">Nuôi ${esc(S.flags.pet)}</span>`);
     // Học vấn, sư đồ (js/edu.js).
+    for (const t of [G.royalText && G.royalText(S), G.houseText && G.houseText(S)]) if (t) chips.push(`<span class="chip ok">${esc(t)}</span>`);
     { const e = G.eduText && G.eduText(S); if (e) chips.push(`<span class="chip ok">${esc(e)}</span>`); for (const t of (G.mentorText ? G.mentorText(S) : [])) chips.push(`<span class="chip ok">${esc(t)}</span>`); }
     if (S.flags.lordSlayer) chips.push(`<span class="chip ok">Kẻ hạ ${esc(S.flags.lordSlayer)}</span>`);
     // Pháp lý: truy nã, tiền án, nghĩa vụ, khổ sai.
@@ -230,7 +231,7 @@
     // Vai trò (js/org.js): trưởng khu, quan, người cai trị, hội; mỗi vai có nút rời / từ chức (không hướng nào bắt buộc).
     const RLs = S.dead ? [] : G.roleList(S);
     $('cRolesBox').hidden = !RLs.length;
-    $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : r.what === 'noble' ? 'Từ bỏ' : 'Từ chức'}</button></div>`).join('');
+    $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : r.what === 'noble' || r.what === 'rank' ? 'Từ bỏ' : 'Từ chức'}</button></div>`).join('');
     const ms = Object.entries(S.mastery).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
     $('cMast').innerHTML = ms.map(([m, v]) => {
       const inh = S.inherited && S.inherited.skill === m;
@@ -486,7 +487,7 @@
   $('autoLife').checked = pref.auto;
   $('autoLife').onchange = e => setAuto(e.target.checked);
   $('reckless').onchange = e => { sim.S.reckless = e.target.checked; sim.ensureZone(); dirty = true; };
-  $('btnNew').onclick = () => { if (sim.S.dead || confirm('Bỏ kiếp đang sống để bắt đầu kiếp mới?')) start(); };
+  $('btnNew').onclick = () => { if (sim.S.dead || confirm('Bỏ kiếp đang sống để bắt đầu kiếp mới?')) start(null, $('origin').value || null); };
   $('btnWorld').onclick = () => { if (confirm('Tạo đại lục mới? Kiếp đang sống sẽ bị bỏ, mộ các kiếp trước ở lại với thế giới cũ.')) { useWorld(G.newSeed()); selNation = null; start(); } };
   $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; dirty = true; };
   document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); $('btnPause').click(); } });

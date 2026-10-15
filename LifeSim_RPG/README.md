@@ -46,6 +46,8 @@ Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành th�
 
 **Học viện, sư đồ, quý tộc** (`js/edu.js`, `js/noble.js`, `research/03` mục 5.9): **học viện** ba cấp ở trường của khu dân cư: sơ cấp (thơ ấu, thị trấn trở lên), trung cấp (thiếu niên, thi đầu vào, thành phố, kinh đô), cao cấp (Học viện ở kinh đô, thi đầu vào, chọn ngành Võ bị / Pháp thuật / Y dược / Văn chính / Cơ khí). Học phí do gia đình trả theo tầng lớp (nhà giàu cho con học tới cao cấp, nhà nghèo chỉ học được nhờ học bổng ít suất hoặc tự đi làm trả), hết tiền thì bỏ dở; học vấn thêm thu nhập nghề trí óc và mở đường làm quan. **Sư đồ**: được thợ lành nghề nhận học việc (rèn nghề, thu nhập tăng) hoặc cao thủ Tier 3–5 nhận làm đệ tử sau một trận thử tay (rèn trường phái, xuất sư được tuyệt kỹ); khi tinh thông một kỹ năng thì tự nhận đệ tử (đệ tử có thể thành danh hoặc phản sư môn). **Quý tộc** năm bậc Nam, Tử, Bá, Hầu, Công ở nước quân chủ, đế chế, triều đình Yêu Tinh, tử quyền: sinh ra trong nhà có tước và kế tước, được sắc phong khi công trạng với nước (đi lính, làm quan, dọn hang, lập làng, đánh thuê, hạ chúa vùng…) và danh vọng đủ ngưỡng, hoặc quyên góp mua tước Nam, Tử; có bổng lộc, từ Bá tước có thái ấp; mất tước khi nước mất hoặc khi làm phản; bảng quốc gia liệt kê các nhà quý tộc.
 
+**Xuất thân, thăng tiến, sự kiện quốc gia** (bước 10; `js/noble.js`, `js/realmev.js`, `research/03` mục 5.10): nút **Kiếp mới** có ô chọn xuất thân: ngẫu nhiên, **hoàng gia dòng chính** (con của vua, có thứ tự kế vị; vua băng hà thì người kế vị số 1 lên ngôi, còn nhỏ thì có nhiếp chính; anh chị cả lên ngôi thì con của vua mới đứng trước mình), **hoàng gia dòng phụ** (họ hàng của vua, xa ngai), **quý tộc** (con trưởng thì kế tước khi cha mẹ mất, con thứ thì không, trừ khi anh chị đều mất). Ngẫu nhiên thì người sinh ở kinh đô, thành phố có thể là hoàng tộc (chỉ ở chính thể cha truyền con nối), người sinh ở nước ban tước có thể là con nhà quý tộc. Hoàng tộc có trợ cấp, được phong Công / Hầu tước nếu không lên ngôi, có thể **tranh ngôi** lúc triều rối (thua thì mất đầu hoặc lưu vong). Nước không ban tước có **đường thăng tiến riêng** theo chính thể (thần quyền: Tu sĩ → Hồng y theo Devotion; hội đồng: Nghị viên → Chủ tịch; thương nhân: theo tài sản; pháp quyền: theo Huyền thuật; quân quản: theo công trạng; bộ lạc, hãn quốc: theo danh vọng, rồi **thách đấu giành ngôi**). Mỗi đặc tính mẫu (50) và đặc trưng riêng (31) có một sự kiện cho người sống ở nước đó, cộng ân xá, lễ quốc giáo, nhắc lại sử, sứ thần, quan tham…; nhiều đặc tính có tác dụng lên chiến tranh, nổi loạn, kế vị (Quân đoàn chiếm tỉnh nhanh, Bạo chúa, Kỵ binh, Lò chiến, Sổ thù, Giao thức chiến, Thập tự chinh, Lời nguyền hoàng tộc…).
+
 Nút **Vùng / Địa hình / Chính trị / Nguy hiểm / Biển** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
 
 Mỗi vùng có **4 khu = 4 tầng nguy hiểm**: ven → sâu → lõi → vùng chết, mỗi khu một dải Tier và bảng loài riêng (`data/world.js`). Ô nào thuộc tầng nào do **độ hoang** quyết định (bước 3, `js/realm.js`): khoảng cách đi bộ từ ô tới khu dân cư gần nhất chia cho bán kính của khu (kinh đô 120px, thành phố 100, thị trấn 80, làng 50, thôn 25, đồn ít nhất 70; nhân tuần tra của nước, vô chủ × 0,6), cộng độ hoang biome (`G.TERRAIN.wild`) và địa hình (`G.FEATURES.wild`). Ngưỡng ven < 1 ≤ sâu < 2 ≤ lõi < 3 ≤ vùng chết. Rừng rậm, núi "xa" văn minh hơn đồng bằng; vùng không có làng nào gần là lõi hoặc vùng chết. Một vùng có thể thiếu tầng (vùng hoang không có tầng ven); khu săn chỉ hiện tầng có ô. Trận đánh xảy ra ở một ô cụ thể của khu, và địa hình ô đó nhân trọng số loài đã có (`G.FEATURE_SPAWN`: rừng rậm nhiều quái phục kích và côn trùng, núi nhiều quái bay và rồng…). Chế độ xem **Nguy hiểm** tô từng ô theo sức nhân vật: an toàn, vừa sức, nguy hiểm (Liều mạng), khóa.
@@ -64,7 +66,7 @@ Mỗi vùng có **4 khu = 4 tầng nguy hiểm**: ven → sâu → lõi → vùn
 | Tầng biển dùng cùng luật dải Tier; hải trình không vào tầng biển bị khóa (trừ tàu có lính hộ tống), mỗi loại tàu chỉ vào tầng của nó | `validateWorld`, `G.findSeaRoute` |
 | Hang ổ, tầng di tích: loài chỉ lấy trong bảng của tầng chứa hang / trong dải Tier của tầng di tích (kiểm như khu); họ quái chủ chỉ nhân trọng số; chỉ được hỏi khi tầng mở với sức mình | `validateWorld`, `G.lairChoices`, `G.dungeonChoice`, `G.assault` |
 
-Kết quả 1000 đời headless (seed `can-bang`, thế giới `can-bang`, sau bước 8): 48.021 trận kể cả dọc đường, trên biển, trong hang ổ và di tích, chênh Tier từ −5 tới +1, **không trận nào vượt +1**.
+Kết quả 1000 đời headless (seed `can-bang`, thế giới `can-bang`, sau bước 10): 48.216 trận kể cả dọc đường, trên biển, trong hang ổ và di tích, chênh Tier từ −5 tới +1, **không trận nào vượt +1**.
 
 ### Quái hoạt động theo tỉnh × tầng
 
@@ -84,7 +86,7 @@ sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ să
 | Focus tính theo thời gian thực trong năm | `G.FOCUS`; đổi focus giữa năm có tác dụng ngay với các nhịp săn |
 | Chỉ số trôi về mục tiêu 25%/năm | `G.driftStats` |
 | Sự kiện = dữ liệu + điều kiện + trọng số + `run`; chống lặp | `G.EVENTS` (75 sự kiện) |
-| Quyết định = `build` + `apply`, sinh từ trạng thái | `G.DECISIONS` (34 quyết định, kể cả dọn hang, xuống di tích, lập làng, lập nước, vào hội, đi học, theo thầy, nhận tước) |
+| Quyết định = `build` + `apply`, sinh từ trạng thái | `G.DECISIONS` (37 quyết định, kể cả dọn hang, xuống di tích, lập làng, lập nước, vào hội, đi học, theo thầy, nhận tước, thăng tiến, tranh ngôi, thách đấu); 90 sự kiện quốc gia ở `G.NATION_EVENTS` |
 | Dòng "dữ kiện thật" kèm sự kiện | Dòng **Sổ tay lữ khách**: luật họ quái lấy thẳng từ `library/bestiary/rules.js` |
 | 4 đứa trẻ sinh cùng giây chạy headless | 4 **đồng niên**; báo khi họ mất (và nếu họ trỗi dậy) |
 | RNG có seed, mọi chỗ gọi qua một hàm | Mỗi `Sim` một RNG riêng; trạng thái RNG lưu cùng save |
@@ -129,7 +131,8 @@ LifeSim_RPG/
   js/dynamic.js             thế giới động: gắn trạng thái đời vào thế giới (G.bindWorld), mật độ quái theo tỉnh × tầng, hệ con quốc gia (chiến tranh, nổi loạn, diệt vong, vua băng hà), khu dân cư sa sút / sụp / lập mới, đường xuống cấp, hang ổ (mọc, lớn, tràn, NPC dọn), dọn hang và xuống di tích của người chơi (G.assault), sử biên niên, G.runWorld
   js/org.js                 tổ chức và lập nghiệp: vai trò của nhân vật (S.roles), hội / đoàn (W.dyn.orgs), trưởng khu, quan, người cai trị, lập làng / thị trấn / nước, dấy binh, triều chính, bảng nhiệm vụ, đánh thuê, kế vị (G.onDeath)
   js/edu.js                 học viện ba cấp (học phí, học bổng, thi, ngành), sư đồ (làm đệ tử thợ / cao thủ, nhận đệ tử)
-  js/noble.js               quý tộc: tước Nam → Công, công trạng, sắc phong, mua tước, kế tước, thái ấp
+  js/noble.js               quý tộc: tước Nam → Công, công trạng, sắc phong, mua tước, kế tước, thái ấp; xuất thân hoàng gia, quý tộc, kế vị ngai vàng, tranh ngôi, thăng tiến theo chính thể, thách đấu giành ngôi
+  js/realmev.js             sự kiện quốc gia: 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng, mỗi lượt 35%)
   js/ui.js                  giao diện (chỉ nghe hook)
   tools/serve.ps1           server tĩnh PowerShell
 ```

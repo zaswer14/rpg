@@ -234,11 +234,13 @@ window.LifeSim = window.LifeSim || {};
       const world = opt.world || this.newWorld();
       if (world.lastDeath === world.year) world.year++;   // năm kiếp trước mất đã chạy hệ con; kiếp này bắt đầu từ năm sau
       G.bindWorld(world);
+      // Chọn xuất thân (Kiếp mới): hoàng gia sinh ở kinh đô nước có người cai trị, quý tộc ở nước ban tước (js/noble.js G.originSpot).
+      if (opt.origin && G.originSpot) Object.assign(opt, G.originSpot(opt.origin, T) || {});
       // Nơi sinh (research/05 mục 7): bốc khu dân cư theo số người sống (đô thị + vùng quê quanh nó; Bộ Xương không sinh con),
       // rồi bốc sinh trong khu (đô thị) hay ở vùng quê quanh khu theo tỉ lệ dân.
       const living = s => 1 - (s.races.skeleton || 0) / 100;
       const raceW = s => opt.race ? (s.races[opt.race] || 0) / 100 : 1;
-      const cands = G.realm.settlements.filter(s => s.tier !== 'ruin' && (!opt.region || s.region === opt.region));
+      const cands = G.realm.settlements.filter(s => s.tier !== 'ruin' && (!opt.region || s.region === opt.region) && (!opt.settlement || s.id === opt.settlement));
       const st = T.wpick(cands, s => G.popOf(s) * living(s) * raceW(s)) || cands[0];
       const reg = G.REGION[st.region];
       const urban = st.tier !== 'hamlet' && T.chance(st.urban / Math.max(1, G.popOf(st)));
@@ -288,6 +290,8 @@ window.LifeSim = window.LifeSim || {};
       }
       if (T.chance(.04)) S.flags.omen = T.pick(['fire', 'frost', 'storm', 'moon', 'light', 'dark']);
       if (T.chance(.012) && q <= 3) S.flags.bastard = true;
+      // Xuất thân hoàng gia, quý tộc (js/noble.js): đổi tầng lớp, tên cha mẹ trước lời mở đầu.
+      const origTxt = G.birthOrigin ? G.birthOrigin(this, st, opt.origin) : null;
       // Định vị trên bản đồ.
       S.pos = G.homePos(st, urban, T.rnd); S.path2.push(S.pos);
       // Lời mở đầu.
@@ -299,6 +303,7 @@ window.LifeSim = window.LifeSim || {};
       this.log(parentsTxt + (S.family.sibs.length ? ` Bạn có ${S.family.sibs.length} anh chị.` : ''), 'info');
       if (S.faith) this.log(`Gia đình theo ${J.faiths[S.faith].nameVi}.`, 'info');
       if (S.flags.omen) this.log(`Đêm bạn sinh có sao chổi. Bà đỡ bảo đứa trẻ mang khí chất ${J.aspects[S.flags.omen].nameVi}.`, 'big');
+      if (origTxt) this.log(origTxt, 'big');
       // Tuổi thọ kỳ vọng — như "trong số trẻ sinh cùng năm, X% sống tới…" của 1in8b.
       const surv = a => { let l = 1; for (let x = 0; x < Math.min(a, lt.q.length); x++) l *= 1 - lt.q[x]; return l; };
       const aT = Math.round(lt.adultT);

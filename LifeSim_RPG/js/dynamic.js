@@ -654,6 +654,10 @@ window.LifeSim = window.LifeSim || {};
     });
   };
 
+  // Đặc tính mẫu (n.template) và đặc trưng riêng (n.quirks) có tác dụng lên chính trị (bước 10, research/03 mục 5.10).
+  const tpl = (n, id) => G.DYN.traitFx !== false && n.template === id;   // G.DYN.traitFx = false: tắt để so sánh trong sim.html
+  const qk = (n, id) => G.DYN.traitFx !== false && n.quirks.some(q => q.id === id);
+  const qkOn = (n, id, k) => G.DYN.traitFx !== false && n.quirks.some(q => q.id === id && q.target === k);
   // ═════════ Một năm chính trị (research/03 mục 5.3) ═════════
   G.polityYear = function (W, X, S, year) {
     const R = G.bindWorld(W), D = W.dyn, NN = R.nations, P = R.provinces;
@@ -667,7 +671,7 @@ window.LifeSim = window.LifeSim || {};
     }
     // Sức mạnh: Σ tỉnh dân × (.5 + giàu) × quân × (.5 + ổn định).
     const wealth = p => { const s = R.byId[P[p].seat]; return (G.REGION[s.region].wealth + (s.ship >= 1 && s.tier !== 'ruin' ? .1 : 0)) * (1 - .5 * D.war[p]); };
-    const power = k => { let t = 0; for (const p of provsOf(D, k)) t += P[p].pop * (.5 + wealth(p)); return Math.max(1, t) * NN[k].army * (.5 + D.nat[k].stab); };
+    const power = k => { let t = 0; for (const p of provsOf(D, k)) t += P[p].pop * (.5 + wealth(p)); return Math.max(1, t) * NN[k].army * (.5 + D.nat[k].stab) * (tpl(NN[k], 'O3') ? 1 + Math.min(.3, .01 * D.nat[k].peace) : 1) * (qk(NN[k], 'court_mage') || tpl(NN[k], 'E2') ? 1.05 : 1); };
     const wars = k => D.wars.filter(w => w.a === k || w.b === k).length;
     const plagued = k => provsOf(D, k).some(p => (W.regions[R.byId[P[p].seat].region] || {}).plague > 0);
     const mine = k => S && S.nation === k;
@@ -699,8 +703,8 @@ window.LifeSim = window.LifeSim || {};
       if (ru && !ru.player) {
         ru.age++;
         const le = G.RACES[n.race].le, x = (ru.age - le * .6) / (le * .4);
-        if (X.chance(x > 0 ? Math.min(.6, .004 + .25 * x * x) : .004)) {
-          const fight = X.chance(.2), nr = makeRuler(n, X);
+        if (X.chance((x > 0 ? Math.min(.6, .004 + .25 * x * x) : .004) * (qk(n, 'royal_curse') ? 2 : 1))) {
+          const fight = X.chance(qk(n, 'two_lines') || tpl(n, 'O2') ? .45 : .2), nr = (G.royalSucceed && G.royalSucceed(W, n.idx, X, S, fight)) || makeRuler(n, X);
           d.ruler = nr; n.ruler = nr; d.stab = Math.max(0, d.stab - (fight ? .18 : .06)); D.n.kings++;
           hist(D, year, 'king', `${ru.title} ${ru.name} của ${n.name} băng hà ở tuổi ${ru.age}.` + (fight ? ` Hai phe tranh ngôi; ${nr.name} thắng.` : ` ${nr.name} lên ngôi.`));
           news(n.idx, `${ru.title} ${ru.name} băng hà.` + (fight ? ` Triều đình chia hai phe; ${nr.name} giành được ngai.` : ` ${nr.name} lên ngôi.`), fight ? 'bad' : 'info');
@@ -713,6 +717,10 @@ window.LifeSim = window.LifeSim || {};
       const a = w.a, b = w.b, Pa = power(a), Pb = power(b);
       let bonus = 0;
       if (S && S.flags && S.flags.soldier > 0 && (S.nation === a || S.nation === b)) { const t = G.tierOf(S.level); if (t >= 3) bonus = (S.nation === a ? 1 : -1) * .05 * (t - 2); }
+      const coast = k => { const c = R.byId[D.nat[k].cap]; return !!(c && c.seaCells); };
+      const edge = (k, o) => (w.years === 0 && tpl(NN[k], 'O1') ? .3 : 0) + ((tpl(NN[k], 'M2') || qk(NN[k], 'strong_navy')) && coast(o) ? .1 : 0) + (tpl(NN[k], 'B1') && k === b ? .08 : 0);
+      bonus += edge(a, b) - edge(b, a);
+      for (const [k, o] of [[a, b], [b, a]]) if (qk(NN[k], 'assassins') || tpl(NN[k], 'E5')) D.nat[o].stab = Math.max(0, D.nat[o].stab - .03);
       w.score += .35 * (Pa - Pb) / (Pa + Pb) + X.gauss() * .25 + bonus; w.years++;
       // Thắng thế thì chiếm một tỉnh tiền tuyến của bên kia (kinh đô chỉ khi hết tỉnh khác).
       const take = (by, from) => {
@@ -729,10 +737,13 @@ window.LifeSim = window.LifeSim || {};
         w.score += by === a ? -.2 : .2;
         if (!provsOf(D, from).length) killNation(R, D, from, year, NN[by].name);
       };
-      if (w.score > .3 && X.chance(.5)) take(a, b);
-      else if (w.score < -.3 && X.chance(.5)) take(b, a);
+      const pTake = k => tpl(NN[k], 'H4') ? 1 : .5;
+      const took = k => { if (tpl(NN[k], 'H4') || tpl(NN[k], 'R4')) D.nat[k].stab = Math.max(0, D.nat[k].stab - (tpl(NN[k], 'R4') ? .05 : .03)); };
+      if (w.score > .3 && X.chance(pTake(a))) { take(a, b); took(a); }
+      else if (w.score < -.3 && X.chance(pTake(b))) { take(b, a); took(b); }
       if (!D.nat[a].alive || !D.nat[b].alive) { D.wars = D.wars.filter(x => x !== w); endWar(R, D, w, year, X, S, true); continue; }
-      if (Math.abs(w.score) >= 1 || w.years >= 6 || (D.nat[a].stab < .2 && D.nat[b].stab < .2)) { D.wars = D.wars.filter(x => x !== w); endWar(R, D, w, year, X, S); }
+      const stubborn = tpl(NN[a], 'C3') || tpl(NN[b], 'C3') || (tpl(NN[b], 'D2') && w.occ.some(o => o.from === b));
+      if (Math.abs(w.score) >= (stubborn ? 1.5 : 1) || w.years >= (stubborn ? 10 : 6) || (D.nat[a].stab < .2 && D.nat[b].stab < .2)) { D.wars = D.wars.filter(x => x !== w); endWar(R, D, w, year, X, S); }
     }
 
     // ── Tuyên chiến: cặp nước kề nhau, không hưu chiến; mỗi nước tối đa 2 cuộc. Dưới 3 nước thì không.
@@ -746,7 +757,10 @@ window.LifeSim = window.LifeSim || {};
         const tk = Math.min(a, b) + ':' + Math.max(a, b); if ((D.truce[tk] || 0) > year) continue;
         // Đòi lại đất: nước bị tỉnh nổi loạn tách ra (nb.from === a) muốn đánh lại nhiều hơn hẳn.
         const rel = na.relations[b] || 0, vas = na.overlord === b || nb.overlord === a ? .2 : 1, claim = nb.from === a ? G.DYN.claim : 1;
-        const p = G.DYN.warP * na.ambition * G.clamp(power(a) / power(b), .5, 2) * (na.faith !== nb.faith ? 1.5 : 1) * (1 - .15 * rel) * vas * claim;
+        const p = G.DYN.warP * na.ambition * G.clamp(power(a) / power(b), .5, 2) * (na.faith !== nb.faith ? 1.5 : 1) * (1 - .15 * rel) * vas * claim
+          * (tpl(na, 'H1') && D.nat[a].stab > .6 && (nb.faith === 'dark' || nb.race === 'skeleton') ? 3 : 1) * (tpl(na, 'D2') && nb.from !== a ? 0 : 1)
+          * (qkOn(na, 'old_feud', b) || qkOn(nb, 'old_feud', a) ? 3 : 1) * (qkOn(na, 'royal_match', b) || qkOn(nb, 'royal_match', a) ? 0 : 1)
+          * (tpl(nb, 'S2') && na.faith === 'light' ? 0 : 1) * (na.laws.includes('liberation') && !nb.laws.includes('construct_citizen') ? 2 : 1);
         if (!X.chance(p)) continue;
         D.wars.push({ a, b, score: 0, years: 0, start: year, occ: [] }); D.n.wars++;
         hist(D, year, 'war', `${na.name} tuyên chiến với ${nb.name}.`);
@@ -763,7 +777,8 @@ window.LifeSim = window.LifeSim || {};
       const live = liveIn(R, p); if (!live.length) continue;
       const seat = R.byId[P[p].seat], src = seat && seat.tier !== 'ruin' ? seat : live[0];
       const race = top(src.races), faith = top(src.faiths), alien = (race !== n.race && n.wary.includes(race)) || (faith && n.faith && faith !== n.faith);
-      if (!X.chance(G.DYN.rebelP * (1 - d.stab) * (alien ? 2 : .5))) continue;
+      const rmul = (tpl(n, 'E1') ? .2 : 1) * (tpl(n, 'R4') ? 1.5 : 1) * (qk(n, 'two_lines') ? 1.5 : 1) * (qk(n, 'fading_empire') ? 1.5 : 1);
+      if (!X.chance(G.DYN.rebelP * (1 - d.stab) * (alien ? 2 : .5) * rmul)) continue;
       if (X.chance(.5)) {
         d.stab = Math.max(0, d.stab - .03);
         hist(D, year, 'riot', `Tỉnh ${pname(R, p)} nổi loạn chống ${n.name}, bị dẹp.`);

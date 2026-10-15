@@ -677,6 +677,7 @@ window.LifeSim = window.LifeSim || {};
     if (what === 'head') { const h = G.SET[r.head]; if (live(h)) Dn().setField(D, h, 'head', { name: G.personName(h.race || 'human', 'm', X.rnd), player: false, since: W.year }); r.head = null; return 'Bạn giao lại việc chung cho người khác.'; }
     if (what === 'office') { r.office = null; return 'Bạn treo ấn từ quan.'; }
     if (what === 'noble') return G.renounceTitle ? G.renounceTitle(S) : null;
+    if (what === 'rank') { const t = G.rankText(S); r.rank = null; return t ? `Bạn từ bỏ bậc ${t.split(' của ')[0]}.` : null; }
     if (what === 'ruler') {
       const k = r.ruler, n = G.realm.nations[k], nr = Dn().makeRuler(n, X);
       if (nr) { D.nat[k].ruler = nr; n.ruler = nr; } D.nat[k].stab = Math.max(0, D.nat[k].stab - .08);
@@ -727,6 +728,7 @@ window.LifeSim = window.LifeSim || {};
     if (!r) return out;
     if (r.ruler != null) { const n = G.realm.nations[r.ruler], d = W.dyn.nat[r.ruler]; out.push({ what: 'ruler', text: `${d && d.ruler ? d.ruler.title : 'Người cai trị'} ${n.name}`, mgr: true }); }
     if (r.noble && G.nobleText) out.push({ what: 'noble', text: G.nobleText(S), mgr: false });
+    if (r.rank && G.rankText) out.push({ what: 'rank', text: G.rankText(S), mgr: r.rank.r >= 2 });
     if (r.office) out.push({ what: 'office', text: `${G.OFFICE_VI[r.office.rank]} ${G.realm.nations[r.office.k].name}${r.office.rank === 1 ? ' · tỉnh ' + G.realm.provinces[r.office.p].name : ''}`, mgr: true });
     if (r.head != null && G.SET[r.head]) { const h = G.SET[r.head]; out.push({ what: 'head', text: `${cap(G.HEAD_VI[h.tier] || 'trưởng')} ${h.name}${h.founder === S.name ? ' (bạn lập)' : ''}`, mgr: true }); }
     if (r.adv) out.push({ what: 'adv', text: `Hiệp Hội Mạo Hiểm · hạng ${G.ADV_RANKS[G.advRank(S)]}${r.adv.branch && G.SET[r.adv.branch] ? ' · trưởng chi nhánh ' + G.SET[r.adv.branch].name : ''}`, mgr: !!r.adv.branch });
