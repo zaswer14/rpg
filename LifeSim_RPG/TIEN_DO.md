@@ -1,6 +1,6 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** bước 6 (biển) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `6f113ff` (bước 6) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
 Đang làm **bản đồ V2** theo `research/03_Thiet_ke_ban_do_Varen_V2.md` (thứ tự làm ở mục 12). Đã xong bước 1–6; **việc tiếp theo là bước 7: quốc gia động**.
 
@@ -14,7 +14,7 @@
 | 3 | 4 tầng nguy hiểm (thêm vùng chết) theo độ hoang; trận theo ô + địa hình; chế độ xem Nguy hiểm | `7f5ec62` | 03 mục 3.6 |
 | 4 | Công trình → nghề, sức khỏe, học; thuế, thái độ chủng tộc; 21/22 luật | `470d291` | 03 mục 5.6 |
 | 5 | Đường, cầu, đèo; hành trình A*, trạm biên giới, hộ tống | `49666d9` | 03 mục 6.5 |
-| 6 | 7 vùng biển × 4 tầng, 8 loài biển, bến và 3 loại tàu, hải trình A*, đi tàu (bão, đắm tàu, cướp biển, cách ly, thuế cảng), nghề biển theo tầng, đảo Hải Xà tách hẳn; chế độ xem Biển | (bước 6) | 03 mục 7.4 |
+| 6 | 7 vùng biển × 4 tầng, 8 loài biển, bến và 3 loại tàu, hải trình A*, đi tàu (bão, đắm tàu, cướp biển, cách ly, thuế cảng), nghề biển theo tầng, đảo Hải Xà tách hẳn; chế độ xem Biển | `6f113ff` | 03 mục 7.4 |
 
 Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
