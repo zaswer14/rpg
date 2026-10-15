@@ -1,6 +1,6 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `0891b93` (bước 7; bước 8 xong nhưng chưa commit) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `d9aab09` (bước 8) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
 Đang làm **bản đồ V2** theo `research/03_Thiet_ke_ban_do_Varen_V2.md` (thứ tự làm ở mục 12). Đã xong bước 1–8; **việc tiếp theo là bước 9: lập làng, lập nước**.
 
@@ -16,7 +16,7 @@
 | 5 | Đường, cầu, đèo; hành trình A*, trạm biên giới, hộ tống | `49666d9` | 03 mục 6.5 |
 | 6 | 7 vùng biển × 4 tầng, 8 loài biển, bến và 3 loại tàu, hải trình A*, đi tàu (bão, đắm tàu, cướp biển, cách ly, thuế cảng), nghề biển theo tầng, đảo Hải Xà tách hẳn; chế độ xem Biển | `6f113ff` | 03 mục 7.4 |
 | 7 | Thế giới động: chủ tỉnh, chiến tranh / hưu chiến, nổi loạn, nước mới lập / diệt vong, vua băng hà, dời đô; khu dân cư sa sút / sụp / lập mới, đường xuống cấp; độ hoang tính lại từng phần; mật độ quái theo tỉnh × tầng; sử biên niên; kiếp sau sống tiếp trong thế giới của kiếp trước; save v4 | `0891b93` | 03 mục 5.7 |
-| 8 | Hang ổ (mọc, lớn, sào huyệt tràn ra tầng ven, NPC dọn, trống rồi bị chiếm lại, phế tích thành hang), di tích 3 tầng, ổ chúa; quyết định Dọn hang, Xuống di tích; ký hiệu và tooltip ở chế độ Nguy hiểm; thú triều giờ đến từ sào huyệt | (chưa commit) | 03 mục 4.3 |
+| 8 | Hang ổ (mọc, lớn, sào huyệt tràn ra tầng ven, NPC dọn, trống rồi bị chiếm lại, phế tích thành hang), di tích 3 tầng, ổ chúa; quyết định Dọn hang, Xuống di tích; ký hiệu và tooltip ở chế độ Nguy hiểm; thú triều giờ đến từ sào huyệt | `d9aab09` | 03 mục 4.3 |
 
 Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 40 tỉnh, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
