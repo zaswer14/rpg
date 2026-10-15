@@ -27,7 +27,12 @@ Không dùng bản đồ thế giới thật. Đại lục Varen có **16 vùng*
 
 **Quốc gia và khu dân cư** (bước 2; `research/04_Mau_quoc_gia.md`, `research/05_Thanh_pho_lang_mac.md`, `js/realm.js`): không có nước hay làng khai tay. Mỗi **thế giới** (seed riêng, khác seed của đời) bốc 5–7 mẫu trong 50 mẫu quốc gia (`data/nations.js`, 10 chủng tộc × 5), đặt kinh đô theo chỗ hợp với mẫu, lan lãnh thổ theo chi phí đi (~75% đất có chủ), rồi dựng mạng khu dân cư phân cấp: kinh đô, thành phố, thị trấn, làng, thôn, cộng vai trò (cảng, đồn, mỏ, trại gỗ, làng chài, làng ruộng, đền, chợ biên) và phế tích ở đất vô chủ. Tỉnh = kinh đô / thành phố / thị trấn + vùng quanh nó. Dân đô thị theo bậc; dân nông thôn theo sức chứa từng ô, gom về làng gần nhất, co giãn theo tỉ lệ đô thị của chủng tộc. Mỗi nước có tên, người cai trị, quốc giáo, thuế, luật, thái độ chủng tộc, đặc tính của mẫu và 1–2 đặc trưng riêng; mọi tên lấy từ `data/names.js`. Một thế giới ~140 khu dân cư, ~35 tỉnh, dựng trong ~0,2 giây.
 
-Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành thị) hoặc **vùng quê quanh khu** (nông thôn, ~75% số đời), chủng tộc và đạo theo khu đó. Luật, thuế, công trình chưa tác động lên đời (bước 4).
+Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành thị) hoặc **vùng quê quanh khu** (nông thôn, ~75% số đời), chủng tộc và đạo theo khu đó. Nơi ở và nước tác động lên đời (bước 4, `js/state.js`):
+
+- **Công trình của khu** quyết định nghề làm được (thợ rèn cần lò rèn, thương nhân cần chợ và sống trong thị trấn trở lên, học giả cần trường, tu sĩ cần đền, lính canh cần doanh trại hoặc tường, ngư dân cần làng chài hoặc cảng, thợ mỏ cần làng mỏ, tiều phu cần trại gỗ), tử vong trẻ em (không có thầy thuốc × 1,15 … nhà thương lớn × 0,8), dịch (thành lớn × 1,4, thôn × 0,7) và việc học (không có trường × 0,6 … học viện × 1,2). Người ở vùng quê luôn được đưa ít nhất một nghề đất khi chọn sinh kế; dân quê di cư thì về vùng quê của làng nơi mới.
+- **Thu nhập** sau thuế của nước, × 1,1 nếu chủng tộc được ưu ái, × 0,85 nếu bị dè chừng; Cơ Nhân ở nước không coi Cơ Nhân là công dân × 0,8; mạo hiểm giả ở nơi không có Hội Mạo Hiểm × 0,6.
+- **Luật** (22 luật, `research/04` mục 3): bắt giữ vì tử thuật, phép (phạt bạc → giam hoặc khổ sai → treo cổ), giấy phép pháp sư hằng năm, lệnh nghĩa vụ ba năm (trốn thì bị truy nã), lệnh trục xuất ngoại tộc (cố ở thì bị áp giải ra khỏi biên giới), phí phường hội khi vào nghề, đẳng cấp không rơi tầng lớp và chặn nghề cao, luật săn Bộ Xương (thanh tẩy × 3) và Bộ Xương là công dân (× 0,2), kết thú (cưỡi, thuần thú × 1,3), tự do buôn, treo thưởng, lễ vật tổ tiên, và sự kiện riêng cho quyết đấu, cướp phá biên giới, khế ước, kiểm kê Cơ Nhân, giải phóng Cơ Nhân, thái độ chủng tộc, thuế đầu người. Thuế cảng chờ bước đi biển; đặc tính mẫu và đặc trưng riêng của nước chờ bước 10.
+- Bảng nhân vật có dòng **Nước** (tên, thuế thật, ưu ái / dè chừng; rê chuột xem luật) và nhãn truy nã, tiền án, đang làm lính, khổ sai.
 
 Nút **Vùng / Địa hình / Chính trị / Nguy hiểm** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
 
@@ -105,6 +110,7 @@ LifeSim_RPG/
   js/life.js                Sim: newLife, rise, planYear, tick, endYear, chết, săn quái có phân cấp
   js/systems.js             hệ con cuối năm, autoFocus, rương báu
   js/events.js              sự kiện + quyết định
+  js/state.js               nhà nước và nơi ở lên đời: công trình → nghề, sức khỏe, học; thuế, thái độ chủng tộc; hệ con luật, sự kiện luật
   js/ui.js                  giao diện (chỉ nghe hook)
   tools/serve.ps1           server tĩnh PowerShell
 ```

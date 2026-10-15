@@ -347,6 +347,18 @@ Người chơi là người cai trị:
 
 Mục tiêu cân bằng: lập làng ở ~10% đời người trưởng thành, lập nước dưới 2% đời.
 
+### 5.6. Kết quả bước 4 (15/10/2026)
+
+Đã làm (`LifeSim_RPG/js/state.js`): công trình của khu quyết định nghề, tử vong trẻ em, dịch, việc học (`research/05` mục 6–7); thuế và thái độ chủng tộc vào thu nhập; 21 trong 22 luật có tác dụng (thuế cảng chờ bước đi biển); 8 sự kiện và 1 quyết định mới (lệnh nghĩa vụ); thêm nghề tiều phu.
+
+Khác với thiết kế:
+
+- Ở lại trái lệnh trục xuất ngoại tộc không tính tiền án mà bị **áp giải** sang vùng kề ngoài lãnh thổ. Bản đầu tính tiền án làm 8,4% đời bị treo cổ ở thế giới có nước Người Lùn cấm ngoại tộc.
+- Bị bắt lần thứ ba mới treo cổ, và chỉ ở nước không có luật khổ sai.
+- Tự sống: người ở vùng quê luôn được đưa một nghề đất và nghiêng về nghề đất; dân quê di cư thì sống ở vùng quê của làng nơi mới. Không có hai chỉnh này thì công trình mới ở làng (lò rèn, chợ) kéo tỉ lệ nông dân xuống 3%.
+
+Đo bằng `sim.html` (thế giới `can-bang`, 1000 đời): 45.057 trận, 0 trận vượt Tier + 1, trỗi dậy 20,0%, chết vì quái 10,3%; nông dân 25%, mạo hiểm giả 26%, thợ săn 9%, ngư dân 7%. Bốn thế giới có luật nghĩa vụ / cấm tử thuật / giấy phép / đẳng cấp / phường hội (250 đời mỗi thế giới): đi lính 0–30% đời, trốn lính ≤ 4%, từng bị bắt ≤ 2%, treo cổ ≤ 0,4%, bị lệnh trục xuất ~21% ở thế giới có nước cấm ngoại tộc.
+
 ## 6. Đường đi và hành trình
 
 ### 6.1. Lưới chi phí
@@ -518,7 +530,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 1 ✓ | Mở khung 1200 × 900; lớp địa hình, sông, hồ, đặc trưng; chế độ xem Địa hình (15/10/2026) | bản đồ có sông, rừng, núi; chưa đổi luật chơi |
 | 2 ✓ | Nạp `names.js`; 50 mẫu quốc gia vào `data/nations.js`; seed thế giới; kinh đô, lãnh thổ, mạng khu dân cư phân cấp, vai trò, công trình, dân, tỉnh, tên (`research/05`); quốc gia tĩnh; chế độ xem Chính trị, màn tạo thế giới | mỗi thế giới một bộ nước, thành phố, làng; sinh ra ở thành thị hoặc nông thôn |
 | 3 ✓ | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô (15/10/2026, xem mục 3.6) | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
-| 4 | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời | sinh ra ở một nước có luật |
+| 4 ✓ | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời (15/10/2026, xem mục 5.6) | sinh ra ở một nước có luật |
 | 5 | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống | đi lại có quãng đường |
 | 6 | Vùng biển 4 tầng, loài biển mới, tàu, hải trình | đi biển |
 | 7 | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên | thế giới đổi qua các kiếp |

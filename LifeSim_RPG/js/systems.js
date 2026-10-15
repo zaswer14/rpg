@@ -99,7 +99,7 @@ window.LifeSim = window.LifeSim || {};
     for (const c of [...S.conds]) {
       c.years++;
       const C = G.CONDS[c.id];
-      if (C.heal && X.rnd() < C.heal * (1 + share * 1.2) * (S.q >= 4 ? 1.3 : 1)) {
+      if (C.heal && X.rnd() < C.heal * (1 + share * 1.2) * (S.q >= 4 ? 1.3 : 1) * (G.healerMult(S) < 1 ? 1.2 : 1)) {
         S.conds.splice(S.conds.indexOf(c), 1);
         X.log(`Khỏi ${C.nameVi.toLowerCase()}.`, 'good');
       } else if (c.id === 'fever' && c.years >= 2) { S.conds.splice(S.conds.indexOf(c), 1); X.cond('frail'); }

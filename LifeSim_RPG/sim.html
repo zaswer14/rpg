@@ -68,6 +68,7 @@
 <script src="js/life.js"></script>
 <script src="js/systems.js"></script>
 <script src="js/events.js"></script>
+<script src="js/state.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -101,7 +102,7 @@ $('run').onclick = () => {
   $('status').textContent = 'Đang chạy…';
   setTimeout(() => {
     const t0 = performance.now();
-    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {} };
+    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 } };
     for (let i = 0; i < N; i++) {
       const sim = new G.Sim({ seed: base + ':' + i, headless: true });
       sim.newLife({ noPeers: true }); sim.runToDeath();
@@ -115,6 +116,8 @@ $('run').onclick = () => {
       A.maxTier[rec.tier] = (A.maxTier[rec.tier] || 0) + 1;
       A.jobTier[rec.job] = (A.jobTier[rec.job] || 0) + 1;
       A.region[S.born.region] = (A.region[S.born.region] || 0) + 1;
+      { const F = S.flags, L = A.law; if (F.crimes) L.crimes++; if (S.causeId === 'hanged') L.hanged++; if (F.served) L.served++; if (F.wanted) L.fled++; if (F.expelled) L.expelled++;
+        const n = S.nation != null ? G.realm.nations[S.nation] : null; if (n && n.wary.includes(S.race)) L.wary++; if (n && n.fav.includes(S.race)) L.fav++; }
       { const bs = G.SET[S.born.settlement], key = bs ? (S.born.urban ? G.TIER_VI[bs.tier] + ' (trong khu)' : 'vùng quê quanh ' + G.TIER_VI[bs.tier].toLowerCase()) : '?'; A.bornTier[key] = (A.bornTier[key] || 0) + 1;
         const nk = bs && bs.nation >= 0 ? G.realm.nations[bs.nation].name : 'đất vô chủ'; A.bornNation[nk] = (A.bornNation[nk] || 0) + 1; }
       if (S.rose) {
@@ -145,6 +148,7 @@ $('run').onclick = () => {
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu research/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
+    out.push(table('Luật và thái độ (đời đầu)', [['Từng bị bắt', A.law.crimes, pct(A.law.crimes, N)], ['Bị treo cổ', A.law.hanged, pct(A.law.hanged, N)], ['Đi lính nghĩa vụ', A.law.served, pct(A.law.served, N)], ['Trốn lính', A.law.fled, pct(A.law.fled, N)], ['Bị lệnh trục xuất', A.law.expelled, pct(A.law.expelled, N)], ['Chết ở nước dè chừng mình', A.law.wary, pct(A.law.wary, N)], ['Chết ở nước ưu ái mình', A.law.fav, pct(A.law.fav, N)]], ['', 'Đời', '%'], { note: 'Đếm trên đời đầu (trước khi trỗi dậy). research/04 mục 3.' }));
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
     $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;

@@ -173,6 +173,7 @@ window.LifeSim = window.LifeSim || {};
       const acc = this.access(S, G.MASTERY[m]);
       let mult = acc === 'native' ? 1.15 : acc === 'foreign' ? .8 : 0;
       if (S.inherited && S.inherited.skill === m) mult = Math.max(mult, .6);
+      if ((m === 'Taming' || m === 'Riding') && G.lawHere(S, 'beast_bond')) mult *= 1.3;
       const cur = S.mastery[m], d = amount * mult * Math.max(0, 1 - cur / 115);
       S.mastery[m] = Math.min(100, cur + d);
       return d;
@@ -393,8 +394,10 @@ window.LifeSim = window.LifeSim || {};
       const tot = Object.values(S.focusTime).reduce((a, b) => a + b, 0) || 1;
       for (const [f, t] of Object.entries(S.focusTime)) {
         const F = G.FOCUS[f], share = t / tot; if (!F) continue;
-        for (const [k, v] of Object.entries(F.eff || {})) this.add(k, v * share);
-        for (const [m, v] of Object.entries(F.train || {})) this.gain(m, v * share * 2);
+        // Học chữ hiệu quả theo trường của khu đang ở (research/05 mục 6).
+        const fm = f === 'study' ? G.schoolMult(S) : 1;
+        for (const [k, v] of Object.entries(F.eff || {})) this.add(k, v * share * (k === 'sm' ? fm : 1));
+        for (const [m, v] of Object.entries(F.train || {})) this.gain(m, v * share * 2 * fm);
         if (f === 'train') this.trainYear(share);
         if (f === 'work') this.workYear(share);
         if (f === 'chores') this.gain('Body', 1.5 * share);
@@ -402,13 +405,13 @@ window.LifeSim = window.LifeSim || {};
           const fav = (J.faiths[S.faith].races.favored || []).includes(S.race) ? 1.5 : 1;
           S.devotion = Math.min(100, S.devotion + 9 * share * fav);
         }
-        if (f === 'study') this.addXp(15 * share);
+        if (f === 'study') this.addXp(15 * share * fm);
       }
       // 2. Tiền: chi phí sống của người lớn.
       if (['adult', 'elder', 'teen'].includes(st) && !(st === 'teen' && S.family.parents.some(p => p.alive))) {
         const cost = S.undead ? 0 : G.median(reg) * .5 * (.55 + .15 * S.q);
         this.money(-cost);
-        if (S.gold < 0) { this.add('h', -6); this.add('hl', -3); if (S.gold < -G.median(reg)) { S.q = Math.max(1, S.q - 1); S.gold = 0; this.log('Nợ chồng nợ. Bạn bán hết đồ đạc và rơi xuống tầng lớp thấp hơn.', 'bad'); } }
+        if (S.gold < 0) { this.add('h', -6); this.add('hl', -3); if (S.gold < -G.median(reg)) { S.gold = 0; if (G.lawHere(S, 'caste')) { this.add('h', -8); this.log('Nợ chồng nợ. Bạn bán hết đồ đạc; luật đẳng cấp vẫn giữ bạn ở tầng lớp cũ, nhưng ai cũng biết.', 'bad'); } else { S.q = Math.max(1, S.q - 1); this.log('Nợ chồng nợ. Bạn bán hết đồ đạc và rơi xuống tầng lớp thấp hơn.', 'bad'); } } }
       }
       // 3. Chỉ số trôi về mục tiêu (quán tính 25%/năm).
       G.driftStats(this);
@@ -437,8 +440,10 @@ window.LifeSim = window.LifeSim || {};
       let m = Math.exp((60 - S.hl) / 28);
       m *= [0, 1.45, 1.15, 1, .86, .74][S.q];
       for (const c of S.conds) m *= G.CONDS[c.id].mult;
-      if (!this.R(S).undead && !this.R(S).construct) m *= 1 + rs.plague * 1.6;
-      if (st !== 'infant') m *= 1 + rs.war * (st === 'adult' ? .5 : .2) + rs.raid * .5;
+      // Nơi ở (js/state.js): dịch nặng hơn ở thành lớn; trẻ nhỏ theo thầy thuốc của khu; lính nghĩa vụ chết trận nhiều hơn.
+      if (!this.R(S).undead && !this.R(S).construct) m *= 1 + rs.plague * 1.6 * G.plagueMult(S);
+      if (st === 'infant' || st === 'child') m *= G.healerMult(S);
+      if (st !== 'infant') m *= 1 + rs.war * (st === 'adult' ? .5 : .2) * (S.flags.soldier ? 2 : 1) + rs.raid * .5;
       if (S.age >= t.leT * .85) m = Math.pow(m, .6);
       m = G.clamp(m, .25, 9);
       return 1 - Math.pow(1 - q, m);
@@ -460,11 +465,12 @@ window.LifeSim = window.LifeSim || {};
         if (c.war) w *= .2 + rs.war * 10;
         if (c.raid) w *= .3 + rs.raid * 5 + reg.danger;
         if (c.magic) w *= .5 + reg.magic * 2;
-        if (id === 'bandit') w *= .3 + reg.danger + reg.gini * .5;
+        if (id === 'bandit') w *= (.3 + reg.danger + reg.gini * .5) * (G.attitude(S) === 'wary' ? 1.5 : 1);
         if (id === 'drown') w *= reg.coastal ? 2 : .7;
         if (W.cause === id) w = w * 3 + 6;
         if (id === 'hanged' && S.work === 'thief') w = 12;
         if (id === 'purge' && S.flags.revealed) w *= 2;
+        if (id === 'purge') w *= G.lawHere(S, 'hunt_undead') ? 3 : G.lawHere(S, 'undead_citizen') ? .2 : 1;
         ws[id] = w;
       }
       for (const c of S.conds) { const cc = G.CONDS[c.id].cause; if (cc && cc in ws) ws[cc] += 25; }
@@ -612,14 +618,15 @@ window.LifeSim = window.LifeSim || {};
     }
     workYear(share) {
       const S = this.S, reg = this.reg(S), W = G.WORKS[S.work];
-      if (!W || W.adventurer) { // làm thuê vặt
-        this.money(G.incomeAt(reg, Math.min(.3, S.pct)) * share * .7);
+      // Thu nhập sau thuế, theo thái độ chủng tộc và luật (js/state.js G.incomeMult).
+      if (!W || W.adventurer) { // làm thuê vặt; mạo hiểm giả sống bằng săn quái và lệnh treo thưởng
+        this.money(G.incomeAt(reg, Math.min(.3, S.pct)) * share * .7 * G.incomeMult(S));
         return;
       }
       const skill = Object.keys(W.trains).reduce((a, m) => Math.max(a, S.mastery[m]), 0);
-      const target = G.lerp(W.pct[0], W.pct[1], G.clamp(S.sm / 100 * .35 + skill / 100 * .45 + S.so / 100 * .2, 0, 1));
+      const target = G.lerp(W.pct[0], W.pct[1], G.clamp(S.sm / 100 * .35 + skill / 100 * .45 + S.so / 100 * .2, 0, 1)) + (S.work === 'merchant' && G.lawHere(S, 'free_trade') ? .05 : 0);
       S.pct = G.clamp(S.pct + (target - S.pct) * .12 * share, .005, .995);
-      this.money(G.incomeAt(reg, S.pct) * share);
+      this.money(G.incomeAt(reg, S.pct) * share * G.incomeMult(S));
       for (const [m, v] of Object.entries(W.trains)) this.gain(m, v * share);
       this.addXp(20 * share);
       if (this.rnd() < .05 * W.risk * share) { this.add('hl', -this.int(5, 18)); this.log(`Tai nạn khi làm ${W.nameVi.toLowerCase()}.`, 'bad'); }

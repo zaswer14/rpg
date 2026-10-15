@@ -198,7 +198,7 @@ window.LifeSim = window.LifeSim || {};
     };
     const addS = (cell, tier, k, race) => {
       const s = { id: 's' + settlements.length, name: '', tier, roles: [], cell, x: px(cell), y: py(cell), region: regOf(cell).id,
-        nation: k, race, urban: 0, rural: 0, races: {}, faiths: {}, buildings: [], province: -1 };
+        nation: k, race, urban: 0, rural: 0, races: {}, faiths: {}, buildings: [], bld: [], province: -1 };   // buildings: tên hiện; bld: mã (G.BUILDINGS) cho luật chơi
       settlements.push(s); return s;
     };
     nations.forEach((n, k) => {
@@ -376,9 +376,9 @@ window.LifeSim = window.LifeSim || {};
       if (tierKey) for (const b of G.BUILDINGS) {
         const p = b.p[tierKey]; if (!p || rnd() >= p) continue;
         if (b.id === 'walls' && rs.noWalls) continue;
-        s.buildings.push(b.id === 'walls' && rs.palisade ? 'Rào cọc' : b.name[tierKey]);
+        s.buildings.push(b.id === 'walls' && rs.palisade ? 'Rào cọc' : b.name[tierKey]); s.bld.push(b.id);
       }
-      if (s.roles.includes('fort') && !s.buildings.includes('Đồn lính') && !s.buildings.includes('Doanh trại')) s.buildings.push('Đồn lính');
+      if (s.roles.includes('fort') && !s.bld.includes('barracks')) { s.buildings.push('Đồn lính'); s.bld.push('barracks'); }
       if (s.tier === 'capital') { if (rs.signature) s.buildings.push(rs.signature); const sig = (G.GOVS[nations[s.nation].gov].settle || {}).signature; if (sig) s.buildings.push(sig); }
       // Tên: kinh đô / thành phố dùng chữ của bậc; khu nhỏ hơn có vai trò rõ thì dùng chữ của vai trò.
       const role = RANK[s.tier] >= 2 ? ROLE_NAME.find(r => s.roles.includes(r)) : null;

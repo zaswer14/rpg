@@ -195,9 +195,12 @@
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Bạc', S.gold], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
-      ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không']
+      ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
+      // Nước đang sống: thuế thật phải nộp và thái độ của nước với chủng tộc mình (js/state.js).
+      ['Nước', nat ? `${nat.name} · thuế ${Math.round(G.taxRate(S) * 100)}%${{ fav: ' · được ưu ái', wary: ' · bị dè chừng' }[G.attitude(S)] || ''}` : 'đất vô chủ']
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
+    if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
     const need = G.xpNeed(S.level);
     $('xpBar').style.width = (S.level >= G.MAX_LEVEL ? 100 : S.xp / need * 100) + '%';
     $('xpTxt').textContent = `Cấp ${S.level}`;
@@ -206,6 +209,11 @@
     if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
     if (S.flags.pet) chips.push(`<span class="chip ok">Nuôi ${esc(S.flags.pet)}</span>`);
     if (S.flags.lordSlayer) chips.push(`<span class="chip ok">Kẻ hạ ${esc(S.flags.lordSlayer)}</span>`);
+    // Pháp lý: truy nã, tiền án, nghĩa vụ, khổ sai.
+    for (const k of Object.keys(S.flags.wanted || {})) chips.push(`<span class="chip">Bị ${esc(G.realm.nations[k] ? G.realm.nations[k].name : '?')} truy nã</span>`);
+    if (S.flags.crimes) chips.push(`<span class="chip">Tiền án ${S.flags.crimes}</span>`);
+    if (S.flags.soldier) chips.push(`<span class="chip ok">Đang làm lính (còn ${S.flags.soldier} năm)</span>`);
+    if (S.flags.labor) chips.push(`<span class="chip">Khổ sai (còn ${S.flags.labor} năm)</span>`);
     $('cConds').innerHTML = chips.join('');
     const ms = Object.entries(S.mastery).filter(([, v]) => v >= 1).sort((a, b) => b[1] - a[1]).slice(0, 8);
     $('cMast').innerHTML = ms.map(([m, v]) => {

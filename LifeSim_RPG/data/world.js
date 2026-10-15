@@ -38,20 +38,24 @@ window.LifeSim = window.LifeSim || {};
   ];
 
   // ── SINH KẾ (nghề sống, khác nghề chiến đấu của thư viện) ──
-  // pct: khoảng phân vị thu nhập; risk: hệ số tai nạn; trains: mastery luyện được khi làm; need: điều kiện.
+  // pct: khoảng phân vị thu nhập; risk: hệ số tai nạn; trains: mastery luyện được khi làm.
+  // Điều kiện theo nơi ở (research/05 mục 7, js/state.js G.workOK): bld = cần một công trình trong khu (G.BUILDINGS);
+  // role = cần khu có vai trò; town = sống trong thị trấn trở lên; land = sống ở làng, thôn hoặc vùng quê;
+  // biomes = biome của vùng; guild = phải vào phường hội nếu nước có luật độc quyền; banLaw = luật cấm nghề này.
   G.WORKS = {
-    farmer:     { nameVi:'Nông dân',       pct:[.05,.35], risk:1.0, trains:{ Body:2 } },
-    herder:     { nameVi:'Chăn nuôi',      pct:[.08,.38], risk:1.1, trains:{ Taming:3, Riding:2 }, biomes:['wind_steppe','golden_plains','frost_tundra'] },
-    fisher:     { nameVi:'Ngư dân',        pct:[.08,.40], risk:1.8, trains:{ Spear:2, Body:1 }, coastal:true, cause:'drown' },
-    miner:      { nameVi:'Thợ mỏ',         pct:[.15,.48], risk:2.0, trains:{ Body:3, Engineering:1 }, biomes:['crystal_cave','ash_peak','forge_ruins','frost_tundra'], cause:'mine' },
-    smith:      { nameVi:'Thợ rèn',        pct:[.30,.65], risk:1.0, trains:{ Engineering:3, Sword:1, Axe:1 }, town:true },
+    farmer:     { nameVi:'Nông dân',       pct:[.05,.35], risk:1.0, trains:{ Body:2 }, land:true },
+    herder:     { nameVi:'Chăn nuôi',      pct:[.08,.38], risk:1.1, trains:{ Taming:3, Riding:2 }, land:true, biomes:['wind_steppe','golden_plains','frost_tundra'] },
+    fisher:     { nameVi:'Ngư dân',        pct:[.08,.40], risk:1.8, trains:{ Spear:2, Body:1 }, role:['fishing','port'], cause:'drown' },
+    miner:      { nameVi:'Thợ mỏ',         pct:[.15,.48], risk:2.0, trains:{ Body:3, Engineering:1 }, role:['mine'], guild:true, cause:'mine' },
+    woodcutter: { nameVi:'Tiều phu',       pct:[.08,.38], risk:1.5, trains:{ Axe:3, Body:2 }, role:['lumber'], banLaw:'no_logging' },
+    smith:      { nameVi:'Thợ rèn',        pct:[.30,.65], risk:1.0, trains:{ Engineering:3, Sword:1, Axe:1 }, bld:['smith'], guild:true },
     hunter:     { nameVi:'Thợ săn',        pct:[.15,.50], risk:1.4, trains:{ Bow:3, Stealth:2, Throwing:1 } },
-    guard:      { nameVi:'Lính canh',      pct:[.25,.55], risk:1.5, trains:{ Sword:2, Shield:3, Spear:1 }, town:true },
-    merchant:   { nameVi:'Thương nhân',    pct:[.45,.92], risk:1.1, trains:{}, town:true, needSm:35 },
-    scholar:    { nameVi:'Học giả',        pct:[.40,.85], risk:.7,  trains:{ Arcane:3, Alchemy:1 }, town:true, needSm:60 },
-    healer:     { nameVi:'Thầy thuốc',     pct:[.35,.75], risk:.9,  trains:{ Alchemy:3, Spirit:1 }, needSm:45 },
-    priest:     { nameVi:'Tu sĩ',          pct:[.30,.70], risk:.7,  trains:{ Spirit:3, Soul:1 }, needFaith:true },
-    sailor:     { nameVi:'Thủy thủ',       pct:[.18,.55], risk:1.9, trains:{ Throwing:1, Body:2 }, coastal:true, cause:'drown' },
+    guard:      { nameVi:'Lính canh',      pct:[.25,.55], risk:1.5, trains:{ Sword:2, Shield:3, Spear:1 }, bld:['barracks','walls'] },
+    merchant:   { nameVi:'Thương nhân',    pct:[.45,.92], risk:1.1, trains:{}, bld:['market'], town:true, guild:true, needSm:35 },
+    scholar:    { nameVi:'Học giả',        pct:[.40,.85], risk:.7,  trains:{ Arcane:3, Alchemy:1 }, bld:['school'], town:true, needSm:60 },
+    healer:     { nameVi:'Thầy thuốc',     pct:[.35,.75], risk:.9,  trains:{ Alchemy:3, Spirit:1 }, bld:['healer'], needSm:45 },
+    priest:     { nameVi:'Tu sĩ',          pct:[.30,.70], risk:.7,  trains:{ Spirit:3, Soul:1 }, bld:['temple'], needFaith:true },
+    sailor:     { nameVi:'Thủy thủ',       pct:[.18,.55], risk:1.9, trains:{ Throwing:1, Body:2 }, role:['port'], town:true, cause:'drown' },
     thief:      { nameVi:'Kẻ trộm',        pct:[.05,.60], risk:2.2, trains:{ Dagger:3, Stealth:3, Trap:1 }, town:true, cause:'hanged' },
     adventurer: { nameVi:'Mạo hiểm giả',   pct:[.10,.95], risk:1.0, trains:{}, adventurer:true }
   };

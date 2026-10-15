@@ -39,21 +39,28 @@ window.LifeSim = window.LifeSim || {};
       prio: 8, gap: 1,
       when: (S, X) => !S.undead && !S.work && S.flags.workQ && ['adult', 'elder'].includes(X.stage(S)),
       build(S, X) {
-        const reg = X.reg(S), ok = Object.entries(G.WORKS).filter(([id, w]) =>
-          (!w.coastal || reg.coastal) && (!w.biomes || w.biomes.includes(reg.biome)) && (!w.town || town(S)) &&
-          (!w.needSm || S.sm >= w.needSm) && (!w.needFaith || S.faith));
-        const pick = ok.filter(([id]) => id !== 'adventurer').sort(() => X.rnd() - .5).slice(0, 3);
+        // Nghề làm được tùy công trình, vai trò của khu đang ở và luật của nước (js/state.js G.workOK); phường hội thu phí vào nghề.
+        const reg = X.reg(S), ok = Object.entries(G.WORKS).filter(([id]) => G.workOK(S, id) && (!G.workFee(S, id) || S.gold >= G.workFee(S, id)));
+        // Ba nghề ngẫu nhiên; người ở vùng quê, làng, thôn luôn có ít nhất một nghề đất (nghề của nhà mình).
+        const LAND = ['farmer', 'herder', 'fisher', 'woodcutter', 'miner'], rural = !S.urban || ['village', 'hamlet'].includes((G.here(S).s || {}).tier);
+        const shuffled = ok.filter(([id]) => id !== 'adventurer').sort(() => X.rnd() - .5);
+        const land = rural ? shuffled.find(([id]) => LAND.includes(id)) : null;
+        const pick = land ? [land, ...shuffled.filter(e => e !== land).slice(0, 2)] : shuffled.slice(0, 3);
         pick.push(['adventurer', G.WORKS.adventurer]);
         return { title: 'Kiếm sống bằng gì?', body: `Bạn đã trưởng thành ở ${home(S, X)}. Thu nhập tính theo phân vị trong vùng (${reg.nameVi}, trung vị ${Math.round(G.median(reg))} bạc/năm).`,
-          choices: pick.map(([id, w]) => ({ k: id, label: w.nameVi, sub: w.adventurer ? 'Sống bằng săn quái; thu nhập theo danh vọng; nguy hiểm.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]))}–${Math.round(G.incomeAt(reg, w.pct[1]))} bạc/năm` + (w.risk > 1.4 ? ' · nguy hiểm' : '') })) };
+          choices: pick.map(([id, w]) => { const m = G.incomeMult({ ...S, work: id }), fee = G.workFee(S, id);
+            return { k: id, label: w.nameVi, sub: w.adventurer ? 'Sống bằng săn quái; thu nhập theo danh vọng; nguy hiểm.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${Math.round(G.incomeAt(reg, w.pct[1]) * m)} bạc/năm sau thuế` + (w.risk > 1.4 ? ' · nguy hiểm' : '') + (fee ? ` · phí phường hội ${fee} bạc` : '') }; }) };
       },
-      apply(S, X, k) { S.work = k; S.flags.workQ = false; const w = G.WORKS[k]; if (!w.adventurer) S.pct = Math.max(S.pct * .6, w.pct[0]); return w.adventurer ? 'Bạn ghi tên vào Hội Mạo Hiểm.' : 'Năm đầu học việc, lương thấp.'; },
+      apply(S, X, k) { const fee = G.workFee(S, k); if (fee) X.money(-fee); S.work = k; S.flags.workQ = false; const w = G.WORKS[k]; if (!w.adventurer) S.pct = Math.max(S.pct * .6, w.pct[0]); return w.adventurer ? 'Bạn ghi tên vào Hội Mạo Hiểm.' : 'Năm đầu học việc, lương thấp.'; },
       auto(S, X, d) {
         const T = S.traits, has = k => d.choices.find(c => c.k === k);
         if (T.bold > .62) return 'adventurer';
         if (T.studious > .6 && (has('scholar') || has('healer'))) return (has('scholar') || has('healer')).k;
         if (T.pious > .65 && has('priest')) return 'priest';
-        return d.choices[0].k;
+        // Không có thiên hướng rõ: người ở vùng quê, làng, thôn nghiêng về nghề đất (ngoài đời phần lớn dân là nông dân).
+        const LAND = ['farmer', 'herder', 'fisher', 'woodcutter', 'miner'], rural = !S.urban || ['village', 'hamlet'].includes((G.here(S).s || {}).tier);
+        const rest = d.choices.filter(c => c.k !== 'adventurer');
+        return rest.length ? X.wpick(rest, c => rural && LAND.includes(c.k) ? 4 : 1).k : 'adventurer';
       }
     },
     promote: {
@@ -115,9 +122,11 @@ window.LifeSim = window.LifeSim || {};
       apply(S, X, k) { S.flags.migrateQ = null; if (k === 'stay') return 'Bạn ở lại.'; return G.moveTo(X, k); },
       auto(S, X, d) {
         const opts = d.choices.filter(c => c.k !== 'stay');
-        if (!opts.length || X.rnd() < .45) return 'stay';
+        // Bị lệnh trục xuất thì phần lớn sẽ đi, và tránh vùng vẫn thuộc nước ra lệnh.
+        const forced = S.flags.expelled && G.lawHere(S, 'no_outsiders') && !G.here(S).n.fav.includes(S.race);
+        if (!opts.length || X.rnd() < (forced ? .15 : .45)) return 'stay';
         const ct = X.ctier(S);
-        const score = c => { const r = G.REGION[c.k]; return r.wealth * 2 - Math.max(0, r.zones[0].tier[0] - ct) * 1.5 + (S.traits.bold > .6 ? r.danger : 0); };
+        const score = c => { const r = G.REGION[c.k], m = G.mainSettlement(c.k); return r.wealth * 2 - Math.max(0, r.zones[0].tier[0] - ct) * 1.5 + (S.traits.bold > .6 ? r.danger : 0) - (forced && m && m.nation === S.nation ? 3 : 0); };
         return opts.sort((a, b) => score(b) - score(a))[0].k;
       }
     },
@@ -267,16 +276,18 @@ window.LifeSim = window.LifeSim || {};
   G.moveTo = function (X, regionId) {
     const S = X.S, to = G.REGION[regionId];
     S.loc = regionId;
-    // Tới vùng mới thì ở khu dân cư lớn nhất của vùng; vùng không có khu dân cư thì sống ngoài trời.
-    const st = S.undead ? null : G.mainSettlement(regionId);
+    // Tới vùng mới: dân thành thị vào khu lớn nhất của vùng; dân quê về vùng quê của một làng / thôn (bốc theo dân quê);
+    // vùng không có khu dân cư thì sống ngoài trời.
+    const wasRural = S.urban === false, villages = G.settlementsIn(regionId).filter(s => s.tier === 'village' || s.tier === 'hamlet');
+    const st = S.undead ? null : wasRural && villages.length ? X.wpick(villages, s => s.rural + 1) : G.mainSettlement(regionId);
     S.home = { region: regionId, settlement: st ? st.id : null };
-    S.urban = !!st && G.TIER_RANK[st.tier] <= 2;
+    S.urban = !!st && !(wasRural && villages.includes(st)) && G.TIER_RANK[st.tier] <= 2;
     S.pos = st ? G.homePos(st, S.urban, X.rnd) : G.map.pointIn(regionId, 0, X.rnd);
     const nat = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = nat ? nat.idx : null;
     S.path2.push(S.pos);
     X.money(-Math.min(Math.max(S.gold, 0), 10));
     if (S.undead) S.flags.townQ = true;
-    if (S.work && !S.undead) { const w = G.WORKS[S.work]; if ((w.coastal && !to.coastal) || (w.biomes && !w.biomes.includes(to.biome))) { S.work = null; S.flags.workQ = true; } }
+    if (S.work && !S.undead && !G.workOK(S, S.work)) { S.work = null; S.flags.workQ = true; }   // nơi mới không có công trình / vai trò cho nghề cũ
     let txt = `Bạn tới ${st ? st.name + ', ' + to.nameVi : to.nameVi}${nat ? ` (${nat.name})` : ''}.`;
     // Gặp quái dọc đường: khu ven của vùng mới, vẫn chịu luật Tier.
     if (['teen', 'adult', 'elder'].includes(X.stage(S)) && X.chance(.35)) {
@@ -405,7 +416,7 @@ window.LifeSim = window.LifeSim || {};
         S.world.zonePop[z.id] = Math.max(.6, S.world.zonePop[z.id] - .3);
         if (rec.win) { S.fame += 2; X.add('so', 4); return { t: `Thú triều từ ${z.nameVi}. Bạn đứng ở cổng làng tới khi đợt cuối rút.`, k: 'big', f: X.factOf(enc.s) }; }
         return { t: `Thú triều từ ${z.nameVi} phá nửa làng.`, k: 'bad', f: X.factOf(enc.s) }; } },
-    { id: 'ad_bounty_post', st: ['adult', 'teen', 'elder'], undead: 'any', c: S => !S.flags.bounty && !!S.zoneSel && (S.work === 'adventurer' || S.undead || S.work === 'hunter'), w: 3, rep: true, gap: 2, run(S, X) {
+    { id: 'ad_bounty_post', st: ['adult', 'teen', 'elder'], undead: 'any', c: S => !S.flags.bounty && !!S.zoneSel && (S.work === 'adventurer' || S.undead || S.work === 'hunter'), w: S => G.lawHere(S, 'bounties') ? 6 : 3, rep: true, gap: 2, run(S, X) {
         const z = G.ZONE[S.zoneSel].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null;
         const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(30 * Math.pow(1 + sp.tier, 2)) };
         return { t: `Bảng tin Hội có lệnh mới: thủ lĩnh ${sp.nameVi} ở ${z.nameVi}.`, k: 'info' }; } },
@@ -438,7 +449,7 @@ window.LifeSim = window.LifeSim || {};
     { id: 'con_dream', st: ['adult'], c: S => G.RACES[S.race].construct, w: 1.5, run(S, X) { X.add('sm', 5); return { t: 'Lõi bạn chạy một đoạn mã không ai viết. Bạn gọi nó là giấc mơ.', k: 'big', f: J.races.construct.lore }; } },
     // ── Bộ Xương ──
     { id: 'sk_flee', st: ['adult', 'elder'], undead: true, w: 4, rep: true, gap: 2, run(S, X) { X.add('h', -4); return { t: 'Một đoàn lữ khách thấy bạn và bỏ chạy, để lại cả nồi cháo đang sôi.', k: 'bad' }; } },
-    { id: 'sk_paladin', st: ['adult', 'elder'], undead: true, w: S => 1 + (S.flags.revealed ? 4 : 0) + (X0(S).faiths.light || 0) / 15, rep: true, gap: 2, run(S, X) {
+    { id: 'sk_paladin', st: ['adult', 'elder'], undead: true, w: S => (1 + (S.flags.revealed ? 4 : 0) + (X0(S).faiths.light || 0) / 15) * (G.lawHere(S, 'hunt_undead') ? 3 : G.lawHere(S, 'undead_citizen') ? .2 : 1), rep: true, gap: 2, run(S, X) {
         const p = 1 / (1 + Math.exp(-3 * (X.power(S) - (X.ctier(S) + .6))));
         if (X.rnd() < p) { S.fame += 3; X.gain('Shield', 2); return { t: 'Một Thánh Kỵ Sĩ trẻ tìm tới. Bạn đánh gãy kiếm của anh ta rồi để anh ta đi.', k: 'big', f: J.faiths.light.blessing }; }
         if (X.chance(.15)) { X.die({ id: 'purge', text: 'bị Thánh Kỵ Sĩ thanh tẩy' }); return null; }
