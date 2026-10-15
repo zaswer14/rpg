@@ -1,8 +1,8 @@
 /* Vạn Kiếp — HỆ CON chạy cuối mỗi năm, khai báo thứ tự và điều kiện của mình (thay cho ~50 hàm xxxYear() gọi cứng của 1in8b).
- * Thứ tự: world → family → health → undead → career → place → peers.
- * Hệ "world" là nơi quái HOẠT ĐỘNG THEO KHU: mỗi khu có mật độ quái (zonePop) sinh sôi, bị thợ săn NPC và người chơi tỉa bớt;
- * khu sâu quá đông thì đẩy mật độ ra khu ngoài (chỉ mật độ, không đẩy loài — loài vẫn nằm trong dải Tier của khu);
- * khu ven quá đông thì thành thú triều đánh vào làng (rs.raid), làm tăng nguy cơ chết của dân trong vùng.
+ * Thứ tự: world → nations → family → health → undead → career → law → place → peers ("nations" ở js/dynamic.js, "law" ở js/state.js).
+ * Hệ "world": dịch theo vùng; quái HOẠT ĐỘNG THEO TỈNH × TẦNG: mỗi tầng của tỉnh có mật độ quái (zonePop) sinh sôi, bị thợ săn NPC
+ * và người chơi tỉa bớt; tầng sâu quá đông thì đẩy mật độ ra tầng ngoài (chỉ mật độ, không đẩy loài — loài vẫn nằm trong dải Tier
+ * của tầng); tầng ven quá đông thì thành thú triều đánh vào khu dân cư của tỉnh (dyn.raid), làm tăng nguy cơ chết của dân trong tỉnh.
  */
 window.LifeSim = window.LifeSim || {};
 (function (G) {
@@ -20,43 +20,18 @@ window.LifeSim = window.LifeSim || {};
 
   G.worldYear = function (S, X) {
     const W = S.world, adjOf = id => G.map.adj[G.map.idx[id]];
+    G.bindWorld(W);
+    // Dịch bệnh theo vùng.
     for (const r of G.REGIONS) {
-      const rs = W.regions[r.id], zp = W.zonePop;
-      // Dịch bệnh.
+      const rs = W.regions[r.id];
       if (rs.plague > 0) rs.plague = Math.max(0, rs.plague - .3 - X.rnd() * .25);
       else if (X.chance(.01 + (r.biome === 'venom_marsh' ? .02 : 0) + (1 - r.wealth) * .01)) {
         rs.plague = .6 + X.rnd() * .4; rs.plagueNew = true;
         for (const n of adjOf(r.id)) if (X.chance(.25)) { W.regions[n].plague = Math.max(W.regions[n].plague, .4); W.regions[n].plagueNew = true; }
       }
-      // Mật độ quái theo khu: sinh sôi (logistic), bị NPC tỉa (vùng giàu có nhiều thợ săn; không ai vào vùng chết), mùa sinh sản ngẫu nhiên.
-      r.zones.forEach((z, i) => {
-        let p = zp[z.id] ?? 1;
-        p += .1 * (1 - p / 1.5) * (1 + r.danger * .6) - .045 * (.5 + r.wealth) * [1.4, 1, 1, 0][i] + (X.rnd() - .5) * .08;
-        if (X.chance(.025)) { p += .35; if (r.id === S.loc && i <= 1) X.log(`Mùa sinh sản ở ${z.nameVi}: quái đông bất thường.`, 'info'); }
-        zp[z.id] = G.clamp(p, .3, 2.2);
-      });
-      // Khu sâu tràn mật độ ra khu ngoài: vùng chết → lõi → sâu → ven.
-      const ids = r.zones.map(z => z.id);
-      for (let k = ids.length - 1; k > 0; k--) if (zp[ids[k]] > 1.6) zp[ids[k - 1]] = Math.min(2.2, zp[ids[k - 1]] + .1);
-      rs.raid = Math.max(0, zp[ids[0]] - 1.25) * 1.5;
-      // Chiến tranh giảm dần.
-      if (rs.war > 0) rs.war = Math.max(0, rs.war - .25);
     }
-    // Mật độ quái biển: sinh sôi như trên đất, chỉ thuyền chài và tàu tuần tỉa tầng ven bờ, khơi; không có thú triều.
-    for (const r of G.SEAS) r.zones.forEach((z, i) => {
-      const zp = W.zonePop; let p = zp[z.id] ?? 1;
-      p += .1 * (1 - p / 1.5) - .04 * [1.2, .8, 0, 0][i] + (X.rnd() - .5) * .08;
-      zp[z.id] = G.clamp(p, .3, 2.2);
-    });
-    // Chiến tranh mới giữa hai vùng kề có kinh đô / thành phố / đồn (quốc gia động: bước 7 của research/03).
-    if (X.chance(.035)) {
-      const cands = G.REGIONS.filter(r => G.settlementsIn(r.id).some(s => s.tier === 'capital' || s.tier === 'city' || s.roles.includes('fort')));
-      const a = X.pick(cands), nb = adjOf(a.id).filter(id => cands.some(c => c.id === id));
-      if (nb.length) {
-        const b = X.pick(nb); W.regions[a.id].war = 1; W.regions[b].war = 1;
-        if ([a.id, b].includes(S.loc) || X.chance(.4)) X.log(`Chiến tranh nổ ra giữa ${a.nameVi} và ${G.REGION[b].nameVi}.`, [a.id, b].includes(S.loc) ? 'bad' : 'info');
-      }
-    }
+    // Mật độ quái theo tỉnh × tầng, biển; thú triều (js/dynamic.js).
+    G.monsterYear(W, X, S);
     const here = W.regions[S.loc];
     if (here.plagueNew && !S.undead && !G.RACES[S.race].construct) X.log(`Dịch hạch lan tới ${G.REGION[S.loc].nameVi}.`, 'bad');
     for (const r of G.REGIONS) W.regions[r.id].plagueNew = false;

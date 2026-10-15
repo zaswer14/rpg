@@ -448,12 +448,24 @@ window.LifeSim = window.LifeSim || {};
     return cv;
   };
 
+  // Lớp sọc đỏ chéo trên tỉnh tiền tuyến (war[p] ≥ 1, js/dynamic.js), chế độ Chính trị.
+  G.renderWarLayer = function (map, realm, war) {
+    const { W, H, CS } = map, cv = document.createElement('canvas'); cv.width = W * CS; cv.height = H * CS;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = 'rgba(200,40,30,.5)';
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const p = realm.provOf[y * W + x];
+      if (p >= 0 && war[p] >= 1 && (x + y) % 4 === 0) ctx.fillRect(x * CS, y * CS, CS, CS);
+    }
+    return cv;
+  };
+
   // Lớp phủ: khu dân cư, tên vùng, mộ các kiếp trước, đường đời, nhân vật, vùng đang chọn.
   G.drawMap = function (ctx, map, base, o = {}) {
     const R = G.REGIONS;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(base, 0, 0);
     if (o.roads) ctx.drawImage(o.roads, 0, 0);
+    if (o.war) ctx.drawImage(o.war, 0, 0);
     if (o.selected) {
       const k = map.idx[o.selected], { W, CS, zone } = map;
       ctx.fillStyle = 'rgba(255,240,180,.10)';
@@ -486,18 +498,23 @@ window.LifeSim = window.LifeSim || {};
       const FILL = { capital: '#ffd27a', city: '#f6e7c4', town: '#e8dcc0', village: '#d6c9aa', hamlet: '#c9bc9c' };
       for (const s of realm.settlements) {
         const { x, y } = s;
+        ctx.globalAlpha = 1;
         if (s.tier === 'ruin') {
           ctx.strokeStyle = 'rgba(200,190,175,.75)'; ctx.lineWidth = 1.5;
           ctx.beginPath(); ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3); ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3); ctx.stroke();
           continue;
         }
         const r = SZ[s.tier], n = s.nation >= 0 ? realm.nations[s.nation] : null;
+        ctx.globalAlpha = s.dwindling ? .55 : 1;   // khu sa sút (js/dynamic.js) nhạt đi
         if (s.tier === 'hamlet') { ctx.fillStyle = 'rgba(26,18,12,.8)'; ctx.fillRect(x - 2, y - 2, 4, 4); ctx.fillStyle = FILL.hamlet; ctx.fillRect(x - 1, y - 1, 2, 2); continue; }
         ctx.fillStyle = political && n ? n.color : '#1a120c'; ctx.fillRect(x - r - 1, y - r - 1, r * 2 + 2, r * 2 + 2);
         ctx.fillStyle = s.roles.includes('fort') ? '#d08070' : FILL[s.tier]; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-        if (s.tier === 'capital') { ctx.fillStyle = '#1a120c'; ctx.fillRect(x - 1, y - r - 5, 2, 5); ctx.fillStyle = n ? n.color : '#ffd27a'; ctx.fillRect(x + 1, y - r - 5, 4, 3); }
+        // Cờ kinh đô: khu là kinh đô hiện tại của nước (dời đô thì cờ theo).
+        if (n ? n.capital === s.id : s.tier === 'capital') { ctx.fillStyle = '#1a120c'; ctx.fillRect(x - 1, y - r - 5, 2, 5); ctx.fillStyle = n ? n.color : '#ffd27a'; ctx.fillRect(x + 1, y - r - 5, 4, 3); }
         if (s.roles.includes('port') && r >= 3) { ctx.fillStyle = '#7fc4ee'; ctx.fillRect(x + r - 2, y + r - 2, 3, 3); }
+        ctx.globalAlpha = 1;
       }
+      ctx.globalAlpha = 1;
       // Chế độ Biển: bến theo loại tàu (vòng nhạt: thuyền chài; xanh: tàu buôn; vàng: tàu viễn dương), tên vùng biển.
       if (o.view === 'sea' && realm.harbors) {
         for (const h of realm.harbors) {
@@ -513,8 +530,10 @@ window.LifeSim = window.LifeSim || {};
     }
     // Tên vùng (chế độ Vùng, Địa hình) hoặc tên nước (chế độ Chính trị).
     if (o.labels !== false) {
-      if (political && realm) for (const n of realm.nations) label(ctx, n.name.toUpperCase(), n.labelPos[0], n.labelPos[1] - 16, 12.5, `rgb(${mix(hex(n.color), [255, 248, 230], .55).map(Math.round).join(',')})`, true);
-      else for (const reg of R) label(ctx, reg.nameVi.toUpperCase(), reg.x, reg.y - 26, 11, 'rgba(255,248,230,.82)', true);
+      if (political && realm) {
+        if (G.relabelNations) G.relabelNations(realm);
+        for (const n of realm.nations) if (n.alive !== false && n.labelPos) label(ctx, n.name.toUpperCase(), n.labelPos[0], n.labelPos[1] - 16, 12.5, `rgb(${mix(hex(n.color), [255, 248, 230], .55).map(Math.round).join(',')})`, true);
+      } else for (const reg of R) label(ctx, reg.nameVi.toUpperCase(), reg.x, reg.y - 26, 11, 'rgba(255,248,230,.82)', true);
     }
     // Mộ.
     for (const g of o.graves || []) {

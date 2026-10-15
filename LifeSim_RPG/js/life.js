@@ -208,6 +208,10 @@ window.LifeSim = window.LifeSim || {};
       G.init();
       const T = this;
       if (!G.realm) G.useWorld('varen');
+      // Thế giới phải gắn trước khi bốc nơi sinh: khu dân cư đã sụp / mới lập, tỉnh đã đổi chủ (js/dynamic.js).
+      const world = opt.world || this.newWorld();
+      if (world.lastDeath === world.year) world.year++;   // năm kiếp trước mất đã chạy hệ con; kiếp này bắt đầu từ năm sau
+      G.bindWorld(world);
       // Nơi sinh (research/05 mục 7): bốc khu dân cư theo số người sống (đô thị + vùng quê quanh nó; Bộ Xương không sinh con),
       // rồi bốc sinh trong khu (đô thị) hay ở vùng quê quanh khu theo tỉ lệ dân.
       const living = s => 1 - (s.races.skeleton || 0) / 100;
@@ -229,7 +233,7 @@ window.LifeSim = window.LifeSim || {};
       const lt = G.lifeTable(race, sex, reg.wealth);
       const mastery = Object.fromEntries(Object.keys(G.MASTERY).map(m => [m, 0]));
       const S = this.S = {
-        v: 1, seed: this.seed, kiep: 1, name: '', sex, race, undead: false,
+        v: 2, seed: this.seed, kiep: 1, name: '', sex, race, undead: false,
         age: 0, t: 0, home: { region: reg.id, settlement: st.id }, loc: reg.id, born: { region: reg.id, settlement: st.id, urban },
         urban, nation: st.nation >= 0 ? st.nation : null, worldSeed: G.realm.seed,
         q, pct: G.lerp(cr[0], cr[1], T.rnd()), gold: 0, work: null, path: null,
@@ -241,7 +245,7 @@ window.LifeSim = window.LifeSim || {};
         conds: [], flags: {}, recent: {}, recentDec: {}, queue: [], pending: null,
         years: [], kills: {}, hunts: { n: 0, won: 0, lost: 0, fled: 0, maxGap: -9, byGap: {} }, fame: 0,
         log: [], path2: [], dead: false, cause: null, rose: null, lineage: opt.lineage || [], inherited: null,
-        world: opt.world || this.newWorld(), peers: [], peerSeen: {}
+        world, peers: [], peerSeen: {}
       };
       S.birthYear = S.world.year;
       S.name = this.name(race, sex);
@@ -277,7 +281,7 @@ window.LifeSim = window.LifeSim || {};
       const surv = a => { let l = 1; for (let x = 0; x < Math.min(a, lt.q.length); x++) l *= 1 - lt.q[x]; return l; };
       const aT = Math.round(lt.adultT);
       this.log(`Trong số ${J.races[race].nameVi} sinh cùng năm ở ${reg.nameVi}, khoảng ${Math.round(surv(aT) * 100)}% sống tới tuổi trưởng thành (${R.adult}) và ${Math.round(surv(Math.round(lt.leT)) * 100)}% sống tới ${Math.round(lt.leT * R.ypt)}.`, 'info');
-      if (!opt.noPeers && !this.headless) this.makePeers();
+      if (!opt.noPeers && !this.headless) { this.makePeers(); G.bindWorld(S.world); }   // đồng niên sống trên bản sao thế giới; gắn lại thế giới của đời này
       this.planYear();
       return S;
     }
@@ -292,7 +296,7 @@ window.LifeSim = window.LifeSim || {};
       const reg = G.REGION[old.loc];
       const grave = reg.zones[0];
       const S = this.S = {
-        v: 1, seed: this.seed, kiep: old.kiep + 1, name: `Bộ Xương của ${old.name.split(' ')[0]}`, sex: 'n', race: 'skeleton', undead: true,
+        v: 2, seed: this.seed, kiep: old.kiep + 1, name: `Bộ Xương của ${old.name.split(' ')[0]}`, sex: 'n', race: 'skeleton', undead: true,
         age: 0, t: 0, home: { region: reg.id, settlement: null }, loc: reg.id, born: { region: reg.id, settlement: null },
         urban: false, nation: null, worldSeed: old.worldSeed,
         q: 1, pct: .02, gold: 0, work: null, path: dom ? G.MASTERY[dom.skill] : 'death',
@@ -306,6 +310,7 @@ window.LifeSim = window.LifeSim || {};
         log: [], path2: [], dead: false, cause: null, rose: null, lineage, inherited: dom ? { ...dom } : null,
         world: old.world, peers: old.peers, peerSeen: old.peerSeen
       };
+      if (S.world.lastDeath === S.world.year) S.world.year++;
       S.birthYear = S.world.year;
       S.pos = G.map.pointIn(reg.id, 0, this.rnd); S.path2.push(S.pos);
       const here = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = here ? here.idx : null;
@@ -316,12 +321,8 @@ window.LifeSim = window.LifeSim || {};
       return S;
     }
 
-    newWorld() {
-      const zonePop = {};
-      for (const r of [...G.REGIONS, ...G.SEAS]) for (const z of r.zones) zonePop[z.id] = +(0.85 + this.rnd() * .35).toFixed(3);
-      const regions = Object.fromEntries(G.REGIONS.map(r => [r.id, { plague: 0, war: 0, raid: 0 }]));
-      return { year: 1000 + this.int(120, 380), zonePop, regions, wars: [], lordSeen: {} };
-    }
+    // Thế giới động của đời này (js/dynamic.js): mật độ quái, dịch, quốc gia, khu dân cư, sử biên niên.
+    newWorld() { return G.makeWorld(this); }
 
     // Đồng niên: 4 đời khác sinh cùng năm, chạy headless tới chết ngay lúc bắt đầu.
     makePeers() {
@@ -357,6 +358,7 @@ window.LifeSim = window.LifeSim || {};
     tick(dt) {
       const S = this.S;
       if (!S || S.dead || S.pending) return;
+      G.bindWorld(S.world);
       S.focusTime[S.focus] = (S.focusTime[S.focus] || 0) + dt;
       S.t += dt;
       while (S.queue.length && S.queue[0].at <= S.t && !S.pending && !S.dead) this.fire(S.queue.shift());
@@ -438,7 +440,7 @@ window.LifeSim = window.LifeSim || {};
     }
 
     deathProb() {
-      const S = this.S, t = this.lt(S), reg = this.reg(S), rs = S.world.regions[S.loc], st = this.stage(S);
+      const S = this.S, t = this.lt(S), reg = this.reg(S), rs = G.local(S), st = this.stage(S);
       const q = t.q[Math.min(S.age, t.q.length - 1)];
       let m = Math.exp((60 - S.hl) / 28);
       m *= [0, 1.45, 1.15, 1, .86, .74][S.q];
@@ -452,7 +454,7 @@ window.LifeSim = window.LifeSim || {};
       return 1 - Math.pow(1 - q, m);
     }
     pickCause() {
-      const S = this.S, reg = this.reg(S), rs = S.world.regions[S.loc], R = this.R(S);
+      const S = this.S, reg = this.reg(S), rs = G.local(S), R = this.R(S);
       let st = this.stage(S); if (st === 'teen') st = 'child';
       const W = G.WORKS[S.work] || {};
       const ws = {};
@@ -488,6 +490,7 @@ window.LifeSim = window.LifeSim || {};
     die(cause) {
       const S = this.S; if (S.dead) return;
       S.dead = true; S.cause = cause.text; S.causeId = cause.id; S.causeSpecies = cause.species || null;
+      S.world.lastDeath = S.world.year;
       S.dominant = this.dominant(S);
       // Kết quả trỗi dậy được tung ngay lúc chết (cùng seed thì cùng kết quả).
       S.rose = this.rnd() < G.REINCARNATE_P ? (S.dominant || { skill: 'Body', value: 5 }) : null;
@@ -576,7 +579,7 @@ window.LifeSim = window.LifeSim || {};
       if (this.rnd() < pWin) {
         rec.win = true; S.hunts.won++;
         S.kills[s.id] = (S.kills[s.id] || 0) + count;
-        pop[enc.zone.id] = Math.max(.3, (pop[enc.zone.id] ?? 1) - .015 * count);
+        { const key = enc.cell != null ? G.areaKey(enc.cell) : G.zoneKey(enc.zone, G.provOfS(S)); pop[key] = Math.max(.3, (pop[key] ?? 1) - .015 * count); }
         const xp = 60 * Math.pow(1 + Math.max(0, mET), 2) * (.6 + .4 * count) * (adventure ? 1.3 : 1);
         const loot = Math.round(3 * Math.pow(1 + s.tier, 2) * { normal: 1, elite: 2.5, alpha: 4, lord: 20 }[grade] * (.5 + this.rnd()) * (adventure ? 1.4 : 1));
         this.money(loot); this.addXp(xp);

@@ -5,7 +5,8 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // v3: thế giới sinh từ seed (quốc gia, khu dân cư của js/realm.js); bản lưu và mộ gắn với seed thế giới.
-  const SAVE = 'vankiep.save.v3', GRAVES = 'vankiep.graves.v3', PREF = 'vankiep.pref.v1', WORLD = 'vankiep.world.v1';
+  // v4: thế giới động (js/dynamic.js): bản lưu giữ S.world.dyn; đời mới nối tiếp thế giới của đời trước.
+  const SAVE = 'vankiep.save.v4', GRAVES = 'vankiep.graves.v3', PREF = 'vankiep.pref.v1', WORLD = 'vankiep.world.v1';
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bộ nhớ trình duyệt bị chặn: chơi tiếp, không lưu */ } }
@@ -18,13 +19,17 @@
   function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); for (const k of Object.keys(bases)) if (k !== 'terrain') delete bases[k]; }
   // Ảnh nền mỗi chế độ xem dựng lần đầu khi cần rồi giữ lại (Vùng, Chính trị, Nguy hiểm dựng lại khi đổi thế giới).
   // Nguy hiểm dựng lại khi Tier nhân vật hoặc Liều mạng đổi (chỉ giữ một bản).
+  // Vùng, Chính trị, Nguy hiểm đổi theo thế giới động (tỉnh đổi chủ, khu sụp làm độ hoang đổi): khóa theo realm.rev, mỗi chế độ giữ một bản.
   const bases = {};
-  // Lớp đường: dựng một lần mỗi thế giới.
-  let roadsLayer = null, roadsSeed = null;
-  const roadsFor = () => { if (roadsSeed !== G.realm.seed) { roadsSeed = G.realm.seed; roadsLayer = G.renderRoads(G.map, G.realm); } return roadsLayer; };
+  // Lớp đường: dựng lại khi thế giới đổi (đường xuống cấp).
+  let roadsLayer = null, roadsKey = null;
+  const roadsFor = () => { const k = G.realm.seed + ':' + G.realm.rev; if (roadsKey !== k) { roadsKey = k; roadsLayer = G.renderRoads(G.map, G.realm); } return roadsLayer; };
+  // Lớp sọc đỏ: tỉnh đang là tiền tuyến (chế độ Chính trị).
+  let warLayer = null, warKey = null;
+  const warFor = W => { const k = G.realm.seed + ':' + W.dyn.war.join(); if (warKey !== k) { warKey = k; warLayer = W.dyn.war.some(v => v >= 1) ? G.renderWarLayer(G.map, G.realm, W.dyn.war) : null; } return warLayer; };
   function baseFor(v, ct, cap) {
-    const k = v === 'danger' ? `danger:${ct}:${cap}` : v;
-    if (!bases[k]) { if (v === 'danger') for (const o of Object.keys(bases)) if (o.startsWith('danger:')) delete bases[o]; bases[k] = G.renderMapBase(G.map, v, G.realm, { ct, cap }); }
+    const k = v === 'terrain' || v === 'sea' ? v : v === 'danger' ? `danger:${ct}:${cap}:${G.realm.rev}` : v + ':' + G.realm.rev;
+    if (!bases[k]) { const pre = v === 'danger' ? 'danger:' : v + ':'; for (const o of Object.keys(bases)) if (o.startsWith(pre)) delete bases[o]; bases[k] = G.renderMapBase(G.map, v, G.realm, { ct, cap }); }
     return bases[k];
   }
   const urlWorld = new URLSearchParams(location.search).get('world');
@@ -44,12 +49,14 @@
       hunt: () => { dirty = true; }
     };
   }
+  // Kiếp mới sinh vào thế giới của kiếp trước (cùng seed thế giới): năm, nước, khu dân cư, sử biên niên nối tiếp.
   function start(seed) {
+    const prev = sim && sim.S && sim.S.world && sim.S.worldSeed === G.realm.seed ? sim.S.world : null;
     sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() });
     sim.autoDecide = pref.auto;
     clearLog();
     deathShown = false; $('deathModal').hidden = true; $('decModal').hidden = true;
-    sim.newLife();
+    sim.newLife(prev ? { world: prev } : {});
     sim.S.auto = pref.auto;
     selRegion = sim.S.loc;
     dirty = true; save();
@@ -65,13 +72,13 @@
   function save() { if (sim && sim.S) store.set(SAVE, { seed: sim.seed, rs: sim.rs, S: sim.S, world: G.realm.seed }); }
   function load() {
     const d = store.get(SAVE);
-    if (!d || !d.S || d.S.v !== 1) return false;
+    if (!d || !d.S || d.S.v !== 2) return false;
     try {
       if (urlWorld && d.world !== urlWorld) return false;   // ?world=… trên URL: bắt đầu đời mới ở thế giới đó
       if (d.world && d.world !== G.realm.seed) useWorld(d.world);
       sim = new G.Sim({ seed: d.seed, hook: hook() });
       sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
-      for (const r of G.REGIONS) for (const z of r.zones) if (d.S.world.zonePop[z.id] == null) d.S.world.zonePop[z.id] = 1;   // bản lưu trước khi có vùng chết
+      G.bindWorld(d.S.world);
       clearLog(); for (const e of d.S.log) appendLog(e, true);
       selRegion = d.S.loc;
       if (d.S.pending) showDecision(d.S.pending);
@@ -257,7 +264,7 @@
       const b = document.createElement('button');
       b.className = 'zone' + (S.zoneSel === z.zone.id ? ' sel' : ''); b.style.setProperty('--c', ZCOL[z.level]);
       b.disabled = !z.open || S.dead;
-      const pop = S.world.zonePop[z.zone.id] ?? 1;
+      const pop = G.densityOf(S.world, G.zoneKey(z.zone, G.provOfS(S)));
       b.innerHTML = `<span class="band">${G.BAND_VI[z.index]}</span><b>${esc(z.zone.nameVi)}</b><span class="t">Tier ${z.zone.tier[0]}${z.zone.tier[1] > z.zone.tier[0] ? '–' + z.zone.tier[1] : ''}</span> · ${ZTXT[z.level]}<div class="pop" title="Mật độ quái ${pop.toFixed(2)}"><i style="width:${Math.min(100, pop / 2.2 * 100)}%"></i></div>`;
       b.onclick = () => { S.zoneSel = z.zone.id; S.zoneManual = true; dirty = true; };
       box.appendChild(b);
@@ -277,7 +284,11 @@
     const pop = RL.provinces.filter(p => p.nation === n.idx).reduce((a, p) => a + p.pop, 0), urban = own.reduce((a, s) => a + s.urban, 0);
     const cnt = ['capital', 'city', 'town', 'village', 'hamlet'].map(t => [t, own.filter(s => s.tier === t).length]).filter(([, k]) => k).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ');
     const rname = r => J.races[r].nameVi, qname = q => { const Q = G.QUIRKS.find(x => x.id === q.id); return Q.nameVi + (q.target != null ? ` (${RL.nations[q.target].name})` : '') + (q.race ? ` (${rname(q.race)})` : ''); };
-    const rel = RL.nations.filter(o => o !== n).map(o => { const v = n.relations[o.idx] || 0; return `<span style="color:${v > 0 ? 'var(--good)' : v < 0 ? 'var(--bad)' : 'var(--dim)'}">${esc(o.name)} ${v > 0 ? '+' : ''}${v}</span>`; }).join(' · ');
+    const D = sim.S.world.dyn, cap = G.SET[n.capital], yr = sim.S.world.year;
+    // Chiến tranh đang đánh, hưu chiến còn hạn (js/dynamic.js).
+    const wars = D.wars.filter(w => w.a === n.idx || w.b === n.idx).map(w => { const o = RL.nations[w.a === n.idx ? w.b : w.a], sc = w.a === n.idx ? w.score : -w.score; return `với ${esc(o.name)} (năm thứ ${w.years + 1}, ${sc > .3 ? 'đang thắng thế' : sc < -.3 ? 'đang núng thế' : 'giằng co'})`; }).join(' · ');
+    const truce = Object.entries(D.truce).filter(([k, y]) => y > yr && k.split(':').map(Number).includes(n.idx)).map(([k, y]) => { const o = RL.nations[k.split(':').map(Number).find(v => v !== n.idx)]; return `${esc(o.name)} tới năm ${y}`; }).join(' · ');
+    const rel = RL.nations.filter(o => o !== n && o.alive !== false).map(o => { const v = n.relations[o.idx] || 0; return `<span style="color:${v > 0 ? 'var(--good)' : v < 0 ? 'var(--bad)' : 'var(--dim)'}">${esc(o.name)} ${v > 0 ? '+' : ''}${v}</span>`; }).join(' · ');
     const provs = RL.provinces.filter(p => p.nation === n.idx).sort((a, b) => b.pop - a.pop).map(p => `${esc(p.name)} (${p.pop.toLocaleString('vi')})`).join(' · ');
     const big = own.slice().sort((a, b) => b.urban - a.urban).slice(0, 8).map(s => `${esc(s.name)} <span class="fam">${G.TIER_VI[s.tier].toLowerCase()} ${s.urban.toLocaleString('vi')}${s.roles.length ? ', ' + s.roles.map(r => G.ROLE_VI[r]).join(', ') : ''}</span>`).join(' · ');
     box.innerHTML = `<h4 style="color:${n.color}">${esc(n.name)}</h4>
@@ -288,10 +299,12 @@
       <div class="row"><span>Ưu ái: ${n.tolerant ? 'mọi chủng tộc' : esc(n.fav.map(rname).join(', ') || 'không')}</span><span>Dè chừng: ${esc(n.wary.length > 6 ? 'mọi chủng tộc khác' : n.wary.map(rname).join(', ') || 'không')}</span></div>
       <div class="rz"><b>${esc(n.trait.nameVi)}</b>: ${esc(n.trait.desc)}</div>
       <div class="row"><span>Đặc trưng: ${esc(n.quirks.map(qname).join(', '))}</span>${n.overlord != null ? `<span>Chư hầu của ${esc(RL.nations[n.overlord].name)}</span>` : ''}</div>
+      <div class="row"><span>Kinh đô: ${cap ? esc(cap.name) : '—'}</span>${n.founded ? `<span>Lập năm ${n.founded}</span>` : ''}</div>
       <div class="row"><span>Dân ${pop.toLocaleString('vi')} · đô thị ${Math.round(urban / Math.max(1, pop) * 100)}%</span><span>${cnt}</span></div>
       <div class="rz"><b>Tỉnh</b> · ${provs}</div>
       <div class="rz"><b>Khu dân cư lớn</b> · ${big}</div>
-      <div class="rz"><b>Quan hệ</b> · ${rel}</div>`;
+      <div class="rz"><b>Quan hệ</b> · ${rel}</div>
+      ${wars ? `<div class="rz" style="color:var(--bad)"><b>Đang chiến tranh</b> · ${wars}</div>` : ''}${truce ? `<div class="rz"><b>Hưu chiến</b> · ${truce}</div>` : ''}`;
     box.hidden = false;
   }
 
@@ -300,7 +313,11 @@
     const box = $('regionPanel');
     if (pref.view === 'political' && selNation != null) return renderNation(box);
     if (!selRegion) { box.hidden = true; return; }
-    const S = sim.S, R = G.REGION[selRegion], rs = S.world.regions[R.id], bio = J.biomes[R.biome];
+    const S = sim.S, R = G.REGION[selRegion], bio = J.biomes[R.biome], D = S.world.dyn;
+    // Tình hình vùng: dịch theo vùng; chiến tranh, thú triều theo các tỉnh có thủ phủ trong vùng. Mật độ quái: tỉnh nơi mình ở, hoặc tỉnh của khu lớn nhất vùng.
+    const provs = G.realm.provinces.filter(p => G.SET[p.seat].region === R.id).map(p => p.idx);
+    const rs = { plague: (S.world.regions[R.id] || {}).plague || 0, war: Math.max(0, ...provs.map(p => D.war[p])), raid: Math.max(0, ...provs.map(p => D.raid[p])) };
+    const main = G.mainSettlement(R.id), dp = R.id === S.loc ? G.provOfS(S) : main ? main.province : -1;
     const top = (o, f) => Object.entries(o).filter(([k]) => k !== 'none').sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => f(k)).join(', ');
     // Chuyến đi tới vùng này (js/travel.js): số ngày, phần trên đường, có phải thuê hộ tống không. Tính lại khi đổi vị trí / vùng / Tier.
     const able = !S.dead && ['teen', 'adult', 'elder'].includes(sim.stage(S)) && R.id !== S.loc;
@@ -314,7 +331,7 @@
     const zones = R.zones.map((z, i) => {
       const ms = Object.keys(z.spawns).map(id => G.B.byId[id]).sort((a, b) => a.tier - b.tier).map(s => `${s.nameVi} T${s.tier}`).join(', ');
       const share = bc[i].length ? `${Math.max(1, Math.round(bc[i].length / btot * 100))}% diện tích` : 'không có ở thế giới này';
-      return `<div class="rz${bc[i].length ? '' : ' absent'}"><b>${G.BAND_VI[i]}: ${esc(z.nameVi)}</b> · Tier ${z.tier[0]}–${z.tier[1]} · ${share} · mật độ ${(S.world.zonePop[z.id] ?? 1).toFixed(2)}<br><span class="fam">${esc(ms)}</span></div>`;
+      return `<div class="rz${bc[i].length ? '' : ' absent'}"><b>${G.BAND_VI[i]}: ${esc(z.nameVi)}</b> · Tier ${z.tier[0]}–${z.tier[1]} · ${share} · mật độ ${G.densityOf(S.world, G.zoneKey(z, dp)).toFixed(2)}<br><span class="fam">${esc(ms)}</span></div>`;
     }).join('');
     const state = [rs.plague > 0 ? 'đang có dịch' : '', rs.war > 0 ? 'đang chiến tranh' : '', rs.raid > 0 ? `thú triều ${rs.raid.toFixed(2)}` : ''].filter(Boolean).join(' · ');
     box.innerHTML = `<h4>${esc(R.nameVi)}</h4>
@@ -339,6 +356,10 @@
       const gone = S.peerSeen[i];
       return `<div class="prow${gone ? ' gone' : ''}"><b>${esc(p.name)}</b> · ${esc(J.races[p.race].nameVi)} · ${esc(p.settlement || p.regionName)}<br>${gone ? `mất ở tuổi ${p.years}: ${esc(p.cause)}${p.rose ? ' · đã trỗi dậy' : ''}` : 'còn sống'}</div>`;
     }).join('') || '<div class="prow">Kiếp này không có đồng niên.</div>';
+    // Biên niên sử của thế giới (js/dynamic.js): 40 dòng gần nhất, mới nhất trên cùng.
+    const H = (S.world.dyn && S.world.dyn.hist) || [];
+    $('chronCount').textContent = H.length ? `(${H.length})` : '';
+    $('chron').innerHTML = H.slice(-40).reverse().map(h => `<div class="prow"><b>Năm ${h.y}</b> · ${esc(h.t)}</div>`).join('') || '<div class="prow">Chưa có gì đáng ghi.</div>';
     const L = S.lineage || [];
     $('lineageBox').hidden = !L.length;
     $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} cấp ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
@@ -359,7 +380,8 @@
     G.drawMap(ctx, G.map, baseFor(pref.view, ct, cap), {
       selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
-      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null,
+      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers,
+      war: pref.view === 'political' && S.world.dyn ? warFor(S.world) : null, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null,
       seaLines: pref.view === 'sea' && !S.dead ? G.seaLinesFrom(S) : null
     });
   }
@@ -387,7 +409,7 @@
     const near = G.realm.settlements.filter(s => Math.hypot(s.x - x, s.y - y) < ({ capital: 10, city: 9, town: 8 }[s.tier] || 6)).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
     const prov = G.provinceAtCell(c.cell), nat = G.nationAtCell(c.cell);
     const gv = graves.find(g => g.world === G.realm.seed && Math.hypot(g.x - x, g.y - y) < 7);
-    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
+    const nearTxt = near ? (near.tier === 'ruin' ? `<br><b>${esc(near.name)}</b> · phế tích${near.ruined != null ? ` (bỏ hoang năm ${near.ruined})` : ''}` : `<br><b>${esc(near.name)}</b> · ${G.TIER_VI[near.tier].toLowerCase()}${near.roles.length ? ', ' + near.roles.map(r => G.ROLE_VI[r]).join(', ') : ''} · ${near.urban.toLocaleString('vi')} người${near.rural ? ` · vùng quê ${near.rural.toLocaleString('vi')}` : ''}${near.dwindling ? ' · <span style="color:var(--bad)">sa sút</span>' : ''}${near.founded ? ` · lập năm ${near.founded}` : near.revived ? ` · dựng lại năm ${near.revived}` : ''}<br><span class="fam">${esc(near.buildings.join(', ') || 'chưa có công trình')}</span>`) : '';
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
       + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`

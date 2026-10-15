@@ -189,7 +189,7 @@ Vùng chết chỉ có ở nơi xa văn minh thật sự: giữa vùng hoang, sa
 Khác với thiết kế ở trên:
 
 - Bảng loài vẫn khai theo **vùng** (mỗi vùng thêm khu thứ tư), chưa tách sang biome. Vì mỗi vùng đúng một biome nên kết quả như nhau; tách khi có vùng thứ hai cùng biome.
-- Mật độ quái (`zonePop`) vẫn theo **vùng × tầng**, chưa theo tỉnh × tầng như 3.5. Đổi khi làm quốc gia động (bước 7), lúc tỉnh có ý nghĩa cho thú triều.
+- Mật độ quái (`zonePop`) vẫn theo **vùng × tầng**, chưa theo tỉnh × tầng như 3.5. Đổi khi làm quốc gia động (bước 7), lúc tỉnh có ý nghĩa cho thú triều. (Đã đổi ở bước 7, xem 5.7.)
 - Chưa có đường nên nguồn văn minh chỉ là khu dân cư; đường thêm vào ở bước 5.
 
 Đo bằng `sim.html` (thế giới `can-bang`): diện tích đất ven 20%, sâu 38%, lõi 18%, vùng chết 21% (cách chia cũ: 45 / 35 / 20, không có vùng chết). 1000 đời: 47.490 trận, 0 trận vượt Tier + 1, 9,9% chết vì quái (trước bước 3: ~10%). 100 thế giới: 0 lỗi, ~0,33 giây mỗi thế giới. Cảnh báo dữ liệu: `hai_xa_3` và `hac_uyen_3` chỉ có một họ quái (thiếu loài T5 biển, thêm họ cho Đáy Thật).
@@ -358,6 +358,41 @@ Khác với thiết kế:
 - Tự sống: người ở vùng quê luôn được đưa một nghề đất và nghiêng về nghề đất; dân quê di cư thì sống ở vùng quê của làng nơi mới. Không có hai chỉnh này thì công trình mới ở làng (lò rèn, chợ) kéo tỉ lệ nông dân xuống 3%.
 
 Đo bằng `sim.html` (thế giới `can-bang`, 1000 đời): 45.057 trận, 0 trận vượt Tier + 1, trỗi dậy 20,0%, chết vì quái 10,3%; nông dân 25%, mạo hiểm giả 26%, thợ săn 9%, ngư dân 7%. Bốn thế giới có luật nghĩa vụ / cấm tử thuật / giấy phép / đẳng cấp / phường hội (250 đời mỗi thế giới): đi lính 0–30% đời, trốn lính ≤ 4%, từng bị bắt ≤ 2%, treo cổ ≤ 0,4%, bị lệnh trục xuất ~21% ở thế giới có nước cấm ngoại tộc.
+
+### 5.7. Kết quả bước 7 (15/10/2026)
+
+Đã làm (`LifeSim_RPG/js/dynamic.js`, phần độ hoang ở `js/realm.js`): quốc gia động theo 5.3, khu dân cư sa sút / sụp / lập mới theo 3.1, độ hoang động theo 3.3, mật độ quái theo tỉnh × tầng theo 3.5, sử biên niên, save theo mục 11.
+
+- Thế giới tĩnh vẫn dựng từ seed. Phần đổi nằm trong `S.world.dyn` (chủ tỉnh, hp khu dân cư, khu và nước mới lập, chiến tranh, hưu chiến, đường xuống cấp, sử biên niên). `G.bindWorld` đưa `G.realm` về đúng trạng thái của một thế giới: cùng thế giới thì không làm gì; thế giới chưa đổi gì thì chép lại bản gốc đã lưu; còn lại thì trả về bản gốc rồi áp phần đổi. Gắn lại một thế giới đã chạy 250 năm ra đúng từng ô như lúc cập nhật dần.
+- Độ hoang: mỗi nguồn (khu dân cư, nhóm ô đường của một tỉnh) có vết loang riêng, cache theo (ô, bán kính). Đổi một nguồn chỉ tính lại những ô mà nguồn đó đang là nguồn gần nhất; bán kính tăng thì chỉ cần trộn min. Kết quả giống hệt tính lại toàn bộ (kiểm sau 300 năm × 3 thế giới), và lúc dựng giống hệt bản bước 6 (0 ô khác ở 3 seed).
+- Kiếp mới sinh vào thế giới của kiếp trước (cùng seed thế giới), bắt đầu từ năm sau năm kiếp trước mất. Save đổi sang `vankiep.save.v4`.
+- Giao diện: chế độ Chính trị tô sọc đỏ tỉnh tiền tuyến, nhãn theo lãnh thổ mới, cờ kinh đô theo kinh đô hiện tại, khu sa sút vẽ nhạt, phế tích ghi năm bỏ hoang; bảng quốc gia ghi kinh đô, năm lập, chiến tranh đang đánh, hưu chiến; thẻ Biên niên sử dưới nhật ký.
+
+Khác với thiết kế ở 5.3 và 3.1:
+
+- **Tuyên chiến** `.002 × tham vọng × kẹp(P_a / P_b, .5, 2) × (khác đạo 1,5) × (1 − .15 × quan hệ) × (chư hầu .2)` thay vì `.015 × …`. Với .015 có ~20 cuộc chiến / 100 năm, ~15 tỉnh đổi chủ / 100 năm và nước rã ra rất nhanh. Thêm hệ số **đòi lại đất** × 15 khi nước kia vừa tách ra từ tỉnh nổi loạn của mình: không có nó, nước nổi loạn một tỉnh sống dai và số nước dồn lên trần 9.
+- **Nổi loạn** `.01 × (1 − ổn định) × (2 hoặc .5)` thay vì `.02 × …`.
+- **Thú triều không trừ hp mỗi năm.** Tầng ven vượt 1,25 ở ~38% số năm-tỉnh (mật độ tràn từ vùng chết gần như thường trực, kể cả ở tỉnh ít nguy hiểm), nên trừ −.15 mỗi năm làm 160 khu sụp trong 300 năm. Giờ mỗi năm khu bị thú triều đánh với xác suất `cường độ thú triều × .05` (−.25 hp), bị cướp phá ở tiền tuyến với xác suất .3 (−.2), dịch nặng −.08; hp mất nhân hệ số theo bậc (kinh đô .2, thành phố .35, thị trấn .5, làng .8, thôn 1); năm yên hồi +.05. Sa sút khi hp < .5, hết sa sút khi > .8 (có khoảng trễ để không bật tắt liên tục).
+- **Khu mới**: mỗi năm 4% một nước đang yên (ổn định > .45, không đánh nhau, bốc theo số tỉnh) hồi sinh một phế tích trong lãnh thổ (đã bỏ hoang ≥ 15 năm, 50%) hoặc lập làng ven sông ở ô đồng / đồi / rừng, tầng ven hoặc sâu, cách mọi khu ≥ 35px. Làng mới hp .4, chưa có đường.
+- Tỉnh tiền tuyến: tỉnh của bên này kề tỉnh của bên kia trên đất (`provAdj`) hoặc có cảng tàu buôn nối được tới cảng bên kia trong 420px (`provSea`). Thắng thế (điểm > .3) thì mỗi năm 50% chiếm một tỉnh tiền tuyến (kinh đô chỉ khi hết tỉnh khác), điểm lùi .2.
+- Người cai trị già đi theo năm; chết với xác suất tăng dần sau 60% tuổi thọ chủng tộc; kế vị làm ổn định −.06 (tranh ngôi 20%: −.18).
+- Nước mới lập từ nổi loạn: mẫu cùng chủng tộc đa số của tỉnh (ưu tiên nước nhỏ, ít khi là đế chế), quốc giáo theo đạo đa số của tỉnh nếu mẫu có, ổn định .5, tham vọng + .2, đặc trưng Nước mới lập, quan hệ −3 với nước cũ, tuần tra làm tròn .05 (ít tổ hợp vết loang).
+- Đất vô chủ ngoài mọi tỉnh có mật độ quái riêng theo vùng × tầng (khóa `r<vùng>:<tầng>`), NPC tỉa ở mức .35.
+- Đồng niên vẫn chạy trên bản sao thế giới lúc sinh, không ảnh hưởng thế giới của nhân vật.
+- Chưa làm: quốc giáo đồng hóa dần tỉnh chiếm được (5.1), lập nước / lập làng của người chơi (bước 9), sự kiện nhắc lại sử trong đời ("ông nội chết trong trận…").
+
+Đo bằng `sim.html` (thế giới `can-bang`):
+
+| Số đo | Mục tiêu | Kết quả |
+|---|---|---|
+| Nước còn sống sau 300 năm (50 thế giới động) | trung vị 5–7, không dưới 3 | trung vị 7, ít nhất 4, nhiều nhất 9 |
+| Tỉnh đổi chủ / 100 năm | 3–8 | 6,7 (300 năm × 50); 5,2 (1000 đời) |
+| Khu dân cư sụp / 100 năm | 1–3 | 2,2; 1,2 |
+| Khu dân cư lập mới, dựng lại / 100 năm | 1–3 | 1,9; 2,1 |
+| Chiến tranh / 100 năm | | 5,8; 4,5 |
+| Nước mới lập / diệt vong / 100 năm | | 2,3 / 2,4 |
+
+1000 đời: 43.538 trận, 0 trận vượt Tier + 1; trỗi dậy 18,5%; chết vì quái 10,7%; nông dân 27%, mạo hiểm giả 24%; tuổi thọ theo chủng tộc như bản bước 6. Chết trận tăng từ 0,6% lên 1,9% số cái chết (chiến tranh giờ kéo dài theo tỉnh, tỉnh tiền tuyến war = 1, tỉnh khác của hai nước .4); 4,2% lính nghĩa vụ chết trận; 9,7% đời thấy quê đổi chủ. 1000 đời chạy 55 giây (bản bước 6: 24 giây); một thế giới động 300 năm ~0,16 giây. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước, ~0,55 giây mỗi thế giới.
 
 ## 6. Đường đi và hành trình
 
@@ -581,7 +616,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 4 ✓ | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời (15/10/2026, xem mục 5.6) | sinh ra ở một nước có luật |
 | 5 ✓ | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống (15/10/2026, xem mục 6.5) | đi lại có quãng đường |
 | 6 ✓ | Vùng biển 4 tầng, loài biển mới, tàu, hải trình (15/10/2026, xem mục 7.4) | đi biển |
-| 7 | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên | thế giới đổi qua các kiếp |
+| 7 ✓ | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên (15/10/2026, xem mục 5.7) | thế giới đổi qua các kiếp |
 | 8 | Hang ổ, di tích | dọn hang, thú triều có nguồn |
 | 9 | Lập làng, lập nước, focus Trị quốc | người chơi để lại dấu trên bản đồ |
 | 10 | Sự kiện cho luật, đặc tính, đặc trưng riêng; quyết định; đường thăng tiến theo chính thể | |

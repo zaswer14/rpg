@@ -38,6 +38,8 @@ Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành th�
 
 **Biển** (bước 6; `data/world.js` `G.SEAS`, `js/realm.js` mục 11, `js/travel.js`): ô biển chia **7 vùng biển** theo điểm neo (biển sương, biển đảo rắn, biển băng, biển sấm, biển tro, biển đỏ, vịnh vực), tên mỗi thế giới bốc từ `names.geo.sea`. Mỗi vùng biển có 4 tầng theo **độ hoang biển** `w = khoảng cách tới bờ / 5 − .6 nếu gần cảng`: **ven bờ** < 1 ≤ **khơi** < 2,5 ≤ **sâu** < 4 ≤ **vực biển**, mỗi tầng một dải Tier và bảng loài (cùng luật như khu đất, `validateWorld` kiểm cả hai), thêm thời tiết riêng (sương mù dễ bị phục kích, bão sét, băng trôi làm chậm…). Khu dân cư có ô biển trong 2 ô là **bến**: thuyền chài (chỉ ven bờ) ở mọi bến, tàu buôn (ven bờ, khơi) ở khu có vai trò cảng, tàu viễn dương (tới tầng sâu) ở kinh đô ven biển và cảng của nước có đặc tính Tàu lá hoặc đặc trưng Cảng lớn; không tàu nào vào vực biển. Quần Đảo Hải Xà giờ là đảo thật (eo biển quanh đảo), chỉ tới được bằng tàu; bến lớn nhất của đảo có ít nhất tàu buôn. **Hải trình** = A* trên ô biển (0,6 mỗi ô, băng trôi × 1,3), chỉ trong tầng tàu vào được và, như đường bộ, không vào tầng biển bị khóa với nhân vật trừ khi trả thêm cho lính hộ tống. Chuyến đi chọn đường bộ hoặc đất → bến → biển → bến → đất (xét khi đường bộ từ 8 ngày, hoặc khi đích ở khối đất khác); vé = giá tàu × ngày biển (không đủ bạc thì làm công trên tàu). Trên biển: quái theo tầng biển của ô (vẫn qua luật Tier), bão theo vùng biển (có thể **đắm tàu**: dạt vào bờ gần nhất, hoặc chết), **cướp biển** gần bến của nước có luật cướp phá, cảng có dịch thì cách ly ba ngày, thuế cảng. Ngư dân ở bến làm ở tầng ven bờ, thủy thủ ở tầng khơi của vùng biển trước bến: rủi ro tai nạn, đuối nước, đắm tàu theo Tier của tầng đó, thỉnh thoảng gặp quái biển. Chế độ xem **Biển**: vùng biển, tầng, bến theo loại tàu, hải trình từ cảng gần nhân vật; rê chuột lên ô biển ghi vùng biển, tầng, Tier so với mình, thời tiết, tàu nào vào được. Chế độ **Nguy hiểm** tô cả tầng biển.
 
+**Thế giới động** (bước 7; `js/dynamic.js`, `research/03` mục 5.3, 5.7): thế giới tĩnh dựng lại từ seed, phần đổi nằm trong `S.world.dyn` (chủ từng tỉnh, sức sống từng khu dân cư, khu mới lập, nước mới lập, chiến tranh, hưu chiến, sử biên niên) và được lưu. Kiếp mới sinh vào chính thế giới của kiếp trước, nên năm, biên giới, làng mạc nối tiếp qua các đời. Mỗi năm (chủng tộc sống lâu: mỗi lượt vài năm): **sức mạnh** nước = Σ tỉnh dân × (.5 + giàu) × quân × (.5 + ổn định); **ổn định** trôi về .6, trừ chiến tranh, dịch, khu sa sút, thuế cao; người cai trị già đi, băng hà thì kế vị (đôi khi tranh ngôi). Hai nước kề nhau (chung biên tỉnh, hoặc hai cảng có hải trình tàu buôn) có thể **tuyên chiến** (theo tham vọng, tỉ lệ sức mạnh, khác đạo, quan hệ; nước bị tỉnh nổi loạn tách ra muốn đánh lại hơn hẳn); bên thắng thế chiếm từng tỉnh tiền tuyến, hết chiến tranh giữ tối đa 2 tỉnh, hưu chiến 15 năm. Tỉnh của nước bất ổn có thể **nổi loạn**: dẹp được, hoặc tách ra lập nước mới (mẫu theo chủng tộc đa số của tỉnh), hoặc theo nước láng giềng cùng đạo. Tỉnh vô chủ có thể xin nhập nước ổn định bên cạnh; nước mất hết tỉnh thì **diệt vong**. Khu dân cư có **sức sống**: thú triều, cướp phá ở tiền tuyến, dịch nặng làm giảm; yên thì hồi; dưới .5 là **sa sút** (vòng văn minh co lại), dưới .15 thì thành **phế tích**, dân dạt về khu gần nhất, kinh đô sụp thì dời đô. Nước đang yên lập **làng mới** ven sông hoặc dựng lại phế tích. Đường nối tới khu bỏ hoang trên 20 năm thì cứ 20 năm tụt một bậc. Độ hoang tính lại đúng vùng bị ảnh hưởng, nên tầng nguy hiểm đổi theo chính trị. Quê đổi chủ thì nhân vật thành dân nước mới (luật, thuế, thái độ theo nước mới); lính nghĩa vụ chết trận nhiều hơn khi tỉnh là tiền tuyến; anh hùng Tier ≥ 3 đang làm lính đẩy cục diện chiến tranh. Thẻ **Biên niên sử** dưới nhật ký ghi lập nước, diệt nước, tuyên chiến, chiếm tỉnh, hòa ước, nổi loạn, vua băng hà, dời đô, khu sụp, khu mới lập. Chế độ Chính trị tô sọc đỏ tỉnh tiền tuyến, khu sa sút vẽ nhạt; bảng quốc gia ghi kinh đô, chiến tranh đang đánh, hưu chiến.
+
 Nút **Vùng / Địa hình / Chính trị / Nguy hiểm / Biển** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
 
 Mỗi vùng có **4 khu = 4 tầng nguy hiểm**: ven → sâu → lõi → vùng chết, mỗi khu một dải Tier và bảng loài riêng (`data/world.js`). Ô nào thuộc tầng nào do **độ hoang** quyết định (bước 3, `js/realm.js`): khoảng cách đi bộ từ ô tới khu dân cư gần nhất chia cho bán kính của khu (kinh đô 120px, thành phố 100, thị trấn 80, làng 50, thôn 25, đồn ít nhất 70; nhân tuần tra của nước, vô chủ × 0,6), cộng độ hoang biome (`G.TERRAIN.wild`) và địa hình (`G.FEATURES.wild`). Ngưỡng ven < 1 ≤ sâu < 2 ≤ lõi < 3 ≤ vùng chết. Rừng rậm, núi "xa" văn minh hơn đồng bằng; vùng không có làng nào gần là lõi hoặc vùng chết. Một vùng có thể thiếu tầng (vùng hoang không có tầng ven); khu săn chỉ hiện tầng có ô. Trận đánh xảy ra ở một ô cụ thể của khu, và địa hình ô đó nhân trọng số loài đã có (`G.FEATURE_SPAWN`: rừng rậm nhiều quái phục kích và côn trùng, núi nhiều quái bay và rồng…). Chế độ xem **Nguy hiểm** tô từng ô theo sức nhân vật: an toàn, vừa sức, nguy hiểm (Liều mạng), khóa.
@@ -57,10 +59,10 @@ Mỗi vùng có **4 khu = 4 tầng nguy hiểm**: ven → sâu → lõi → vùn
 
 Kết quả 1000 đời headless (seed `can-bang`, thế giới `can-bang`, sau bước 6): 46.093 trận kể cả dọc đường và trên biển, chênh Tier từ −5 tới +1, **không trận nào vượt +1**.
 
-### Quái hoạt động theo khu
+### Quái hoạt động theo tỉnh × tầng
 
-Mỗi khu có **mật độ** (`world.zonePop`, 0,3–2,2), cập nhật mỗi năm trong hệ con `world`:
-sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ săn NPC tỉa (vùng giàu tỉa nhiều hơn) → mùa sinh sản ngẫu nhiên → khu sâu hơn quá đông thì đẩy mật độ ra khu ngoài nó (vùng chết → lõi → sâu → ven; thợ săn NPC không vào vùng chết) (chỉ đẩy mật độ, **không đẩy loài**, nên dải Tier vẫn giữ) → khu ven vượt 1,25 thì thành **thú triều** (`raid`), tăng nguy cơ chết của dân trong vùng và bắn sự kiện quái tràn vào làng. Người chơi hạ quái thì mật độ khu đó giảm. Ba vùng có **chúa vùng** (Leviathan, Cổ Long, Chúa Quỷ Hắc Uyên) ngủ ở vùng chết của vùng, chỉ xuất hiện qua sự kiện khi nhân vật từ cấp 40.
+Mỗi tầng của mỗi tỉnh (đất ngoài mọi tỉnh: theo vùng × tầng; biển: theo tầng biển) có **mật độ** (`world.zonePop`, khóa `p<tỉnh>:<tầng>`, 0,3–2,2), cập nhật mỗi năm trong hệ con `world` (`G.monsterYear`, `js/dynamic.js`):
+sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ săn NPC tỉa (theo tuần tra của nước chủ tỉnh) → mùa sinh sản ngẫu nhiên → khu sâu hơn quá đông thì đẩy mật độ ra khu ngoài nó (vùng chết → lõi → sâu → ven; thợ săn NPC không vào vùng chết) (chỉ đẩy mật độ, **không đẩy loài**, nên dải Tier vẫn giữ) → tầng ven vượt 1,25 thì thành **thú triều** (`dyn.raid` của tỉnh), tăng nguy cơ chết của dân trong tỉnh, bắn sự kiện quái tràn vào làng và thỉnh thoảng đánh khu dân cư của tỉnh (giảm sức sống). Người chơi hạ quái thì mật độ của tỉnh × tầng nơi trận đánh xảy ra giảm. Ba vùng có **chúa vùng** (Leviathan, Cổ Long, Chúa Quỷ Hắc Uyên) ngủ ở vùng chết của vùng, chỉ xuất hiện qua sự kiện khi nhân vật từ cấp 40.
 
 ## 3. Mô hình đời (theo 1in8b)
 
@@ -82,7 +84,7 @@ sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ să
 | Hook tách giao diện | `hook.log / decision / year / death / hunt` |
 | Quét NaN cuối năm | có trong `endYear` |
 
-Thứ **không** bắt chước: ~50 hàm `xxxYear()` gọi cứng. Ở đây mỗi hệ con khai báo trong `G.SYSTEMS` với thứ tự và điều kiện của mình (`world → family → health → undead → career → place → peers`).
+Thứ **không** bắt chước: ~50 hàm `xxxYear()` gọi cứng. Ở đây mỗi hệ con khai báo trong `G.SYSTEMS` với thứ tự và điều kiện của mình (`world → nations → family → health → undead → career → law → place → peers`).
 
 ## 4. Phát triển nhân vật
 
@@ -117,6 +119,7 @@ LifeSim_RPG/
   js/events.js              sự kiện + quyết định
   js/state.js               nhà nước và nơi ở lên đời: công trình → nghề, sức khỏe, học; thuế, thái độ chủng tộc; hệ con luật, sự kiện luật
   js/travel.js              hành trình: đường bộ và hải trình A*, gặp quái dọc đường và trên biển, trạm biên giới, hộ tống, bão, đắm tàu, cướp biển
+  js/dynamic.js             thế giới động: gắn trạng thái đời vào thế giới (G.bindWorld), mật độ quái theo tỉnh × tầng, hệ con quốc gia (chiến tranh, nổi loạn, diệt vong, vua băng hà), khu dân cư sa sút / sụp / lập mới, đường xuống cấp, sử biên niên, G.runWorld
   js/ui.js                  giao diện (chỉ nghe hook)
   tools/serve.ps1           server tĩnh PowerShell
 ```
@@ -134,7 +137,7 @@ Không sửa file nào trong `library/`. Loài thư viện được thả vào v
 
 ## 8. Còn thiếu
 
-- Bản đồ V2 còn bước 7–10 (quốc gia động, hang ổ và di tích, lập làng / lập nước, sự kiện cho đặc tính và đặc trưng): xem `TIEN_DO.md`.
+- Bản đồ V2 còn bước 8–10 (hang ổ và di tích, lập làng / lập nước, sự kiện cho đặc tính và đặc trưng): xem `TIEN_DO.md`.
 - Chưa có bản dịch; mọi văn bản viết thẳng tiếng Việt.
 - Con cái chỉ là danh sách tên/tuổi; chưa chơi tiếp đời con.
 - Nghề ẩn (`hidden`) của thư viện chưa mở được trong game.

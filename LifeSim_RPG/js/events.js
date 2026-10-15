@@ -299,7 +299,7 @@ window.LifeSim = window.LifeSim || {};
     // ── Sơ sinh ──
     { id: 'inf_fever', st: ['infant'], w: S => 6 - S.q, run(S, X) { X.add('hl', -10); if (X.chance(.2)) X.cond('fever'); return { t: 'Bạn sốt ba ngày liền. Mẹ thức trắng bên nôi.', k: 'bad' }; } },
     { id: 'inf_bless', st: ['infant'], c: S => !!S.faith, w: 3, run(S, X) { X.add('hl', 6); return { t: `Một tu sĩ ${J.faiths[S.faith].nameVi} đi ngang qua làng và ban phước cho bạn.`, k: 'good', f: J.faiths[S.faith].tenet }; } },
-    { id: 'inf_night', st: ['infant'], w: S => 2 + S.world.regions[S.loc].raid * 6, run(S, X) { const sp = X.monsterIn(X.reg(S).zones[0]); return { t: `Đêm đông, ${sp.nameVi} lảng vảng quanh nhà. Cha cầm đuốc đuổi đi tới sáng.`, k: 'info', f: X.factOf(sp) }; } },
+    { id: 'inf_night', st: ['infant'], w: S => 2 + G.local(S).raid * 6, run(S, X) { const sp = X.monsterIn(X.reg(S).zones[0]); return { t: `Đêm đông, ${sp.nameVi} lảng vảng quanh nhà. Cha cầm đuốc đuổi đi tới sáng.`, k: 'info', f: X.factOf(sp) }; } },
     { id: 'inf_word', st: ['infant'], w: 4, run(S, X) { X.add('h', 4); X.add('sm', 2); return { t: `Từ đầu tiên bạn nói là ${X.pick(FIRST_WORDS)}.`, k: 'good' }; } },
     // ── Thơ ấu ──
     { id: 'ch_river', st: ['child'], c: flesh, w: S => G.REGION[S.loc].coastal ? 4 : 2, run(S, X) {
@@ -315,7 +315,7 @@ window.LifeSim = window.LifeSim || {};
         S.flags.inspired = j.school; X.gain(J.schools[j.school].masteries[0], 3);
         return { t: `Một ${j.nameVi} ghé quán trọ trong làng. Bạn theo sau suốt ba ngày.`, k: 'info', f: j.summary || null }; } },
     { id: 'ch_letters', st: ['child', 'teen'], w: S => 1 + S.q * .6, run(S, X) { X.add('sm', 8); return { t: 'Một tu sĩ già dạy bạn đọc chữ bằng cách vạch lên cát.', k: 'good' }; } },
-    { id: 'ch_raid', st: ['child', 'teen', 'adult'], c: S => !S.undead, w: S => 1 + S.world.regions[S.loc].raid * 12, rep: true, gap: 3, run(S, X) {
+    { id: 'ch_raid', st: ['child', 'teen', 'adult'], c: S => !S.undead, w: S => 1 + G.local(S).raid * 12, rep: true, gap: 3, run(S, X) {
         const z = X.reg(S).zones[0], sp = X.monsterIn(z);
         X.add('hl', -X.int(4, 12)); X.add('h', -5);
         const sib = S.family.sibs.find(s => s.alive);
@@ -380,15 +380,15 @@ window.LifeSim = window.LifeSim || {};
         if (X.chance(.05)) { X.die({ id: 'drown', text: 'đắm thuyền trong bão' }); return null; }
         X.add('hl', -8); return { t: 'Bão lật thuyền. Bạn bám mảnh ván suốt một đêm.', k: 'bad' }; } },
     { id: 'ad_sandstorm', st: ['child', 'teen', 'adult', 'elder'], undead: 'any', c: S => X0(S).biome === 'red_desert', w: 3, rep: true, gap: 3, run(S, X) { X.add('hl', -6); return { t: 'Bão cát đỏ ba ngày. Khi tạnh, một ngôi đền cổ lộ ra rồi lại bị vùi.', k: 'info', f: X0(S).lore }; } },
-    { id: 'ad_volcano', st: ['child', 'teen', 'adult', 'elder'], undead: 'any', c: S => X0(S).biome === 'ash_peak', w: 1.5, rep: true, gap: 8, run(S, X) { X.add('hl', -8); S.world.regions[S.loc].raid += .4; return { t: 'Núi phun tro. Quái từ miệng núi chạy xuống sườn.', k: 'bad', f: X0(S).lore }; } },
+    { id: 'ad_volcano', st: ['child', 'teen', 'adult', 'elder'], undead: 'any', c: S => X0(S).biome === 'ash_peak', w: 1.5, rep: true, gap: 8, run(S, X) { X.add('hl', -8); { const k = G.zoneKey(X0(S).zones[0], G.provOfS(S)); S.world.zonePop[k] = Math.min(2.2, (S.world.zonePop[k] ?? 1) + .4); } return { t: 'Núi phun tro. Quái từ miệng núi chạy xuống sườn.', k: 'bad', f: X0(S).lore }; } },
     { id: 'ad_fae_sleep', st: ['teen', 'adult'], c: S => X0(S).biome === 'fae_glade' && !S.undead, w: 1.2, run(S, X) { S.age += 1; S.world.year += X.R(S).ypt; return { t: `Bạn chợp mắt dưới gốc nấm. Khi tỉnh dậy, ${X.R(S).ypt * 2} năm đã trôi qua.`, k: 'big', f: X0(S).lore }; } },
     { id: 'ad_frost', st: ['child', 'adult', 'elder'], c: S => X0(S).cold && !S.undead, w: 3, rep: true, gap: 3, run(S, X) { X.add('hl', -7); return { t: 'Mùa đông dài nhất trong trí nhớ người già. Củi cạn từ tháng thứ năm.', k: 'bad' }; } },
-    { id: 'ad_tide', st: ['adult', 'elder'], undead: 'any', c: S => S.world.regions[S.loc].raid > .15, w: S => S.world.regions[S.loc].raid * 15, rep: true, gap: 2, run(S, X) {
+    { id: 'ad_tide', st: ['adult', 'elder'], undead: 'any', c: S => G.local(S).raid > .15, w: S => G.local(S).raid * 15, rep: true, gap: 2, run(S, X) {
         const z = X.reg(S).zones[0], enc = X.rollEncounter(z, { grade: 'normal' });
         if (!enc) return null;
         const rec = X.fight({ ...enc, count: Math.min(5, enc.count + 2) }, false);
         if (S.dead) return null;
-        S.world.zonePop[z.id] = Math.max(.6, S.world.zonePop[z.id] - .3);
+        { const k = G.zoneKey(z, G.provOfS(S)); S.world.zonePop[k] = Math.max(.6, (S.world.zonePop[k] ?? 1) - .3); }
         if (rec.win) { S.fame += 2; X.add('so', 4); return { t: `Thú triều từ ${z.nameVi}. Bạn đứng ở cổng làng tới khi đợt cuối rút.`, k: 'big', f: X.factOf(enc.s) }; }
         return { t: `Thú triều từ ${z.nameVi} phá nửa làng.`, k: 'bad', f: X.factOf(enc.s) }; } },
     { id: 'ad_bounty_post', st: ['adult', 'teen', 'elder'], undead: 'any', c: S => !S.flags.bounty && !!S.zoneSel && (S.work === 'adventurer' || S.undead || S.work === 'hunter'), w: S => G.lawHere(S, 'bounties') ? 6 : 3, rep: true, gap: 2, run(S, X) {
@@ -399,7 +399,7 @@ window.LifeSim = window.LifeSim || {};
         S.flags.lordQ = { ...X0(S).lord }; return { t: `Mặt đất ở ${X0(S).nameVi} rung. Chúa vùng đang thức.`, k: 'big' }; } },
     { id: 'ad_lord_far', st: ['child', 'teen', 'adult', 'elder'], c: S => { const R = X0(S); return R.lord && S.level < 40; }, w: .8, rep: true, gap: 15, run(S, X) {
         const sp = G.B.byId[X0(S).lord.species]; X.add('h', -4); return { t: `${sp.nameVi} nổi lên ở rìa ${X0(S).nameVi}. Ba làng bị xóa khỏi bản đồ. Người ta đếm xác cả tháng.`, k: 'bad', f: sp.note }; } },
-    { id: 'ad_war', st: ['adult'], c: S => S.world.regions[S.loc].war > 0 && !S.undead, w: 6, rep: true, gap: 1, run(S, X) {
+    { id: 'ad_war', st: ['adult'], c: S => G.local(S).war > 0 && !S.undead, w: 6, rep: true, gap: 1, run(S, X) {
         if (['guard', 'adventurer'].includes(S.work) || S.traits.bold > .7) {
           if (X.rnd() > G.clamp(.82 + (X.power(S) - 1) * .1, .6, .97)) { X.die({ id: 'war', text: 'tử trận trong chiến tranh' }); return null; }
           X.gain('Spear', 4); X.gain('Shield', 3); S.fame += 3; X.add('h', -6); X.money(30);
@@ -407,8 +407,8 @@ window.LifeSim = window.LifeSim || {};
         const g = Math.min(Math.max(S.gold, 0), 40); X.money(-g); return { t: `Lính mộ phu về làng. Bạn nộp ${g} bạc để khỏi đi.`, k: 'bad' }; } },
     { id: 'ad_preacher', st: ['teen', 'adult'], c: S => !S.faith && !S.undead && !S.flags.preacher, w: 2, run(S, X) { S.flags.preacher = true; return { t: 'Có người truyền giáo ghé làng.', k: 'info' }; } },
     { id: 'ad_tourney', st: ['adult', 'teen'], c: S => !S.undead && bestCombat(S) >= 25 && !S.flags.tourney, w: 1.5, rep: true, gap: 4, run(S, X) { S.flags.tourney = true; return { t: 'Sứ giả loan tin: Kinh Đô mở đại hội võ thuật.', k: 'info' }; } },
-    { id: 'ad_restless', st: ['adult'], c: S => !S.flags.migrateQ, w: S => .8 + S.traits.bold + (S.q <= 2 ? 1 : 0) + S.world.regions[S.loc].war * 3 + S.world.regions[S.loc].plague * 3, rep: true, gap: 5, run(S, X) {
-        const rs = S.world.regions[S.loc];
+    { id: 'ad_restless', st: ['adult'], c: S => !S.flags.migrateQ, w: S => .8 + S.traits.bold + (S.q <= 2 ? 1 : 0) + G.local(S).war * 3 + G.local(S).plague * 3, rep: true, gap: 5, run(S, X) {
+        const rs = G.local(S);
         S.flags.migrateQ = rs.war > 0 ? 'Chiến tranh tràn qua quê bạn.' : rs.plague > 0 ? 'Dịch bệnh chưa dứt. Nhiều nhà đã khóa cửa đi.' : true;
         return { t: 'Bạn bắt đầu nhìn về phía đường cái.', k: 'info' }; } },
     { id: 'ad_kid', st: ['adult', 'elder'], c: S => S.family.kids.some(k => k.alive && k.age >= 8), w: 2, rep: true, gap: 4, run(S, X) {
