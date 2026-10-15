@@ -40,7 +40,7 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | `vankiep/README.md` (26K) | mô tả game cho người đọc | khi cập nhật sau mỗi bước |
 | `vankiep/js/*.js`, `data/*.js` | mã (bảng vai trò từng file: TIEN_DO mục 2) | theo hàm, qua `muc_luc.sh` |
 | `vankiep/sim.html` | 1000 đời headless + kiểm dữ liệu | kiểm sau mỗi bước |
-| `vankiep/docs/` | 01 ý tưởng 1in8b · 02 phương án bản đồ · **03 thiết kế bản đồ V2 (62K, mục 12 = thứ tự bước)** · 04 50 mẫu quốc gia · 05 thành phố, làng · 06 thiên phú, chí hướng | theo mục, qua `muc_luc.sh` |
+| `vankiep/docs/` | 01 ý tưởng 1in8b · 02 phương án bản đồ · **03 thiết kế bản đồ V2 (62K, mục 12 = thứ tự bước)** · 04 50 mẫu quốc gia · 05 thành phố, làng · 06 thiên phú, chí hướng · **07 định hướng xã hội tu luyện (mục 7 = thứ tự bước, mục 8 = chờ chốt)** | theo mục, qua `muc_luc.sh` |
 | **Platform** `platform/` | Skeleton Codex: game platformer 2D, tài liệu + bản chơi thử cân bằng V12 | `README.md` đầu file |
 | `platform/docs/*_EXPORT_CANONICAL.json` (224–275K) | dữ liệu xuất | không đọc cả; Grep theo id |
 | `platform/docs/11_Art_Pipeline_ChatGPT_PixelLab.md` | quy trình vẽ art | khi làm art |
