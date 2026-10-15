@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<!-- Sinh dữ liệu cho nation-review.src.html:
+     msedge --headless --allow-file-access-from-files --dump-dom file:///<repo>/LifeSim_RPG/tools/nation-data.html
+     lấy khối pre#out, thay /*DATA*/null trong nation-review.src.html. -->
+<script src="../../library/aspects.js"></script><script src="../../library/faiths.js"></script>
+<script src="../../library/races/human.js"></script><script src="../../library/races/elf.js"></script><script src="../../library/races/dwarf.js"></script>
+<script src="../../library/races/orc.js"></script><script src="../../library/races/beastfolk.js"></script><script src="../../library/races/fae.js"></script>
+<script src="../../library/races/merfolk.js"></script><script src="../../library/races/dragonkin.js"></script><script src="../../library/races/construct.js"></script>
+<script src="../../library/races/skeleton.js"></script>
+<script src="../../library/bestiary/biomes.js"></script>
+<script src="../data/ecology.js"></script>
+<script src="../data/world.js"></script>
+<script src="../data/nations.js"></script>
+<script src="../data/names.js"></script>
+<pre id="out"></pre>
+<script>
+const L = JobLibrary, G = LifeSim, N = G.NAMES;
+const RACES = ['human', 'elf', 'dwarf', 'orc', 'beastfolk', 'fae', 'merfolk', 'dragonkin', 'construct', 'skeleton'];
+const data = {
+  races: Object.fromEntries(RACES.map(r => [r, { vi: L.races[r].nameVi, lore: L.races[r].lore, settle: G.RACE_SETTLE[r] }])),
+  faiths: Object.fromEntries(Object.entries(L.faiths).map(([k, f]) => [k, { vi: f.nameVi, symbol: f.symbol, color: L.aspects[f.aspect].color }])),
+  biomes: Object.fromEntries(Object.entries(L.biomes).map(([k, b]) => [k, b.nameVi])),
+  govs: G.GOVS, laws: G.LAWS, quirks: G.QUIRKS,
+  templates: G.NATION_TEMPLATES,
+  names: { prefix: N.nation.prefix, prefixRace: N.nation.prefixRace, root: N.nation.root, ruler: N.nation.ruler }
+};
+document.getElementById('out').textContent = JSON.stringify(data);
+</script>
+</body></html>

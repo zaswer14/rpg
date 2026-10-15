@@ -217,12 +217,15 @@ window.LifeSim = window.LifeSim || {};
         const x = Math.floor(px / CS), y = Math.floor(py / CS);
         if (x < 0 || y < 0 || x >= W || y >= H) return null;
         const i = y * W + x; if (region[i] === SEA) return null;
-        const reg = R[region[i]];
-        return { region: reg, zone: reg.zones[zone[i]], zoneIndex: zone[i], feature: G.FEATURES[feat[i]], river: !!river[i], elev: elev[i], cell: i };
+        // Khu (tầng) của ô: theo độ hoang của thế giới đang dùng (realm.js); chưa có thế giới thì theo cách chia cũ.
+        const reg = R[region[i]], b = G.realm && G.realm.band ? G.realm.band[i] : zone[i];
+        return { region: reg, zone: reg.zones[b], zoneIndex: b, feature: G.FEATURES[feat[i]], river: !!river[i], elev: elev[i], cell: i };
       },
-      // Một điểm ngẫu nhiên trong khu (để đặt mộ, điểm săn); không rơi xuống hồ.
+      // Một điểm ngẫu nhiên trong khu (để đặt mộ, điểm săn); không rơi xuống hồ. Khu không có ô thì lấy khu gần làng nhất có ô.
       pointIn(regionId, zi, rnd) {
-        const k = idx[regionId], cs = cellsOf[k].filter(i => zone[i] === zi && feat[i] !== FE.lake);
+        const k = idx[regionId], bc = G.realm && G.realm.bandCells ? G.realm.bandCells[k] : null;
+        let cs = bc ? bc[zi] : cellsOf[k].filter(i => zone[i] === zi && feat[i] !== FE.lake);
+        if (!cs || !cs.length) cs = (bc && bc.find(a => a.length)) || cellsOf[k];
         const i = cs[Math.floor(rnd() * cs.length)] ?? cellsOf[k][0];
         return [(i % W + .5) * CS, (Math.floor(i / W) + .5) * CS];
       }
@@ -240,7 +243,8 @@ window.LifeSim = window.LifeSim || {};
 
   // Ảnh nền vẽ một lần vào canvas phụ. mode: 'region' (vùng + khu), 'terrain' (biome + đặc trưng + bóng núi)
   // hoặc 'political' (màu quốc gia trên nền địa hình, biên tỉnh mảnh, biên nước đậm; cần realm).
-  G.renderMapBase = function (map, mode = 'region', realm = null) {
+  // 'danger': tô theo tầng so với sức nhân vật (opt.ct = Tier nhân vật, opt.cap = Tier tối đa được gặp): an toàn / vừa sức / nguy hiểm / khóa.
+  G.renderMapBase = function (map, mode = 'region', realm = null, opt = {}) {
     const { W, H, CS, region, zone, elev, temp, feat, shore } = map, R = G.REGIONS, BI = window.JobLibrary.biomes;
     const cv = document.createElement('canvas'); cv.width = W * CS; cv.height = H * CS;
     const ctx = cv.getContext('2d'), img = ctx.createImageData(W * CS, H * CS), d = img.data;
@@ -248,6 +252,9 @@ window.LifeSim = window.LifeSim || {};
     const deep = hex('#0a1622'), shallow = hex('#1e4560'), foam = hex('#5d8aa0'), border = [24, 18, 14];
     const terrain = mode === 'terrain', political = mode === 'political' && realm;
     const ncol = political ? realm.nations.map(n => hex(n.color)) : [], owner = political && realm.owner, prov = political && realm.provOf;
+    const zb = realm && realm.band ? realm.band : zone, danger = mode === 'danger' && realm;
+    const DCOL = { safe: [84, 168, 96], fair: [214, 176, 64], risky: [210, 96, 62], locked: [66, 58, 64] };
+    const lvlOf = (r, b) => { const t = R[r].zones[b].tier; return t[1] <= opt.ct ? 'safe' : t[0] <= opt.ct ? 'fair' : t[0] <= opt.cap ? 'risky' : 'locked'; };
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, r = region[i];
       let c;
@@ -257,9 +264,15 @@ window.LifeSim = window.LifeSim || {};
       } else if (feat[i] === FE.lake) {
         c = mix(WATER, shallow, .3);
       } else {
-        const p = pal[r], z = zone[i];
+        const p = pal[r], z = zb[i];
         const nb = [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx < 0 || ny < 0 || nx >= W || ny >= H ? i : ny * W + nx; });
-        if (political) {
+        if (danger) {
+          let t = p.g; const fc = FCOL[feat[i]]; if (fc) t = mix(t, fc[0], fc[1] * .5);
+          const lum = (t[0] * .3 + t[1] * .55 + t[2] * .15) * (.8 + elev[i] * .35);
+          c = mix([lum, lum, lum], DCOL[lvlOf(r, z)], .62);
+          if (nb.some(j => region[j] !== SEA && region[j] !== r)) c = mix(c, border, .55);
+          else if (nb.some(j => region[j] === r && zb[j] !== z)) c = mix(c, border, .35);
+        } else         if (political) {
           let t = p.g; const fc = FCOL[feat[i]]; if (fc) t = mix(t, fc[0], fc[1] * .6);
           const k = owner[i];
           c = k >= 0 ? mix(t, ncol[k], .58) : mix(t, [84, 80, 74], .62);
@@ -277,11 +290,11 @@ window.LifeSim = window.LifeSim || {};
           c = c.map(v => v * G.clamp(.82 + elev[i] * .3 + (elev[i] - up) * 7, .6, 1.3));
           if (nb.some(j => region[j] !== SEA && region[j] !== r)) c = mix(c, border, .4);
         } else {
-          c = z === 0 ? mix(p.g, p.e, .2) : z === 1 ? mix(p.g, p.f, .12) : mix(mix(p.g, p.f, .45), [40, 10, 20], .18);
+          c = z === 0 ? mix(p.g, p.e, .2) : z === 1 ? mix(p.g, p.f, .12) : z === 2 ? mix(mix(p.g, p.f, .45), [40, 10, 20], .18) : mix(mix(p.g, p.f, .6), [50, 0, 18], .4);
           c = c.map(v => v * (.78 + elev[i] * .4));
           // Biên giới vùng và ranh khu.
           if (nb.some(j => region[j] !== SEA && region[j] !== r)) c = mix(c, border, .75);
-          else if (nb.some(j => region[j] === r && zone[j] !== z) && (x + y) % 2) c = mix(c, border, .3);
+          else if (nb.some(j => region[j] === r && zb[j] !== z) && (x + y) % 2) c = mix(c, border, .3);
         }
         if (nb.some(j => region[j] === SEA)) c = mix(c, [230, 220, 190], .25);
         else if (nb.some(j => feat[j] === FE.lake)) c = mix(c, [210, 220, 200], .2);

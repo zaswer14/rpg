@@ -486,13 +486,14 @@ window.LifeSim = window.LifeSim || {};
     }
 
     // ═════════ Săn quái theo khu, có phân cấp ═════════
+    // Khu săn của một vùng = các tầng (ven, sâu, lõi, vùng chết) có ô trong vùng ở thế giới này (độ hoang: js/realm.js).
     zonesFor(S = this.S, regionId = S.loc) {
-      const ct = this.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+      const ct = this.ctier(S), cap = ct + (S.reckless ? 2 : 1), bc = G.realm ? G.realm.bandCells[G.map.idx[regionId]] : null;
       return G.REGION[regionId].zones.map((z, i) => {
         const open = z.tier[0] <= cap;
         const level = z.tier[1] <= ct ? 'safe' : z.tier[0] <= ct ? 'fair' : open ? 'risky' : 'locked';
-        return { zone: z, index: i, open, level };
-      });
+        return { zone: z, index: i, open, level, cells: bc ? bc[i].length : 1 };
+      }).filter(z => z.cells > 0);
     }
     // Khu gợi ý: khu sâu nhất mà đe dọa trung bình của bảng gặp quái vẫn thấp hơn sức mình ~0,3 Tier.
     recommendedZone(S = this.S, regionId = S.loc) {
@@ -508,14 +509,18 @@ window.LifeSim = window.LifeSim || {};
       if (!cur || !cur.open || (!S.zoneManual && !S.reckless)) { const r = this.recommendedZone(S); S.zoneSel = r ? r.zone.id : null; }
     }
     // Bảng gặp quái: loài trong khu, Tier ≤ Tier nhân vật + 1 (liều mạng + 2). Đây là luật chống "cấp thấp gặp cấp cao".
-    encounterTable(zone, ct, reckless) {
-      const cap = ct + (reckless ? 2 : 1);
+    // feat: địa hình của ô gặp quái, nhân trọng số loài đã có (G.FEATURE_SPAWN); không thêm loài nên không phá luật trên.
+    encounterTable(zone, ct, reckless, feat) {
+      const cap = ct + (reckless ? 2 : 1), F = (feat && G.FEATURE_SPAWN[feat]) || {};
       return Object.entries(zone.spawns).map(([id, w]) => ({ s: G.B.byId[id], w })).filter(x => x.s && x.s.tier <= cap)
-        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? .5 : 1) * (x.s.tier < ct - 1 ? .4 : 1) }));
+        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? .5 : 1) * (x.s.tier < ct - 1 ? .4 : 1) * ((F.behavior || {})[x.s.behavior] || 1) * ((F.family || {})[x.s.family] || 1) }));
     }
+    // Gặp quái ở một ô ngẫu nhiên của khu (opt.cell để chỉ định); địa hình ô đó đổi trọng số loài.
     rollEncounter(zone, opt = {}) {
       const S = this.S, ct = this.ctier(S), bi = G.B.biomes[G.ZONE[zone.id].region.biome];
-      const table = this.encounterTable(zone, ct, S.reckless);
+      const cells = opt.cell != null ? [opt.cell] : G.zoneCells(zone.id), cell = cells.length ? cells[Math.floor(this.rnd() * cells.length)] : null;
+      const feat = cell != null ? G.FEATURES[G.map.feat[cell]].id : null;
+      const table = this.encounterTable(zone, ct, S.reckless, feat);
       if (!table.length) return null;
       const s = this.wpick(table, 'w').s;
       let grade = opt.grade;
@@ -524,7 +529,7 @@ window.LifeSim = window.LifeSim || {};
       while (affixes.length < G.B.grades[grade].affixes && pool.length) affixes.push(pool.splice(Math.floor(this.rnd() * pool.length), 1)[0]);
       const g = s.group || [1, 1];
       const count = grade === 'normal' ? this.int(g[0], g[1]) : Math.max(1, Math.floor(g[0] / 2));
-      return { s, grade, affixes, count, zone };
+      return { s, grade, affixes, count, zone, cell, feat };
     }
     threat(enc) {
       const { s, grade, affixes, count } = enc;
@@ -537,7 +542,7 @@ window.LifeSim = window.LifeSim || {};
       if (!zid) { if (!S.flags.noZoneMsg) { this.log(`Không có khu nào ở ${this.reg(S).nameVi} hợp sức bạn. Phải rời vùng hoặc bật Liều mạng.`, 'bad'); S.flags.noZoneMsg = S.age; } return; }
       let zone = G.ZONE[zid].zone;
       // Phiêu lưu: đi sâu thêm một khu nếu khu đó vẫn mở.
-      if (adventure) { const zs = this.zonesFor(S), nx = zs[G.ZONE[zid].index + 1]; if (nx && nx.open) zone = nx.zone; }
+      if (adventure) { const zs = this.zonesFor(S), nx = zs.find(z => z.index > G.ZONE[zid].index); if (nx && nx.open) zone = nx.zone; }
       const enc = forced || this.rollEncounter(zone, { bonus: adventure ? .06 : 0 });
       if (!enc) return;
       return this.fight(enc, adventure);
@@ -551,7 +556,8 @@ window.LifeSim = window.LifeSim || {};
       const pop = S.world.zonePop;
       const gname = grade === 'normal' ? '' : ` ${G.B.grades[grade].nameVi.toLowerCase()}`;
       const what = (count > 1 ? `${count} ${s.nameVi}` : s.nameVi) + gname;
-      const where = `${enc.zone.nameVi}`;
+      const where = `${enc.zone.nameVi}${enc.feat && enc.feat !== 'open' && enc.feat !== 'lake' ? ' (' + G.FEATURES.find(f => f.id === enc.feat).nameVi.toLowerCase() + ')' : ''}`;
+      if (enc.cell != null) S.huntPos = [(enc.cell % G.map.W + .5) * G.map.CS, (Math.floor(enc.cell / G.map.W) + .5) * G.map.CS];
       const rec = { species: s.id, grade, count, win: false, gap, zone: enc.zone.id };
       // Rèn mastery theo trường phái đang đi.
       const j = this.job(S), school = j && j.tier > 0 ? j.school : (S.path || 'combat');
@@ -559,7 +565,7 @@ window.LifeSim = window.LifeSim || {};
       if (this.rnd() < pWin) {
         rec.win = true; S.hunts.won++;
         S.kills[s.id] = (S.kills[s.id] || 0) + count;
-        pop[enc.zone.id] = Math.max(.3, pop[enc.zone.id] - .015 * count);
+        pop[enc.zone.id] = Math.max(.3, (pop[enc.zone.id] ?? 1) - .015 * count);
         const xp = 60 * Math.pow(1 + Math.max(0, mET), 2) * (.6 + .4 * count) * (adventure ? 1.3 : 1);
         const loot = Math.round(3 * Math.pow(1 + s.tier, 2) * { normal: 1, elite: 2.5, alpha: 4, lord: 20 }[grade] * (.5 + this.rnd()) * (adventure ? 1.4 : 1));
         this.money(loot); this.addXp(xp);

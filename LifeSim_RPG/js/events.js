@@ -280,7 +280,7 @@ window.LifeSim = window.LifeSim || {};
     let txt = `Bạn tới ${st ? st.name + ', ' + to.nameVi : to.nameVi}${nat ? ` (${nat.name})` : ''}.`;
     // Gặp quái dọc đường: khu ven của vùng mới, vẫn chịu luật Tier.
     if (['teen', 'adult', 'elder'].includes(X.stage(S)) && X.chance(.35)) {
-      const enc = X.rollEncounter(to.zones[0]);
+      const enc = X.rollEncounter(G.firstZone(regionId));
       if (enc) { const rec = X.fight(enc, false); if (S.dead) return null; txt += rec.win ? ` Dọc đường hạ ${enc.s.nameVi}.` : ` Dọc đường bị ${enc.s.nameVi} tấn công.`; }
     }
     S.zoneManual = false;

@@ -82,8 +82,8 @@ function showChecks() {
     G.check.warnings.map(w => `<div class="note">⚠ ${esc(w)}</div>`).join('') +
     (RL.check.errors.length ? RL.check.errors.map(e => `<div class="no">✗ thế giới: ${esc(e)}</div>`).join('') : `<div class="ok">✓ Thế giới "${esc(RL.seed)}" không có lỗi.</div>`) +
     RL.check.warnings.map(w => `<div class="note">⚠ thế giới: ${esc(w)}</div>`).join('') +
-    `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 3} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>` +
-    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}%</div>` +
+    `<div class="note">${G.REGIONS.length} vùng · ${G.REGIONS.length * 4} khu · ${G.B.stat.species} loài (${G.B.stat.spawnable} sinh ngẫu nhiên) · ${G.jobs.jobs.length} nghề · ${Object.keys(G.EVENTS).length} sự kiện · ${Object.keys(G.DECISIONS).length} quyết định</div>` +
+    `<div class="note">Thế giới: ${st.nations} nước · ${st.provinces} tỉnh · ${st.settlements} khu dân cư (${Object.entries(st.byTier).map(([t, k]) => `${k} ${G.TIER_VI[t].toLowerCase()}`).join(', ')}) · dân ${st.pop.toLocaleString('vi')} · đô thị ${(st.urbanShare * 100).toFixed(1)}% · đất vô chủ ${(st.unclaimed * 100).toFixed(0)}% · tầng (diện tích đất): ${st.bands.map((v, b) => `${G.BAND_VI[b].toLowerCase()} ${(v * 100).toFixed(0)}%`).join(', ')}</div>` +
     `<table><tr><th>Nước</th><th>Mẫu</th><th class="n">Cỡ</th><th class="n">Tỉnh</th><th class="n">Khu</th><th class="n">Dân</th><th class="n">Đô thị</th></tr>${RL.nations.map(nrow).join('')}</table>`;
 }
 showChecks();

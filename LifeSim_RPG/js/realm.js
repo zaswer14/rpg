@@ -10,6 +10,7 @@
  *   6. Tỉnh = thủ phủ (kinh đô / thành phố / thị trấn; làng ở đất vô chủ) + vùng quanh nó theo chi phí đi.
  *   7. Dân đô thị theo bậc; dân nông thôn theo sức chứa ô, gom về làng / thôn gần nhất, co giãn để khớp tỉ lệ đô thị của chủng tộc.
  *   8. Chủng tộc, đạo của từng khu; người cai trị, đặc trưng riêng, quan hệ giữa các nước.
+ *   9. Độ hoang từng ô (khoảng cách đi bộ tới khu dân cư + biome + địa hình) → tầng ven / sâu / lõi / vùng chết (research/03 mục 3.3).
  */
 window.LifeSim = window.LifeSim || {};
 (function (G) {
@@ -457,6 +458,41 @@ window.LifeSim = window.LifeSim || {};
       n.labelPos = [px(bi), py(bi)];
     }
 
+    // ── 10. Độ hoang và tầng nguy hiểm (research/03 mục 3.3–3.4) ──
+    // w(ô) = min qua khu dân cư (chi phí đi bộ / bán kính) + độ hoang biome + độ hoang địa hình.
+    // Bán kính (ô) = theo bậc (kinh đô 120px … thôn 25px; đồn ít nhất 70px) / 4 × tuần tra của nước (vô chủ .6).
+    // Mỗi khu dân cư loang Dijkstra riêng, dừng khi w vượt 3,5 (đã là vùng chết).
+    const WR = { capital: 120, city: 100, town: 80, village: 50, hamlet: 25 };
+    const wmin = new Float32Array(N).fill(3.5), dd = new Float32Array(N).fill(Infinity);
+    for (const s of settlements) {
+      if (s.tier === 'ruin') continue;
+      const rc = Math.max(WR[s.tier], s.roles.includes('fort') ? 70 : 0) / CS * (s.nation >= 0 ? nations[s.nation].patrol : .6);
+      const lim = 3.5 * rc, touched = [s.cell], q = G.minHeap(512);
+      dd[s.cell] = 0; q.push(0, s.cell);
+      while (q.size) {
+        const i = q.pop(), d = q.lastKey;
+        if (d > dd[i]) continue;
+        if (d / rc < wmin[i]) wmin[i] = d / rc;
+        for (const j of nbrs(i)) {
+          if (region[j] === SEA || !isFinite(cost[j])) continue;
+          const nd = d + cost[j];
+          if (nd < dd[j] && nd <= lim) { if (dd[j] === Infinity) touched.push(j); dd[j] = nd; q.push(nd, j); }
+        }
+      }
+      for (const i of touched) dd[i] = Infinity;
+    }
+    const BW = G.BAND_W, wild = new Float32Array(N), band = new Uint8Array(N).fill(SEA);
+    for (const i of land) {
+      if (feat[i] === FE.lake) continue;
+      wild[i] = wmin[i] + ((G.TERRAIN[biomeOf(i)] || {}).wild || 0) + G.FEATURES[feat[i]].wild;
+      band[i] = wild[i] < BW[0] ? 0 : wild[i] < BW[1] ? 1 : wild[i] < BW[2] ? 2 : 3;
+    }
+    // Hồ lấy tầng thấp nhất của bờ (để rê chuột có tên khu); trên hồ không có chỗ săn.
+    for (const i of land) if (feat[i] === FE.lake) { let b = 3; for (const j of nbrs(i)) if (band[j] !== SEA && band[j] < b) b = band[j]; band[i] = b; wild[i] = BW[0] * b; }
+    // Ô săn được của mỗi vùng × tầng (không tính hồ).
+    const bandCells = R.map(() => [[], [], [], []]);
+    for (const i of land) if (feat[i] !== FE.lake) bandCells[region[i]][band[i]].push(i);
+
     // ── Kiểm tra (research/05 mục 12) ──
     for (const s of settlements) {
       const f = feat[s.cell];
@@ -471,10 +507,11 @@ window.LifeSim = window.LifeSim || {};
       nations: nations.length, settlements: settlements.filter(s => s.tier !== 'ruin').length, ruins: settlements.filter(s => s.tier === 'ruin').length, provinces: provinces.length,
       byTier: Object.fromEntries([...TIERS, 'ruin'].map(t => [t, settlements.filter(s => s.tier === t).length])),
       pop: urbanTot + ruralTot, urban: urbanTot, urbanShare: urbanTot / Math.max(1, urbanTot + ruralTot),
-      unclaimed: land.filter(i => owner[i] === NONE).length / land.length
+      unclaimed: land.filter(i => owner[i] === NONE).length / land.length,
+      bands: [0, 1, 2, 3].map(b => land.filter(i => feat[i] !== FE.lake && band[i] === b).length / land.length)
     };
     const byId = Object.fromEntries(settlements.map(s => [s.id, s]));
-    return { seed, nations, settlements, provinces, owner, provOf, byId, stats, check: { errors, warnings } };
+    return { seed, nations, settlements, provinces, owner, provOf, wild, band, bandCells, byId, stats, check: { errors, warnings } };
   };
 
   // ── Thế giới đang dùng ──
@@ -496,6 +533,9 @@ window.LifeSim = window.LifeSim || {};
   G.nationAtCell = i => { const k = G.realm.owner[i]; return k >= 0 ? G.realm.nations[k] : null; };
   G.nationAtPos = (x, y) => { const c = G.map.at(x, y); return c ? G.nationAtCell(c.cell) : null; };
   G.provinceAtCell = i => { const p = G.realm.provOf[i]; return p >= 0 ? G.realm.provinces[p] : null; };
+  // Ô săn được của một khu (vùng × tầng) trong thế giới đang dùng; khu đầu tiên có ô của một vùng.
+  G.zoneCells = zid => { const Z = G.ZONE[zid]; return Z && G.realm ? G.realm.bandCells[G.map.idx[Z.region.id]][Z.index] : []; };
+  G.firstZone = regionId => { const bc = G.realm.bandCells[G.map.idx[regionId]], i = bc.findIndex(a => a.length); return G.REGION[regionId].zones[Math.max(0, i)]; };
   G.popOf = s => s.urban + s.rural;
   // Chỗ ở trên bản đồ: trong khu (đô thị) hoặc một điểm ở vùng quê quanh khu, không rơi xuống nước.
   G.homePos = function (s, urban, rnd) {

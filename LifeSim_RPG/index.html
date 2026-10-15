@@ -50,7 +50,8 @@
     </div>
     <div class="canvasbox">
       <canvas id="map" width="1200" height="900" aria-label="Bản đồ đại lục Varen"></canvas>
-      <div class="viewbtns" id="viewBtns" role="group" aria-label="Chế độ xem bản đồ"><button data-v="region">Vùng</button><button data-v="terrain">Địa hình</button><button data-v="political">Chính trị</button></div>
+      <div class="viewbtns" id="viewBtns" role="group" aria-label="Chế độ xem bản đồ"><button data-v="region">Vùng</button><button data-v="terrain">Địa hình</button><button data-v="political">Chính trị</button><button data-v="danger">Nguy hiểm</button></div>
+      <div class="maplegend" id="mapLegend" hidden><span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span></div>
       <div class="tip" id="tip" hidden></div>
     </div>
     <div class="focus">

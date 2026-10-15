@@ -1,0 +1,334 @@
+<title>Duyệt Mẫu Quốc Gia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Bố cục: tiêu đề + tiến độ → thanh tab (10 chủng tộc, đặc trưng riêng, luật, chính thể) → lưới thẻ; mỗi thẻ có nút duyệt riêng.
+   Giống trang Duyệt Cây Nghề về chữ và nút; khác ở màu nhấn (xanh mực của sổ bộ triều đình) để hai trang không lẫn. */
+:root{
+  --bg:#f2f1ed; --panel:#fbfbf8; --ink:#1f2126; --muted:#666a72; --line:#d9d7d0; --chip:#e8e6df;
+  --accent:#2c5a86; --accent-ink:#ffffff; --bar:#2c5a86; --bar-bg:#e2e3e3;
+  --ok:#2f7d4a; --fix:#b07a12; --drop:#b0352f;
+  --font-display:"Spectral SC", Georgia, serif; --font-body:"Be Vietnam Pro", system-ui, sans-serif; --font-mono:"JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#131518; --panel:#1b1e22; --ink:#e7e8ea; --muted:#9ca1aa; --line:#30343a; --chip:#262a30;
+  --accent:#7fb0e0; --accent-ink:#0d1621; --bar:#7fb0e0; --bar-bg:#2a2f36; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#131518; --panel:#1b1e22; --ink:#e7e8ea; --muted:#9ca1aa; --line:#30343a; --chip:#262a30;
+  --accent:#7fb0e0; --accent-ink:#0d1621; --bar:#7fb0e0; --bar-bg:#2a2f36; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+.page{padding-inline:16px;padding-block:16px 48px;max-width:1500px;margin:0 auto}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 12px;max-width:72ch}
+.progress{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-bottom:12px;font-size:13px;font-variant-numeric:tabular-nums}
+.progress .grp{display:inline-flex;gap:6px;align-items:center}
+.progress b{font-weight:600}
+.n-ok{color:var(--ok)} .n-fix{color:var(--fix)} .n-drop{color:var(--drop)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;min-width:96px}
+.tabs button small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button[aria-selected="true"] small{color:inherit;opacity:.85}
+.tabs .sep{width:1px;background:var(--line);margin:2px 4px}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:13px}
+.bar2 select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.save{color:var(--muted);font-size:12px}
+.overview{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.overview h2{font-family:var(--font-display);font-weight:600;font-size:21px;margin:0 0 2px}
+.overview p{margin:2px 0 6px;color:var(--muted);max-width:80ch}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{background:var(--chip);border-radius:5px;padding:1px 7px;font-size:12px;white-space:nowrap}
+.chip.dash{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.chip i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-right:4px;vertical-align:baseline}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.s-ok{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.card.s-fix{border-color:color-mix(in srgb,var(--fix) 60%,var(--line))}
+.card.s-drop{border-color:color-mix(in srgb,var(--drop) 55%,var(--line));opacity:.8}
+.card header{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.card h3{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.tid{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.pill{flex:none;font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;line-height:1.7}
+.pill.ok{background:var(--ok);color:var(--panel)} .pill.fix{background:var(--fix);color:var(--panel)} .pill.drop{background:var(--drop);color:var(--panel)}
+.meta{color:var(--muted);font-size:13px;margin-top:-4px}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 10px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0}
+.stats{display:grid;grid-template-columns:max-content minmax(0,1fr) 3.2em;gap:3px 8px;align-items:center;font-size:12px;font-variant-numeric:tabular-nums}
+.stats span{color:var(--muted)}
+.stats .v{text-align:right;color:var(--ink)}
+.track{height:7px;background:var(--bar-bg);border-radius:4px;overflow:hidden}
+.track b{display:block;height:100%;background:var(--bar);border-radius:4px}
+.trait{background:var(--chip);border-radius:8px;padding:7px 10px;font-size:13px}
+.trait b{font-weight:600}
+.names{font-size:12px;color:var(--muted)}
+.review{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.review .row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.btn.fix[aria-pressed="true"]{background:var(--fix);border-color:var(--fix);color:var(--panel)}
+.btn.drop[aria-pressed="true"]{background:var(--drop);border-color:var(--drop);color:var(--panel)}
+textarea{width:100%;min-height:52px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.hint{color:var(--muted);font-size:12px;margin:0}
+.group-title{font-family:var(--font-display);font-weight:600;font-size:17px;margin:14px 0 8px;grid-column:1/-1}
+.empty{color:var(--muted);padding:20px 0}
+code{font-family:var(--font-mono);font-size:12px}
+</style>
+
+<div class="page">
+  <h1>Duyệt Mẫu Quốc Gia</h1>
+  <p class="lede">Năm mươi mẫu quốc gia của Vạn Kiếp (10 chủng tộc × 5), cùng đặc trưng riêng, luật và chính thể mà các mẫu dùng. Mỗi thế giới bốc 5–7 mẫu, cộng nhiễu chỉ số và gắn 1–2 đặc trưng riêng. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa <code>data/nations.js</code>.</p>
+  <div class="progress" id="progress"></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
+  <div class="bar2">
+    <label for="filter">Hiện</label>
+    <select id="filter">
+      <option value="all">tất cả</option><option value="todo">chưa duyệt</option><option value="ok">đã giữ</option><option value="fix">cần sửa</option><option value="drop">bỏ</option>
+    </select>
+    <span class="save" id="saveState" aria-live="polite"></span>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+(function () {
+  const D = /*DATA*/null;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const RACES = Object.keys(D.races);
+  const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
+  const SIZE = { S: 'nhỏ, 2–3 tỉnh', M: 'vừa, 4–5 tỉnh', L: 'lớn, 6–8 tỉnh' };
+  const FEAT = { open: 'đồng trống', hills: 'đồi', forest: 'rừng', jungle: 'rừng rậm', marsh: 'đầm', mountain: 'núi' };
+  const NEED = { coast: 'kinh đô ven biển', mountain: 'gần núi', coastOrRiver: 'ven biển hoặc sông' };
+  const GROUP = { throne: 'Ngôi vua', economy: 'Kinh tế', army: 'Quân sự', faith: 'Tôn giáo', diplo: 'Ngoại giao', history: 'Lịch sử', culture: 'Văn hóa' };
+  const raceVi = r => D.races[r] ? D.races[r].vi : r;
+  const tplOf = id => D.templates.find(t => t.id === id);
+
+  const reviews = {}, drafts = {};
+  let db = null, dbState = 'connecting';
+  const state = { tab: 'human', filter: 'all' };
+  try { const h = location.hash.slice(1); if (h && (D.races[h] || ['quirks', 'laws', 'govs'].includes(h))) state.tab = h; } catch (e) {}
+  try { const f = localStorage.getItem('nationReview.filter'); if (f) state.filter = f; } catch (e) {}
+  const key = (kind, id) => kind + '__' + id;
+  const rv = (kind, id) => reviews[key(kind, id)] || {};
+
+  // ---- Danh sách mục duyệt theo nhóm ----
+  const items = {
+    tpl: D.templates.map(t => ({ kind: 'tpl', id: t.id, name: t.label, race: t.race })),
+    quirk: D.quirks.map(q => ({ kind: 'quirk', id: q.id, name: q.nameVi })),
+    law: Object.entries(D.laws).map(([id, l]) => ({ kind: 'law', id, name: l.nameVi })),
+    gov: Object.entries(D.govs).map(([id, g]) => ({ kind: 'gov', id, name: g.nameVi }))
+  };
+  const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
+  const passes = it => { const s = rv(it.kind, it.id).status; return state.filter === 'all' || (state.filter === 'todo' ? !s : s === state.filter); };
+
+  // ---- Tiến độ ----
+  function renderProgress() {
+    const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
+    $('progress').innerHTML = part('Mẫu', items.tpl) + part('Đặc trưng', items.quirk) + part('Luật', items.law) + part('Chính thể', items.gov);
+  }
+
+  // ---- Tab ----
+  function renderTabs() {
+    const tab = (id, label, list) => { const c = count(list), done = c.ok + c.fix + c.drop;
+      return `<button role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${esc(label)}<small>${done}/${c.n}${c.fix ? ` · ✎ ${c.fix}` : ''}${c.drop ? ` · ✕ ${c.drop}` : ''}</small></button>`; };
+    $('tabs').innerHTML = RACES.map(r => tab(r, raceVi(r), items.tpl.filter(t => t.race === r))).join('')
+      + '<span class="sep" aria-hidden="true"></span>'
+      + tab('quirks', 'Đặc trưng riêng', items.quirk) + tab('laws', 'Luật', items.law) + tab('govs', 'Chính thể', items.gov);
+  }
+
+  // ---- Khối duyệt dùng chung ----
+  function reviewBlock(kind, id) {
+    const r = rv(kind, id), k = key(kind, id), note = drafts[k] != null ? drafts[k] : (r.note || ''), off = db ? '' : 'disabled';
+    return `<div class="review" data-kind="${kind}" data-id="${esc(id)}">
+      <div class="row" role="group" aria-label="Quyết định">
+        ${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}
+      </div>
+      <textarea id="note-${esc(k)}" data-note placeholder="Ghi chú: đổi số, đổi luật, đổi đặc tính, ý tưởng…" ${off}>${esc(note)}</textarea>
+      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div>
+    </div>`;
+  }
+  const pill = (kind, id) => { const s = rv(kind, id).status; return s ? `<span class="pill ${s}">${STATUS[s].t} ${STATUS[s].vi}</span>` : ''; };
+  const cardClass = (kind, id) => { const s = rv(kind, id).status; return 'card' + (s ? ' s-' + s : ''); };
+
+  // ---- Thẻ mẫu quốc gia ----
+  const statRow = (label, v, lo, hi, fmt) => `<span>${label}</span><div class="track"><b style="width:${Math.max(3, Math.min(100, (v - lo) / (hi - lo) * 100))}%"></b></div><span class="v">${fmt(v)}</span>`;
+  const faithChip = (f, w) => f === 'none' ? `<span class="chip">không đạo ${w}%</span>` : `<span class="chip"><i style="--c:${D.faiths[f].color}"></i>${esc(D.faiths[f].symbol)} ${esc(D.faiths[f].vi)} ${w}%</span>`;
+  function sampleNames(t) {
+    const pr = ((D.names.prefixRace[t.race] || {})[t.gov]) || D.names.prefix[t.gov] || [], roots = D.names.root[t.race] || [];
+    const idx = t.id.charCodeAt(1) % roots.length;
+    return [0, 1, 2].map(k => `${pr[k % pr.length]} ${roots[(idx + k * 3) % roots.length]}`).join(' · ');
+  }
+  function tplCard(t) {
+    const [tax, army, patrol, stab, amb] = t.stats, g = D.govs[t.gov];
+    const fav = t.tolerant ? 'mọi chủng tộc' : (t.fav.map(raceVi).join(', ') || 'không');
+    const wary = t.xeno ? 'mọi chủng tộc khác' : (t.wary.map(raceVi).join(', ') || 'không');
+    const where = [...t.biomes.map(b => `<span class="chip">${esc(D.biomes[b] || b)}</span>`), ...t.feats.map(f => `<span class="chip">${FEAT[f] || f}</span>`), ...t.needs.map(n => `<span class="chip dash">cần ${NEED[n] || n}</span>`)];
+    const extra = [t.forts ? `+${t.forts} đồn` : ''].filter(Boolean);
+    return `<article class="${cardClass('tpl', t.id)}" id="tpl-${t.id}">
+      <header><h3><span class="tid">${t.id}</span>${esc(t.label)}</h3>${pill('tpl', t.id)}</header>
+      <div class="meta">${esc(g.nameVi)} · cỡ ${SIZE[t.size]}</div>
+      <dl class="kv">
+        <dt>Đạo</dt><dd class="chips">${Object.entries(t.faith).map(([f, w]) => faithChip(f, w)).join('')}</dd>
+        <dt>Đất ưa</dt><dd class="chips">${where.join('') || '<span class="chip">bất kỳ (theo chủng tộc)</span>'}</dd>
+        <dt>Luật</dt><dd class="chips">${t.laws.map(l => `<span class="chip" title="${esc(D.laws[l].desc)}">${esc(D.laws[l].nameVi)}</span>`).join('') || '<span class="chip dash">không có</span>'}${t.lawPool.map(l => `<span class="chip dash" title="${esc(D.laws[l].desc)}">có thể: ${esc(D.laws[l].nameVi)}</span>`).join('')}</dd>
+        <dt>Ưu ái</dt><dd>${esc(fav)}</dd>
+        <dt>Dè chừng</dt><dd>${esc(wary)}</dd>
+        ${extra.length ? `<dt>Thêm</dt><dd>${esc(extra.join(', '))}</dd>` : ''}
+      </dl>
+      <div class="stats">
+        ${statRow('Thuế', tax, 0, .35, v => Math.round(v * 100) + '%')}
+        ${statRow('Quân', army, .4, 1.5, v => v.toFixed(2))}
+        ${statRow('Tuần tra', patrol, .4, 1.5, v => v.toFixed(2))}
+        ${statRow('Ổn định', stab, 0, 1, v => Math.round(v * 100))}
+        ${statRow('Tham vọng', amb, 0, 1, v => Math.round(v * 100))}
+      </div>
+      <div class="trait"><b>${esc(t.trait.nameVi)}.</b> ${esc(t.trait.desc)}</div>
+      <div class="names">Tên có thể ra: ${esc(sampleNames(t))}</div>
+      ${reviewBlock('tpl', t.id)}
+    </article>`;
+  }
+  function raceView(r) {
+    const R = D.races[r], s = R.settle || {};
+    const flags = [s.mountain ? 'đặt được khu dân cư trên núi' : '', s.coastOnly ? 'mọi khu phải ven biển' : '', s.noFarm ? 'không ăn: không có làng ruộng' : '', s.noHamlet ? 'không có thôn' : '', s.palisade ? 'tường là rào cọc' : '', s.noWalls ? 'không xây tường' : ''].filter(Boolean);
+    const list = D.templates.filter(t => t.race === r);
+    const shown = list.filter(t => passes({ kind: 'tpl', id: t.id }));
+    return `<section class="overview">
+        <h2>${esc(R.vi)}</h2>
+        <p>${esc(R.lore)}</p>
+        <div class="chips">
+          ${(s.biomes || []).map(b => `<span class="chip">${esc(D.biomes[b] || b)}</span>`).join('')}
+          <span class="chip">đô thị ${Math.round((s.urban || 0) * 100)}%</span>
+          ${s.signature ? `<span class="chip">công trình riêng: ${esc(s.signature)}</span>` : ''}
+          ${flags.map(f => `<span class="chip dash">${esc(f)}</span>`).join('')}
+        </div>
+      </section>
+      <div class="grid">${shown.map(tplCard).join('') || '<p class="empty">Không có mẫu nào khớp bộ lọc.</p>'}</div>`;
+  }
+
+  // ---- Đặc trưng riêng ----
+  function whenText(w) {
+    if (!w) return 'mọi nước';
+    const out = [];
+    if (w.ruled) out.push('nước có người cai trị');
+    if (w.gov) out.push('chính thể ' + w.gov.map(g => D.govs[g].nameVi.toLowerCase()).join(', '));
+    if (w.notGov) out.push('không phải ' + w.notGov.map(g => D.govs[g].nameVi.toLowerCase()).join(', '));
+    if (w.size) out.push('nước cỡ ' + w.size.join(', '));
+    if (w.coastCapital) out.push('kinh đô ven biển');
+    if (w.hasFaith) out.push('có quốc giáo');
+    if (w.near) out.push('lãnh thổ có ' + (FEAT[w.near] || w.near));
+    if (w.lordNear) out.push('lãnh thổ có vùng của chúa vùng');
+    if (w.notTolerant) out.push('không phải nước ưu ái mọi chủng tộc');
+    if (w.biomeAny) out.push('lãnh thổ có ' + w.biomeAny.map(b => D.biomes[b] || b).join(' hoặc '));
+    if (w.notLaw) out.push('không có luật ' + D.laws[w.notLaw].nameVi.toLowerCase());
+    return out.join('; ') || 'mọi nước';
+  }
+  const MODVI = { stability: 'ổn định', ambition: 'tham vọng', army: 'quân', patrol: 'tuần tra', tax: 'thuế' };
+  const modText = m => Object.entries(m || {}).map(([k, v]) => (k === 'army' || k === 'patrol') ? `${MODVI[k]} ×${(1 + v).toFixed(2)}` : `${MODVI[k]} ${v > 0 ? '+' : ''}${Math.round(v * 100)}`).join(', ');
+  const TARGET = { feud: 'chọn một nước khác làm thù (quan hệ −3)', marriage: 'chọn một nước khác làm thông gia (quan hệ +3)', vassal: 'làm chư hầu cho một nước cỡ vừa hoặc lớn (quan hệ +2)' };
+  function quirksView() {
+    const groups = {};
+    for (const q of D.quirks) if (passes({ kind: 'quirk', id: q.id })) (groups[q.group] = groups[q.group] || []).push(q);
+    const card = q => `<article class="${cardClass('quirk', q.id)}">
+        <header><h3><span class="tid">${q.id}</span>${esc(q.nameVi)}</h3>${pill('quirk', q.id)}</header>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(whenText(q.when))}</dd>
+          ${q.mods ? `<dt>Chỉ số</dt><dd>${esc(modText(q.mods))}</dd>` : ''}
+          ${q.target ? `<dt>Gắn với</dt><dd>${esc(TARGET[q.target])}</dd>` : ''}</dl>
+        ${reviewBlock('quirk', q.id)}
+      </article>`;
+    const html = Object.keys(GROUP).filter(g => groups[g]).map(g => `<h3 class="group-title">${GROUP[g]}</h3>${groups[g].map(card).join('')}`).join('');
+    return `<section class="overview"><h2>Đặc trưng riêng</h2><p>Mỗi nước bốc 1 đặc trưng (35% bốc 2, không trùng nhóm) trong số các đặc trưng hợp điều kiện. Phần lớn tác dụng mới được hiện; chỉ số và quan hệ đã có tác dụng khi tạo thế giới.</p></section>
+      <div class="grid">${html || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+  }
+
+  // ---- Luật ----
+  function lawsView() {
+    const card = ([id, l]) => {
+      const fixed = D.templates.filter(t => t.laws.includes(id)).map(t => t.id), pool = D.templates.filter(t => t.lawPool.includes(id)).map(t => t.id);
+      return `<article class="${cardClass('law', id)}">
+        <header><h3><span class="tid">${id}</span>${esc(l.nameVi)}</h3>${pill('law', id)}</header>
+        <p style="margin:0">${esc(l.desc)}</p>
+        <dl class="kv"><dt>Mẫu có</dt><dd>${fixed.length ? fixed.map(x => `<code>${x}</code>`).join(' ') : '<span style="color:var(--fix)">chưa mẫu nào</span>'}</dd>
+          ${pool.length ? `<dt>Có thể có</dt><dd>${pool.map(x => `<code>${x}</code>`).join(' ')}</dd>` : ''}</dl>
+        ${reviewBlock('law', id)}
+      </article>`;
+    };
+    const list = Object.entries(D.laws).filter(([id]) => passes({ kind: 'law', id }));
+    return `<section class="overview"><h2>Luật</h2><p>Luật nằm trong mẫu (cố định) hoặc bốc thêm 50% từ danh sách "có thể". Tác dụng lên đời người vào ở bước 4 của thiết kế bản đồ.</p></section>
+      <div class="grid">${list.map(card).join('') || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+  }
+
+  // ---- Chính thể ----
+  function govsView() {
+    const settleText = s => !s ? '' : [s.noCity ? 'không có thành phố' : '', s.town ? `+${s.town} thị trấn` : '', s.village ? `+${s.village} làng` : '', s.hamlet ? `+${s.hamlet} thôn` : '', s.smallCapital ? 'kinh đô chỉ là thị trấn lớn' : '', s.templeVillages ? `${s.templeVillages} làng có đền ở xa` : '', s.forts ? `+${s.forts} đồn` : '', s.signature ? `kinh đô có ${s.signature}` : ''].filter(Boolean).join(', ');
+    const card = ([id, g]) => {
+      const used = D.templates.filter(t => t.gov === id).map(t => t.id), titles = D.names.ruler[id] || [];
+      return `<article class="${cardClass('gov', id)}">
+        <header><h3><span class="tid">${id}</span>${esc(g.nameVi)}</h3>${pill('gov', id)}</header>
+        <dl class="kv"><dt>Cai trị</dt><dd>${g.ruled ? esc(titles.join(' / ') || 'có') : 'không có người cai trị'}</dd>
+          <dt>Thăng tiến</dt><dd>${esc(g.promo)}</dd>
+          ${settleText(g.settle) ? `<dt>Khu dân cư</dt><dd>${esc(settleText(g.settle))}</dd>` : ''}
+          ${g.urban ? `<dt>Đô thị</dt><dd>${g.urban > 0 ? '+' : ''}${Math.round(g.urban * 100)} điểm %</dd>` : ''}
+          <dt>Tên nước</dt><dd>${esc((D.names.prefix[id] || []).join(', '))}</dd>
+          <dt>Mẫu dùng</dt><dd>${used.map(x => `<code>${x}</code>`).join(' ') || '—'}</dd></dl>
+        ${reviewBlock('gov', id)}
+      </article>`;
+    };
+    const list = Object.entries(D.govs).filter(([id]) => passes({ kind: 'gov', id }));
+    return `<section class="overview"><h2>Chính thể</h2><p>Chính thể quyết định ai cai trị, tước của người cai trị, đường thăng tiến của người chơi và chỉnh mạng khu dân cư của nước.</p></section>
+      <div class="grid">${list.map(card).join('') || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+  }
+
+  function renderContent() {
+    $('content').innerHTML = D.races[state.tab] ? raceView(state.tab) : state.tab === 'quirks' ? quirksView() : state.tab === 'laws' ? lawsView() : govsView();
+    if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
+  }
+  function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
+
+  // ---- Lưu ----
+  async function write(kind, id, status, note) {
+    if (!db) return;
+    const it = items[kind].find(x => x.id === id), k = key(kind, id);
+    $('saveState').textContent = 'Đang lưu…';
+    try {
+      const ref = db.collection('reviews').doc(k);
+      if (status === null) await ref.delete();
+      else await ref.set({ kind, id, name: it ? it.name : id, race: it && it.race ? it.race : null, status, note: note || '', updatedAt: new Date().toISOString() });
+      delete drafts[k];
+      $('saveState').textContent = 'Đã lưu';
+    } catch (e) {
+      $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.';
+    }
+  }
+
+  // ---- Sự kiện ----
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; try { history.replaceState(null, '', '#' + state.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); });
+  $('filter').addEventListener('change', e => { state.filter = e.target.value; try { localStorage.setItem('nationReview.filter', state.filter); } catch (x) {} renderContent(); });
+  $('content').addEventListener('input', e => { if (!e.target.matches('[data-note]')) return; const box = e.target.closest('.review'); drafts[key(box.dataset.kind, box.dataset.id)] = e.target.value; });
+  $('content').addEventListener('click', e => {
+    const box = e.target.closest('.review'); if (!box) return;
+    const kind = box.dataset.kind, id = box.dataset.id, note = box.querySelector('[data-note]').value, cur = rv(kind, id).status;
+    const st = e.target.closest('[data-status]');
+    if (st) { write(kind, id, cur === st.dataset.status ? null : st.dataset.status, note); return; }
+    if (e.target.closest('[data-clear]')) { write(kind, id, null); return; }
+    if (e.target.closest('[data-savenote]')) write(kind, id, cur || 'fix', note);
+  });
+
+  render();
+
+  (async () => {
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { dbState = 'off'; renderContent(); return; }
+    dbState = 'ready'; $('saveState').textContent = 'Quyết định được lưu chung cho trang này; Claude đọc lại được.'; renderContent();
+    db.collection('reviews').onSnapshot(snap => {
+      for (const k of Object.keys(reviews)) delete reviews[k];
+      for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
+      const act = document.activeElement, focusId = act && act.matches && act.matches('[data-note]') ? act.id : null, pos = focusId ? act.selectionStart : 0;
+      renderProgress(); renderTabs(); renderContent();
+      if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } }
+    }, () => { dbState = 'off'; renderContent(); });
+  })();
+})();
+</script>

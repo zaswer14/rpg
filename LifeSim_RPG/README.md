@@ -29,9 +29,9 @@ Không dùng bản đồ thế giới thật. Đại lục Varen có **16 vùng*
 
 Nhân vật sinh ra ở một khu dân cư cụ thể, **trong khu** (thành thị) hoặc **vùng quê quanh khu** (nông thôn, ~75% số đời), chủng tộc và đạo theo khu đó. Luật, thuế, công trình chưa tác động lên đời (bước 4).
 
-Nút **Vùng / Địa hình / Chính trị** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
+Nút **Vùng / Địa hình / Chính trị / Nguy hiểm** đổi chế độ xem. Chính trị: màu nước, biên nước đậm, biên tỉnh mảnh, đất vô chủ gạch chéo; bấm vào một nước để xem bảng quốc gia. Rê chuột lên khu dân cư: bậc, vai trò, dân, công trình. Nút **Thế giới mới** tạo đại lục khác; `?world=abc` mở đúng một thế giới.
 
-Mỗi vùng chia **3 khu**: ven → sâu → lõi, xếp theo khoảng cách tới điểm neo của vùng (`anchor`). Khu ven ôm điểm neo và phía lòng đại lục; khu lõi nằm ở rìa ngoài, xa văn minh. Mỗi khu có dải Tier và bảng loài riêng (`data/world.js`). Vùng trung tâm (Đồng Kim Hà, T0–2) an toàn; càng ra rìa càng nguy hiểm (Đỉnh Lôi Vân T2–5, Vực Hắc Uyên T3–5).
+Mỗi vùng có **4 khu = 4 tầng nguy hiểm**: ven → sâu → lõi → vùng chết, mỗi khu một dải Tier và bảng loài riêng (`data/world.js`). Ô nào thuộc tầng nào do **độ hoang** quyết định (bước 3, `js/realm.js`): khoảng cách đi bộ từ ô tới khu dân cư gần nhất chia cho bán kính của khu (kinh đô 120px, thành phố 100, thị trấn 80, làng 50, thôn 25, đồn ít nhất 70; nhân tuần tra của nước, vô chủ × 0,6), cộng độ hoang biome (`G.TERRAIN.wild`) và địa hình (`G.FEATURES.wild`). Ngưỡng ven < 1 ≤ sâu < 2 ≤ lõi < 3 ≤ vùng chết. Rừng rậm, núi "xa" văn minh hơn đồng bằng; vùng không có làng nào gần là lõi hoặc vùng chết. Một vùng có thể thiếu tầng (vùng hoang không có tầng ven); khu săn chỉ hiện tầng có ô. Trận đánh xảy ra ở một ô cụ thể của khu, và địa hình ô đó nhân trọng số loài đã có (`G.FEATURE_SPAWN`: rừng rậm nhiều quái phục kích và côn trùng, núi nhiều quái bay và rồng…). Chế độ xem **Nguy hiểm** tô từng ô theo sức nhân vật: an toàn, vừa sức, nguy hiểm (Liều mạng), khóa.
 
 ### Luật phân cấp (tránh cấp thấp gặp cấp cao)
 
@@ -42,14 +42,15 @@ Mỗi vùng chia **3 khu**: ven → sâu → lõi, xếp theo khoảng cách t�
 | Khu có `lo > t + 1` bị khóa | `zonesFor` |
 | **Liều mạng** (tick tay): mở thêm một bậc, gặp tới `t + 2` | công tắc trên giao diện |
 | Khu gợi ý = khu sâu nhất mà đe dọa trung bình thấp hơn sức mình ~0,3 Tier | `recommendedZone` |
-| Đi đường sang vùng mới: gặp quái ở khu ven của vùng đó, vẫn qua luật trên | `G.moveTo` |
+| Đi đường sang vùng mới: gặp quái ở tầng gần làng nhất của vùng đó, vẫn qua luật trên | `G.moveTo` |
+| Địa hình ô chỉ nhân trọng số loài đã có trong khu, không thêm loài | `encounterTable` |
 
-Kết quả 1000 đời headless (seed `can-bang`): khoảng 50.000 trận, chênh Tier từ −5 tới +1, **không trận nào vượt +1**.
+Kết quả 1000 đời headless (seed `can-bang`, thế giới `can-bang`, 4 tầng): 47.490 trận, chênh Tier từ −5 tới +1, **không trận nào vượt +1**.
 
 ### Quái hoạt động theo khu
 
 Mỗi khu có **mật độ** (`world.zonePop`, 0,3–2,2), cập nhật mỗi năm trong hệ con `world`:
-sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ săn NPC tỉa (vùng giàu tỉa nhiều hơn) → mùa sinh sản ngẫu nhiên → khu lõi quá đông thì đẩy mật độ ra khu sâu, khu sâu đẩy ra khu ven (chỉ đẩy mật độ, **không đẩy loài**, nên dải Tier vẫn giữ) → khu ven vượt 1,25 thì thành **thú triều** (`raid`), tăng nguy cơ chết của dân trong vùng và bắn sự kiện quái tràn vào làng. Người chơi hạ quái thì mật độ khu đó giảm. Ba vùng có **chúa vùng** (Leviathan, Cổ Long, Chúa Quỷ Hắc Uyên) chỉ xuất hiện qua sự kiện khi nhân vật từ cấp 40.
+sinh sôi kiểu logistic (vùng nguy hiểm sinh nhanh hơn) → bị thợ săn NPC tỉa (vùng giàu tỉa nhiều hơn) → mùa sinh sản ngẫu nhiên → khu sâu hơn quá đông thì đẩy mật độ ra khu ngoài nó (vùng chết → lõi → sâu → ven; thợ săn NPC không vào vùng chết) (chỉ đẩy mật độ, **không đẩy loài**, nên dải Tier vẫn giữ) → khu ven vượt 1,25 thì thành **thú triều** (`raid`), tăng nguy cơ chết của dân trong vùng và bắn sự kiện quái tràn vào làng. Người chơi hạ quái thì mật độ khu đó giảm. Ba vùng có **chúa vùng** (Leviathan, Cổ Long, Chúa Quỷ Hắc Uyên) ngủ ở vùng chết của vùng, chỉ xuất hiện qua sự kiện khi nhân vật từ cấp 40.
 
 ## 3. Mô hình đời (theo 1in8b)
 
@@ -95,12 +96,12 @@ LifeSim_RPG/
   index.html, style.css     giao diện
   sim.html                  cân bằng headless
   data/ecology.js           10 kiểu địa hình + 36 loài quái mới (cùng lược đồ bestiary, qua bộ kiểm tra của thư viện)
-  data/world.js             chủng tộc (tuổi thọ, ypt), tầng lớp, sinh kế, 16 vùng × 3 khu, địa hình theo biome, đặc trưng ô, nguyên nhân chết, validateWorld
+  data/world.js             chủng tộc (tuổi thọ, ypt), tầng lớp, sinh kế, 16 vùng × 4 khu (tầng), địa hình và độ hoang theo biome, đặc trưng ô, quái theo địa hình, nguyên nhân chết, validateWorld
   data/nations.js           50 mẫu quốc gia, chính thể, luật, đặc trưng riêng, phong cách khu dân cư theo chủng tộc, công trình
   data/names.js             kho tên riêng (người, nước, khu dân cư, địa danh, hang ổ, di tích…)
   js/core.js                RNG có seed, odds, Φ/Φ⁻¹, noise
-  js/map.js                 dựng và vẽ bản đồ raster: vùng, khu, độ cao, độ ẩm, nhiệt, sông, hồ, đặc trưng, khu dân cư; ba chế độ xem
-  js/realm.js               tạo thế giới: quốc gia, lãnh thổ, mạng khu dân cư, tỉnh, dân, tên
+  js/map.js                 dựng và vẽ bản đồ raster: vùng, khu, độ cao, độ ẩm, nhiệt, sông, hồ, đặc trưng, khu dân cư; bốn chế độ xem
+  js/realm.js               tạo thế giới: quốc gia, lãnh thổ, mạng khu dân cư, tỉnh, dân, tên, độ hoang và tầng nguy hiểm từng ô
   js/life.js                Sim: newLife, rise, planYear, tick, endYear, chết, săn quái có phân cấp
   js/systems.js             hệ con cuối năm, autoFocus, rương báu
   js/events.js              sự kiện + quyết định
@@ -112,7 +113,7 @@ Không sửa file nào trong `library/`. Loài thư viện được thả vào v
 
 ## 7. Mở rộng
 
-- **Thêm vùng:** một dòng trong `G.REGIONS` (tâm, bán kính, điểm neo, chỉ số, 3 khu) và một dòng trong `G.TERRAIN`. Mở `sim.html` tới khi mục Kiểm tra dữ liệu không còn lỗi.
+- **Thêm vùng:** một dòng trong `G.REGIONS` (tâm, bán kính, điểm neo, chỉ số, 4 khu) và một dòng trong `G.TERRAIN`. Mở `sim.html` tới khi mục Kiểm tra dữ liệu không còn lỗi.
 - **Thêm mẫu quốc gia:** một dòng `T(...)` trong `G.NATION_TEMPLATES` (`data/nations.js`); thêm tên vào `data/names.js`. Bấm **Thử nhiều thế giới** để xem mẫu có ra không và có lỗi không.
 - **Thêm loài:** `data/ecology.js` (hoặc `library/bestiary/species.js` nếu muốn dùng chung), rồi đưa vào `spawns` của một khu có dải Tier chứa nó.
 - **Thêm sự kiện:** một object trong `G.EVENTS`; không phải sửa vòng lặp. `undead: true` cho sự kiện chỉ Bộ Xương gặp, `'any'` cho cả hai.

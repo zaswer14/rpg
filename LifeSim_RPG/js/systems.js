@@ -28,18 +28,17 @@ window.LifeSim = window.LifeSim || {};
         rs.plague = .6 + X.rnd() * .4; rs.plagueNew = true;
         for (const n of adjOf(r.id)) if (X.chance(.25)) { W.regions[n].plague = Math.max(W.regions[n].plague, .4); W.regions[n].plagueNew = true; }
       }
-      // Mật độ quái theo khu: sinh sôi (logistic), bị NPC tỉa (vùng giàu có nhiều thợ săn), mùa sinh sản ngẫu nhiên.
+      // Mật độ quái theo khu: sinh sôi (logistic), bị NPC tỉa (vùng giàu có nhiều thợ săn; không ai vào vùng chết), mùa sinh sản ngẫu nhiên.
       r.zones.forEach((z, i) => {
-        let p = zp[z.id];
-        p += .1 * (1 - p / 1.5) * (1 + r.danger * .6) - .045 * (.5 + r.wealth) * (i === 0 ? 1.4 : 1) + (X.rnd() - .5) * .08;
+        let p = zp[z.id] ?? 1;
+        p += .1 * (1 - p / 1.5) * (1 + r.danger * .6) - .045 * (.5 + r.wealth) * [1.4, 1, 1, 0][i] + (X.rnd() - .5) * .08;
         if (X.chance(.025)) { p += .35; if (r.id === S.loc && i <= 1) X.log(`Mùa sinh sản ở ${z.nameVi}: quái đông bất thường.`, 'info'); }
         zp[z.id] = G.clamp(p, .3, 2.2);
       });
-      // Khu sâu tràn mật độ ra khu ngoài.
-      const [a, b, c] = r.zones.map(z => z.id);
-      if (zp[c] > 1.6) zp[b] = Math.min(2.2, zp[b] + .1);
-      if (zp[b] > 1.6) zp[a] = Math.min(2.2, zp[a] + .1);
-      rs.raid = Math.max(0, zp[a] - 1.25) * 1.5;
+      // Khu sâu tràn mật độ ra khu ngoài: vùng chết → lõi → sâu → ven.
+      const ids = r.zones.map(z => z.id);
+      for (let k = ids.length - 1; k > 0; k--) if (zp[ids[k]] > 1.6) zp[ids[k - 1]] = Math.min(2.2, zp[ids[k - 1]] + .1);
+      rs.raid = Math.max(0, zp[ids[0]] - 1.25) * 1.5;
       // Chiến tranh giảm dần.
       if (rs.war > 0) rs.war = Math.max(0, rs.war - .25);
     }

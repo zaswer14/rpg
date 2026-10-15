@@ -182,6 +182,18 @@ Vùng chết chỉ có ở nơi xa văn minh thật sự: giữa vùng hoang, sa
 
 `world.zonePop` hiện tính theo khu của vùng. Chuyển sang **tỉnh × tầng** (khóa `tinh:ven`, `tinh:sau`, `tinh:loi`, `tinh:chet`), vẫn chạy đúng chu trình cũ: sinh sôi logistic, NPC tỉa (giờ tỉa theo `patrol` của nước thay vì độ giàu vùng; NPC không vào vùng chết), tràn từ vùng chết ra lõi ra sâu ra ven, ven quá 1,25 thì thú triều đánh khu dân cư của tỉnh (giảm `hp`). Hang ổ cộng thêm mật độ (mục 4).
 
+### 3.6. Kết quả bước 3 (15/10/2026)
+
+Đã làm: tầng 4 cho cả 16 vùng (loài theo bảng ở 3.4; chúa vùng chuyển xuống vùng chết), độ hoang từng ô tính từ mạng khu dân cư của thế giới (`js/realm.js`), khu săn chỉ gồm tầng có ô trong vùng, trận đánh xảy ra ở một ô và địa hình ô nhân trọng số loài (`G.FEATURE_SPAWN`), chế độ xem Nguy hiểm.
+
+Khác với thiết kế ở trên:
+
+- Bảng loài vẫn khai theo **vùng** (mỗi vùng thêm khu thứ tư), chưa tách sang biome. Vì mỗi vùng đúng một biome nên kết quả như nhau; tách khi có vùng thứ hai cùng biome.
+- Mật độ quái (`zonePop`) vẫn theo **vùng × tầng**, chưa theo tỉnh × tầng như 3.5. Đổi khi làm quốc gia động (bước 7), lúc tỉnh có ý nghĩa cho thú triều.
+- Chưa có đường nên nguồn văn minh chỉ là khu dân cư; đường thêm vào ở bước 5.
+
+Đo bằng `sim.html` (thế giới `can-bang`): diện tích đất ven 20%, sâu 38%, lõi 18%, vùng chết 21% (cách chia cũ: 45 / 35 / 20, không có vùng chết). 1000 đời: 47.490 trận, 0 trận vượt Tier + 1, 9,9% chết vì quái (trước bước 3: ~10%). 100 thế giới: 0 lỗi, ~0,33 giây mỗi thế giới. Cảnh báo dữ liệu: `hai_xa_3` và `hac_uyen_3` chỉ có một họ quái (thiếu loài T5 biển, thêm họ cho Đáy Thật).
+
 ## 4. Hang ổ và di tích
 
 ### 4.1. Hang ổ
@@ -505,7 +517,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 |---|---|---|
 | 1 ✓ | Mở khung 1200 × 900; lớp địa hình, sông, hồ, đặc trưng; chế độ xem Địa hình (15/10/2026) | bản đồ có sông, rừng, núi; chưa đổi luật chơi |
 | 2 ✓ | Nạp `names.js`; 50 mẫu quốc gia vào `data/nations.js`; seed thế giới; kinh đô, lãnh thổ, mạng khu dân cư phân cấp, vai trò, công trình, dân, tỉnh, tên (`research/05`); quốc gia tĩnh; chế độ xem Chính trị, màn tạo thế giới | mỗi thế giới một bộ nước, thành phố, làng; sinh ra ở thành thị hoặc nông thôn |
-| 3 | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
+| 3 ✓ | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô (15/10/2026, xem mục 3.6) | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
 | 4 | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời | sinh ra ở một nước có luật |
 | 5 | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống | đi lại có quãng đường |
 | 6 | Vùng biển 4 tầng, loài biển mới, tàu, hải trình | đi biển |

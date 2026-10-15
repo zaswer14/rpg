@@ -15,9 +15,15 @@
   let sim = null, paused = false, dirty = true, selRegion = null, selNation = null, lastHeader = null, deathShown = false;
   let graves = store.get(GRAVES) || [];
   // Thế giới: ?world=… trên URL, hoặc thế giới đang chơi, hoặc một thế giới mới.
-  function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); delete bases.political; }
-  // Ảnh nền mỗi chế độ xem dựng lần đầu khi cần rồi giữ lại (Chính trị dựng lại khi đổi thế giới).
-  const bases = {}, baseFor = v => bases[v] || (bases[v] = G.renderMapBase(G.map, v, G.realm));
+  function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); for (const k of Object.keys(bases)) if (k !== 'terrain') delete bases[k]; }
+  // Ảnh nền mỗi chế độ xem dựng lần đầu khi cần rồi giữ lại (Vùng, Chính trị, Nguy hiểm dựng lại khi đổi thế giới).
+  // Nguy hiểm dựng lại khi Tier nhân vật hoặc Liều mạng đổi (chỉ giữ một bản).
+  const bases = {};
+  function baseFor(v, ct, cap) {
+    const k = v === 'danger' ? `danger:${ct}:${cap}` : v;
+    if (!bases[k]) { if (v === 'danger') for (const o of Object.keys(bases)) if (o.startsWith('danger:')) delete bases[o]; bases[k] = G.renderMapBase(G.map, v, G.realm, { ct, cap }); }
+    return bases[k];
+  }
   const urlWorld = new URLSearchParams(location.search).get('world');
   useWorld(urlWorld || store.get(WORLD) || G.newSeed());
   const canvas = $('map'), ctx = canvas.getContext('2d');
@@ -62,6 +68,7 @@
       if (d.world && d.world !== G.realm.seed) useWorld(d.world);
       sim = new G.Sim({ seed: d.seed, hook: hook() });
       sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
+      for (const r of G.REGIONS) for (const z of r.zones) if (d.S.world.zonePop[z.id] == null) d.S.world.zonePop[z.id] = 1;   // bản lưu trước khi có vùng chết
       clearLog(); for (const e of d.S.log) appendLog(e, true);
       selRegion = d.S.loc;
       if (d.S.pending) showDecision(d.S.pending);
@@ -239,8 +246,8 @@
       const b = document.createElement('button');
       b.className = 'zone' + (S.zoneSel === z.zone.id ? ' sel' : ''); b.style.setProperty('--c', ZCOL[z.level]);
       b.disabled = !z.open || S.dead;
-      const pop = S.world.zonePop[z.zone.id];
-      b.innerHTML = `<b>${esc(z.zone.nameVi)}</b><span class="t">Tier ${z.zone.tier[0]}${z.zone.tier[1] > z.zone.tier[0] ? '–' + z.zone.tier[1] : ''}</span> · ${ZTXT[z.level]}<div class="pop" title="Mật độ quái ${pop.toFixed(2)}"><i style="width:${Math.min(100, pop / 2.2 * 100)}%"></i></div>`;
+      const pop = S.world.zonePop[z.zone.id] ?? 1;
+      b.innerHTML = `<span class="band">${G.BAND_VI[z.index]}</span><b>${esc(z.zone.nameVi)}</b><span class="t">Tier ${z.zone.tier[0]}${z.zone.tier[1] > z.zone.tier[0] ? '–' + z.zone.tier[1] : ''}</span> · ${ZTXT[z.level]}<div class="pop" title="Mật độ quái ${pop.toFixed(2)}"><i style="width:${Math.min(100, pop / 2.2 * 100)}%"></i></div>`;
       b.onclick = () => { S.zoneSel = z.zone.id; S.zoneManual = true; dirty = true; };
       box.appendChild(b);
     }
@@ -285,9 +292,12 @@
     const top = (o, f) => Object.entries(o).filter(([k]) => k !== 'none').sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => f(k)).join(', ');
     const adj = G.map.adj[G.map.idx[S.loc]].includes(R.id);
     const canGo = adj && !S.dead && ['teen', 'adult', 'elder'].includes(sim.stage(S)) && S.flags.movedAge !== S.age;
-    const zones = R.zones.map(z => {
+    // Tỉ lệ diện tích từng tầng của vùng ở thế giới này (độ hoang theo khu dân cư).
+    const bc = G.realm.bandCells[G.map.idx[R.id]], btot = bc.reduce((a, c) => a + c.length, 0) || 1;
+    const zones = R.zones.map((z, i) => {
       const ms = Object.keys(z.spawns).map(id => G.B.byId[id]).sort((a, b) => a.tier - b.tier).map(s => `${s.nameVi} T${s.tier}`).join(', ');
-      return `<div class="rz"><b>${esc(z.nameVi)}</b> · Tier ${z.tier[0]}–${z.tier[1]} · mật độ ${S.world.zonePop[z.id].toFixed(2)}<br><span class="fam">${esc(ms)}</span></div>`;
+      const share = bc[i].length ? `${Math.max(1, Math.round(bc[i].length / btot * 100))}% diện tích` : 'không có ở thế giới này';
+      return `<div class="rz${bc[i].length ? '' : ' absent'}"><b>${G.BAND_VI[i]}: ${esc(z.nameVi)}</b> · Tier ${z.tier[0]}–${z.tier[1]} · ${share} · mật độ ${(S.world.zonePop[z.id] ?? 1).toFixed(2)}<br><span class="fam">${esc(ms)}</span></div>`;
     }).join('');
     const state = [rs.plague > 0 ? 'đang có dịch' : '', rs.war > 0 ? 'đang chiến tranh' : '', rs.raid > 0 ? `thú triều ${rs.raid.toFixed(2)}` : ''].filter(Boolean).join(' · ');
     box.innerHTML = `<h4>${esc(R.nameVi)}</h4>
@@ -327,7 +337,8 @@
   function drawMap(now) {
     const S = sim.S;
     const peers = (S.peers || []).map((p, i) => ({ x: p.bornPos[0], y: p.bornPos[1], dead: !!S.peerSeen[i] })).filter(p => !p.dead);
-    G.drawMap(ctx, G.map, baseFor(pref.view), {
+    const ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+    G.drawMap(ctx, G.map, baseFor(pref.view, ct, cap), {
       selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
       graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null
@@ -370,7 +381,8 @@
     if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decModal').hidden = true; showDecision(sim.S.pending); } }
   }
   function setView(v) {
-    pref.view = ['terrain', 'political'].includes(v) ? v : 'region'; store.set(PREF, pref); dirty = true;
+    pref.view = ['terrain', 'political', 'danger'].includes(v) ? v : 'region'; store.set(PREF, pref); dirty = true;
+    $('mapLegend').hidden = pref.view !== 'danger';
     for (const b of $('viewBtns').children) { const on = b.dataset.v === pref.view; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
   }
   for (const b of $('viewBtns').children) b.onclick = () => setView(b.dataset.v);
