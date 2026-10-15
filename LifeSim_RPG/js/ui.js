@@ -382,8 +382,34 @@
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
       graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers,
       war: pref.view === 'political' && S.world.dyn ? warFor(S.world) : null, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null,
-      seaLines: pref.view === 'sea' && !S.dead ? G.seaLinesFrom(S) : null
+      seaLines: pref.view === 'sea' && !S.dead ? G.seaLinesFrom(S) : null,
+      sites: pref.view === 'danger' ? sitesFor(S) : null
     });
+  }
+  // Hang ổ, di tích, ổ chúa của thế giới đang sống (chế độ Nguy hiểm; js/dynamic.js, js/realm.js).
+  function sitesFor(S) {
+    const W = S.world;
+    return {
+      lairs: ((W.dyn && W.dyn.lairs) || []).map(l => ({ pos: G.lairPos(l), lv: l.lv, empty: l.empty != null })),
+      dungeons: (G.realm.dungeons || []).map(d => ({ x: d.x, y: d.y, done: [0, 1, 2].every(k => G.dungeonCleared(W, d, k)) })),
+      nests: G.realm.nests || []
+    };
+  }
+  // Dòng tooltip cho hang ổ, di tích, ổ chúa gần con trỏ.
+  function siteTip(S, x, y) {
+    const W = S.world, out = [], near = (px, py, r) => Math.hypot(px - x, py - y) < r;
+    for (const l of (W.dyn && W.dyn.lairs) || []) {
+      const [lx, ly] = G.lairPos(l); if (!near(lx, ly, 7)) continue;
+      const z = G.lairZone(l);
+      out.push(l.empty != null ? `<b>${esc(l.name)}</b> · hang trống, quái có thể về lại từ năm ${l.empty}`
+        : `<b>${esc(l.name)}</b> · ${G.LAIR_VI[l.lv]} (level ${l.lv}) ở ${esc(z.nameVi)} · ${G.tierTxt(z)} · ${G.LAIR_FIGHTS[l.lv]} trận để dọn${l.lv === 3 ? ' · <span style="color:var(--bad)">quái tràn ra tầng ven</span>' : ''}`);
+    }
+    for (const d of G.realm.dungeons || []) {
+      if (!near(d.x, d.y, 8)) continue;
+      out.push(`<b>${esc(d.name)}</b> · di tích${d.nation != null ? ' (kho báu thất lạc của ' + esc(G.realm.nations[d.nation].name) + ')' : ''}<br>` + G.dungeonFloors(d).map((z, k) => `${z.nameVi} ${G.tierTxt(z)}${G.dungeonCleared(W, d, k) ? ' (đã dọn)' : ''}`).join(' · '));
+    }
+    for (const n of G.realm.nests || []) if (near(n.x, n.y, 8)) out.push(`<b>Ổ chúa</b> · ${esc(G.B.byId[n.species].nameVi)} ngủ ở đây; thức giấc khi có người đủ cấp 40 trong vùng`);
+    return out.length ? '<br>' + out.join('<br>') : '';
   }
   function canvasPoint(ev) {
     const r = canvas.getBoundingClientRect();
@@ -413,7 +439,8 @@
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
       + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`
-      + nearTxt + (near && near.seaCells ? ` · bến có ${G.SHIPS[near.ship].nameVi}` : '') + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '');
+      + nearTxt + (near && near.seaCells ? ` · bến có ${G.SHIPS[near.ship].nameVi}` : '') + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '')
+    if (pref.view === 'danger') tip.innerHTML += siteTip(S, x, y);
     place(tip);
   });
   canvas.addEventListener('mouseleave', () => { $('tip').hidden = true; });
@@ -431,7 +458,7 @@
     if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decModal').hidden = true; showDecision(sim.S.pending); } }
   }
   const LEGEND = {
-    danger: '<span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span>',
+    danger: '<span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span><span><b style="color:#ff6a50">▲</b> hang ổ (đỏ: sào huyệt)</span><span><b style="color:#c9b2ff">Π</b> di tích</span><span><b style="color:#ff3d6e">◆</b> ổ chúa</span>',
     sea: '<span>Tầng biển tối dần: ven bờ → khơi → sâu → vực biển</span><span><i style="border:2px solid #cfe2ea;border-radius:50%;background:none"></i>thuyền chài</span><span><i style="border:2px solid #7fc4ee;border-radius:50%;background:none"></i>tàu buôn</span><span><i style="border:2px solid #ffd27a;border-radius:50%;background:none"></i>tàu viễn dương</span><span>nét đứt: hải trình từ bến gần bạn</span>'
   };
   function setView(v) {

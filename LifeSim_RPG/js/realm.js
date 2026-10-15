@@ -624,8 +624,50 @@ window.LifeSim = window.LifeSim || {};
       harbors: [0, 1, 2].map(c => harbors.filter(h => h.ship === c).length), islands: liveOn.size,
       seaBands: [0, 1, 2, 3].map(b => seaBandCells.reduce((a, bc) => a + bc[b].length, 0) / Math.max(1, N - land.length))
     };
+    placeSites(out, seed);
+    out.stats.dungeons = out.dungeons.length;
     return out;
   };
+
+  // ── 13. Di tích và ổ chúa (research/03 mục 4.2, cuối 3.4). RNG riêng nên thêm vào không đổi phần còn lại của thế giới. ──
+  // Di tích: 5–7 cái, mỗi cái ở ô lõi hoặc vùng chết của một vùng có biome trong G.DUNGEON_TIERS (mỗi vùng tối đa một), cách khu
+  // dân cư ≥ 30px; nước có đặc trưng Kho báu thất lạc thêm một cái trong lãnh thổ (ô sâu trở lên). Tầng của di tích: G.DG[vùng].
+  // Ổ chúa: một ô trong 5% ô hoang nhất của vùng có chúa vùng. Cả hai tĩnh; tầng đã dọn lưu trong W.dyn.dg (js/dynamic.js).
+  function placeSites(R, seed) {
+    const M = G.map, { W, CS, region, feat } = M, X = G.tools(G.makeRng('sites:' + seed));
+    const FE_LAKE = G.FEATURES.findIndex(f => f.id === 'lake');
+    const px = i => (i % W + .5) * CS, py = i => (Math.floor(i / W) + .5) * CS;
+    const far = (i, d) => !R.settlements.some(s => Math.hypot(s.x - px(i), s.y - py(i)) < d) && !R.dungeons.some(o => Math.hypot(o.x - px(i), o.y - py(i)) < 60);
+    const NR = G.NAMES.ruin, used = new Set();
+    const name = () => {
+      for (let t = 0; t < 40; t++) {
+        const a = X.pick(NR.prefix), b = X.pick(NR.root), nm = a + ' ' + b;
+        if (!a.split(' ').some(w => b.split(' ').includes(w)) && !used.has(nm)) { used.add(nm); return nm; }
+      }
+      return 'Phế Tích ' + X.pick(NR.root) + ' ' + (used.size + 1);
+    };
+    R.dungeons = [];
+    const add = (cell, nation) => R.dungeons.push({ id: 'd' + R.dungeons.length, name: name(), cell, x: px(cell), y: py(cell), region: G.REGIONS[region[cell]].id, nation });
+    const regs = G.REGIONS.map((r, k) => k).filter(k => G.DUNGEON_TIERS[G.REGIONS[k].biome]).map(k => [X.rnd(), k]).sort((a, b) => a[0] - b[0]).map(a => a[1]);
+    const want = X.int(5, 7);
+    for (const k of regs) {
+      if (R.dungeons.length >= want) break;
+      const cs = M.cellsOf[k].filter(i => feat[i] !== FE_LAKE && R.band[i] >= 2 && far(i, 30));
+      if (cs.length) add(X.pick(cs), null);
+    }
+    for (const n of R.nations) if (n.quirks.some(q => q.id === 'lost_treasure')) {
+      const cs = []; for (let i = 0; i < R.owner.length; i++) if (R.owner[i] === n.idx && R.band[i] >= 1 && R.band[i] < 4 && feat[i] !== FE_LAKE && far(i, 25)) cs.push(i);
+      if (cs.length) add(X.pick(cs), n.idx);
+    }
+    R.nests = [];
+    G.REGIONS.forEach((r, k) => {
+      if (!r.lord) return;
+      const cs = M.cellsOf[k].filter(i => feat[i] !== FE_LAKE).sort((a, b) => R.wild[b] - R.wild[a]);
+      const c = X.pick(cs.slice(0, Math.max(1, Math.ceil(cs.length * .05))));
+      R.nests.push({ region: r.id, cell: c, x: px(c), y: py(c), species: r.lord.species });
+    });
+    if (R.dungeons.length < 5) R.check.warnings.push(`chỉ đặt được ${R.dungeons.length} di tích`);
+  }
 
   // ── 10. Độ hoang và tầng nguy hiểm (research/03 mục 3.3–3.4) ──
   // w(ô) = min qua các nguồn văn minh (chi phí đi bộ / bán kính) + độ hoang biome + độ hoang địa hình; tầng theo G.BAND_W.

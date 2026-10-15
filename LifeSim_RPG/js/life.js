@@ -34,6 +34,25 @@ window.LifeSim = window.LifeSim || {};
     G.ZONE = {};
     for (const r of G.REGIONS) r.zones.forEach((z, i) => { G.ZONE[z.id] = { zone: z, region: r, index: i }; });
     for (const r of G.SEAS) r.zones.forEach((z, i) => { G.ZONE[z.id] = { zone: z, region: r, index: i, sea: true }; });
+    // Tầng di tích của mỗi vùng (research/03 mục 4.2): loài lấy từ mọi khu của vùng trong dải Tier của tầng (G.DUNGEON_TIERS),
+    // dải co lại theo loài có thật; biome không có trong bảng thì 3 tầng là khu sâu, lõi, vùng chết. Vào G.ZONE như một khu.
+    G.DG = {};
+    for (const r of G.REGIONS) {
+      const T = G.DUNGEON_TIERS[r.biome];
+      G.DG[r.id] = [0, 1, 2].map(k => {
+        const id = 'dg_' + r.id + '_' + k, nameVi = G.DUNGEON_FLOOR_VI[k];
+        let z;
+        if (!T) z = { id, nameVi, tier: r.zones[k + 1].tier.slice(), spawns: { ...r.zones[k + 1].spawns } };
+        else {
+          const spawns = {};
+          for (const rz of r.zones) for (const [sid, w] of Object.entries(rz.spawns)) { const s = G.B.byId[sid]; if (s && s.spawn !== false && s.tier >= T[k][0] && s.tier <= T[k][1]) spawns[sid] = Math.max(spawns[sid] || 0, w); }
+          const ts = Object.keys(spawns).map(sid => G.B.byId[sid].tier);
+          z = { id, nameVi, tier: ts.length ? [Math.min(...ts), Math.max(...ts)] : T[k].slice(), spawns };
+        }
+        G.ZONE[id] = { zone: z, region: r, index: k + 1, dungeon: true };
+        return z;
+      });
+    }
     G.jobs = J.compose({ races: Object.keys(J.races) });
     G.MASTERY = {};
     for (const [sid, sc] of Object.entries(J.schools)) for (const m of sc.masteries) G.MASTERY[m] = sid;
@@ -524,19 +543,22 @@ window.LifeSim = window.LifeSim || {};
     }
     // Bảng gặp quái: loài trong khu, Tier ≤ Tier nhân vật + 1 (liều mạng + 2). Đây là luật chống "cấp thấp gặp cấp cao".
     // feat: địa hình của ô gặp quái, nhân trọng số loài đã có (G.FEATURE_SPAWN); không thêm loài nên không phá luật trên.
-    encounterTable(zone, ct, reckless, feat) {
+    // fam: họ quái chủ của hang ổ (js/dynamic.js), nhân 4 trọng số loài cùng họ.
+    encounterTable(zone, ct, reckless, feat, fam) {
       const cap = ct + (reckless ? 2 : 1), F = (feat && G.FEATURE_SPAWN[feat]) || {};
       return Object.entries(zone.spawns).map(([id, w]) => ({ s: G.B.byId[id], w })).filter(x => x.s && x.s.tier <= cap)
-        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? .5 : 1) * (x.s.tier < ct - 1 ? .4 : 1) * ((F.behavior || {})[x.s.behavior] || 1) * ((F.family || {})[x.s.family] || 1) }));
+        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? .5 : 1) * (x.s.tier < ct - 1 ? .4 : 1) * ((F.behavior || {})[x.s.behavior] || 1) * ((F.family || {})[x.s.family] || 1) * (fam && x.s.family === fam ? 4 : 1) }));
     }
     // Gặp quái ở một ô ngẫu nhiên của khu (opt.cell để chỉ định); địa hình ô đó đổi trọng số loài.
+    // opt.fam: họ quái chủ của hang; opt.boss: trận cuối của hang / tầng di tích, lấy loài Tier cao nhất bảng cho phép.
     rollEncounter(zone, opt = {}) {
       const S = this.S, ct = this.ctier(S), bi = G.B.biomes[G.ZONE[zone.id].region.biome];
       const cells = opt.cell != null ? [opt.cell] : G.zoneCells(zone.id), cell = cells.length ? cells[Math.floor(this.rnd() * cells.length)] : null;
       const feat = cell != null ? G.FEATURES[G.map.feat[cell]].id : null;
-      const table = this.encounterTable(zone, ct, S.reckless, feat);
+      const table = this.encounterTable(zone, ct, S.reckless, feat, opt.fam);
       if (!table.length) return null;
-      const s = this.wpick(table, 'w').s;
+      const top = opt.boss ? Math.max(...table.map(x => x.s.tier)) : null;
+      const s = this.wpick(opt.boss ? table.filter(x => x.s.tier === top) : table, 'w').s;
       let grade = opt.grade;
       if (!grade) { const r = this.rnd(), a = bi.alphaChance + (opt.bonus || 0) * .5, e = bi.eliteChance + .02 * ct + (opt.bonus || 0); grade = r < a ? 'alpha' : r < a + e ? 'elite' : 'normal'; }
       const pool = Object.keys(G.B.affixes), affixes = [];

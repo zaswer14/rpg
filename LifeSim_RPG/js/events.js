@@ -162,6 +162,35 @@ window.LifeSim = window.LifeSim || {};
       },
       auto(S, X) { const b = S.flags.bounty, sp = G.B.byId[b.species]; return X.power(S) >= X.threat({ s: sp, grade: 'alpha', affixes: ['a', 'b'], count: 1 }) - .1 ? 'go' : 'no'; }
     },
+    // Hang ổ trong vùng (js/dynamic.js, research/03 mục 4.1): ổ 3 trận, hang 5, sào huyệt 7 (trận cuối là thủ lĩnh). Thua thì rút.
+    lair: {
+      prio: 6, gap: 1,
+      when: (S, X) => (S.focus === 'hunt' || S.focus === 'adventure') && ['teen', 'adult', 'elder'].includes(X.stage(S)) && G.lairChoices(S, X).length > 0,
+      build(S, X) {
+        const ls = G.lairChoices(S, X).slice(0, 2);
+        return { title: 'Hang ổ', body: `Quanh ${G.REGION[S.loc].nameVi} có ${ls.length > 1 ? 'mấy' : 'một'} hang quái người ta đang bàn tán. Sức bạn ${X.power(S).toFixed(1)}.`,
+          choices: [...ls.map(l => { const z = G.lairZone(l); return { k: l.id, label: `Dọn ${l.name}`, sub: `${G.LAIR_VI[l.lv]} ở ${z.nameVi}, ${G.tierTxt(z)}, đe dọa ~${G.tableThreat(X, z, l.fam).toFixed(1)}; ${G.LAIR_FIGHTS[l.lv]} trận liền${l.lv === 3 ? ', trận cuối là thủ lĩnh' : ''}.` }; }),
+            { k: 'no', label: 'Để sau', sub: '' }] };
+      },
+      apply(S, X, k) { if (k === 'no') return null; const l = (S.world.dyn.lairs || []).find(x => x.id === k && x.empty == null); return l ? G.raidLair(X, l) : null; },
+      auto(S, X, d) {
+        if (S.hl < 55) return 'no';
+        const l = G.lairChoices(S, X).slice(0, 2).find(l => X.power(S) >= G.tableThreat(X, G.lairZone(l), l.fam) + .1 * l.lv);
+        return l ? l.id : 'no';
+      }
+    },
+    // Di tích (research/03 mục 4.2): xuống tầng sâu nhất chưa dọn mà Tier cho phép; 4 trận, trận cuối là thủ lĩnh.
+    dungeon: {
+      prio: 5, gap: 3,
+      when: (S, X) => (S.focus === 'hunt' || S.focus === 'adventure') && ['adult', 'elder'].includes(X.stage(S)) && !!G.dungeonChoice(S, X),
+      build(S, X) {
+        const c = G.dungeonChoice(S, X), fl = G.dungeonFloors(c.d);
+        return { title: c.d.name, body: `Di tích cổ ở ${G.REGION[c.d.region].nameVi}${c.d.nation != null ? `, kho báu thất lạc của ${G.realm.nations[c.d.nation].name}` : ''}. Ba tầng: ${fl.map(z => `${z.nameVi.toLowerCase()} ${G.tierTxt(z)}`).join(', ')}. Sức bạn ${X.power(S).toFixed(1)}.`,
+          choices: [{ k: 'go', label: `Xuống ${c.zone.nameVi.toLowerCase()}`, sub: `4 trận, đe dọa ~${G.tableThreat(X, c.zone).toFixed(1)}; trận cuối là thủ lĩnh. Rương báu theo độ sâu.` }, { k: 'no', label: 'Không vào', sub: '' }] };
+      },
+      apply(S, X, k) { if (k !== 'go') return null; const c = G.dungeonChoice(S, X); return c ? G.raidDungeon(X, c) : null; },
+      auto(S, X) { const c = G.dungeonChoice(S, X); return S.hl >= 60 && c && X.power(S) >= G.tableThreat(X, c.zone) + .3 ? 'go' : 'no'; }
+    },
     faith_join: {
       prio: 5, gap: 1,
       when: (S, X) => !S.faith && S.flags.preacher && X.stage(S) !== 'infant',
@@ -384,13 +413,13 @@ window.LifeSim = window.LifeSim || {};
     { id: 'ad_fae_sleep', st: ['teen', 'adult'], c: S => X0(S).biome === 'fae_glade' && !S.undead, w: 1.2, run(S, X) { S.age += 1; S.world.year += X.R(S).ypt; return { t: `Bạn chợp mắt dưới gốc nấm. Khi tỉnh dậy, ${X.R(S).ypt * 2} năm đã trôi qua.`, k: 'big', f: X0(S).lore }; } },
     { id: 'ad_frost', st: ['child', 'adult', 'elder'], c: S => X0(S).cold && !S.undead, w: 3, rep: true, gap: 3, run(S, X) { X.add('hl', -7); return { t: 'Mùa đông dài nhất trong trí nhớ người già. Củi cạn từ tháng thứ năm.', k: 'bad' }; } },
     { id: 'ad_tide', st: ['adult', 'elder'], undead: 'any', c: S => G.local(S).raid > .15, w: S => G.local(S).raid * 15, rep: true, gap: 2, run(S, X) {
-        const z = X.reg(S).zones[0], enc = X.rollEncounter(z, { grade: 'normal' });
+        const z = X.reg(S).zones[0], p = G.provOfS(S), nest = ((S.world.dyn || {}).lairs || []).find(l => l.lv === 3 && l.empty == null && G.realm.provOf[l.cell] === p), from = nest ? nest.name : z.nameVi, enc = X.rollEncounter(z, { grade: 'normal' });
         if (!enc) return null;
         const rec = X.fight({ ...enc, count: Math.min(5, enc.count + 2) }, false);
         if (S.dead) return null;
         { const k = G.zoneKey(z, G.provOfS(S)); S.world.zonePop[k] = Math.max(.6, (S.world.zonePop[k] ?? 1) - .3); }
-        if (rec.win) { S.fame += 2; X.add('so', 4); return { t: `Thú triều từ ${z.nameVi}. Bạn đứng ở cổng làng tới khi đợt cuối rút.`, k: 'big', f: X.factOf(enc.s) }; }
-        return { t: `Thú triều từ ${z.nameVi} phá nửa làng.`, k: 'bad', f: X.factOf(enc.s) }; } },
+        if (rec.win) { S.fame += 2; X.add('so', 4); return { t: `Thú triều từ ${from}. Bạn đứng ở cổng làng tới khi đợt cuối rút.`, k: 'big', f: X.factOf(enc.s) }; }
+        return { t: `Thú triều từ ${from} phá nửa làng.`, k: 'bad', f: X.factOf(enc.s) }; } },
     { id: 'ad_bounty_post', st: ['adult', 'teen', 'elder'], undead: 'any', c: S => !S.flags.bounty && !!S.zoneSel && (S.work === 'adventurer' || S.undead || S.work === 'hunter'), w: S => G.lawHere(S, 'bounties') ? 6 : 3, rep: true, gap: 2, run(S, X) {
         const z = G.ZONE[S.zoneSel].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null;
         const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(30 * Math.pow(1 + sp.tier, 2)) };

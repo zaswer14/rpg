@@ -528,6 +528,27 @@ window.LifeSim = window.LifeSim || {};
         if (s.tier === 'capital' || s.tier === 'city' || (o.allLabels && s.tier === 'town')) label(ctx, s.name, s.x, s.y + SZ[s.tier] + 11, s.tier === 'capital' ? 10.5 : 9.5, s.tier === 'capital' ? '#ffe6a8' : '#f3e6c8');
       }
     }
+    // Chế độ Nguy hiểm (research/03 mục 9): hang ổ (tam giác, đậm dần theo level; rỗng: hang trống), di tích (cổng đá tím), ổ chúa (thoi đỏ).
+    if (o.sites) {
+      const { lairs, dungeons, nests } = o.sites;
+      for (const l of lairs || []) {
+        const [x, y] = l.pos, r = 3.5 + l.lv * 1.2;
+        ctx.beginPath(); ctx.moveTo(x, y - r - 1); ctx.lineTo(x + r + 1, y + r); ctx.lineTo(x - r - 1, y + r); ctx.closePath();
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(10,8,6,.9)'; ctx.stroke();
+        if (l.empty) { ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(200,190,175,.8)'; ctx.stroke(); }
+        else { ctx.fillStyle = ['', '#e8c070', '#e88040', '#ff4a3a'][l.lv]; ctx.fill(); }
+      }
+      for (const d of dungeons || []) {
+        const { x, y } = d;
+        ctx.fillStyle = 'rgba(10,8,6,.9)'; ctx.fillRect(x - 8, y - 8, 16, 15);
+        ctx.fillStyle = d.done ? '#8f86a8' : '#c9b2ff'; ctx.fillRect(x - 7, y - 7, 14, 3); ctx.fillRect(x - 5, y - 4, 3, 10); ctx.fillRect(x + 2, y - 4, 3, 10);
+      }
+      for (const n of nests || []) {
+        const { x, y } = n;
+        ctx.beginPath(); ctx.moveTo(x, y - 9); ctx.lineTo(x + 7, y); ctx.lineTo(x, y + 9); ctx.lineTo(x - 7, y); ctx.closePath();
+        ctx.lineWidth = 2.6; ctx.strokeStyle = 'rgba(10,8,6,.9)'; ctx.stroke(); ctx.fillStyle = '#ff3d6e'; ctx.fill();
+      }
+    }
     // Tên vùng (chế độ Vùng, Địa hình) hoặc tên nước (chế độ Chính trị).
     if (o.labels !== false) {
       if (political && realm) {

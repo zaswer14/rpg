@@ -304,6 +304,16 @@ window.LifeSim = window.LifeSim || {};
   G.BAND_W = [1, 2, 3];
   G.BAND_VI = ['Ven', 'Sâu', 'Lõi', 'Vùng chết'];
 
+  // ── DI TÍCH (research/03 mục 4.2): 3 tầng, dải Tier theo biome. Loài của tầng lấy từ mọi khu của vùng, trong dải đó
+  // (dải co lại theo loài có thật, life.js G.init). Biome không có trong bảng (di tích của đặc trưng Kho báu thất lạc):
+  // 3 tầng = khu sâu, lõi, vùng chết của vùng.
+  G.DUNGEON_TIERS = {
+    grave_hills: [[2, 3], [3, 4], [4, 5]], red_desert: [[2, 2], [3, 3], [3, 4]], forge_ruins: [[2, 3], [3, 3], [3, 4]],
+    crystal_cave: [[1, 2], [2, 3], [3, 4]], mist_coast: [[1, 2], [2, 3], [3, 3]], moss_forest: [[1, 1], [1, 2], [2, 3]],
+    elder_wood: [[1, 1], [1, 2], [2, 3]], frost_tundra: [[2, 2], [2, 3], [3, 4]]
+  };
+  G.DUNGEON_FLOOR_VI = ['Tầng trên', 'Tầng giữa', 'Đáy'];
+
   // ── NGUYÊN NHÂN CHẾT NỀN (ngoài trận đánh) theo giai đoạn đời; trọng số được nhân theo vùng/cá nhân trong life.js ──
   G.CAUSES = {
     newborn:  { nameVi:'sốt sơ sinh',            stages:{ infant:30 } },
@@ -335,28 +345,30 @@ window.LifeSim = window.LifeSim || {};
   G.validateWorld = function (B) {
     const errors = [], warnings = [];
     const seen = new Set();
+    // Luật tầng chung cho khu đất, tầng biển, tầng di tích.
+    const checkZone = (z, prev) => {
+      const [lo, hi] = z.tier;
+      if (hi - lo > 2) errors.push(`${z.id}: dải Tier rộng quá 2 (${lo}–${hi})`);
+      if (prev && z.tier[0] < prev.tier[0]) errors.push(`${z.id}: khu sâu hơn mà Tier thấp hơn khu trước`);
+      for (const [sid] of Object.entries(z.spawns)) {
+        const s = B.byId[sid];
+        if (!s) { errors.push(`${z.id}: loài ${sid} không có`); continue; }
+        if (s.spawn === false) errors.push(`${z.id}: ${sid} là chúa vùng, không được nằm trong bảng sinh`);
+        if (s.tier < lo || s.tier > hi) errors.push(`${z.id}: ${sid} Tier ${s.tier} ngoài dải ${lo}–${hi}`);
+      }
+      // Mọi Tier nhân vật vào được khu (≥ lo − 1) đều phải có loài để gặp.
+      for (let t = Math.max(0, lo - 1); t <= hi; t++)
+        if (!Object.keys(z.spawns).some(id => B.byId[id] && B.byId[id].tier <= t + 1)) errors.push(`${z.id}: nhân vật Tier ${t} không có loài nào để gặp`);
+      const fams = new Set(Object.keys(z.spawns).map(id => B.byId[id] && B.byId[id].family));
+      if (fams.size < 2) warnings.push(`${z.id}: chỉ ${fams.size} họ quái`);
+    };
     // Vùng đất và vùng biển dùng chung luật tầng (research/03 mục 10).
     for (const R of [...G.REGIONS, ...G.SEAS]) {
       const sea = G.SEAS.includes(R);
       if (seen.has(R.id)) errors.push(`vùng trùng id ${R.id}`); seen.add(R.id);
       if (!B.biomes[R.biome]) errors.push(`${R.id}: biome ${R.biome} không có`);
       if (R.zones.length !== 4) errors.push(`${R.id}: cần đúng 4 ${sea ? 'tầng (ven bờ, khơi, sâu, vực biển)' : 'khu (ven, sâu, lõi, vùng chết)'}`);
-      R.zones.forEach((z, i) => {
-        const [lo, hi] = z.tier;
-        if (hi - lo > 2) errors.push(`${z.id}: dải Tier rộng quá 2 (${lo}–${hi})`);
-        if (i && z.tier[0] < R.zones[i - 1].tier[0]) errors.push(`${z.id}: khu sâu hơn mà Tier thấp hơn khu trước`);
-        for (const [sid] of Object.entries(z.spawns)) {
-          const s = B.byId[sid];
-          if (!s) { errors.push(`${z.id}: loài ${sid} không có`); continue; }
-          if (s.spawn === false) errors.push(`${z.id}: ${sid} là chúa vùng, không được nằm trong bảng sinh`);
-          if (s.tier < lo || s.tier > hi) errors.push(`${z.id}: ${sid} Tier ${s.tier} ngoài dải ${lo}–${hi}`);
-        }
-        // Mọi Tier nhân vật vào được khu (≥ lo − 1) đều phải có loài để gặp.
-        for (let t = Math.max(0, lo - 1); t <= hi; t++)
-          if (!Object.keys(z.spawns).some(id => B.byId[id] && B.byId[id].tier <= t + 1)) errors.push(`${z.id}: nhân vật Tier ${t} không có loài nào để gặp`);
-        const fams = new Set(Object.keys(z.spawns).map(id => B.byId[id] && B.byId[id].family));
-        if (fams.size < 2) warnings.push(`${z.id}: chỉ ${fams.size} họ quái`);
-      });
+      R.zones.forEach((z, i) => checkZone(z, i ? R.zones[i - 1] : null));
       if (R.lord) { const s = B.byId[R.lord.species]; if (!s || s.spawn !== false) errors.push(`${R.id}: chúa vùng ${R.lord.species} phải có spawn:false`); }
       if (sea) continue;
       const rsum = Object.values(R.races).reduce((a, b) => a + b, 0);
@@ -364,6 +376,8 @@ window.LifeSim = window.LifeSim || {};
       for (const r of Object.keys(R.races)) if (!G.RACES[r]) errors.push(`${R.id}: chủng tộc ${r} không có`);
       for (const f of Object.keys(R.faiths)) if (f !== 'none' && !(window.JobLibrary.faiths || {})[f]) errors.push(`${R.id}: giáo phái ${f} không có`);
     }
+    // Tầng di tích (G.DG, dựng ở life.js G.init).
+    for (const fl of Object.values(G.DG || {})) fl.forEach((z, i) => checkZone(z, i ? fl[i - 1] : null));
     return { errors, warnings };
   };
 })(window.LifeSim);

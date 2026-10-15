@@ -231,6 +231,38 @@ Phế tích của khu dân cư bị bỏ thì 40% thành hang ổ họ `undead` 
 | Rừng Rêu, Rừng Cổ Thụ | T1 / T1–2 / T2–3 |
 | Băng Nguyên | T2 / T2–3 / T3–4 |
 
+### 4.3. Kết quả bước 8 (15/10/2026)
+
+Đã làm (`LifeSim_RPG/js/dynamic.js` mục hang ổ, `js/realm.js` mục 13, `data/world.js` `G.DUNGEON_TIERS`, quyết định `lair` và `dungeon` ở `js/events.js`): hang ổ theo 4.1, di tích theo 4.2, ổ chúa theo cuối 3.4, ký hiệu và chú thích trên chế độ xem Nguy hiểm, sử biên niên, save trong `S.world.dyn` theo mục 11.
+
+- Hang ổ nằm trong `W.dyn.lairs` (`{ id, cell, b, fam, lv, name, born, empty }`). Tên ghép tiền tố theo họ (`names.lair.prefix`) với tên tầng, tên tỉnh hoặc tên khu dân cư gần nhất, bỏ tổ hợp lặp chữ: "Hầm Mộ Gò Vô Danh", "Tổ Rồng Đáy Thật", "Mắt Lõi Tinh Thể".
+- Dọn hang: quyết định khi focus Săn quái / Phiêu lưu, hang ở vùng đang ở, tầng của hang mở với sức mình; đưa tối đa 2 hang (lớn trước, gần trước) kèm đe dọa ước tính. Đánh 3 / 5 / 7 trận ở đúng ô của hang (`G.assault`), trận cuối của sào huyệt là loài Tier cao nhất bảng cho phép, bậc alpha. Thua một trận thì rút (rủi ro chết như trận thường). Dọn xong: mật độ tầng −0,4 × level, bạc 25 × (1 + Tier)² × level, mỗi level 60% một rương (`G.treasure`), danh tiếng; sào huyệt ở tỉnh có chủ thì quan tỉnh thưởng thêm nửa số bạc (thay cho "tiền treo thưởng nếu có lệnh").
+- Di tích tĩnh, đặt từ seed bằng RNG riêng (`sites:<seed>`) nên phần còn lại của thế giới không đổi. Tầng dọn xong lưu năm trong `W.dyn.dg`, có quái lại sau 25 năm. Xuống tầng sâu nhất chưa dọn mà Tier cho phép (lo ≤ Tier + 1, Liều mạng + 2), 4 trận, trận cuối là thủ lĩnh; bạc 40 × (1 + Tier)² × số tầng, mỗi tầng một rương.
+- Ổ chúa chỉ là vị trí trên bản đồ (chúa vùng vẫn ra qua sự kiện từ cấp 40 như cũ).
+
+Khác với thiết kế ở 4.1, 4.2, 3.5:
+
+- **Thú triều đến từ sào huyệt.** Tầng sâu không tràn mật độ ra tầng ven nữa (`G.DYN.spill = [0, .1, .1]`; vùng chết → lõi → sâu giữ như cũ). Với chuỗi tràn cũ, tầng ven vượt 1,25 ở 31–46% số năm-tỉnh dù có hay không có hang, nên hang không đổi được gì (việc treo từ bước 7). Giờ thú triều chỉ còn ở ~7% số năm-tỉnh, gần như toàn bộ do sào huyệt (+0,3 / năm vào tầng ven). Để số khu sụp vẫn trong 1–3 / 100 năm, xác suất thú triều đánh khu dân cư tăng từ `.05` lên `.15` × cường độ.
+- **Tỉ lệ mọc, lớn, dọn** đo lại cho ra 8–15 hang: mọc `.006` / năm (thiết kế `.12`; mật độ trên 1,4 gần như thường trực ở tầng sâu, nên `.12` ra ~57 hang, gần hết là sào huyệt), lớn `.04` / năm (thiết kế `.15`). Thêm **đoàn mạo hiểm NPC** dọn hang mỗi năm với xác suất `.25 × tuần tra × (sâu 1, lõi .8, vùng chết .6) / (1 + .5 × (level − 1))`; không có nó hang không bao giờ mất.
+- Thế giới mới có sẵn 10–14 hang (level 1 : 2 : 3 = 5 : 3 : 2), và mật độ khởi đầu của tầng sâu, lõi, vùng chết là 1,1–1,5 (tầng ven giữ .85–1,2). Không có hai thứ này, 60 năm đầu chỉ có ~6 hang.
+- Hang theo tầng của ô: ô thành tầng ven (văn minh lan tới) thì hang mất; ô đổi sang tầng sâu khác thì hang đổi theo. Hang trống hết hạn thì bị chiếm lại (có thể họ khác, tên mới) nếu tầng còn đông hơn 1,2, không thì lấp hẳn.
+- Phế tích thành hang (40%): ở tầng của ô sau khi tính lại độ hoang (ít nhất là tầng sâu); họ quái là họ đông nhất tầng ven của vùng (khu sụp vì thú triều) hoặc `undead`, nếu tầng chứa hang không có loài họ đó thì lấy họ đông nhất của tầng.
+- Tầng di tích lấy loài từ mọi khu của vùng trong dải Tier của bảng 4.2, rồi **co dải theo loài có thật**: Đồi Mộ tầng 1 thành T3 (vùng không có loài T2), Rừng Rêu tầng 1 vẫn T1. Biome không có trong bảng (di tích của Kho báu thất lạc) dùng khu sâu, lõi, vùng chết làm 3 tầng. `validateWorld` kiểm tầng di tích như khu; còn 2 cảnh báo một họ quái: Phế Xưởng tầng giữa (T3 chỉ có Bọ Ngựa Cơ Khí), Hồng Sa tầng giữa (T3 chỉ có Giun Cát Khổng Lồ).
+- Chủng tộc sống lâu: mật độ quái cập nhật mỗi lượt còn hang chạy mỗi năm, nên đời Tiên Tộc, Người Lùn thấy ít hang hơn (thử 60 đời: 5,6–6,9 so với 7,7 ở Nhân Loại).
+
+Đo bằng `sim.html` (thế giới `can-bang`):
+
+| Số đo | Mục tiêu | Kết quả |
+|---|---|---|
+| Hang ổ đang có | 8–15 toàn đại lục | 13,7 trung bình (50 thế giới × 300 năm), cuối kỳ ~3 sào huyệt; 7,2 trong đời người (thế giới mới, ~60 năm đầu) |
+| Trận vượt Tier + 1 (kể cả trong hang, di tích) | 0 | 0 / 48.021 trận (706 trận trong hang, di tích) |
+| Năm-tỉnh có thú triều | (bước 7 ghi 38% là quá cao) | 7,5% (1000 đời); 6,7% (300 năm × 50) |
+| Khu dân cư sụp / lập mới / 100 năm | 1–3 / 1–3 | 2,6 / 2,2 (1000 đời); 1,8 / 2,1 (300 năm × 50) |
+| Nước còn sống sau 300 năm | trung vị 5–7, không dưới 3 | trung vị 6, ít nhất 4, nhiều nhất 9 |
+| Tỉnh đổi chủ / 100 năm | 3–8 | 5,2 (1000 đời); 6,5 (300 năm × 50) |
+
+1000 đời: trỗi dậy 20,3%; chết vì quái 9,6% (bản bước 7: 10,7%); quái tấn công làng 2,1%; 7,5% đời từng vào hang (126 lần, 81 lần dọn sạch), 4,3% đời từng vào di tích (89 lần, 62 tầng dọn sạch), 1 đời chết trong hang. Đời dài hơn ~7% vì thú triều ít đi; chi phí mỗi năm thế giới không đổi (~1,1 ms), nên 1000 đời chạy lâu hơn tương ứng. 100 thế giới (chỉ dựng): 0 lỗi, 40 cảnh báo "đất chật" như trước, mỗi thế giới 5–7 di tích, dựng nhanh như bản bước 7.
+
 ## 5. Lớp 4: tỉnh và quốc gia
 
 ### 5.1. Tỉnh
@@ -617,7 +649,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 5 ✓ | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống (15/10/2026, xem mục 6.5) | đi lại có quãng đường |
 | 6 ✓ | Vùng biển 4 tầng, loài biển mới, tàu, hải trình (15/10/2026, xem mục 7.4) | đi biển |
 | 7 ✓ | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên (15/10/2026, xem mục 5.7) | thế giới đổi qua các kiếp |
-| 8 | Hang ổ, di tích | dọn hang, thú triều có nguồn |
+| 8 ✓ | Hang ổ, di tích, ổ chúa (15/10/2026, xem mục 4.3) | dọn hang, thú triều có nguồn |
 | 9 | Lập làng, lập nước, focus Trị quốc | người chơi để lại dấu trên bản đồ |
 | 10 | Sự kiện cho luật, đặc tính, đặc trưng riêng; quyết định; đường thăng tiến theo chính thể | |
 

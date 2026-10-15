@@ -10,6 +10,8 @@
  *   rd[i]            bậc hiện tại của đoạn đường i đã xuống cấp
  *   wars, truce      chiến tranh đang đánh (điểm, số năm, tỉnh đang chiếm), hưu chiến tới năm nào
  *   hist             sử biên niên (300 dòng cuối); n: bộ đếm cho sim.html
+ *   lairs, nlair     hang ổ (bước 8, research/03 mục 4.1): { id, cell, b tầng, fam họ quái chủ, lv 1–3, name, born, empty năm hết trống }
+ *   dg[id]           năm dọn xong từng tầng của di tích (di tích tĩnh, đặt từ seed: G.realm.dungeons ở realm.js)
  * G.bindWorld(W): đưa G.realm về đúng trạng thái của W. Cùng W thì không làm gì; W khác (đời khác, đồng niên, thế giới
  * vừa nạp) thì trả G.realm về bản gốc rồi áp phần đổi. Trong năm, mọi thay đổi đi qua các hàm ở đây: sửa W.dyn và G.realm
  * cùng lúc, độ hoang chỉ tính lại vùng bị ảnh hưởng (G.wildSet / G.wildCommit ở realm.js).
@@ -24,9 +26,13 @@ window.LifeSim = window.LifeSim || {};
   // Hệ số cân bằng (research/03 mục 5.7): chỉnh ở đây, đo bằng sim.html (300 năm × nhiều thế giới).
   G.DYN = {
     // hp khu dân cư mỗi năm: bị thú triều đánh (xác suất = cường độ thú triều × raidHit), bị cướp phá ở tiền tuyến (warHit), dịch nặng; yên thì hồi.
-    raidHit: .05, raidLoss: .25, warHit: .3, warLoss: .2, plagueLoss: .08, heal: .05,
+    raidHit: .15, raidLoss: .25, warHit: .3, warLoss: .2, plagueLoss: .08, heal: .05,
     frail: { capital: .2, city: .35, town: .5, village: .8, hamlet: 1 },   // hp mất nhân hệ số theo bậc
-    warP: .002, claim: 15, rebelP: .01, annexP: .02, foundP: .04   // tuyên chiến (× claim khi đòi lại tỉnh đã nổi loạn), nổi loạn, sáp nhập, lập khu mới
+    warP: .002, claim: 15, rebelP: .01, annexP: .02, foundP: .04,   // tuyên chiến (× claim khi đòi lại tỉnh đã nổi loạn), nổi loạn, sáp nhập, lập khu mới
+    spill: [0, .1, .1],   // tầng b quá 1,6 thì tràn ra tầng b − 1 (spill[b − 1]). Sâu không tràn ra ven nữa (bước 8): thú triều đến từ sào huyệt
+    // Hang ổ (research/03 mục 4.1, kết quả ở 4.3): mọc ở tỉnh × tầng (sâu, lõi, vùng chết) có mật độ > 1,4, tối đa lairMax hang / tỉnh;
+    // lớn khi mật độ > 1,2; sào huyệt (level 3) tràn lairSpill vào tầng ven; đoàn mạo hiểm NPC dọn theo tuần tra; trống 8–15 năm rồi mọc lại.
+    lairP: .006, lairMax: 3, lairGrow: .04, lairSpill: .3, lairNpc: .25, lairNpcB: [0, 1, .8, .6], lairRuin: .4, lairEmpty: [8, 15]
   };
 
   // ═════════ Trạng thái động mới cho một thế giới ═════════
@@ -36,14 +42,15 @@ window.LifeSim = window.LifeSim || {};
     prov: B.prov.slice(), war: B.prov.map(() => 0), raid: B.prov.map(() => 0),
     hp: Object.fromEntries(B.s.flatMap((s, i) => s.tier === 'ruin' ? [] : [[B.ids[i], 1]])), sx: {}, newSets: [], newNat: [], rd: {},
     nat: B.n.map(n => ({ alive: true, stab: n.stability, cap: n.capital, ruler: n.ruler ? { ...n.ruler } : null, peace: 10 })),
-    wars: [], truce: {}, hist: [],
-    n: { kept: 0, occ: 0, rebel: 0, join: 0, annex: 0, wars: 0, newNat: 0, fell: 0, ruins: 0, founded: 0, revived: 0, kings: 0, moved: 0, roads: 0 }
+    wars: [], truce: {}, hist: [], lairs: [], nlair: 0, dg: {},
+    n: { lairs: 0, lairUp: 0, lairNpc: 0, lairMe: 0, lairRuin: 0, lairGone: 0, lairSum: 0, lairYrs: 0, kept: 0, occ: 0, rebel: 0, join: 0, annex: 0, wars: 0, newNat: 0, fell: 0, ruins: 0, founded: 0, revived: 0, kings: 0, moved: 0, roads: 0 }
   }; };
   // Thế giới cho một đời (Sim.newWorld) hoặc chạy headless (G.runWorld): mật độ quái theo tỉnh × tầng và vùng hoang × tầng, tầng biển.
   G.makeWorld = function (X) {
-    const R = G.realm, zonePop = {}, v = () => +(0.85 + X.rnd() * .35).toFixed(3);
-    for (let p = 0; p < R.provinces.length; p++) for (let b = 0; b < 4; b++) zonePop['p' + p + ':' + b] = v();
-    G.REGIONS.forEach((r, k) => { for (let b = 0; b < 4; b++) zonePop['r' + k + ':' + b] = v(); });
+    // Tầng sâu trở vào bắt đầu đông hơn (1,1–1,5): thế giới đã có quái từ trước, hang ổ mọc ngay từ những năm đầu (bước 8).
+    const R = G.realm, zonePop = {}, v = (b = 0) => +((b ? 1.1 : .85) + X.rnd() * (b ? .4 : .35)).toFixed(3);
+    for (let p = 0; p < R.provinces.length; p++) for (let b = 0; b < 4; b++) zonePop['p' + p + ':' + b] = v(b);
+    G.REGIONS.forEach((r, k) => { for (let b = 0; b < 4; b++) zonePop['r' + k + ':' + b] = v(b); });
     for (const r of G.SEAS) for (const z of r.zones) zonePop[z.id] = v();
     const regions = Object.fromEntries(G.REGIONS.map(r => [r.id, { plague: 0 }]));
     return { year: 1000 + X.int(120, 380), seed: R.seed, zonePop, regions, lordSeen: {}, dyn: G.newDyn(R) };
@@ -210,6 +217,8 @@ window.LifeSim = window.LifeSim || {};
     delete D.hp[s.id];
     G.wildSet(R, 'S' + s.id, null);
     R.harbors = R.harbors.filter(h => h !== s);
+    // 40% phế tích thành hang ổ: họ quái của thú triều đã đánh sập nó, còn lại hầm mộ. Đặt sau khi tính lại độ hoang (lairYear).
+    if (X.chance(G.DYN.lairRuin)) (R._lairQ || (R._lairQ = [])).push({ cell: s.cell, name: s.name, fam: why === 'thú triều' ? 'raid' : 'undead' });
     G.indexRealm(R); provPop(R);
     D.n.ruins++;
     hist(D, year, 'ruin', `${s.name} (${G.TIER_VI[was].toLowerCase()}${s.nation >= 0 ? ', ' + R.nations[s.nation].name : ''}) bị bỏ hoang vì ${why}, thành phế tích.` + (to ? ` Dân dạt về ${to.name}.` : ''));
@@ -371,17 +380,243 @@ window.LifeSim = window.LifeSim || {};
   }
   G.histAdd = (W, kind, text) => hist(W.dyn, W.year, kind, text);
 
+  // ═════════ Hang ổ (research/03 mục 4.1) ═════════
+  // Hang nằm ở một ô tầng sâu, lõi hoặc vùng chết. Tier của hang = hi của tầng chứa nó; trận trong hang lấy loài trong bảng
+  // của tầng đó (encounterTable lọc Tier như mọi trận, họ quái chủ chỉ nhân trọng số) nên không phá luật Tier.
+  // Tầng của ô đổi theo độ hoang: ô thành tầng ven (văn minh lan tới) thì hang mất; đổi sang tầng sâu khác thì hang theo tầng mới.
+  const feLake = () => G._feLake ?? (G._feLake = G.FEATURES.findIndex(f => f.id === 'lake'));
+  const areasOf = R => R._areas || (R._areas = [
+    ...R.provinces.map((p, q) => ({ key: 'p' + q, prov: q, reg: NONE, danger: G.REGION[R.byId[p.seat].region].danger })),
+    ...G.REGIONS.map((r, k) => ({ key: 'r' + k, prov: NONE, reg: k, danger: r.danger }))
+  ]);
+  // Ô của một khu vực mật độ: tỉnh, hoặc phần đất hoang ngoài mọi tỉnh của một vùng.
+  const areaCells = (R, a) => a.prov >= 0 ? R._provCells[a.prov]
+    : (R._wildCells || (R._wildCells = G.REGIONS.map((r, k) => G.map.cellsOf[k].filter(c => R.provOf[c] < 0))))[a.reg];
+  const cx = c => (c % G.map.W + .5) * G.map.CS, cy = c => (Math.floor(c / G.map.W) + .5) * G.map.CS;
+  const lairArea = c => { const p = G.realm.provOf[c]; return p >= 0 ? 'p' + p : 'r' + G.map.region[c]; };
+  const lairZone = l => G.REGIONS[G.map.region[l.cell]].zones[l.b];
+  G.lairZone = lairZone;
+  G.lairTier = l => lairZone(l).tier[1];
+  G.lairKey = l => lairArea(l.cell) + ':' + l.b;
+  G.lairPos = l => [cx(l.cell), cy(l.cell)];
+  G.LAIR_VI = ['', 'ổ', 'hang', 'sào huyệt'];
+  G.LAIR_FIGHTS = [0, 3, 5, 7];
+  G.tierTxt = z => 'Tier ' + z.tier[0] + (z.tier[1] > z.tier[0] ? '–' + z.tier[1] : '');
+  const cnt = (D, k, v = 1) => { D.n[k] = (D.n[k] || 0) + v; };
+  // Họ quái chủ: bốc theo tổng trọng số loài của tầng; prefer (nếu tầng có loài họ đó) thắng luôn.
+  function lairFam(zone, X, prefer) {
+    const w = {};
+    for (const [id, v] of Object.entries(zone.spawns)) { const s = G.B.byId[id]; if (s) w[s.family] = (w[s.family] || 0) + v; }
+    return prefer && w[prefer] ? prefer : X.wkey(w);
+  }
+  // Tên: tiền tố theo họ (names.js lair.prefix) + địa danh: tên tầng, tên tỉnh, tên khu dân cư gần nhất.
+  function lairName(R, D, fam, l, X) {
+    const P = G.NAMES.lair.prefix[fam] || ['Hang'], p = R.provOf[l.cell], used = new Set(D.lairs.map(o => o.name)), x = cx(l.cell), y = cy(l.cell);
+    let near = null, nd = Infinity;
+    for (const s of R.settlements) { const d = Math.hypot(s.x - x, s.y - y); if (d < nd) { nd = d; near = s; } }
+    const places = [lairZone(l).nameVi, p >= 0 ? R.provinces[p].name : null, near ? near.name.split(' ').slice(-2).join(' ') : null].filter(Boolean);
+    const clash = (a, b) => a.split(' ').some(w => b.split(' ').includes(w));
+    for (const pl of places) { const ok = P.filter(a => !clash(a, pl)); if (!ok.length) continue; const nm = X.pick(ok) + ' ' + pl; if (!used.has(nm)) return nm; }
+    return X.pick(P) + ' ' + places[0] + ' ' + (D.nlair + 1);
+  }
+  function lairAt(R, D, cell, b, fam, year, X) {
+    const l = { id: 'h' + (D.nlair++), cell, b, fam: null, lv: 1, name: '', born: year, empty: null };
+    l.fam = fam || lairFam(lairZone(l), X);
+    l.name = lairName(R, D, l.fam, l, X);
+    D.lairs.push(l); cnt(D, 'lairs');
+    return l;
+  }
+  // Mặt nạ ô cấm đặt hang: trong 20px quanh khu dân cư còn sống (giữ lại tới khi có khu sụp, lập), 25px quanh hang khác. mask.add thêm một hang mới.
+  function lairMask(R, D) {
+    const M = G.map, W = M.W, H = M.H, CS = M.CS;
+    let mask;
+    const mark = (x, y, r) => {
+      const c0 = Math.floor(x / CS), r0 = Math.floor(y / CS), k = Math.ceil(r / CS);
+      for (let yy = Math.max(0, r0 - k); yy <= Math.min(H - 1, r0 + k); yy++) for (let xx = Math.max(0, c0 - k); xx <= Math.min(W - 1, c0 + k); xx++)
+        if (Math.hypot((xx + .5) * CS - x, (yy + .5) * CS - y) < r) mask[yy * W + xx] = 1;
+    };
+    const key = R.settlements.length + '|' + D.n.ruins + '|' + D.n.founded + '|' + D.n.revived;   // đổi khi khu dân cư sụp, lập, hồi sinh
+    if (!R._lairBase || R._lairBase.D !== D || R._lairBase.key !== key) {
+      mask = new Uint8Array(M.feat.length);
+      for (const s of R.settlements) if (s.tier !== 'ruin') mark(s.x, s.y, 20);
+      R._lairBase = { D, key, mask: mask.slice() };
+    } else mask = R._lairBase.mask.slice();
+    for (const l of D.lairs) mark(cx(l.cell), cy(l.cell), 25);
+    mask.add = c => mark(cx(c), cy(c), 25);
+    return mask;
+  }
+  // Ô đặt hang: đúng tầng, không phải hồ, ngoài mặt nạ.
+  function lairCells(R, D, cs, b, mask) {
+    const FL = feLake(), feat = G.map.feat, out = [];
+    mask = mask || lairMask(R, D);
+    for (const c of cs) if (R.band[c] === b && feat[c] !== FL && !mask[c]) out.push(c);
+    return out;
+  }
+  // Dọn hang (người chơi: who = tên; đoàn mạo hiểm NPC: who = null): mật độ tầng −0,4 × level, hang trống 8–15 năm.
+  G.clearLair = function (W, l, X, who) {
+    const D = W.dyn, zp = W.zonePop, k = G.lairKey(l), year = W.year;
+    zp[k] = Math.max(.3, (zp[k] ?? 1) - .4 * l.lv);
+    l.empty = year + X.int(G.DYN.lairEmpty[0], G.DYN.lairEmpty[1]);
+    if (who) { cnt(D, 'lairMe'); hist(D, year, 'lair', `${who} dọn sạch ${l.name}${l.lv === 3 ? ', sào huyệt quái lớn nhất vùng' : ''}.`); }
+    else { cnt(D, 'lairNpc'); if (l.lv === 3) hist(D, year, 'lair', `Một đoàn mạo hiểm dọn sạch sào huyệt ${l.name}.`); }
+  };
+  // Hang đang có quái trong vùng nhân vật đang ở.
+  G.lairsNear = S => { const D = S.world.dyn, k = G.map.idx[S.loc]; return ((D && D.lairs) || []).filter(l => l.empty == null && G.map.region[l.cell] === k); };
+  // Thế giới mới đã có sẵn 10–14 hang (level 1 : 2 : 3 = 5 : 3 : 2), bốc theo số ô của tỉnh × tầng và độ nguy hiểm của vùng.
+  function seedLairs(R, D, X, year) {
+    const cand = [], mask = lairMask(R, D);
+    for (const a of areasOf(R)) for (let b = 1; b < 4; b++) { const n = lairCells(R, D, areaCells(R, a), b, mask).length; if (n) cand.push({ a, b, w: Math.sqrt(n) * (1 + a.danger) }); }
+    const per = {}, want = X.int(10, 14);
+    for (let i = 0; i < want && cand.length; i++) {
+      const c = X.wpick(cand, 'w'), cs = lairCells(R, D, areaCells(R, c.a), c.b, mask);
+      if (cs.length) { const l = lairAt(R, D, X.pick(cs), c.b, null, year, X); mask.add(l.cell); l.lv = +X.wkey({ 1: 5, 2: 3, 3: 2 }); per[c.a.key] = (per[c.a.key] || 0) + 1; }
+      if (per[c.a.key] >= G.DYN.lairMax) { for (let j = cand.length - 1; j >= 0; j--) if (cand[j].a === c.a) cand.splice(j, 1); }
+      else if (!cs.length) cand.splice(cand.indexOf(c), 1);
+    }
+  }
+  // Một năm của hang ổ (cuối G.polityYear, sau khi độ hoang tính lại).
+  function lairYear(R, D, W, X, S, year) {
+    const K = G.DYN, zp = W.zonePop, M = G.map, lp = S ? G.provOfS(S) : NONE;
+    if (!D.lairs) { D.lairs = []; D.nlair = 0; }
+    if (!D.dg) D.dg = {};
+    if (!D.lairInit) { D.lairInit = true; seedLairs(R, D, X, year); }
+    const L = D.lairs, count = {};
+    for (const l of L) { const a = lairArea(l.cell); count[a] = (count[a] || 0) + 1; }
+    const drop = l => { L.splice(L.indexOf(l), 1); count[lairArea(l.cell)]--; };
+    const here = l => S && !S.dead && lp >= 0 && R.provOf[l.cell] === lp;
+    // Phế tích vừa có (ruin): 40% thành hang, họ của thú triều đã đánh sập nó (họ đông nhất tầng ven) hoặc hầm mộ.
+    for (const q of R._lairQ || []) {
+      const a = lairArea(q.cell), b = Math.min(3, Math.max(1, R.band[q.cell]));
+      if ((count[a] || 0) >= K.lairMax) continue;
+      const reg = G.REGIONS[M.region[q.cell]], prefer = q.fam === 'raid' ? lairFam(reg.zones[0], X) : q.fam;
+      const l = lairAt(R, D, q.cell, b, lairFam(reg.zones[b], X, prefer), year, X);
+      count[a] = (count[a] || 0) + 1; cnt(D, 'lairRuin');
+      hist(D, year, 'lair', `Quái làm tổ trong phế tích ${q.name}: giờ gọi là ${l.name}.`);
+      if (here(l)) X.log(`Phế tích ${q.name} giờ là ${l.name}. Đêm đêm có tiếng động từ phía đó.`, 'bad');
+    }
+    R._lairQ = [];
+    for (const l of L.slice()) {
+      const b = R.band[l.cell];
+      if (l.empty != null) {
+        if (year < l.empty) continue;
+        // Hết trống: tầng còn đông thì quái (có thể họ khác) chiếm lại, không thì hang lấp hẳn.
+        if (b >= 1 && b <= 3 && (zp[lairArea(l.cell) + ':' + b] ?? 1) > 1.2) {
+          l.b = b; l.lv = 1; l.empty = null; l.born = year; cnt(D, 'lairBack');
+          const fam = lairFam(lairZone(l), X);
+          if (fam !== l.fam) { l.fam = fam; l.name = lairName(R, D, fam, l, X); }
+        } else drop(l);
+        continue;
+      }
+      if (b < 1 || b > 3) { drop(l); cnt(D, 'lairGone'); if (l.lv >= 2) hist(D, year, 'lair', `${l.name} bị bỏ: làng mạc lan tới, quái dạt đi nơi khác.`); continue; }
+      l.b = b;
+      const k = G.lairKey(l);
+      if (l.lv < 3 && (zp[k] ?? 1) > 1.2 && X.chance(K.lairGrow)) {
+        l.lv++; cnt(D, 'lairUp');
+        if (l.lv === 3) { hist(D, year, 'lair', `${l.name} thành sào huyệt; quái tràn ra các làng quanh đó.`); if (here(l)) X.log(`${l.name} thành sào huyệt. Quái từ đó tràn xuống ven làng mỗi mùa.`, 'bad'); }
+      }
+      // Sào huyệt tràn quái ra tầng ven của tỉnh: nguồn chính của thú triều.
+      if (l.lv === 3) { const v = lairArea(l.cell) + ':0'; zp[v] = Math.min(2.2, (zp[v] ?? 1) + K.lairSpill); }
+      // Đoàn mạo hiểm NPC: theo tuần tra của nước chủ tỉnh (vô chủ .6, đất hoang .35); hiếm khi vào vùng chết; hang lớn khó dọn hơn.
+      const p = R.provOf[l.cell], own = p >= 0 ? D.prov[p] : NONE, patrol = p < 0 ? .35 : own >= 0 ? R.nations[own].patrol : .6;
+      if (X.chance(K.lairNpc * patrol * K.lairNpcB[l.b] / (1 + .5 * (l.lv - 1)))) G.clearLair(W, l, X, null);
+    }
+    // Mọc: tỉnh × tầng (sâu, lõi, vùng chết) quá đông.
+    let mask = null;
+    for (const a of areasOf(R)) for (let b = 1; b < 4; b++) {
+      if ((count[a.key] || 0) >= K.lairMax) break;
+      if ((zp[a.key + ':' + b] ?? 1) <= 1.4 || !X.chance(K.lairP)) continue;
+      const cs = lairCells(R, D, areaCells(R, a), b, mask || (mask = lairMask(R, D)));
+      if (!cs.length) continue;
+      const l = lairAt(R, D, X.pick(cs), b, null, year, X); mask.add(l.cell);
+      count[a.key] = (count[a.key] || 0) + 1;
+      if (here(l)) X.log(`Thợ săn về báo: quái làm ổ ở ${lairZone(l).nameVi}, người ta gọi là ${l.name}.`, 'info');
+    }
+    cnt(D, 'lairSum', L.filter(l => l.empty == null).length); cnt(D, 'lairYrs');
+  }
+
+  // ═════════ Dọn hang, xuống di tích (quyết định "lair", "dungeon" ở js/events.js) ═════════
+  // Đánh liền n trận ở một ô; trận cuối là thủ lĩnh (opt.boss: loài Tier cao nhất bảng cho phép, bậc alpha). Thua trận nào thì rút
+  // (fight() vẫn có rủi ro chết như trận thường). Mỗi trận qua encounterTable nên vẫn giữ luật Tier.
+  G.assault = function (X, zone, n, opt) {
+    const S = X.S, F = S.flags;
+    let won = 0;
+    F.inLair = true;   // sim.html: chết trong hang, di tích
+    for (let i = 0; i < n; i++) {
+      const last = i === n - 1 && opt.boss;
+      const enc = X.rollEncounter(zone, { cell: opt.cell, fam: opt.fam, boss: last, grade: last ? 'alpha' : undefined, bonus: .04 });
+      if (!enc) break;
+      F.lairFights = (F.lairFights || 0) + 1;
+      if (enc.s.tier - X.ctier(S) > (S.reckless ? 2 : 1)) F.lairOver = (F.lairOver || 0) + 1;
+      const rec = X.fight(enc, false);
+      if (S.dead) return { won, n, dead: true };
+      if (!rec.win) { F.inLair = false; return { won, n, done: false }; }
+      won++;
+    }
+    F.inLair = false;
+    return { won, n, done: won === n && n > 0 };
+  };
+  // Đe dọa ước tính của một bảng gặp quái (trung bình theo trọng số), để chọn tự động và ghi vào quyết định.
+  G.tableThreat = (X, zone, fam) => {
+    const t = X.encounterTable(zone, X.ctier(X.S), X.S.reckless, null, fam), tot = t.reduce((a, x) => a + x.w, 0) || 1;
+    return t.reduce((a, x) => a + x.w * (x.s.tier + ({ S: -.15, M: 0, L: .2, XL: .35 }[x.s.size] || 0) + .08 * (((x.s.group || [1, 1])[0] + (x.s.group || [1, 1])[1]) / 2 - 1)), 0) / tot + .15;
+  };
+  const openFor = (X, zone) => zone.tier[0] <= X.ctier(X.S) + (X.S.reckless ? 2 : 1);
+  // Hang dọn được: trong vùng đang ở, tầng mở với sức mình; hang lớn trước, rồi hang gần.
+  G.lairChoices = (S, X) => {
+    const [x, y] = S.pos || [0, 0];
+    return G.lairsNear(S).filter(l => openFor(X, lairZone(l))).sort((a, b) => b.lv - a.lv || Math.hypot(cx(a.cell) - x, cy(a.cell) - y) - Math.hypot(cx(b.cell) - x, cy(b.cell) - y));
+  };
+  G.raidLair = function (X, l) {
+    const S = X.S, W = S.world, zone = lairZone(l), n = G.LAIR_FIGHTS[l.lv];
+    S.flags.lairTries = (S.flags.lairTries || 0) + 1;
+    const r = G.assault(X, { ...zone, nameVi: l.name }, n, { cell: l.cell, fam: l.fam, boss: l.lv === 3 });
+    if (r.dead) return null;
+    if (!r.done) return `Thắng ${r.won}/${n} trận rồi phải rút ra. ${l.name} vẫn còn đó.`;
+    const t = Math.min(zone.tier[1], X.ctier(S) + 1), loot = Math.round(25 * Math.pow(1 + t, 2) * l.lv * (.7 + X.rnd() * .6));
+    X.money(loot); S.fame = Math.min(100, S.fame + 2 * l.lv * (1 + t * .3));
+    for (let i = 0; i < l.lv; i++) if (X.chance(.6)) G.treasure(X, zone);
+    // Sào huyệt trong tỉnh có chủ: quan tỉnh trả tiền thưởng.
+    const p = G.realm.provOf[l.cell], k = p >= 0 ? W.dyn.prov[p] : NONE, bonus = l.lv === 3 && k >= 0 ? Math.round(loot * .5) : 0;
+    if (bonus) X.money(bonus);
+    G.clearLair(W, l, X, S.name);
+    S.flags.lairs = (S.flags.lairs || 0) + 1;
+    return `Dọn sạch ${l.name} sau ${n} trận. +${loot} bạc${bonus ? `, quan ${G.realm.nations[k].name} thưởng thêm ${bonus}` : ''}.`;
+  };
+  // Di tích (research/03 mục 4.2): tĩnh, đặt từ seed (G.realm.dungeons); W.dyn.dg[id][k] = năm dọn xong tầng k, sau 25 năm quái về lại.
+  G.DG_REFILL = 25;
+  G.dungeonCleared = (W, d, k) => { const y = (((W.dyn && W.dyn.dg) || {})[d.id] || [])[k]; return y != null && W.year - y < G.DG_REFILL; };
+  G.dungeonFloors = d => G.DG[d.region];
+  // Tầng sâu nhất chưa dọn mà sức mình vào được, của di tích trong vùng đang ở.
+  G.dungeonChoice = (S, X) => {
+    for (const d of (G.realm.dungeons || []).filter(d => d.region === S.loc))
+      for (let k = 2; k >= 0; k--) { const z = G.DG[d.region][k]; if (openFor(X, z) && !G.dungeonCleared(S.world, d, k)) return { d, k, zone: z }; }
+    return null;
+  };
+  G.raidDungeon = function (X, c) {
+    const S = X.S, W = S.world, D = W.dyn, { d, k, zone } = c, n = 4;
+    S.flags.dgTries = (S.flags.dgTries || 0) + 1;
+    const r = G.assault(X, { ...zone, nameVi: `${d.name}, ${zone.nameVi.toLowerCase()}` }, n, { cell: d.cell, boss: true });
+    if (r.dead) return null;
+    if (!r.done) return `Thắng ${r.won}/${n} trận ở ${zone.nameVi.toLowerCase()} rồi phải leo lên.`;
+    const t = Math.min(zone.tier[1], X.ctier(S) + 1), loot = Math.round(40 * Math.pow(1 + t, 2) * (k + 1) * (.7 + X.rnd() * .6));
+    X.money(loot); S.fame = Math.min(100, S.fame + 3 * (k + 1) * (1 + t * .3));
+    for (let i = 0; i <= k; i++) G.treasure(X, zone);
+    if (!D.dg) D.dg = {};
+    const first = !((D.dg[d.id] || [])[k] != null);
+    (D.dg[d.id] = D.dg[d.id] || [null, null, null])[k] = W.year;
+    cnt(D, 'dgFloors');
+    hist(D, W.year, 'dungeon', `${S.name} xuống tới ${zone.nameVi.toLowerCase()} của ${d.name}${first ? ', lần đầu có người sống sót trở về' : ''}.`);
+    S.flags.dgFloors = (S.flags.dgFloors || 0) + 1;
+    return `Dọn sạch ${zone.nameVi.toLowerCase()} của ${d.name}. +${loot} bạc.`;
+  };
+
   // ═════════ Mật độ quái theo tỉnh × tầng (research/03 mục 3.5) ═════════
   // Sinh sôi logistic; NPC tỉa theo tuần tra của nước chủ tỉnh (vô chủ .6, đất hoang ngoài tỉnh .35; không ai vào vùng chết);
   // tầng sâu quá đông thì tràn ra tầng ngoài; tầng ven của tỉnh quá 1,25 thì thú triều (raid) đánh khu dân cư của tỉnh.
   G.monsterYear = function (W, X, S) {
     const R = G.realm, D = W.dyn, zp = W.zonePop, CULL = [1.4, 1, 1, 0];
     const lp = S ? G.provOfS(S) : NONE;
-    const areas = R._areas || (R._areas = [
-      ...R.provinces.map((p, q) => ({ key: 'p' + q, prov: q, danger: G.REGION[R.byId[p.seat].region].danger })),
-      ...G.REGIONS.map((r, k) => ({ key: 'r' + k, prov: NONE, danger: r.danger }))
-    ]);
-    for (const a of areas) {
+    for (const a of areasOf(R)) {
       const own = a.prov >= 0 ? D.prov[a.prov] : NONE, patrol = a.prov < 0 ? .35 : own >= 0 ? R.nations[own].patrol : .6;
       for (let b = 0; b < 4; b++) {
         const key = a.key + ':' + b;
@@ -390,9 +625,11 @@ window.LifeSim = window.LifeSim || {};
         if (X.chance(.025)) { p += .35; if (S && a.prov === lp && b <= 1) X.log(`Mùa sinh sản ở ${G.REGION[S.loc].zones[b].nameVi}: quái đông bất thường.`, 'info'); }
         zp[key] = G.clamp(p, .3, 2.2);
       }
-      for (let b = 3; b > 0; b--) if (zp[a.key + ':' + b] > 1.6) zp[a.key + ':' + (b - 1)] = Math.min(2.2, zp[a.key + ':' + (b - 1)] + .1);
+      for (let b = 3; b > 0; b--) if (zp[a.key + ':' + b] > 1.6) zp[a.key + ':' + (b - 1)] = Math.min(2.2, zp[a.key + ':' + (b - 1)] + G.DYN.spill[b - 1]);
       if (a.prov >= 0) D.raid[a.prov] = +(Math.max(0, zp[a.key + ':0'] - 1.25) * 1.5).toFixed(3);
     }
+    // Bộ đếm cho sim.html: số năm-tỉnh có thú triều.
+    cnt(D, 'raidYrs', D.raid.filter(v => v > 0).length); cnt(D, 'provYrs', D.raid.length);
     // Biển: chỉ thuyền chài và tàu tuần tỉa tầng ven bờ, khơi; không có thú triều.
     for (const r of G.SEAS) r.zones.forEach((z, i) => {
       let p = zp[z.id] ?? 1;
@@ -551,6 +788,7 @@ window.LifeSim = window.LifeSim || {};
     }
     roadDecay(R, D, year);
     if (R._dirty.length) G.wildCommit(R);
+    lairYear(R, D, W, X, S, year);
     // Nước đổi tên nhãn: tâm lãnh thổ mới.
     for (const n of NN) n.stability = +D.nat[n.idx].stab.toFixed(3);
   };
