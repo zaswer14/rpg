@@ -42,10 +42,11 @@ window.LifeSim = window.LifeSim || {};
   // Điều kiện theo nơi ở (research/05 mục 7, js/state.js G.workOK): bld = cần một công trình trong khu (G.BUILDINGS);
   // role = cần khu có vai trò; town = sống trong thị trấn trở lên; land = sống ở làng, thôn hoặc vùng quê;
   // biomes = biome của vùng; guild = phải vào phường hội nếu nước có luật độc quyền; banLaw = luật cấm nghề này.
+  // seaBand = làm trên biển ở tầng này của vùng biển trước bến nhà (0 ven bờ, 1 khơi): rủi ro và quái biển theo tầng đó (js/state.js G.seaWork).
   G.WORKS = {
     farmer:     { nameVi:'Nông dân',       pct:[.05,.35], risk:1.0, trains:{ Body:2 }, land:true },
     herder:     { nameVi:'Chăn nuôi',      pct:[.08,.38], risk:1.1, trains:{ Taming:3, Riding:2 }, land:true, biomes:['wind_steppe','golden_plains','frost_tundra'] },
-    fisher:     { nameVi:'Ngư dân',        pct:[.08,.40], risk:1.8, trains:{ Spear:2, Body:1 }, role:['fishing','port'], cause:'drown' },
+    fisher:     { nameVi:'Ngư dân',        pct:[.08,.40], risk:1.8, trains:{ Spear:2, Body:1 }, role:['fishing','port'], cause:'drown', seaBand:0 },
     miner:      { nameVi:'Thợ mỏ',         pct:[.15,.48], risk:2.0, trains:{ Body:3, Engineering:1 }, role:['mine'], guild:true, cause:'mine' },
     woodcutter: { nameVi:'Tiều phu',       pct:[.08,.38], risk:1.5, trains:{ Axe:3, Body:2 }, role:['lumber'], banLaw:'no_logging' },
     smith:      { nameVi:'Thợ rèn',        pct:[.30,.65], risk:1.0, trains:{ Engineering:3, Sword:1, Axe:1 }, bld:['smith'], guild:true },
@@ -55,7 +56,7 @@ window.LifeSim = window.LifeSim || {};
     scholar:    { nameVi:'Học giả',        pct:[.40,.85], risk:.7,  trains:{ Arcane:3, Alchemy:1 }, bld:['school'], town:true, needSm:60 },
     healer:     { nameVi:'Thầy thuốc',     pct:[.35,.75], risk:.9,  trains:{ Alchemy:3, Spirit:1 }, bld:['healer'], needSm:45 },
     priest:     { nameVi:'Tu sĩ',          pct:[.30,.70], risk:.7,  trains:{ Spirit:3, Soul:1 }, bld:['temple'], needFaith:true },
-    sailor:     { nameVi:'Thủy thủ',       pct:[.18,.55], risk:1.9, trains:{ Throwing:1, Body:2 }, role:['port'], town:true, cause:'drown' },
+    sailor:     { nameVi:'Thủy thủ',       pct:[.18,.55], risk:1.9, trains:{ Throwing:1, Body:2 }, role:['port'], town:true, cause:'shipwreck', seaBand:1 },
     thief:      { nameVi:'Kẻ trộm',        pct:[.05,.60], risk:2.2, trains:{ Dagger:3, Stealth:3, Trap:1 }, town:true, cause:'hanged' },
     adventurer: { nameVi:'Mạo hiểm giả',   pct:[.10,.95], risk:1.0, trains:{}, adventurer:true }
   };
@@ -103,9 +104,9 @@ window.LifeSim = window.LifeSim || {};
       zones:[ Z('hai_xa_0','Rạn Cạn',1,2,{ drowned_sailor:10, reef_shark:10, tide_elemental:6 }),
               Z('hai_xa_1','Luồng Nước Xoáy',2,3,{ reef_shark:10, sea_serpent:8, siren:8 }),
               Z('hai_xa_2','Vực Xanh',3,4,{ sea_serpent:10, kraken_spawn:10 }),
-              Z('hai_xa_3','Mắt Bão',4,5,{ kraken_spawn:12 }) ],
+              Z('hai_xa_3','Mắt Bão',4,5,{ kraken_spawn:12, bone_whale:6 }) ],
       lord:{ species:'leviathan', zone:'hai_xa_3' },
-      lore:'Đảo nối với đất liền bằng tuyến thuyền từ Bờ Sương Mù. Mỗi đời người có một lần Leviathan nổi lên.' },
+      lore:'Đảo chỉ tới được bằng tàu. Mỗi đời người có một lần Leviathan nổi lên.' },
     { id:'ngan_diep', nameVi:'Rừng Ngân Diệp', biome:'elder_wood', x:350, y:240, r:115, wealth:.6, gini:.25, pop:8, danger:.25, magic:.7,
       races:{ elf:75, fae:10, human:10, beastfolk:5 }, faiths:{ wild:55, light:15, none:30 },
       anchor:[355,245],
@@ -193,11 +194,68 @@ window.LifeSim = window.LifeSim || {};
       zones:[ Z('hac_uyen_0','Miệng Vực',3,3,{ hellhound:12, wailing_shade:8, shadow_panther:8 }),
               Z('hac_uyen_1','Bậc Thang Đỏ',4,4,{ blood_succubus:10, abyss_ooze:10 }),
               Z('hac_uyen_2','Đáy Vực',4,5,{ horned_fiend:8, blood_succubus:6, abyss_ooze:5 }),
-              Z('hac_uyen_3','Đáy Thật',5,5,{ horned_fiend:10 }) ],
+              Z('hac_uyen_3','Đáy Thật',5,5,{ horned_fiend:10, bone_dragon:5 }) ],
       lord:{ species:'abyss_lord', zone:'hac_uyen_3' },
       lore:'Đồn canh trên miệng vực có lệnh treo từ đời nào: không ai được xuống, trừ người đã tới cấp Huyền thoại.' }
   ];
-  G.SEA_ROUTES = [['suong_mu', 'hai_xa'], ['hai_xa', 'tro_tan']];
+
+  // ── VÙNG BIỂN (research/03 mục 7.1) ──
+  // Ô biển thuộc vùng biển có điểm neo gần nhất (Voronoi có trọng số r, bẻ cong bằng noise; map.js). id ở đây là KIỂU vùng biển,
+  // tên thật mỗi thế giới bốc từ G.NAMES.geo.sea (realm.js) theo prefix / roots gợi ý. biome: biome đất giáp bờ, cho tỉ lệ tinh anh và habitat loài.
+  // zones: [ven bờ, khơi, sâu, vực biển] theo độ hoang biển (realm.js): w = khoảng cách tới bờ (ô) / 5 − (gần cảng ? .6 : 0); ngưỡng G.SEA_BAND_W.
+  // storm: xác suất gặp bão mỗi chuyến 6 ngày; ambush: nhân xác suất gặp quái; slow: nhân số ngày đi (băng trôi).
+  G.SEAS = [
+    { id:'sea_mist', nameVi:'Biển sương', biome:'mist_coast', anchor:[60,380], r:1, color:'#7f9aa6', prefix:'Biển', roots:['Sương','Gió Tây','Xác Tàu','Muối'],
+      weather:'sương mù, tầm nhìn thấp', storm:.04, ambush:1.4,
+      zones:[ Z('sea_mist_0','Bãi Cạn Sương',0,1,{ rock_crab:12, lantern_jelly:12, thunder_eel:8, drowned_sailor:8 }),
+              Z('sea_mist_1','Luồng Sương',1,2,{ thunder_eel:10, drowned_sailor:10, tide_elemental:8, reef_shark:6 }),
+              Z('sea_mist_2','Biển Mờ',2,3,{ tide_elemental:8, reef_shark:8, siren:8, giant_squid:8 }),
+              Z('sea_mist_3','Vực Sương',3,4,{ siren:8, sea_serpent:8, giant_squid:8, ghost_ship:6 }) ] },
+    { id:'sea_serpent', nameVi:'Biển đảo rắn', biome:'serpent_bay', anchor:[140,790], r:1, color:'#3f9a94', prefix:'Biển', roots:['Hải Xà','Ngọc','Bão','Cá Voi'],
+      weather:'bão mùa hè', storm:.12, ambush:1,
+      zones:[ Z('sea_serpent_0','Rạn San Hô',1,2,{ drowned_sailor:10, reef_shark:10, tide_elemental:6 }),
+              Z('sea_serpent_1','Luồng Xoáy Ngoài',2,3,{ reef_shark:10, sea_serpent:8, siren:8 }),
+              Z('sea_serpent_2','Biển Rắn',3,4,{ sea_serpent:10, giant_squid:8, kraken_spawn:8 }),
+              Z('sea_serpent_3','Vực Leviathan',4,5,{ kraken_spawn:10, bone_whale:8, ghost_ship:6 }) ] },
+    { id:'sea_frost', nameVi:'Biển băng', biome:'frost_tundra', anchor:[560,20], r:1.15, color:'#a8c4dc', prefix:'Biển', roots:['Băng','Sao','Muối'],
+      weather:'băng trôi, tàu đi chậm', storm:.06, ambush:1, slow:1.3,
+      zones:[ Z('sea_frost_0','Bờ Băng',1,1,{ fang_seal:14, drowned_sailor:8 }),
+              Z('sea_frost_1','Băng Trôi',1,3,{ fang_seal:8, ice_wraith:10, giant_squid:6 }),
+              Z('sea_frost_2','Biển Đêm Dài',3,4,{ giant_squid:8, sea_serpent:6, frost_sea_dragon:10 }),
+              Z('sea_frost_3','Vực Băng',4,4,{ frost_sea_dragon:12, kraken_spawn:8 }) ] },
+    { id:'sea_storm', nameVi:'Biển sấm', biome:'storm_spire', anchor:[1080,80], r:1, color:'#7c7fb8', prefix:'Biển', roots:['Sấm','Bão'],
+      weather:'bão sét quanh năm', storm:.22, ambush:1,
+      zones:[ Z('sea_storm_0','Ghềnh Sét',1,2,{ thunder_eel:14, drowned_sailor:8, tide_elemental:6 }),
+              Z('sea_storm_1','Biển Sóng Bạc',2,3,{ tide_elemental:8, reef_shark:8, sea_serpent:8 }),
+              Z('sea_storm_2','Tâm Bão',3,4,{ sea_serpent:8, giant_squid:8, storm_elemental:8, kraken_spawn:4 }),
+              Z('sea_storm_3','Vực Sấm',4,5,{ storm_elemental:10, kraken_spawn:8, thunderbird:4, bone_whale:4 }) ] },
+    { id:'sea_ash', nameVi:'Biển tro', biome:'ash_peak', anchor:[1170,420], r:1, color:'#9a7a6a', prefix:'Biển', roots:['Tro','Lặng','Muối'],
+      weather:'nước nóng, khói núi lửa', storm:.06, ambush:1,
+      zones:[ Z('sea_ash_0','Nước Ấm',1,1,{ drowned_sailor:10, ember_wisp:10 }),
+              Z('sea_ash_1','Biển Khói',2,3,{ stoneback_turtle:12, magma_slime:6, reef_shark:6, sea_serpent:6 }),
+              Z('sea_ash_2','Biển Sôi',3,4,{ sea_serpent:8, giant_squid:8, kraken_spawn:6 }),
+              Z('sea_ash_3','Vực Tro',4,4,{ kraken_spawn:10, ghost_ship:8 }) ] },
+    { id:'sea_red', nameVi:'Biển đỏ', biome:'red_desert', anchor:[1080,820], r:1, color:'#b07a5a', prefix:'Biển', roots:['Đỏ','Lặng','Ngọc','Sao'],
+      weather:'lặng gió, nắng gắt', storm:.03, ambush:1,
+      zones:[ Z('sea_red_0','Bãi Nắng',0,1,{ rock_crab:12, lantern_jelly:10, drowned_sailor:6 }),
+              Z('sea_red_1','Biển Lặng',1,3,{ drowned_sailor:8, stoneback_turtle:12, reef_shark:8, giant_squid:4 }),
+              Z('sea_red_2','Biển Sâu Đỏ',3,4,{ giant_squid:8, sea_serpent:8, kraken_spawn:6 }),
+              Z('sea_red_3','Vực Đỏ',4,4,{ kraken_spawn:10, ghost_ship:8 }) ] },
+    { id:'sea_abyss', nameVi:'Vịnh vực', biome:'abyss_rift', anchor:[640,885], r:1, color:'#4a3e6a', prefix:'Vịnh', roots:['Hắc Uyên','Xác Tàu','Cá Voi'],
+      weather:'nước đen, không trăng', storm:.1, ambush:1.3,
+      zones:[ Z('sea_abyss_0','Nước Đen',2,3,{ reef_shark:10, tide_elemental:8, siren:8 }),
+              Z('sea_abyss_1','Biển Không Trăng',3,4,{ siren:8, sea_serpent:8, giant_squid:8, kraken_spawn:4 }),
+              Z('sea_abyss_2','Vực Đen',4,5,{ kraken_spawn:8, ghost_ship:8, bone_whale:6 }),
+              Z('sea_abyss_3','Đáy Biển Vực',5,5,{ bone_whale:12, horned_fiend:6 }) ] }
+  ];
+  G.SEA_BAND_W = [1, 2.5, 4];
+  G.SEA_BAND_VI = ['Ven bờ', 'Khơi', 'Sâu', 'Vực biển'];
+  // Tàu (research/03 mục 7.3): maxBand = tầng biển sâu nhất tàu vào được; fare = bạc / ngày đi biển.
+  G.SHIPS = [
+    { id:'boat',     nameVi:'thuyền chài',     maxBand:0, fare:1 },
+    { id:'merchant', nameVi:'tàu buôn',        maxBand:1, fare:2 },
+    { id:'ocean',    nameVi:'tàu viễn dương',  maxBand:2, fare:4 }
+  ];
 
   // ── ĐỊA HÌNH theo biome (research/03 mục 2): độ lệch cộng vào trường độ cao / độ ẩm / nhiệt trước khi chuẩn hóa,
   // đặc trưng biome không có (no), biome rừng (forest: ô ẩm vừa cũng thành rừng), độ hoang nền (wild, ≤ .8 để sát làng vẫn còn tầng ven).
@@ -255,6 +313,7 @@ window.LifeSim = window.LifeSim || {};
     cold:     { nameVi:'chết rét',               stages:{ infant:6, child:3, adult:3, elder:8 }, cold:true },
     heat:     { nameVi:'say nắng giữa cát',      stages:{ infant:4, child:2, adult:2, elder:6 }, hot:true },
     drown:    { nameVi:'đuối nước',              stages:{ child:8, adult:4, elder:2 } },
+    shipwreck:{ nameVi:'đắm tàu',                stages:{ adult:1, elder:.5 }, sea:true },
     accident: { nameVi:'tai nạn',                stages:{ child:6, adult:8, elder:5 } },
     mine:     { nameVi:'sập hầm mỏ',             stages:{ adult:2 } },
     bandit:   { nameVi:'bị cướp đường giết',     stages:{ adult:3, elder:1 } },
@@ -270,16 +329,18 @@ window.LifeSim = window.LifeSim || {};
     purge:    { nameVi:'bị thánh hỏa thanh tẩy', stages:{ adult:8, elder:4 }, undeadOnly:true }
   };
   // Nguyên nhân không áp cho Cơ Nhân / Bộ Xương.
-  G.NO_FLESH = ['newborn', 'fever', 'plague', 'swamp', 'heat', 'heart', 'lung', 'old', 'drown'];
+  G.NO_FLESH = ['newborn', 'fever', 'plague', 'swamp', 'heat', 'heart', 'lung', 'old', 'drown', 'shipwreck'];
 
   // ── Kiểm tra dữ liệu đại lục (chạy một lần lúc nạp; lỗi in ra console và trang sim) ──
   G.validateWorld = function (B) {
     const errors = [], warnings = [];
     const seen = new Set();
-    for (const R of G.REGIONS) {
+    // Vùng đất và vùng biển dùng chung luật tầng (research/03 mục 10).
+    for (const R of [...G.REGIONS, ...G.SEAS]) {
+      const sea = G.SEAS.includes(R);
       if (seen.has(R.id)) errors.push(`vùng trùng id ${R.id}`); seen.add(R.id);
       if (!B.biomes[R.biome]) errors.push(`${R.id}: biome ${R.biome} không có`);
-      if (R.zones.length !== 4) errors.push(`${R.id}: cần đúng 4 khu (ven, sâu, lõi, vùng chết)`);
+      if (R.zones.length !== 4) errors.push(`${R.id}: cần đúng 4 ${sea ? 'tầng (ven bờ, khơi, sâu, vực biển)' : 'khu (ven, sâu, lõi, vùng chết)'}`);
       R.zones.forEach((z, i) => {
         const [lo, hi] = z.tier;
         if (hi - lo > 2) errors.push(`${z.id}: dải Tier rộng quá 2 (${lo}–${hi})`);
@@ -297,6 +358,7 @@ window.LifeSim = window.LifeSim || {};
         if (fams.size < 2) warnings.push(`${z.id}: chỉ ${fams.size} họ quái`);
       });
       if (R.lord) { const s = B.byId[R.lord.species]; if (!s || s.spawn !== false) errors.push(`${R.id}: chúa vùng ${R.lord.species} phải có spawn:false`); }
+      if (sea) continue;
       const rsum = Object.values(R.races).reduce((a, b) => a + b, 0);
       if (!rsum) errors.push(`${R.id}: chưa có chủng tộc`);
       for (const r of Object.keys(R.races)) if (!G.RACES[r]) errors.push(`${R.id}: chủng tộc ${r} không có`);

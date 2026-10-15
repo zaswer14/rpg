@@ -12,6 +12,7 @@
  *   8. Chủng tộc, đạo của từng khu; người cai trị, đặc trưng riêng, quan hệ giữa các nước.
  *   9. Đường: đường cái nối kinh đô / thành phố / thị trấn (cây khung nhỏ nhất), đường mòn cho làng, lối nhỏ cho thôn; cầu, đèo.
  *  10. Độ hoang từng ô (khoảng cách đi bộ tới khu dân cư hoặc đường + biome + địa hình) → tầng ven / sâu / lõi / vùng chết (research/03 mục 3.3).
+ *  11. Biển: khối đất (đại lục, đảo), bến và loại tàu, độ hoang biển → tầng ven bờ / khơi / sâu / vực biển, tên vùng biển (research/03 mục 7).
  */
 window.LifeSim = window.LifeSim || {};
 (function (G) {
@@ -75,7 +76,13 @@ window.LifeSim = window.LifeSim || {};
           return null;
         });
       },
-      ruin() { return uniq(() => pick(N.ruin.prefix) + ' ' + pick(N.ruin.root)); }
+      ruin() { return uniq(() => pick(N.ruin.prefix) + ' ' + pick(N.ruin.root)); },
+      // Vùng biển: tiền tố và gốc gợi ý theo kiểu (G.SEAS), hết gốc gợi ý thì bốc gốc bất kỳ trong names.geo.sea.
+      sea(type) {
+        const S = N.geo.sea, pre = S.prefix.includes(type.prefix) ? type.prefix : S.prefix[0];
+        const roots = (type.roots || []).filter(r => S.root.includes(r));
+        return uniq(() => pre + ' ' + (take('sea:' + type.id, roots) || take('sea', S.root) || pick(S.root)));
+      }
     };
   }
 
@@ -566,6 +573,73 @@ window.LifeSim = window.LifeSim || {};
     const bandCells = R.map(() => [[], [], [], []]);
     for (const i of land) if (feat[i] !== FE.lake) bandCells[region[i]][band[i]].push(i);
 
+    // ── 11. Biển (research/03 mục 7) ──
+    // Gắn nhãn thành phần liên thông 8 hướng của các ô thỏa ok: [nhãn từng ô (−1 = không thuộc), cỡ từng thành phần].
+    const DX = [1, -1, 0, 0, 1, -1, 1, -1], DY = [0, 0, 1, -1, 1, 1, -1, -1], fq = new Int32Array(N);
+    const label = ok => {
+      const id = new Int32Array(N).fill(NONE), size = [];
+      for (let i0 = 0; i0 < N; i0++) {
+        if (id[i0] >= 0 || !ok(i0)) continue;
+        const k = size.length; let qh = 0, qt = 0; fq[qt++] = i0; id[i0] = k;
+        while (qh < qt) { const i = fq[qh++], x = i % W, y = (i - x) / W;
+          for (let d = 0; d < 8; d++) { const nx = x + DX[d], ny = y + DY[d]; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const j = ny * W + nx; if (id[j] < 0 && ok(j)) { id[j] = k; fq[qt++] = j; } } }
+        size.push(qt);
+      }
+      return [id, size];
+    };
+    // Khối đất: đất liền nối nhau 8 hướng; khối lớn nhất là đại lục, còn lại là đảo (chỉ tới được bằng tàu).
+    const [mass, massSize] = label(i => region[i] !== SEA), mainMass = massSize.indexOf(Math.max(...massSize));
+    const liveOn = new Map();   // khối đất (trừ đại lục) → khu dân cư trên đó
+    for (const s of settlements) if (s.tier !== 'ruin' && mass[s.cell] !== mainMass) (liveOn.get(mass[s.cell]) || liveOn.set(mass[s.cell], []).get(mass[s.cell])).push(s);
+    // Cảng: khu dân cư có ô biển trong bán kính 2 ô (seaCells: các ô biển đó, chỗ tàu cập). Tàu theo bậc (G.SHIPS):
+    // thuyền chài ở mọi bến; tàu buôn ở khu có vai trò cảng (thị trấn trở lên); tàu viễn dương ở kinh đô ven biển và mọi cảng
+    // của nước có đặc tính Tàu lá (E4) hoặc đặc trưng Cảng lớn. Đảo: bến lớn nhất có ít nhất tàu buôn để đảo không bị cô lập.
+    const harbors = [];
+    const seaNear = (cell, r) => { const x0 = cell % W, y0 = Math.floor(cell / W), sc = [];
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const x = x0 + dx, y = y0 + dy; if (x >= 0 && y >= 0 && x < W && y < H && region[y * W + x] === SEA) sc.push(y * W + x); }
+      return sc; };
+    const makeHarbor = (s, sc) => {
+      const n = s.nation >= 0 ? nations[s.nation] : null, port = s.roles.includes('port');
+      s.ship = s.tier === 'capital' || (port && n && (n.template === 'E4' || n.quirks.some(q => q.id === 'great_port'))) ? 2 : port ? 1 : 0;
+      s.seaCells = sc; s.mass = mass[s.cell]; harbors.push(s);
+    };
+    for (const s of settlements) { if (s.tier === 'ruin') continue; const sc = seaNear(s.cell, 2); if (sc.length) makeHarbor(s, sc); }
+    // Đảo: không có khu nào sát bờ thì khu gần biển nhất dựng cầu tàu ra tới biển. Bến lớn nhất của đảo có ít nhất tàu buôn.
+    for (const [m, live2] of liveOn) {
+      let hs = harbors.filter(h => h.mass === m);
+      if (!hs.length) {
+        const c = live2.slice().sort((a, b) => dCoast[a.cell] - dCoast[b.cell])[0];
+        makeHarbor(c, seaNear(c.cell, Math.min(60, dCoast[c.cell] + 2))); hs = [c];
+      }
+      hs.sort((a, b) => b.urban - a.urban);
+      if (hs.length && hs[0].ship < 1) hs[0].ship = 1;
+    }
+    // Độ hoang biển: w = khoảng cách tới bờ (ô) / 5 − .6 nếu trong 8 ô quanh một cảng (khu có vai trò cảng). Tầng: G.SEA_BAND_W.
+    const SBW = G.SEA_BAND_W, seaWild = new Float32Array(N), seaBand = new Uint8Array(N).fill(SEA), nearPort = new Uint8Array(N);
+    for (const s of settlements) if (s.roles.includes('port')) {
+      const x0 = s.cell % W, y0 = Math.floor(s.cell / W);
+      for (let dy = -8; dy <= 8; dy++) for (let dx = -8; dx <= 8; dx++) { const x = x0 + dx, y = y0 + dy; if (x >= 0 && y >= 0 && x < W && y < H && dx * dx + dy * dy <= 64) nearPort[y * W + x] = 1; }
+    }
+    const seaBandCells = (G.SEAS || []).map(() => [[], [], [], []]);
+    for (let i = 0; i < N; i++) {
+      if (region[i] !== SEA) continue;
+      const w = Math.max(0, map.shore[i] / 5 - (nearPort[i] ? .6 : 0));
+      seaWild[i] = w; seaBand[i] = w < SBW[0] ? 0 : w < SBW[1] ? 1 : w < SBW[2] ? 2 : 3;
+      seaBandCells[map.sea[i]][seaBand[i]].push(i);
+    }
+    const seas = (G.SEAS || []).map((t, k) => ({ idx: k, type: t.id, name: nm.sea(t), cells: map.seaCells[k].length }));
+    // Đảo có khu dân cư phải có bến, và bến phải nối được (theo tầng tàu của nó, chưa xét sức nhân vật) tới bến của khối đất khác.
+    // Vùng nước mỗi bến đi được theo từng loại tàu (h.comp[c]: thành phần liên thông của ô biển tầng ≤ maxBand của tàu c).
+    const comps = G.SHIPS.map(sh => label(i => seaBand[i] <= sh.maxBand)[0]);   // ô đất có seaBand 255 nên tự bị loại
+    for (const h of harbors) h.comp = comps.map(id => [...new Set(h.seaCells.map(i => id[i]).filter(v => v >= 0))]);
+    const linksOut = h => harbors.some(o => o.mass !== h.mass && o.comp[h.ship].some(v => h.comp[h.ship].includes(v)));
+    for (const [m, live2] of liveOn) {
+      const hs = harbors.filter(h => h.mass === m);
+      if (!hs.length) errors.push(`đảo có ${live2[0].name} mà không có bến`);
+      else if (!hs.some(linksOut)) errors.push(`bến ${hs[0].name} trên đảo không có hải trình tới khối đất khác`);
+    }
+    if (map.seaCells.some((cs, k) => !cs.length)) warnings.push('có vùng biển không có ô nào');
+
     // ── Kiểm tra (research/05 mục 12) ──
     for (const s of settlements) {
       const f = feat[s.cell];
@@ -582,10 +656,13 @@ window.LifeSim = window.LifeSim || {};
       pop: urbanTot + ruralTot, urban: urbanTot, urbanShare: urbanTot / Math.max(1, urbanTot + ruralTot),
       unclaimed: land.filter(i => owner[i] === NONE).length / land.length,
       bands: [0, 1, 2, 3].map(b => land.filter(i => feat[i] !== FE.lake && band[i] === b).length / land.length),
-      roads: [1, 2, 3].map(c => land.filter(i => road[i] === c).length), bridges: bridges.length, passes: passes.length
+      roads: [1, 2, 3].map(c => land.filter(i => road[i] === c).length), bridges: bridges.length, passes: passes.length,
+      harbors: [0, 1, 2].map(c => harbors.filter(h => h.ship === c).length), islands: liveOn.size,
+      seaBands: [0, 1, 2, 3].map(b => seaBandCells.reduce((a, bc) => a + bc[b].length, 0) / Math.max(1, N - land.length))
     };
     const byId = Object.fromEntries(settlements.map(s => [s.id, s]));
-    return { seed, nations, settlements, provinces, owner, provOf, wild, band, bandCells, road, roads, bridges, passes, byId, stats, check: { errors, warnings } };
+    return { seed, nations, settlements, provinces, owner, provOf, wild, band, bandCells, road, roads, bridges, passes, byId, stats, check: { errors, warnings },
+      mass, mainMass, harbors, seas, seaWild, seaBand, seaBandCells };
   };
 
   // ── Thế giới đang dùng ──
@@ -608,7 +685,11 @@ window.LifeSim = window.LifeSim || {};
   G.nationAtPos = (x, y) => { const c = G.map.at(x, y); return c ? G.nationAtCell(c.cell) : null; };
   G.provinceAtCell = i => { const p = G.realm.provOf[i]; return p >= 0 ? G.realm.provinces[p] : null; };
   // Ô săn được của một khu (vùng × tầng) trong thế giới đang dùng; khu đầu tiên có ô của một vùng.
-  G.zoneCells = zid => { const Z = G.ZONE[zid]; return Z && G.realm ? G.realm.bandCells[G.map.idx[Z.region.id]][Z.index] : []; };
+  G.zoneCells = zid => { const Z = G.ZONE[zid]; return !Z || !G.realm ? [] : Z.sea ? G.realm.seaBandCells[G.SEAS.indexOf(Z.region)][Z.index] : G.realm.bandCells[G.map.idx[Z.region.id]][Z.index]; };
+  // Tầng biển của một ô biển (thế giới đang dùng).
+  G.seaZoneAt = i => G.SEAS[G.map.sea[i]].zones[G.realm.seaBand[i]];
+  // Vùng biển gần một khu dân cư ven biển (ô biển đầu tiên của bến): ngư dân làm ở tầng ven bờ của nó, thủy thủ ở tầng khơi.
+  G.seaOf = s => s && s.seaCells ? G.SEAS[G.map.sea[s.seaCells[0]]] : null;
   G.firstZone = regionId => { const bc = G.realm.bandCells[G.map.idx[regionId]], i = bc.findIndex(a => a.length); return G.REGION[regionId].zones[Math.max(0, i)]; };
   G.popOf = s => s.urban + s.rural;
   // Chỗ ở trên bản đồ: trong khu (đô thị) hoặc một điểm ở vùng quê quanh khu, không rơi xuống nước.

@@ -1,5 +1,5 @@
 /* Vạn Kiếp — mở rộng bestiary của thư viện cho đại lục của game.
- * Thư viện có 6 vùng săn và 43 loài; đại lục cần thêm 10 loại địa hình. File này THÊM vùng và loài vào
+ * Thư viện có 6 vùng săn và 43 loài; đại lục cần thêm 10 loại địa hình và 7 vùng biển (loài biển cuối danh sách). File này THÊM vùng và loài vào
  * window.JobLibrary (cùng lược đồ species.js/biomes.js) trước khi gọi JobLibrary.bestiary(), nên mọi loài mới
  * đi qua đúng bộ kiểm tra của thư viện (họ, kiểu, cỡ, khí chất, marker không trùng).
  * Không sửa file trong library/: Skeleton Codex không thấy các loài này.
@@ -63,6 +63,23 @@ window.JobLibrary = window.JobLibrary || {};
         attack:'tám xúc tu quật xuống boong theo nhịp', marker:'tám xúc tu giác hút phát lân quang', loot:['ma hạch','mực đen'], habitat:['serpent_bay'] }),
     S({ id:'leviathan',    family:'dragon', nameEn:'Leviathan', nameVi:'Thủy Quái Leviathan', tier:5, size:'XL', behavior:'charger', aspect:'tide', hp:2, dmg:1.5, spawn:false,
         attack:'nuốt cả sóng, đánh chìm đảo nhỏ', marker:'hàm dưới như vách đá + mắt to bằng thuyền', loot:['vảy','máu rồng'], habitat:['serpent_bay'], note:'Chúa vùng; chỉ xuất hiện qua sự kiện.' }),
+    // Biển (research/03 mục 7.2). Habitat là biome đất giáp bờ của vùng biển (G.SEAS[].biome).
+    S({ id:'lantern_jelly', family:'ooze', nameEn:'Lantern Jelly', nameVi:'Sứa Đèn', tier:0, size:'M', behavior:'flyer', aspect:'tide', hp:.7, group:[2,4],
+        attack:'trôi sát mạn rồi quấn tua gây tê', marker:'chuông trong suốt có đốm sáng xanh bên trong', loot:['dịch nhầy','túi độc'], habitat:['mist_coast','red_desert'] }),
+    S({ id:'thunder_eel',  family:'beast', nameEn:'Thunder Eel', nameVi:'Cá Chình Điện', tier:1, size:'M', behavior:'ambusher', aspect:'storm', group:[1,2],
+        attack:'trồi khỏi hốc đá quấn chân rồi phóng điện', marker:'thân đen có vạch vàng phát sáng dọc sườn', loot:['da','tinh thể nguyên tố'], habitat:['mist_coast','storm_spire'] }),
+    S({ id:'fang_seal',    family:'beast', nameEn:'Fanged Seal', nameVi:'Hải Cẩu Nanh', tier:1, size:'M', behavior:'chaser', aspect:'frost', group:[2,4],
+        attack:'trườn lên tảng băng rồi cắn kéo xuống nước', marker:'hai nanh dài như hải mã + lông xám đốm trắng', loot:['da','nanh'], habitat:['frost_tundra'] }),
+    S({ id:'stoneback_turtle', family:'beast', nameEn:'Stoneback Turtle', nameVi:'Rùa Lưng Đá', tier:2, size:'L', behavior:'pacer', aspect:'stone', hp:1.4, speed:.7,
+        attack:'húc mai đá vào mạn thuyền cho tới khi nứt', marker:'mai là tảng đá phủ hà và san hô đỏ', loot:['vỏ giáp','da'], habitat:['red_desert','ash_peak'] }),
+    S({ id:'giant_squid',  family:'magical_beast', nameEn:'Colossal Squid', nameVi:'Mực Khổng Lồ', tier:3, size:'XL', behavior:'rooted', aspect:'tide', hp:1.1,
+        attack:'phun mực đen rồi kéo người khỏi boong bằng tua dài', marker:'hai tua dài gấp ba thân + mắt vàng to như khiên', loot:['ma hạch','mực đen'], habitat:['mist_coast','serpent_bay','frost_tundra'] }),
+    S({ id:'frost_sea_dragon', family:'dragon', nameEn:'Frost Sea Dragon', nameVi:'Hải Long Băng', tier:4, size:'XL', behavior:'spitter', aspect:'frost', hp:1.2,
+        attack:'phun hơi băng đóng cứng mặt biển quanh thuyền', marker:'mào băng trong suốt + vảy trắng ánh lam', loot:['vảy','máu rồng'], habitat:['frost_tundra'] }),
+    S({ id:'ghost_ship',   family:'spirit', nameEn:'Ghost Ship', nameVi:'Tàu Ma', tier:4, size:'XL', behavior:'flyer', aspect:'death',
+        attack:'áp mạn trong sương rồi thả thủy thủ hồn sang boong', marker:'buồm rách phát lân quang + đèn lồng xanh ở mũi', loot:['hồn tinh','đồng xu muối'], habitat:['mist_coast','ash_peak','red_desert','abyss_rift'] }),
+    S({ id:'bone_whale',   family:'undead', nameEn:'Bone Whale', nameVi:'Cá Voi Xương', tier:5, size:'XL', behavior:'charger', aspect:'death', hp:1.5, dmg:1.2,
+        attack:'lao từ dưới lên đập gãy đôi thân tàu', marker:'bộ xương cá voi còn dính thịt + ánh xanh trong hốc mắt', loot:['xương cũ','tro mộ'], habitat:['serpent_bay','abyss_rift','storm_spire'] }),
     // Băng Nguyên
     S({ id:'frost_wolf',   family:'beast', nameEn:'Frost Wolf', nameVi:'Sói Băng', tier:1, size:'M', behavior:'chaser', aspect:'frost', speed:1.2, group:[2,4],
         attack:'cắn kéo chân gây Lạnh', marker:'lông trắng đóng băng ở mõm + mắt xanh băng', loot:['da','nanh'], habitat:['frost_tundra'] }),

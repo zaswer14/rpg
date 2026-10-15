@@ -41,6 +41,8 @@ window.LifeSim = window.LifeSim || {};
     let m = (1 - G.taxRate(S)) * (a === 'fav' ? 1.1 : a === 'wary' ? .85 : 1);
     if (G.RACES[S.race].construct && n && !n.laws.includes('construct_citizen')) m *= .8;
     if (S.work === 'adventurer') m *= (bldOf(S).includes('guild') ? 1 : .6) * (n && n.laws.includes('bounties') ? 1.15 : 1);
+    // Thuế cảng: tàu ghé cảng nộp phí, dân cảng giàu thêm.
+    if (n && n.laws.includes('sea_toll') && G.here(S).s && G.here(S).s.roles.includes('port') && S.urban) m *= 1.1;
     return m;
   };
 
@@ -64,6 +66,16 @@ window.LifeSim = window.LifeSim || {};
     return true;
   };
   G.workFee = (S, id) => G.WORKS[id] && G.WORKS[id].guild && G.lawHere(S, 'guild_monopoly') ? 25 : 0;
+
+  // ── Nghề biển (research/03 mục 7.3): ngư dân ở tầng ven bờ, thủy thủ ở tầng khơi của vùng biển trước bến nhà.
+  // Không sống ở bến (làng chài ven sông, ven hồ) thì không làm trên biển. Trả về { sea, zone, cell } hoặc null.
+  G.seaWork = S => {
+    const W = G.WORKS[S.work], s = G.here(S).s;
+    if (!W || W.seaBand == null || !s || !s.seaCells) return null;
+    const sea = G.seaOf(s), zone = sea.zones[W.seaBand];
+    const cell = s.seaCells.find(i => G.realm.seaBand[i] === W.seaBand) ?? null;
+    return { sea, zone, cell };
+  };
 
   // ── Bị bắt: lần đầu phạt bạc; tái phạm: giam (hoặc khổ sai nếu nước có luật khổ sai); lần thứ ba: treo cổ (nước không có khổ sai) ──
   G.caught = function (X, n, what) {

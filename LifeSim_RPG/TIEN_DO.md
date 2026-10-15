@@ -1,8 +1,8 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** `49666d9` (bước 5) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 15/10/2026 · **Commit mới nhất của bản đồ V2:** bước 6 (biển) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
-Đang làm **bản đồ V2** theo `research/03_Thiet_ke_ban_do_Varen_V2.md` (thứ tự làm ở mục 12). Đã xong bước 1–5; **việc tiếp theo là bước 6: biển**.
+Đang làm **bản đồ V2** theo `research/03_Thiet_ke_ban_do_Varen_V2.md` (thứ tự làm ở mục 12). Đã xong bước 1–6; **việc tiếp theo là bước 7: quốc gia động**.
 
 ## 1. Đã xong
 
@@ -14,6 +14,9 @@
 | 3 | 4 tầng nguy hiểm (thêm vùng chết) theo độ hoang; trận theo ô + địa hình; chế độ xem Nguy hiểm | `7f5ec62` | 03 mục 3.6 |
 | 4 | Công trình → nghề, sức khỏe, học; thuế, thái độ chủng tộc; 21/22 luật | `470d291` | 03 mục 5.6 |
 | 5 | Đường, cầu, đèo; hành trình A*, trạm biên giới, hộ tống | `49666d9` | 03 mục 6.5 |
+| 6 | 7 vùng biển × 4 tầng, 8 loài biển, bến và 3 loại tàu, hải trình A*, đi tàu (bão, đắm tàu, cướp biển, cách ly, thuế cảng), nghề biển theo tầng, đảo Hải Xà tách hẳn; chế độ xem Biển | (bước 6) | 03 mục 7.4 |
+
+Bước 6 đổi nhẹ bản đồ đất (eo biển quanh đảo) nên thế giới `can-bang` giờ ra 7 nước, 163 khu dân cư; số đo bước 1–5 trong research là của bản đồ cũ.
 
 Trang duyệt (claude.ai, lưu quyết định trong db, collection `reviews`):
 
@@ -24,39 +27,41 @@ Trang duyệt (claude.ai, lưu quyết định trong db, collection `reviews`):
 
 | File | Vai trò |
 |---|---|
-| `data/world.js` | chủng tộc, tầng lớp, sinh kế (`G.WORKS`: bld / role / town / land / guild / banLaw), 16 vùng × 4 khu, `G.TERRAIN` (lệch độ cao / ẩm / nhiệt, `no`, `wild`), `G.FEATURES`, `G.FEATURE_SPAWN`, `G.BAND_W`, nguyên nhân chết, `validateWorld` |
-| `data/ecology.js` | 10 biome + 36 loài thêm vào bestiary thư viện (lược đồ: id, family, nameEn, nameVi, tier, size, behavior, aspect, hp, group, attack, marker không trùng, loot, habitat) |
+| `data/world.js` | chủng tộc, tầng lớp, sinh kế (`G.WORKS`: bld / role / town / land / guild / banLaw / seaBand), 16 vùng × 4 khu, **`G.SEAS` (7 vùng biển × 4 tầng, thời tiết), `G.SEA_BAND_W`, `G.SHIPS`**, `G.TERRAIN` (lệch độ cao / ẩm / nhiệt, `no`, `wild`), `G.FEATURES`, `G.FEATURE_SPAWN`, `G.BAND_W`, nguyên nhân chết (có `shipwreck`), `validateWorld` (kiểm cả vùng đất và vùng biển) |
+| `data/ecology.js` | 10 biome + 44 loài thêm vào bestiary thư viện (8 loài biển cuối danh sách) |
 | `data/nations.js` | `G.GOVS`, `G.LAWS`, `G.RACE_SETTLE`, `G.BUILDINGS`, `G.NATION_TEMPLATES` (50), `G.QUIRKS` |
 | `data/names.js` | kho tên `G.NAMES` |
-| `js/map.js` | `G.buildMap` (raster 300 × 225, ô 4px), `G.minHeap`, `G.renderMapBase(map, mode, realm, opt)` (region / terrain / political / danger), `G.renderRoads`, `G.drawMap` |
-| `js/realm.js` | `G.buildRealm(map, seed)` → nước, khu dân cư (`s.bld`, `s.roles`), tỉnh, đường (`road`, `roads`, `bridges`, `passes`), độ hoang (`wild`, `band`, `bandCells`); `G.useWorld(seed)`, `G.SET`, `G.settlementsIn`, `G.mainSettlement`, `G.zoneCells`, `G.firstZone`, `G.homePos`, `G.nationAtPos`, `G.personName` |
-| `js/life.js` | `Sim`: newLife (sinh ở khu dân cư, thành thị / nông thôn), endYear, deathProb, pickCause, zonesFor, encounterTable (Tier ≤ t + 1, nhân `FEATURE_SPAWN`), rollEncounter (theo ô), hunt, fight |
-| `js/systems.js` | hệ con cuối năm: world (mật độ quái 4 tầng, dịch, chiến tranh vùng), family, health, undead, career, **law** (thêm từ state.js), place, peers |
+| `js/map.js` | `G.buildMap` (raster 300 × 225, ô 4px; eo biển quanh đảo; `map.sea` vùng biển từng ô, `map.seaLabel`, `map.seaAt`), `G.minHeap`, `G.renderMapBase(map, mode, realm, opt)` (region / terrain / political / danger / sea), `G.renderRoads`, `G.drawMap` (bến, tên vùng biển, hải trình ở chế độ Biển) |
+| `js/realm.js` | `G.buildRealm(map, seed)` → nước, khu dân cư (`s.bld`, `s.roles`; bến: `s.ship`, `s.seaCells`, `s.mass`, `s.comp`), tỉnh, đường, độ hoang (`wild`, `band`, `bandCells`), **biển (`mass`, `mainMass`, `harbors`, `seas`, `seaWild`, `seaBand`, `seaBandCells`)**; `G.useWorld(seed)`, `G.SET`, `G.settlementsIn`, `G.mainSettlement`, `G.zoneCells` (cả tầng biển), `G.seaZoneAt`, `G.seaOf`, `G.firstZone`, `G.homePos`, `G.nationAtPos`, `G.personName` |
+| `js/life.js` | `Sim`: newLife, endYear, deathProb, pickCause, zonesFor, encounterTable (Tier ≤ t + 1, nhân `FEATURE_SPAWN`), rollEncounter (theo ô, cả ô biển), hunt, fight, workYear (nghề biển); `G.ZONE` có cả tầng biển (`sea: true`), `G.SEA` |
+| `js/systems.js` | hệ con cuối năm: world (mật độ quái 4 tầng, mật độ quái biển, dịch, chiến tranh vùng), family, health, undead, career, **law** (thêm từ state.js), place, peers |
 | `js/events.js` | sự kiện, quyết định (work, migrate…) |
-| `js/state.js` | `G.here`, `G.lawHere`, `G.attitude`, hệ số công trình, `G.incomeMult`, `G.workOK`, `G.workFee`, `G.caught`, `G.deport`, `G.lawYear`, quyết định nghĩa vụ, 8 sự kiện luật |
-| `js/travel.js` | `G.findRoute` (A*, bảng chi phí tính sẵn `realm._tc`), `G.planTrip`, `G.moveTo` (hành trình, trạm, hộ tống, đi thuyền theo `G.SEA_ROUTES`) |
-| `js/ui.js` | giao diện; bản lưu `vankiep.save.v3`, mộ `vankiep.graves.v3`, thế giới `vankiep.world.v1` |
-| `sim.html` | 1000 đời headless + kiểm dữ liệu + tóm tắt thế giới; nút Thử nhiều thế giới |
+| `js/state.js` | `G.here`, `G.lawHere`, `G.attitude`, hệ số công trình, `G.incomeMult` (có thuế cảng), `G.workOK`, `G.workFee`, `G.seaWork`, `G.caught`, `G.deport`, `G.lawYear`, quyết định nghĩa vụ, 8 sự kiện luật |
+| `js/travel.js` | A* chung (`g` phải là Float64), `G.findRoute` (đường bộ, bảng chi phí `realm._tc`), `G.findSeaRoute` (hải trình, cache `realm._sea`), `G.planTrip` (bộ hoặc đất → bến → biển → bến → đất), `G.tripText`, `G.moveTo` (đi bộ, đi tàu: quái biển, bão, đắm tàu, cướp biển, cách ly, thuế cảng), `G.seaLinesFrom` |
+| `js/ui.js` | giao diện; bản lưu `vankiep.save.v3`, mộ `vankiep.graves.v3`, thế giới `vankiep.world.v1`; chú giải bản đồ theo chế độ (`LEGEND`) |
+| `sim.html` | 1000 đời headless + kiểm dữ liệu + tóm tắt thế giới + bảng Đi biển; nút Thử nhiều thế giới; `?noauto` chỉ nạp, không tự chạy |
 
-## 3. Bước 6: biển (việc tiếp theo)
+## 3. Bước 7: quốc gia động (việc tiếp theo)
 
-Thiết kế: `research/03` mục 7 (vùng biển 7.1, loài 7.2, tàu và hải trình 7.3) và tầng 4 ở 3.4. Kế hoạch đề xuất:
+Thiết kế: `research/03` mục 5.3 (sức mạnh, ổn định, tuyên chiến, diễn biến, nổi loạn, sáp nhập, diệt vong, sử biên niên), 3.5 (mật độ quái theo tỉnh × tầng), 3.3 cuối (văn minh lan, hoang dã lấn), mục 11 (save). Kế hoạch đề xuất:
 
-1. **Loài biển mới** trong `data/ecology.js`, đủ lược đồ bestiary (attack, marker không trùng, loot, habitat): Sứa Đèn T0, Cá Chình Điện T1, Hải Cẩu Nanh T1, Rùa Lưng Đá T2, Mực Khổng Lồ T3, Hải Long Băng T4, Cá Voi Xương T5 (nháp ở 03 mục 7.2). Cá Voi Xương lấp chỗ thiếu T5 của `hai_xa_3`; nên thêm một họ nữa cho `hac_uyen_3` (đang chỉ 1 họ). Có thể cần biome biển mới trong `ecology.js` cho bestiary.
-2. **Vùng biển**: 7 điểm neo trên biển (Voronoi chỉ trên ô biển, `map.region === 255`); tên từ `G.NAMES.geo.sea`; mỗi vùng biển 4 tầng theo độ hoang biển `w = map.shore / 5 − (gần cảng ? .6 : 0)` (03 mục 7.1; `map.shore` đã có, trần 40). Bảng loài theo kiểu vùng biển, kiểm như khu đất trong `validateWorld` (`hi − lo ≤ 2`, có loài cho mọi Tier vào được).
-3. **Cảng và tàu**: cảng = khu dân cư có vai trò `port`; ba loại tàu (thuyền chài ven bờ; tàu buôn ven bờ + khơi ở thị trấn trở lên; tàu viễn dương tới tầng sâu ở thủ đô ven biển, nước có đặc tính Tàu lá E4 hoặc đặc trưng Cảng lớn). Hải trình A* trên ô biển, tránh tầng tàu không vào được và tầng bị khóa với nhân vật.
-4. **Hành trình qua biển** trong `js/travel.js`: thay tuyến biển cố định `G.SEA_ROUTES` bằng hải trình tự sinh; chuyến đi = đất → cảng → biển → cảng → đất khi rẻ hơn hoặc khi đích là đảo; gặp quái theo tầng biển; sự kiện bão (theo mùa, vùng biển), cướp biển (nhiều hơn gần nước có `raid_law`, M4 Liên Minh Cướp Biển), đắm tàu dạt vào bờ.
-5. **Đời người**: ngư dân rủi ro theo tầng biển ven bờ gần nhất, thủy thủ theo tầng khơi; luật `sea_toll` (phí cập cảng, cảng giàu hơn); nguyên nhân chết đắm tàu.
-6. **Giao diện**: chế độ xem Biển (vùng biển, tầng, hải trình từ cảng gần nhất), hoặc gộp vào Nguy hiểm; tooltip ô biển.
-7. **Kiểm tra**: `sim.html` 1000 đời (0 trận vượt Tier + 1, chết trên biển), 100 thế giới (0 lỗi), ghi kết quả vào `research/03` mục 7.4 và đánh ✓ bước 6 ở mục 12; cập nhật `README.md` và file này.
+1. **Trạng thái động trong `S.world`**: chủ từng tỉnh, ổn định, chiến tranh / hưu chiến giữa các nước, trạng thái khu dân cư (`hp`, `dwindling`, phế tích), sử biên niên (300 dòng cuối). Thế giới tĩnh vẫn dựng từ seed; đời chỉ lưu phần đổi.
+2. **Hệ con `nations`** trong `js/systems.js` (sau `world`): sức mạnh, ổn định, tuyên chiến giữa nước giáp nhau (chung biên tỉnh, hoặc hai cảng có hải trình: dùng `harbors` + `comp` của bước 6), diễn biến, chiếm tỉnh, hưu chiến, nổi loạn, sáp nhập đất vô chủ, diệt vong, lan can 3–9 nước. Thay chiến tranh theo vùng hiện tại (`rs.war`) bằng chiến tranh theo tỉnh.
+3. **Đổi chủ tỉnh → bản đồ**: `owner` theo tỉnh, vẽ lại Chính trị; luật, thuế, thái độ theo nước mới (`G.here`).
+4. **Khu dân cư sụp / lập**: thú triều, chiến tranh làm giảm `hp`; sụp thành phế tích; làng mới mọc ven sông. **Độ hoang động**: tính lại nguồn văn minh của khu đổi trạng thái (cache theo nguồn, `research/03` mục 3.3), đường xuống cấp khi làng bỏ hoang trên 20 năm.
+5. **Mật độ quái theo tỉnh × tầng** (khóa `tinh:ven`…), thú triều đánh khu dân cư của tỉnh.
+6. **Đời người**: lính nghĩa vụ chết trận khi tỉnh là tiền tuyến, sự kiện quê đổi chủ, nổi loạn, vua băng hà; thẻ Biên niên sử trên giao diện.
+7. **Kiểm tra**: `sim.html` thêm số đo của mục 10 (số nước sau 300 năm trung vị 5–7, tỉnh đổi chủ 3–8 / 100 năm, khu dân cư sụp / lập 1–3 / 100 năm); 1000 đời (0 trận vượt Tier + 1), 100 thế giới (0 lỗi); ghi vào `research/03` mục 5.7 mới, đánh ✓ bước 7; cập nhật `README.md` và file này.
 
-Sau bước 6: bước 7 quốc gia động, 8 hang ổ / di tích, 9 lập làng / lập nước, 10 sự kiện cho đặc tính và đặc trưng (bảng ở 03 mục 12).
+Sau bước 7: bước 8 hang ổ / di tích, 9 lập làng / lập nước, 10 sự kiện cho đặc tính và đặc trưng (bảng ở 03 mục 12).
 
 ## 4. Việc lẻ đang treo
 
 - Người dùng từng nói muốn chỉnh bản đồ Địa hình nhưng chưa nói chỉnh gì (ngưỡng ở `G.MAP_TH` trong `js/map.js`, lệch biome ở `G.TERRAIN`).
 - Trang Duyệt Mẫu Quốc Gia chưa có đánh dấu.
-- Cảnh báo dữ liệu: `hai_xa_3`, `hac_uyen_3` chỉ một họ quái.
+- **Vũng biển kín** trong lục địa (từ bước 1): bến ở đó không có hải trình. Giữ là biển hay đổi thành hồ (đổi thì sông, độ ẩm đổi theo).
+- Ít người đi tàu (2,2% đời): đi biển 0,6 mỗi ô theo thiết kế, chỉ rẻ hơn đường bộ khi phải vòng xa. Nếu muốn biển quan trọng hơn thì hạ chi phí ô biển hoặc cho thương nhân, thủy thủ đi tàu khi di cư.
+- Thiếu loài T5 cho vùng chết sa mạc và đầm (03 mục 13).
 - ~40 cảnh báo "đất chật" trên 100 thế giới (nước bị kẹp không đặt đủ làng / thôn / thị trấn).
 - Mật độ quái vẫn theo vùng × tầng (thiết kế muốn tỉnh × tầng, làm ở bước 7). Bảng loài khai theo vùng, chưa tách sang biome.
 - Còn chốt ở 03 mục 13 (duyệt tên, biome cố định hay theo seed, lập nước chọn mẫu chủng tộc khác).
@@ -64,8 +69,9 @@ Sau bước 6: bước 7 quốc gia động, 8 hang ổ / di tích, 9 lập làn
 
 ## 5. Cách làm việc đã dùng
 
-- **Mỗi bước**: code → mở `sim.html` (1000 đời, thế giới `can-bang`) → luật Tier phải là "không trận nào quá Tier + 1"; xem tỉ lệ trỗi dậy (~20%), chết vì quái (~10%), sinh kế, bảng luật / hành trình → thử 100 thế giới (0 lỗi) → ghi kết quả + chỗ khác thiết kế vào `research/03` → cập nhật `README.md` → hỏi người dùng trước khi commit; commit message tiếng Việt, kết bằng dòng Co-Authored-By; push lên `github` (`main` theo dõi `github/main`).
-- **Chạy**: cấu hình `vankiep` trong `.claude/launch.json` (server tĩnh PowerShell cổng 8765); game `http://localhost:8765/LifeSim_RPG/index.html?world=<seed>`, sim `.../sim.html`.
-- **Trình duyệt trong app**: lệnh JS chạy lâu hơn ~10 giây báo lỗi hoặc treo tab; tab chạy ngầm bị hãm bộ đếm giờ. Thử nhiều thế giới thì gọi `G.buildRealm` theo đợt ~10 thế giới mỗi lệnh. Nhớ đặt lại kích thước khung (preset desktop) sau khi phóng to.
-- **Sửa file**: file trong repo dùng CRLF (git `core.autocrlf=true`); khi chèn bằng perl/heredoc cẩn thận `$(`… bị shell thay; Python không có trên máy, `cscript` (JScript) kiểm được cú pháp file dữ liệu ES3.
+- **Mỗi bước**: code → mở `sim.html` (1000 đời, thế giới `can-bang`) → luật Tier phải là "không trận nào quá Tier + 1"; xem tỉ lệ trỗi dậy (~20%), chết vì quái (~10%), sinh kế, bảng luật / hành trình / đi biển → thử 100 thế giới (0 lỗi) → ghi kết quả + chỗ khác thiết kế vào `research/03` → cập nhật `README.md` → hỏi người dùng trước khi commit; commit message tiếng Việt, kết bằng dòng Co-Authored-By; push lên `github` (`main` theo dõi `github/main`).
+- **Chạy**: cấu hình `vankiep` trong `.claude/launch.json` (server tĩnh PowerShell cổng 8765); nếu phiên khác đang giữ cổng đó thì dùng `vankiep-2` (cổng 8766; công cụ có thể báo cổng khác, cứ mở thẳng `http://localhost:8766/...`). Game `http://localhost:8765/LifeSim_RPG/index.html?world=<seed>`, sim `.../sim.html`, `.../sim.html?noauto` để thử từng phần trong console.
+- **Trình duyệt trong app**: lệnh JS chạy lâu hơn ~10 giây báo lỗi ("Internal error") hoặc treo tab; tab chạy ngầm bị hãm bộ đếm giờ. Thử nhiều thế giới thì gọi `G.buildRealm` theo đợt ~10–25 thế giới mỗi lệnh. Lệnh bị ngắt giữa chừng có thể để bộ đệm A* bẩn: nạp lại trang trước khi đo tiếp. Ảnh chụp nhỏ thì tạm cho canvas `#map` phủ toàn trang bằng `style.cssText`. Nhớ đặt lại kích thước khung (preset desktop) sau khi phóng to.
+- **Sửa file**: file trong repo dùng CRLF trong thư mục làm việc (git `core.autocrlf=true`, index LF); perl với chữ tiếng Việt trong mẫu thì **không** dùng `-CSD` (khớp theo byte); khi chèn bằng perl/heredoc cẩn thận `$(`… bị shell thay; Python, Node không có trên máy, `cscript` (JScript) kiểm được cú pháp file dữ liệu ES3.
+- **A\***: mảng chi phí đã đi phải là `Float64Array` (xem 03 mục 7.4).
 - **Không sửa** `library/`. Văn bản tiếng Việt tự nhiên (skill viết tiếng Việt), không dùng gạch ngang dài trong văn xuôi.

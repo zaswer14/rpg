@@ -25,12 +25,15 @@ window.LifeSim = window.LifeSim || {};
     // Bảng khu của game là nguồn sự thật về nơi ở: ghi biome của vùng vào habitat (trong bộ nhớ) cho loài thư viện
     // được thả vào vùng mới, để bộ kiểm tra bestiary thấy đúng sinh thái. Không sửa file thư viện.
     const sp = Object.fromEntries(J.species.map(s => [s.id, s]));
-    for (const r of G.REGIONS) for (const z of r.zones) for (const id of Object.keys(z.spawns))
+    for (const r of [...G.REGIONS, ...G.SEAS]) for (const z of r.zones) for (const id of Object.keys(z.spawns))
       if (sp[id] && !sp[id].habitat.includes(r.biome)) sp[id].habitat = [...sp[id].habitat, r.biome];
     G.B = J.bestiary();
     G.REGION = Object.fromEntries(G.REGIONS.map(r => [r.id, r]));
+    G.SEA = Object.fromEntries(G.SEAS.map(r => [r.id, r]));
+    // Khu (tầng) đất và biển chung một bảng tra; tầng biển có sea: true, region là kiểu vùng biển.
     G.ZONE = {};
     for (const r of G.REGIONS) r.zones.forEach((z, i) => { G.ZONE[z.id] = { zone: z, region: r, index: i }; });
+    for (const r of G.SEAS) r.zones.forEach((z, i) => { G.ZONE[z.id] = { zone: z, region: r, index: i, sea: true }; });
     G.jobs = J.compose({ races: Object.keys(J.races) });
     G.MASTERY = {};
     for (const [sid, sc] of Object.entries(J.schools)) for (const m of sc.masteries) G.MASTERY[m] = sid;
@@ -315,7 +318,7 @@ window.LifeSim = window.LifeSim || {};
 
     newWorld() {
       const zonePop = {};
-      for (const r of G.REGIONS) for (const z of r.zones) zonePop[z.id] = +(0.85 + this.rnd() * .35).toFixed(3);
+      for (const r of [...G.REGIONS, ...G.SEAS]) for (const z of r.zones) zonePop[z.id] = +(0.85 + this.rnd() * .35).toFixed(3);
       const regions = Object.fromEntries(G.REGIONS.map(r => [r.id, { plague: 0, war: 0, raid: 0 }]));
       return { year: 1000 + this.int(120, 380), zonePop, regions, wars: [], lordSeen: {} };
     }
@@ -467,6 +470,8 @@ window.LifeSim = window.LifeSim || {};
         if (c.magic) w *= .5 + reg.magic * 2;
         if (id === 'bandit') w *= (.3 + reg.danger + reg.gini * .5) * (G.attitude(S) === 'wary' ? 1.5 : 1);
         if (id === 'drown') w *= reg.coastal ? 2 : .7;
+        if (c.sea) { const hs = G.here(S).s; w *= S.work === 'sailor' ? 1 : S.work === 'fisher' ? .5 : hs && hs.seaCells ? .15 : 0; if (!w) continue; }
+        if ((id === 'drown' || id === 'shipwreck') && W.seaBand != null) { const sw = G.seaWork(S); if (sw) w *= 1 + .3 * sw.zone.tier[0]; }
         if (W.cause === id) w = w * 3 + 6;
         if (id === 'hanged' && S.work === 'thief') w = 12;
         if (id === 'purge' && S.flags.revealed) w *= 2;
@@ -629,7 +634,13 @@ window.LifeSim = window.LifeSim || {};
       this.money(G.incomeAt(reg, S.pct) * share * G.incomeMult(S));
       for (const [m, v] of Object.entries(W.trains)) this.gain(m, v * share);
       this.addXp(20 * share);
-      if (this.rnd() < .05 * W.risk * share) { this.add('hl', -this.int(5, 18)); this.log(`Tai nạn khi làm ${W.nameVi.toLowerCase()}.`, 'bad'); }
+      // Nghề biển: rủi ro theo Tier thấp nhất của tầng biển nơi làm; thỉnh thoảng gặp quái biển (vẫn qua luật Tier của encounterTable).
+      const sw = G.seaWork(S), risk = W.risk * (sw ? 1 + .25 * sw.zone.tier[0] : 1);
+      if (this.rnd() < .05 * risk * share) { this.add('hl', -this.int(5, 18)); this.log(`Tai nạn khi làm ${W.nameVi.toLowerCase()}${sw ? ' trên ' + G.realm.seas[G.SEAS.indexOf(sw.sea)].name : ''}.`, 'bad'); }
+      if (sw && this.rnd() < .1 * share * (S.world.zonePop[sw.zone.id] ?? 1)) {
+        const enc = this.rollEncounter(sw.zone, sw.cell != null ? { cell: sw.cell } : {});
+        if (enc) this.fight(enc, false);
+      }
     }
   }
   G.Sim = Sim;

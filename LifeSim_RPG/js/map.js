@@ -6,6 +6,7 @@
  *   SÔNG   priority-flood từ bờ biển → mỗi ô có ô hạ lưu (recv); dồn nước mưa theo độ ẩm; ô đủ lưu lượng là sông.
  *   HỒ     chỗ trũng bị lấp khi flood mà có sông chảy qua.
  *   ĐẶC TRƯNG mỗi ô một trong G.FEATURES (đồng trống, đồi, rừng, rừng rậm, đầm, núi, hồ).
+ *   BIỂN   ô biển chia 7 vùng biển theo điểm neo (G.SEAS); tầng biển theo độ hoang biển tính ở realm.js.
  * Bản đồ hoàn toàn suy ra từ G.REGIONS + G.TERRAIN + seed cố định, nên không cần lưu.
  */
 window.LifeSim = window.LifeSim || {};
@@ -58,13 +59,14 @@ window.LifeSim = window.LifeSim || {};
       // Bẻ cong hai tầng: tầng lớn làm biên vùng uốn lượn, tầng nhỏ làm răng cưa.
       const wx = px + (warp(px / 150, py / 150) - .5) * 190 + (warp(px / 45 + 5.1, py / 45 + 9.3) - .5) * 46;
       const wy = py + (warp(px / 150 + 31.7, py / 150 + 17.3) - .5) * 190 + (warp(px / 45 + 13.7, py / 45 + 2.9) - .5) * 46;
-      let best = Infinity, bi = -1;
-      for (let k = 0; k < R.length; k++) { const d = Math.hypot(wx - R[k].x, wy - R[k].y) / R[k].r; if (d < best) { best = d; bi = k; } }
+      let best = Infinity, bi = -1, isl = Infinity;
+      for (let k = 0; k < R.length; k++) { const d = Math.hypot(wx - R[k].x, wy - R[k].y) / R[k].r; if (d < best) { best = d; bi = k; } if (R[k].island && d < isl) isl = d; }
       // Ngưỡng bờ > 1 để lấp eo biển giữa các vùng; sát mép khung thì chìm xuống biển.
       const edge = Math.min(px, py, W * CS - px, H * CS - py);
       const coast = 1.22 + (coastN(px / 70 + 7, py / 70 + 3, 4) - .5) * .8 - Math.max(0, (36 - edge) / 36) * .9;
       hraw[i] = hN(px / 70, py / 70, 4);
-      if (best < coast && !(R[bi].island && best > 1.0)) { region[i] = bi; inland[i] = G.clamp(1 - best / coast, 0, 1); }
+      // Đảo: chỉ phần trong bán kính của vùng đảo; đất vùng khác lùi ra ngoài 1,32 bán kính đảo, để lại eo biển (chỉ đi tàu).
+      if (best < coast && !(R[bi].island && best > 1.0) && !(!R[bi].island && isl < 1.32)) { region[i] = bi; inland[i] = G.clamp(1 - best / coast, 0, 1); }
     }
     const land = []; for (let i = 0; i < N; i++) if (region[i] !== SEA) land.push(i);
 
@@ -192,7 +194,29 @@ window.LifeSim = window.LifeSim || {};
     // Sông không chảy trong lòng hồ.
     for (const i of land) if (lake[i]) river[i] = 0;
 
-    // ── Kề nhau: hai ô đất cạnh nhau khác vùng. Thêm tuyến biển ──
+    // ── Vùng biển (research/03 mục 7.1): ô biển thuộc điểm neo gần nhất (chia trọng số r), bẻ cong bằng noise như biên vùng đất ──
+    const SE = G.SEAS || [], sea = new Uint8Array(N).fill(SEA), seaCells = SE.map(() => []);
+    for (let i = 0; i < N; i++) {
+      if (region[i] !== SEA) continue;
+      const x = i % W, y = (i - x) / W, px = (x + .5) * CS, py = (y + .5) * CS;
+      const wx = px + (warp(px / 160 + 51.3, py / 160 + 7.7) - .5) * 170, wy = py + (warp(px / 160 + 3.1, py / 160 + 63.9) - .5) * 170;
+      let best = Infinity, bk = 0;
+      for (let k = 0; k < SE.length; k++) { const d = Math.hypot(wx - SE[k].anchor[0], wy - SE[k].anchor[1]) / SE[k].r; if (d < best) { best = d; bk = k; } }
+      sea[i] = bk; seaCells[bk].push(i);
+    }
+    // Vùng đất giáp mỗi vùng biển; chỗ đặt tên vùng biển: tâm các ô cách bờ 3–12 ô, kéo về ô gần nhất.
+    const seaShore = SE.map(() => new Set());
+    for (const i of coastLand) { const x = i % W, y = (i - x) / W; for (const [ox, oy] of N8) { const nx = x + ox, ny = y + oy; if (inb(nx, ny) && sea[ny * W + nx] !== SEA) seaShore[sea[ny * W + nx]].add(region[i]); } }
+    const seaLabel = seaCells.map(cs => {
+      const mid = cs.filter(i => shore[i] >= 3 && shore[i] <= 12), use = mid.length ? mid : cs;
+      if (!use.length) return null;
+      let sx = 0, sy = 0; for (const i of use) { sx += i % W; sy += Math.floor(i / W); }
+      const cx = sx / use.length, cy = sy / use.length;
+      let bi = use[0], bd = Infinity; for (const i of use) { const d = Math.hypot(i % W - cx, Math.floor(i / W) - cy); if (d < bd) { bd = d; bi = i; } }
+      return [(bi % W + .5) * CS, (Math.floor(bi / W) + .5) * CS];
+    });
+
+    // ── Kề nhau: hai ô đất cạnh nhau khác vùng. Đảo (không kề vùng đất nào) kề các vùng có bờ cách bờ đảo ≤ 30 ô ──
     const adj = R.map(() => new Set());
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const a = region[y * W + x]; if (a === SEA) continue;
@@ -203,7 +227,15 @@ window.LifeSim = window.LifeSim || {};
       }
     }
     const idx = Object.fromEntries(R.map((r, k) => [r.id, k]));
-    for (const [a, b] of G.SEA_ROUTES || []) { adj[idx[a]].add(idx[b]); adj[idx[b]].add(idx[a]); }
+    R.forEach((r, k) => {
+      if (!r.island || adj[k].size) return;
+      const mine = coastLand.filter(i => region[i] === k), xy = i => [i % W, Math.floor(i / W)];
+      for (const j of coastLand) {
+        const o = region[j]; if (o === k || adj[k].has(o)) continue;
+        const [x1, y1] = xy(j);
+        if (mine.some(i => { const [x0, y0] = xy(i); return Math.hypot(x1 - x0, y1 - y0) <= 30; })) { adj[k].add(o); adj[o].add(k); }
+      }
+    });
 
     const stats = { land: land.length, rivers: sysSize.size, riverCells: 0, lakes: lakes.length, lakeCells: 0 };
     for (const f of G.FEATURES) stats[f.id] = 0;
@@ -211,8 +243,17 @@ window.LifeSim = window.LifeSim || {};
     stats.lakeCells = stats.lake; stats.rivers = new Set(land.filter(i => river[i]).map(i => mouth[i])).size;
 
     const map = {
-      CS, W, H, region, zone, elev, moist, temp, feat, river, flow, recv, shore, dCoast, cellsOf, idx, stats,
+      CS, W, H, region, zone, elev, moist, temp, feat, river, flow, recv, shore, dCoast, cellsOf, idx, stats, sea, seaCells, seaLabel,
+      seaShore: seaShore.map(s => [...s].map(k => R[k].id)),
       adj: adj.map(s => [...s].map(k => R[k].id)),
+      // Ô biển: kiểu vùng biển, tầng (theo độ hoang biển của thế giới đang dùng, realm.js), tên vùng biển của thế giới.
+      seaAt(px, py) {
+        const x = Math.floor(px / CS), y = Math.floor(py / CS);
+        if (x < 0 || y < 0 || x >= W || y >= H) return null;
+        const i = y * W + x; if (region[i] !== SEA) return null;
+        const S = SE[sea[i]], b = G.realm && G.realm.seaBand ? G.realm.seaBand[i] : Math.min(3, Math.floor(shore[i] / 6));
+        return { sea: S, seaIndex: sea[i], name: G.realm && G.realm.seas ? G.realm.seas[sea[i]].name : S.nameVi, zone: S.zones[b], zoneIndex: b, cell: i };
+      },
       at(px, py) {
         const x = Math.floor(px / CS), y = Math.floor(py / CS);
         if (x < 0 || y < 0 || x >= W || y >= H) return null;
@@ -243,7 +284,8 @@ window.LifeSim = window.LifeSim || {};
 
   // Ảnh nền vẽ một lần vào canvas phụ. mode: 'region' (vùng + khu), 'terrain' (biome + đặc trưng + bóng núi)
   // hoặc 'political' (màu quốc gia trên nền địa hình, biên tỉnh mảnh, biên nước đậm; cần realm).
-  // 'danger': tô theo tầng so với sức nhân vật (opt.ct = Tier nhân vật, opt.cap = Tier tối đa được gặp): an toàn / vừa sức / nguy hiểm / khóa.
+  // 'danger': tô theo tầng so với sức nhân vật (opt.ct = Tier nhân vật, opt.cap = Tier tối đa được gặp): an toàn / vừa sức / nguy hiểm / khóa; cả đất và biển.
+  // 'sea': vùng biển (màu theo kiểu), tầng biển tối dần, đất xám mờ.
   G.renderMapBase = function (map, mode = 'region', realm = null, opt = {}) {
     const { W, H, CS, region, zone, elev, temp, feat, shore } = map, R = G.REGIONS, BI = window.JobLibrary.biomes;
     const cv = document.createElement('canvas'); cv.width = W * CS; cv.height = H * CS;
@@ -253,14 +295,34 @@ window.LifeSim = window.LifeSim || {};
     const terrain = mode === 'terrain', political = mode === 'political' && realm;
     const ncol = political ? realm.nations.map(n => hex(n.color)) : [], owner = political && realm.owner, prov = political && realm.provOf;
     const zb = realm && realm.band ? realm.band : zone, danger = mode === 'danger' && realm;
+    const seaMode = mode === 'sea' && realm, sb = realm && realm.seaBand, SE = G.SEAS, scol = SE.map(s => hex(s.color));
     const DCOL = { safe: [84, 168, 96], fair: [214, 176, 64], risky: [210, 96, 62], locked: [66, 58, 64] };
-    const lvlOf = (r, b) => { const t = R[r].zones[b].tier; return t[1] <= opt.ct ? 'safe' : t[0] <= opt.ct ? 'fair' : t[0] <= opt.cap ? 'risky' : 'locked'; };
+    const lvlT = t => t[1] <= opt.ct ? 'safe' : t[0] <= opt.ct ? 'fair' : t[0] <= opt.cap ? 'risky' : 'locked';
+    const lvlOf = (r, b) => lvlT(R[r].zones[b].tier);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const i = y * W + x, r = region[i];
       let c;
       if (r === SEA) {
         const s = shore[i]; c = s <= 1 ? foam : mix(shallow, deep, Math.min(1, (s - 1) / 7));
         if ((x * 7 + y * 3) % 23 === 0 && s > 2) c = mix(c, foam, .25);
+        // Biển: màu kiểu vùng biển, tối dần theo tầng; biên vùng biển đậm, ranh tầng chấm. Nguy hiểm: tầng biển so với sức nhân vật.
+        if ((seaMode || danger) && sb) {
+          const k = map.sea[i], b = sb[i];
+          const nb = [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx < 0 || ny < 0 || nx >= W || ny >= H ? i : ny * W + nx; });
+          if (seaMode) {
+            c = mix(mix(scol[k], [16, 28, 40], .25), deep, b * .2);
+            if (nb.some(j => region[j] === SEA && map.sea[j] !== k)) c = mix(c, [10, 14, 20], .7);
+            else if (nb.some(j => region[j] === SEA && sb[j] !== b) && (x + y) % 2) c = mix(c, [235, 240, 245], .3);
+          } else {
+            c = mix(c, DCOL[lvlT(SE[map.sea[i]].zones[b].tier)], .38);
+            if (nb.some(j => region[j] === SEA && sb[j] !== b) && (x + y) % 2) c = mix(c, [10, 14, 20], .3);
+          }
+        }
+      } else if (seaMode) {
+        // Đất ở chế độ Biển: xám mờ theo địa hình để vùng biển nổi lên.
+        let t = pal[r].g; const fc = FCOL[feat[i]]; if (fc) t = mix(t, fc[0], fc[1] * .25);
+        const lum = (t[0] * .3 + t[1] * .55 + t[2] * .15) * (.8 + elev[i] * .3);
+        c = feat[i] === FE.lake ? [70, 90, 104] : mix([lum, lum, lum], [176, 164, 140], .35);
       } else if (feat[i] === FE.lake) {
         c = mix(WATER, shallow, .3);
       } else {
@@ -402,10 +464,16 @@ window.LifeSim = window.LifeSim || {};
         for (const i of map.cellsOf[k]) if (zone[i] === o.zoneSel) ctx.fillRect((i % W) * CS, Math.floor(i / W) * CS, CS, CS);
       }
     }
-    // Tuyến biển (nối điểm neo hai vùng; hải trình thật ở bước biển của research/03).
-    ctx.setLineDash([4, 5]); ctx.strokeStyle = 'rgba(200,230,255,.35)'; ctx.lineWidth = 1.5;
-    for (const [a, b] of G.SEA_ROUTES || []) { const A = G.REGION[a].anchor, B = G.REGION[b].anchor; ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); }
-    ctx.setLineDash([]);
+    // Hải trình từ bến gần nhân vật nhất (chế độ Biển; js/travel.js G.seaLinesFrom).
+    if (o.seaLines) {
+      const { W, CS } = map, px = i => (i % W + .5) * CS, py = i => (Math.floor(i / W) + .5) * CS;
+      const path = r => { ctx.beginPath(); r.cells.forEach((c, k) => k ? ctx.lineTo(px(c), py(c)) : ctx.moveTo(px(c), py(c))); ctx.stroke(); };
+      ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(8,12,18,.55)'; ctx.lineWidth = 3.4;
+      for (const r of o.seaLines.routes) path(r);
+      ctx.setLineDash([6, 4]); ctx.lineWidth = 1.8;
+      for (const r of o.seaLines.routes) { ctx.strokeStyle = ['#d8ecf6', '#8fd2ff', '#ffd27a'][r.ship]; path(r); }
+      ctx.setLineDash([]);
+    }
     // Đường đời.
     if (o.path && o.path.length > 1) {
       ctx.strokeStyle = 'rgba(255,214,120,.75)'; ctx.lineWidth = 2; ctx.beginPath();
@@ -429,6 +497,15 @@ window.LifeSim = window.LifeSim || {};
         ctx.fillStyle = s.roles.includes('fort') ? '#d08070' : FILL[s.tier]; ctx.fillRect(x - r, y - r, r * 2, r * 2);
         if (s.tier === 'capital') { ctx.fillStyle = '#1a120c'; ctx.fillRect(x - 1, y - r - 5, 2, 5); ctx.fillStyle = n ? n.color : '#ffd27a'; ctx.fillRect(x + 1, y - r - 5, 4, 3); }
         if (s.roles.includes('port') && r >= 3) { ctx.fillStyle = '#7fc4ee'; ctx.fillRect(x + r - 2, y + r - 2, 3, 3); }
+      }
+      // Chế độ Biển: bến theo loại tàu (vòng nhạt: thuyền chài; xanh: tàu buôn; vàng: tàu viễn dương), tên vùng biển.
+      if (o.view === 'sea' && realm.harbors) {
+        for (const h of realm.harbors) {
+          const rr = [2.5, 4, 5.5][h.ship];
+          ctx.strokeStyle = 'rgba(10,8,6,.85)'; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.arc(h.x, h.y, rr, 0, 7); ctx.stroke();
+          ctx.strokeStyle = ['#cfe2ea', '#7fc4ee', '#ffd27a'][h.ship]; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(h.x, h.y, rr, 0, 7); ctx.stroke();
+        }
+        if (o.labels !== false) realm.seas.forEach((s, k) => { const p = map.seaLabel[k]; if (p) label(ctx, s.name.toUpperCase(), p[0], p[1], 11.5, 'rgba(225,240,250,.9)', true); });
       }
       if (o.labels !== false) for (const s of realm.settlements) {
         if (s.tier === 'capital' || s.tier === 'city' || (o.allLabels && s.tier === 'town')) label(ctx, s.name, s.x, s.y + SZ[s.tier] + 11, s.tier === 'capital' ? 10.5 : 9.5, s.tier === 'capital' ? '#ffe6a8' : '#f3e6c8');

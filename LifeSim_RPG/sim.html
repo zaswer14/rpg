@@ -103,7 +103,7 @@ $('run').onclick = () => {
   $('status').textContent = 'Đang chạy…';
   setTimeout(() => {
     const t0 = performance.now();
-    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 } };
+    const A = { lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 }, sea: { lives: 0, voyages: 0, fights: 0, storms: 0, wrecks: 0, pirates: 0, deaths: 0 } };
     for (let i = 0; i < N; i++) {
       const sim = new G.Sim({ seed: base + ':' + i, headless: true });
       sim.newLife({ noPeers: true }); sim.runToDeath();
@@ -120,6 +120,7 @@ $('run').onclick = () => {
       { const F = S.flags, L = A.law; if (F.crimes) L.crimes++; if (S.causeId === 'hanged') L.hanged++; if (F.served) L.served++; if (F.wanted) L.fled++; if (F.expelled) L.expelled++;
         const n = S.nation != null ? G.realm.nations[S.nation] : null; if (n && n.wary.includes(S.race)) L.wary++; if (n && n.fav.includes(S.race)) L.fav++; }
       { const T = A.trip, F = S.flags; if (F.trips) { T.lives++; T.trips += F.trips; } if (F.onRoad && S.dead) T.roadDeaths++; T.escorts += F.escorts || 0; }
+      { const Q = A.sea, F = S.flags; if (F.voyages) { Q.lives++; Q.voyages += F.voyages; } Q.fights += F.seaFights || 0; Q.storms += F.storms || 0; Q.wrecks += F.wrecks || 0; Q.pirates += F.pirates || 0; if (S.dead && (F.atSea || S.causeId === 'shipwreck')) Q.deaths++; }
       { const bs = G.SET[S.born.settlement], key = bs ? (S.born.urban ? G.TIER_VI[bs.tier] + ' (trong khu)' : 'vùng quê quanh ' + G.TIER_VI[bs.tier].toLowerCase()) : '?'; A.bornTier[key] = (A.bornTier[key] || 0) + 1;
         const nk = bs && bs.nation >= 0 ? G.realm.nations[bs.nation].name : 'đất vô chủ'; A.bornNation[nk] = (A.bornNation[nk] || 0) + 1; }
       if (S.rose) {
@@ -151,6 +152,7 @@ $('run').onclick = () => {
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu research/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
     out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'research/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));
+    out.push(table('Đi biển (đời đầu)', [['Đời có đi tàu', A.sea.lives, pct(A.sea.lives, N)], ['Số chuyến tàu', A.sea.voyages, ''], ['Trận trên biển', A.sea.fights, ''], ['Gặp bão', A.sea.storms, ''], ['Đắm tàu', A.sea.wrecks, ''], ['Gặp cướp biển', A.sea.pirates, ''], ['Chết trên biển (kể cả đắm tàu khi làm nghề)', A.sea.deaths, pct(A.sea.deaths, N)]], ['', 'Số', '%'], { note: 'research/03 mục 7.3. Trận trên biển cũng tính vào bảng phân cấp Tier.' }));
     out.push(table('Luật và thái độ (đời đầu)', [['Từng bị bắt', A.law.crimes, pct(A.law.crimes, N)], ['Bị treo cổ', A.law.hanged, pct(A.law.hanged, N)], ['Đi lính nghĩa vụ', A.law.served, pct(A.law.served, N)], ['Trốn lính', A.law.fled, pct(A.law.fled, N)], ['Bị lệnh trục xuất', A.law.expelled, pct(A.law.expelled, N)], ['Chết ở nước dè chừng mình', A.law.wary, pct(A.law.wary, N)], ['Chết ở nước ưu ái mình', A.law.fav, pct(A.law.fav, N)]], ['', 'Đời', '%'], { note: 'Đếm trên đời đầu (trước khi trỗi dậy). research/04 mục 3.' }));
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
@@ -186,7 +188,7 @@ $('runWorlds').onclick = () => {
     G.useWorld($('world').value || 'can-bang');
   }, 30);
 };
-$('run').click();
+if (!/noauto/.test(location.search)) $('run').click();   // ?noauto: chỉ nạp, không tự chạy (thử từng phần trong console)
 </script>
 </body>
 </html>

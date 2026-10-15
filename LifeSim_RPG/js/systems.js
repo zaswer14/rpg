@@ -42,6 +42,12 @@ window.LifeSim = window.LifeSim || {};
       // Chiến tranh giảm dần.
       if (rs.war > 0) rs.war = Math.max(0, rs.war - .25);
     }
+    // Mật độ quái biển: sinh sôi như trên đất, chỉ thuyền chài và tàu tuần tỉa tầng ven bờ, khơi; không có thú triều.
+    for (const r of G.SEAS) r.zones.forEach((z, i) => {
+      const zp = W.zonePop; let p = zp[z.id] ?? 1;
+      p += .1 * (1 - p / 1.5) - .04 * [1.2, .8, 0, 0][i] + (X.rnd() - .5) * .08;
+      zp[z.id] = G.clamp(p, .3, 2.2);
+    });
     // Chiến tranh mới giữa hai vùng kề có kinh đô / thành phố / đồn (quốc gia động: bước 7 của research/03).
     if (X.chance(.035)) {
       const cands = G.REGIONS.filter(r => G.settlementsIn(r.id).some(s => s.tier === 'capital' || s.tier === 'city' || s.roles.includes('fort')));

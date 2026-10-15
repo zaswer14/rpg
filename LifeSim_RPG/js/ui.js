@@ -308,8 +308,7 @@
     if (able && tripCache.key !== tkey) { tripCache.key = tkey; tripCache.plan = G.planTrip(S, R.id); }
     const plan = able ? tripCache.plan : null, moved = S.flags.movedAge === S.age;
     const canGo = plan && !plan.fail && !moved && (!plan.escort || S.gold >= plan.fee);
-    const tripTxt = !plan ? '' : plan.fail ? `Không tới được: ${plan.fail}.` : plan.boat ? `Tuyến thuyền, ${plan.days} ngày.`
-      : `${plan.route.days} ngày đường, ${Math.round(plan.route.onRoad * 100)}% trên đường` + (plan.escort ? `; phải qua vùng quá sức, thuê hộ tống ${plan.fee} bạc` : '') + '.';
+    const tripTxt = G.tripText(plan);
     // Tỉ lệ diện tích từng tầng của vùng ở thế giới này (độ hoang theo khu dân cư).
     const bc = G.realm.bandCells[G.map.idx[R.id]], btot = bc.reduce((a, c) => a + c.length, 0) || 1;
     const zones = R.zones.map((z, i) => {
@@ -360,7 +359,8 @@
     G.drawMap(ctx, G.map, baseFor(pref.view, ct, cap), {
       selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
-      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null
+      graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null,
+      seaLines: pref.view === 'sea' && !S.dead ? G.seaLinesFrom(S) : null
     });
   }
   function canvasPoint(ev) {
@@ -369,8 +369,19 @@
   }
   canvas.addEventListener('mousemove', ev => {
     const [x, y] = canvasPoint(ev), c = G.map.at(x, y), tip = $('tip');
-    if (!c) { tip.hidden = true; return; }
     const S = sim.S, ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+    const place = (t) => { const r = canvas.getBoundingClientRect(); t.style.left = Math.min(ev.clientX - r.left + 14, r.width - 270) + 'px'; t.style.top = (ev.clientY - r.top + 14) + 'px'; t.hidden = false; };
+    if (!c) {
+      // Ô biển: vùng biển, tầng, sức mình, thời tiết, tàu nào vào được; bến gần con trỏ.
+      const sc = G.map.seaAt(x, y); if (!sc) { tip.hidden = true; return; }
+      const t = sc.zone.tier, lvl = t[1] <= ct ? 'safe' : t[0] <= ct ? 'fair' : t[0] <= cap ? 'risky' : 'locked';
+      const ships = G.SHIPS.filter(s => s.maxBand >= sc.zoneIndex).map(s => s.nameVi);
+      const hb = (G.realm.harbors || []).find(h => Math.hypot(h.x - x, h.y - y) < 12);
+      tip.innerHTML = `<b>${esc(sc.name)}</b> · ${esc(sc.sea.nameVi.toLowerCase())}<br>${G.SEA_BAND_VI[sc.zoneIndex]}: ${esc(sc.zone.nameVi)} · <span style="color:${ZCOL[lvl]}">Tier ${t[0]}${t[1] > t[0] ? '–' + t[1] : ''} · ${ZTXT[lvl]} với bạn</span>`
+        + `<br>${esc(sc.sea.weather)} · mật độ quái ${(S.world.zonePop[sc.zone.id] ?? 1).toFixed(2)}<br>${ships.length ? 'Tàu vào được: ' + ships.join(', ') : 'Không tàu nào tới được tầng này'}`
+        + (hb ? `<br><b>${esc(hb.name)}</b> · bến có ${G.SHIPS[hb.ship].nameVi}` : '');
+      return place(tip);
+    }
     const lvl = c.zone.tier[1] <= ct ? 'safe' : c.zone.tier[0] <= ct ? 'fair' : c.zone.tier[0] <= cap ? 'risky' : 'locked';
     // Khu dân cư gần con trỏ (bán kính theo cỡ ký hiệu), tỉnh và nước của ô.
     const near = G.realm.settlements.filter(s => Math.hypot(s.x - x, s.y - y) < ({ capital: 10, city: 9, town: 8 }[s.tier] || 6)).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
@@ -380,10 +391,8 @@
     tip.innerHTML = `<b>${esc(c.region.nameVi)}</b> · ${esc(c.zone.nameVi)}<br><span style="color:${ZCOL[lvl]}">Tier ${c.zone.tier[0]}–${c.zone.tier[1]} · ${ZTXT[lvl]} với bạn</span>`
       + `<br>${esc(c.feature.nameVi)}${c.river ? ' · có sông' : ''}${G.realm.road[c.cell] ? ' · ' + G.ROAD_VI[G.realm.road[c.cell]] + (c.river ? ' (cầu)' : c.feature.id === 'mountain' ? ' (đèo)' : '') : ''}`
       + `<br>${nat ? `<span style="color:${nat.color}">${esc(nat.name)}</span>${prov ? ' · tỉnh ' + esc(prov.name) : ''}` : 'Đất vô chủ' + (prov ? ' · ' + esc(prov.name) : '')}`
-      + nearTxt + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '');
-    const r = canvas.getBoundingClientRect();
-    tip.style.left = Math.min(ev.clientX - r.left + 14, r.width - 270) + 'px'; tip.style.top = (ev.clientY - r.top + 14) + 'px';
-    tip.hidden = false;
+      + nearTxt + (near && near.seaCells ? ` · bến có ${G.SHIPS[near.ship].nameVi}` : '') + (gv ? `<br>✝ ${esc(gv.name)}, ${gv.years} tuổi, ${esc(gv.cause)}${gv.rose ? ' · đã trỗi dậy' : ''}` : '');
+    place(tip);
   });
   canvas.addEventListener('mouseleave', () => { $('tip').hidden = true; });
   canvas.addEventListener('click', ev => {
@@ -399,9 +408,14 @@
     $('autoLife').checked = on;
     if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decModal').hidden = true; showDecision(sim.S.pending); } }
   }
+  const LEGEND = {
+    danger: '<span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span>',
+    sea: '<span>Tầng biển tối dần: ven bờ → khơi → sâu → vực biển</span><span><i style="border:2px solid #cfe2ea;border-radius:50%;background:none"></i>thuyền chài</span><span><i style="border:2px solid #7fc4ee;border-radius:50%;background:none"></i>tàu buôn</span><span><i style="border:2px solid #ffd27a;border-radius:50%;background:none"></i>tàu viễn dương</span><span>nét đứt: hải trình từ bến gần bạn</span>'
+  };
   function setView(v) {
-    pref.view = ['terrain', 'political', 'danger'].includes(v) ? v : 'region'; store.set(PREF, pref); dirty = true;
-    $('mapLegend').hidden = pref.view !== 'danger';
+    pref.view = ['terrain', 'political', 'danger', 'sea'].includes(v) ? v : 'region'; store.set(PREF, pref); dirty = true;
+    $('mapLegend').hidden = !LEGEND[pref.view];
+    if (LEGEND[pref.view]) $('mapLegend').innerHTML = LEGEND[pref.view];
     for (const b of $('viewBtns').children) { const on = b.dataset.v === pref.view; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }
   }
   for (const b of $('viewBtns').children) b.onclick = () => setView(b.dataset.v);

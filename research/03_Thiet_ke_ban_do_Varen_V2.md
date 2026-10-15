@@ -463,6 +463,38 @@ Mỗi đoạn hải trình xét quái theo tầng biển (vẫn qua luật Tier,
 
 Sinh kế: ngư dân làm ở tầng ven bờ gần nhất (rủi ro theo tầng đó), thủy thủ ở tầng khơi trên hải trình của cảng nhà. Ngư dân ở biển đảo rắn vì vậy nguy hiểm hơn ngư dân biển đỏ.
 
+### 7.4. Kết quả bước 6 (15/10/2026)
+
+Đã làm: 7 vùng biển (`G.SEAS` trong `LifeSim_RPG/data/world.js`, Voronoi trên ô biển trong `js/map.js`), 4 tầng biển theo độ hoang biển (`js/realm.js` mục 11), 8 loài biển mới trong `data/ecology.js` (7 loài nháp ở 7.2, Cá Chình Điện đổi id thành `thunder_eel`, thêm Tàu Ma T4 họ U Linh để vực biển nào cũng có hai họ quái), bến và ba loại tàu, hải trình A* (`js/travel.js`), chuyến đi qua biển, bão, đắm tàu, cướp biển, cảng cấm cập vì dịch, thuế cảng, nghề biển theo tầng, chế độ xem Biển, tooltip ô biển, tầng biển trong chế độ Nguy hiểm. `G.SEA_ROUTES` đã bỏ.
+
+Bảng loài của từng tầng biển:
+
+| Vùng biển | Ven bờ | Khơi | Sâu | Vực biển |
+|---|---|---|---|---|
+| Biển sương | T0–1: Cua Đá, Sứa Đèn, Cá Chình Điện, Thủy Thi | T1–2: Cá Chình Điện, Thủy Thi, Thủy Linh Triều, Cá Mập Rạn | T2–3: Thủy Linh Triều, Cá Mập Rạn, Nữ Yêu Biển, Mực Khổng Lồ | T3–4: Nữ Yêu Biển, Hải Xà, Mực Khổng Lồ, Tàu Ma |
+| Biển đảo rắn | T1–2: Thủy Thi, Cá Mập Rạn, Thủy Linh Triều | T2–3: Cá Mập Rạn, Hải Xà, Nữ Yêu Biển | T3–4: Hải Xà, Mực Khổng Lồ, Kraken Non | T4–5: Kraken Non, Cá Voi Xương, Tàu Ma |
+| Biển băng | T1: Hải Cẩu Nanh, Thủy Thi | T1–3: Hải Cẩu Nanh, Băng Hồn, Mực Khổng Lồ | T3–4: Mực Khổng Lồ, Hải Xà, Hải Long Băng | T4: Hải Long Băng, Kraken Non |
+| Biển sấm | T1–2: Cá Chình Điện, Thủy Thi, Thủy Linh Triều | T2–3: Thủy Linh Triều, Cá Mập Rạn, Hải Xà | T3–4: Hải Xà, Mực Khổng Lồ, Lôi Linh, Kraken Non | T4–5: Lôi Linh, Kraken Non, Lôi Điểu, Cá Voi Xương |
+| Biển tro | T1: Thủy Thi, Đốm Lửa Ma | T2–3: Rùa Lưng Đá, Nhầy Dung Nham, Cá Mập Rạn, Hải Xà | T3–4: Hải Xà, Mực Khổng Lồ, Kraken Non | T4: Kraken Non, Tàu Ma |
+| Biển đỏ | T0–1: Cua Đá, Sứa Đèn, Thủy Thi | T1–3: Thủy Thi, Rùa Lưng Đá, Cá Mập Rạn, Mực Khổng Lồ | T3–4: Mực Khổng Lồ, Hải Xà, Kraken Non | T4: Kraken Non, Tàu Ma |
+| Vịnh vực | T2–3: Cá Mập Rạn, Thủy Linh Triều, Nữ Yêu Biển | T3–4: Nữ Yêu Biển, Hải Xà, Mực Khổng Lồ, Kraken Non | T4–5: Kraken Non, Tàu Ma, Cá Voi Xương | T5: Cá Voi Xương, Ma Tướng Hỏa Giác |
+
+Khác với thiết kế ở trên:
+
+- **Quần Đảo Hải Xà dính đất liền từ bước 1** (đất của Trảng Mộng và Đồi Mộ lan tới đảo). Giờ đất của vùng khác lùi ra ngoài 1,32 bán kính đảo, để lại eo biển ~7 ô. Bản đồ đất vì thế đổi nhẹ (phân vị độ cao, độ ẩm tính trên toàn bộ đất), và thế giới `can-bang` ra bộ nước khác (7 nước, 163 khu dân cư thay vì 6 nước, 116 khu); số đo bước 1–5 ở trên là của bản đồ cũ. Đảo kề (cho quyết định rời quê, áp giải) các vùng có bờ cách bờ đảo ≤ 30 ô.
+- **Bến** = khu dân cư bất kỳ có ô biển trong 2 ô (thiết kế: khu `coastal`). Thuyền chài ở mọi bến; tàu buôn ở khu có vai trò cảng (thị trấn trở lên, thiết kế: town, capital); tàu viễn dương như thiết kế. Đảo không có khu nào sát bờ thì khu gần biển nhất dựng cầu tàu; bến lớn nhất của đảo có ít nhất tàu buôn.
+- **Vũng biển kín**: lục địa có vài vũng biển không thông ra khơi (từ bước 1, như hồ nước mặn). Bến ở đó có tàu nhưng không có hải trình; chỉ ghép cặp bến chung vùng nước theo tầng tàu (thành phần liên thông của ô biển tầng ≤ tầng của tàu).
+- Chuyến đi xét đường biển khi đường bộ từ 8 ngày, hoặc khi đích ở khối đất khác (khi đó không tìm đường bộ). Hải trình cộng 1 ngày chờ tàu. Vé: thuyền chài 1, tàu buôn 2, tàu viễn dương 4 bạc mỗi ngày biển; thiếu bạc thì làm công trên tàu. Tầng biển bị khóa: trả thêm phí hộ tống như đường bộ, lính trên tàu đánh thay, 6% mỗi khúc tàu quay về.
+- Quái trên tàu: mỗi 10 ô xét .025 × mật độ × phục kích của vùng biển (sương mù 1,4, vịnh vực 1,3), tối đa 3 trận. Bão, cướp biển: một lần mỗi chuyến tại một ô ngẫu nhiên của hải trình, xác suất × min(2, ngày / 6). Bão thành đắm tàu 25% (thuyền chài), 12% (tàu buôn), 6% (tàu viễn dương); đắm thì chết 10–30% (theo Body; Cơ Nhân 50%, Bộ Xương không chết) hoặc dạt vào bờ gần nhất, mất nửa túi bạc. Cướp biển .03 + .1 mỗi nước có luật cướp phá và có bến trên vùng biển đó (Liên Minh Cướp Biển .2), tàu viễn dương × .5. Chưa có mùa: "bão mùa hè", "băng trôi mùa đông" thành xác suất bão cả năm và hệ số chậm 1,3.
+- Mật độ quái biển theo vùng biển × tầng (`zonePop` có thêm 28 khóa); không có thú triều từ biển.
+- Thuế cảng: tàu cập bến nộp thuế × 30 bạc; dân thành thị ở cảng của nước có luật × 1,1 thu nhập.
+- Nghề biển: ngư dân, thủy thủ chỉ làm trên biển khi sống ở bến (làng chài ven sông, hồ giữ như cũ). Rủi ro tai nạn × (1 + .25 × Tier thấp nhất của tầng), đuối nước / đắm tàu × (1 + .3 × Tier đó), mỗi năm ~10% gặp một con quái của tầng (qua luật Tier). Thủy thủ chết vì đắm tàu thay cho đuối nước.
+- Ngưỡng tầng biển theo thiết kế (1 / 2,5 / 4) cho diện tích biển: ven bờ 16%, khơi 22%, sâu 17%, vực biển 44%.
+
+Lỗi gặp khi làm: A* lưu chi phí đã đi trong `Float32Array`; chi phí biển 0,6 × 1,414 bị làm tròn lên khi lưu nên `nd < g[j]` đúng mãi, ô bị đẩy lại hàng đợi không dứt và trang treo. Đổi sang `Float64Array`.
+
+Đo bằng `sim.html` (thế giới `can-bang`, 1000 đời): 46.093 trận, 0 trận vượt Tier + 1, trỗi dậy 20,6%, chết vì quái 11,3%; 69% đời có đi xa, 2,2% đời có đi tàu (28 chuyến, 3 trận trên biển, 5 lần gặp bão, 1 lần đắm tàu, không ai chết trên biển); ngư dân 4,3% số đời. 200 chuyến tàu thử ra đảo (nhân vật cấp 1–30, chuyến trung bình 42 ngày kể cả đường bộ): 0,55 trận mỗi chuyến, bão 15%, đắm tàu 3%, chết 1%. 100 thế giới: 0 lỗi, 78 thế giới có người trên đảo, mỗi thế giới ~18 bến thuyền chài, ~9 bến tàu buôn, ~1,6 bến tàu viễn dương; ~0,5 giây mỗi thế giới (phần biển ~0,1 giây; máy chạy song song phiên khác nên số giờ chỉ để tham khảo).
+
 ## 8. Ảnh hưởng tới mô hình đời
 
 | Chỗ | Thay đổi |
@@ -548,7 +580,7 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 | 3 ✓ | Bảng 4 tầng theo biome (thêm vùng chết); độ hoang tĩnh từ mạng khu dân cư; encounter đọc theo ô (15/10/2026, xem mục 3.6) | vùng an toàn bám quanh làng; chế độ xem Nguy hiểm |
 | 4 ✓ | Sinh kế theo công trình; thuế, luật, thái độ chủng tộc vào đời (15/10/2026, xem mục 5.6) | sinh ra ở một nước có luật |
 | 5 ✓ | Đường, cầu, đèo, hành trình, trạm biên giới, hộ tống (15/10/2026, xem mục 6.5) | đi lại có quãng đường |
-| 6 | Vùng biển 4 tầng, loài biển mới, tàu, hải trình | đi biển |
+| 6 ✓ | Vùng biển 4 tầng, loài biển mới, tàu, hải trình (15/10/2026, xem mục 7.4) | đi biển |
 | 7 | Quốc gia động, khu dân cư sụp / lập, độ hoang động, sử biên niên | thế giới đổi qua các kiếp |
 | 8 | Hang ổ, di tích | dọn hang, thú triều có nguồn |
 | 9 | Lập làng, lập nước, focus Trị quốc | người chơi để lại dấu trên bản đồ |
@@ -559,5 +591,6 @@ Mỗi bước để game chạy được và `sim.html` sạch lỗi trước kh
 - Duyệt 50 mẫu quốc gia và ~30 đặc trưng riêng ở `research/04` (đổi số, bỏ mẫu, thêm mẫu).
 - Duyệt `names.js` (~1.200 tên): bỏ tên không hợp, thêm tên.
 - Biome có giữ cố định theo bố cục Varen không, hay sau này cũng bốc theo seed (phương án E3 + F4 ở `research/02`).
-- Bảy loài biển nháp và các chỗ thiếu loài của vùng chết (biển T5, sa mạc T5, đầm T5, thêm họ cho Đồi Mộ và Đáy Thật) cần mô tả đầy đủ theo lược đồ bestiary (attack, marker, loot) trước khi vào game.
+- Loài biển đã vào game (mục 7.4); Mắt Bão có thêm Cá Voi Xương, Đáy Thật có thêm Cốt Long. Còn thiếu loài T5 cho vùng chết sa mạc và đầm (hiện dùng loài T4–5 sẵn có).
+- Vũng biển kín trong lục địa (mục 7.4): giữ là biển, hay đổi thành hồ ở bước địa hình.
 - Lập nước: người chơi có được chọn mẫu nước của chủng tộc khác không (hiện chỉ mẫu của chủng tộc mình).
