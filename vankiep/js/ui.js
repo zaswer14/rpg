@@ -142,6 +142,8 @@
       ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
       ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
       ['Bạc để lại', S.gold], ['Con cháu', S.family.kids.length || '—'],
+      ['Căn cốt', G.rootText(S) || '—'], ['Thiên phú', S.tal && S.tal.list.length ? S.tal.list.map(id => G.TALENTS[id].nameVi).join(', ') : '—'],
+      ['Chí hướng', (G.AIMS[S.aim] || G.AIMS.free).nameVi],
       ['Trận săn', `${S.hunts.won} thắng · ${S.hunts.lost} thua`], ['Kiếp', S.kiep]
     ];
     $('dSum').innerHTML = items.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('');
@@ -202,6 +204,7 @@
     const kv = [
       ['Nghề', `${X.jobName(S)} · T${j ? j.tier : 0}`],
       ['Sức mạnh', `${X.power(S).toFixed(2)} Tier · cấp Tier ${X.ctier(S)}`],
+      ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Bạc', S.gold], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
@@ -214,6 +217,8 @@
     const need = G.xpNeed(S.level);
     $('xpBar').style.width = (S.level >= G.MAX_LEVEL ? 100 : S.xp / need * 100) + '%';
     $('xpTxt').textContent = `Cấp ${S.level}`;
+    // Căn cốt, thiên phú (js/talent.js): viền theo bậc màu; di chuột xem hiệu ứng.
+    $('cTal').innerHTML = G.talChips(S).map((c, i) => `<span class="tchip${i ? '' : ' root'}" style="border-color:${c.col};color:${c.col}" title="${esc(c.title)}">${esc(c.text)}</span>`).join('') || '<span class="fam">Bản lưu cũ: chưa có thiên phú.</span>';
     $('cStats').innerHTML = STAT.map(([k, n]) => `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${S[k]}%;background:var(--${k})"></i></div><span>${Math.round(S[k])}</span></div>`).join('');
     const chips = S.conds.map(c => `<span class="chip">${esc(G.CONDS[c.id].nameVi)}</span>`);
     if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
@@ -265,7 +270,19 @@
       box.appendChild(b);
     }
     if (st === 'infant') box.insertAdjacentHTML('beforeend', '<span class="fam">Còn ẵm ngửa; chưa tự chọn được.</span>');
+    // Chí hướng (js/talent.js): đổi lúc nào cũng được, không tắt Tự sống.
+    const sel = $('aimSel'), A = G.AIMS[S.aim] || G.AIMS.free;
+    if (document.activeElement !== sel) sel.value = S.aim || 'free';
+    sel.disabled = S.dead;
+    $('aimTip').textContent = A.d;
   }
+  $('aimSel').innerHTML = Object.entries(G.AIMS).map(([k, A]) => `<option value="${k}">${A.icon} ${esc(A.nameVi)}</option>`).join('');
+  $('aimSel').onchange = e => {
+    const S = sim && sim.S; if (!S || S.dead) return;
+    G.setAim(S, e.target.value); S.flags.aimSet = true;
+    sim.log(`Chí hướng: ${G.AIMS[S.aim].nameVi.toLowerCase()}.`, 'choice');
+    dirty = true; save();
+  };
 
   const ZCOL = { safe: 'var(--safe)', fair: 'var(--fair)', risky: 'var(--risky)', locked: 'var(--locked)' };
   const ZTXT = { safe: 'an toàn', fair: 'vừa sức', risky: 'nguy hiểm', locked: 'khóa' };

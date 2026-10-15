@@ -31,6 +31,8 @@ window.LifeSim = window.LifeSim || {};
       },
       apply(S, X, k) { S.path = k; X.gain(J.schools[k].masteries[0], 6); return `Bạn bắt đầu tập ${G.mv(J.schools[k].masteries[0]).toLowerCase()}.`; },
       auto(S, X, d) {
+        // Thiên phú rèn mạnh một trường phái, hoặc chí hướng đã chọn (js/talent.js), thì theo trường phái đó.
+        const ts = G.aimSchool(S, d.choices.map(c => c.k)); if (ts) return ts;
         const T = S.traits, pref = T.studious > T.bold ? ['arcane', 'craft', 'death', 'shadow'] : ['combat', 'martial', 'ranged', 'beast', 'shadow'];
         return (d.choices.find(c => pref.includes(c.k)) || d.choices[0]).k;
       }
@@ -45,7 +47,9 @@ window.LifeSim = window.LifeSim || {};
         const LAND = ['farmer', 'herder', 'fisher', 'woodcutter', 'miner'], rural = !S.urban || ['village', 'hamlet'].includes((G.here(S).s || {}).tier);
         const shuffled = ok.filter(([id]) => id !== 'adventurer').sort(() => X.rnd() - .5);
         const land = rural ? shuffled.find(([id]) => LAND.includes(id)) : null;
-        const pick = land ? [land, ...shuffled.filter(e => e !== land).slice(0, 2)] : shuffled.slice(0, 3);
+        // Nghề hợp chí hướng, nghề đã định khi rời nhà (js/talent.js G.aimWorks) luôn có mặt nếu làm được ở đây.
+        const want = G.aimWorks(S).filter(id => id !== 'adventurer' && (!land || id !== land[0])).map(id => shuffled.find(e => e[0] === id)).filter(Boolean).slice(0, 2);
+        const pick = [...(land ? [land] : []), ...want, ...shuffled.filter(e => e !== land && !want.includes(e))].slice(0, 3);
         pick.push(['adventurer', G.WORKS.adventurer]);
         return { title: 'Kiếm sống bằng gì?', body: `Bạn đã trưởng thành ở ${home(S, X)}. Thu nhập tính theo phân vị trong vùng (${reg.nameVi}, trung vị ${Math.round(G.median(reg))} bạc/năm).`,
           choices: pick.map(([id, w]) => { const m = G.incomeMult({ ...S, work: id }), fee = G.workFee(S, id);
@@ -54,6 +58,8 @@ window.LifeSim = window.LifeSim || {};
       apply(S, X, k) { const fee = G.workFee(S, k); if (fee) X.money(-fee); S.work = k; S.flags.workQ = false; const w = G.WORKS[k]; if (!w.adventurer) S.pct = Math.max(S.pct * .6, w.pct[0]); return w.adventurer ? 'Bạn ghi tên vào Hội Mạo Hiểm.' : 'Năm đầu học việc, lương thấp.'; },
       auto(S, X, d) {
         const T = S.traits, has = k => d.choices.find(c => c.k === k);
+        // Chí hướng / nghề đã định (js/talent.js): phần lớn theo.
+        const aw = G.aimWorks(S).find(id => has(id)); if (aw && X.chance(.85)) return aw;
         if (T.bold > .62) return 'adventurer';
         if (T.studious > .6 && (has('scholar') || has('healer'))) return (has('scholar') || has('healer')).k;
         if (T.pious > .65 && has('priest')) return 'priest';

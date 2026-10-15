@@ -177,7 +177,8 @@ window.LifeSim = window.LifeSim || {};
       const schools = j && j.tier > 0 ? [j.school, ...(j.schoolAlt || [])] : [S.path || 'combat'];
       let m = 0;
       for (const [k, v] of Object.entries(S.mastery)) if (schools.includes(G.MASTERY[k]) || (S.inherited && S.inherited.skill === k)) m = Math.max(m, v);
-      let p = .35 + S.level / 10 + (j ? j.tier : 0) * .12 + m / 220 + S.gear * .05 - (100 - S.hl) / 220;
+      // Thiên phú (js/talent.js) cộng thẳng vào sức; boost: đồng đội gánh bớt trong một chuyến (cơ hội theo chí hướng).
+      let p = .35 + S.level / 10 + (j ? j.tier : 0) * .12 + m / 220 + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
       for (const c of S.conds) p += (G.CONDS[c.id].power || 0);
       if (st === 'elder') p -= .25 + (S.age - this.lt(S).leT * .78) * .02;
       if (st === 'teen') p -= .15;
@@ -199,12 +200,13 @@ window.LifeSim = window.LifeSim || {};
       let mult = acc === 'native' ? 1.15 : acc === 'foreign' ? .8 : 0;
       if (S.inherited && S.inherited.skill === m) mult = Math.max(mult, .6);
       if ((m === 'Taming' || m === 'Riding') && G.lawHere(S, 'beast_bond')) mult *= 1.3;
-      const cur = S.mastery[m], d = amount * mult * Math.max(0, 1 - cur / 115);
+      // Tu luyện: căn cốt × thiên phú của trường phái / kỹ năng (js/talent.js G.gainMult).
+      const cur = S.mastery[m], d = amount * mult * G.gainMult(S, m) * Math.max(0, 1 - cur / 115);
       S.mastery[m] = Math.min(100, cur + d);
       return d;
     }
     addXp(n) {
-      const S = this.S; S.xp += Math.round(n);
+      const S = this.S; S.xp += Math.round(n * G.cultRate(S));
       let up = 0;
       while (S.level < G.MAX_LEVEL && S.xp >= G.xpNeed(S.level)) { S.xp -= G.xpNeed(S.level); S.level++; up++; }
       if (up) {
@@ -290,6 +292,8 @@ window.LifeSim = window.LifeSim || {};
       }
       if (T.chance(.04)) S.flags.omen = T.pick(['fire', 'frost', 'storm', 'moon', 'light', 'dark']);
       if (T.chance(.012) && q <= 3) S.flags.bastard = true;
+      // Căn cốt, thiên phú (js/talent.js); chí hướng bắt đầu ở Thuận theo tự nhiên.
+      const talTxt = G.birthTalents(this);
       // Xuất thân hoàng gia, quý tộc (js/noble.js): đổi tầng lớp, tên cha mẹ trước lời mở đầu.
       const origTxt = G.birthOrigin ? G.birthOrigin(this, st, opt.origin) : null;
       // Định vị trên bản đồ.
@@ -304,6 +308,7 @@ window.LifeSim = window.LifeSim || {};
       if (S.faith) this.log(`Gia đình theo ${J.faiths[S.faith].nameVi}.`, 'info');
       if (S.flags.omen) this.log(`Đêm bạn sinh có sao chổi. Bà đỡ bảo đứa trẻ mang khí chất ${J.aspects[S.flags.omen].nameVi}.`, 'big');
       if (origTxt) this.log(origTxt, 'big');
+      this.log(talTxt.text, talTxt.big ? 'big' : 'info');
       // Tuổi thọ kỳ vọng — như "trong số trẻ sinh cùng năm, X% sống tới…" của 1in8b.
       const surv = a => { let l = 1; for (let x = 0; x < Math.min(a, lt.q.length); x++) l *= 1 - lt.q[x]; return l; };
       const aT = Math.round(lt.adultT);
@@ -339,11 +344,13 @@ window.LifeSim = window.LifeSim || {};
       };
       if (S.world.lastDeath === S.world.year) S.world.year++;
       S.birthYear = S.world.year;
+      G.riseTalents(old, S);
       S.pos = G.map.pointIn(reg.id, 0, this.rnd); S.path2.push(S.pos);
       const here = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = here ? here.idx : null;
       this.log(`Năm ${S.world.year}. Đất ở ${grave.nameVi} (${reg.nameVi}) nứt ra. Một bộ xương đứng dậy, không nhớ tên mình, chỉ nhớ một điều.`, 'big');
       if (dom) this.log(`Kỹ năng chủ đạo của kiếp trước còn trong xương: ${G.mv(dom.skill)} ${dom.value}. Mọi thứ khác đã mục.`, 'big', 'Bộ Xương: không đói, không bệnh, không có con; tuổi tính bằng năm kể từ khi trỗi dậy. Hồn phai dần theo thời gian.');
       this.log('Người sống sẽ sợ bạn. Tu sĩ Quang Minh sẽ săn bạn. Hắc Giáo sẽ mời bạn.', 'info');
+      this.log(`Căn cốt theo hồn mà đi: ${G.rootText(S)}. Thiên phú của thân xác cũ đã mất.`, 'info');
       this.planYear();
       return S;
     }
@@ -427,15 +434,15 @@ window.LifeSim = window.LifeSim || {};
       for (const [f, t] of Object.entries(S.focusTime)) {
         const F = G.FOCUS[f], share = t / tot; if (!F) continue;
         // Học chữ hiệu quả theo trường của khu đang ở (docs/05 mục 6).
-        const fm = f === 'study' ? G.schoolMult(S) : 1;
-        for (const [k, v] of Object.entries(F.eff || {})) this.add(k, v * share * (k === 'sm' ? fm : 1));
+        const fm = f === 'study' ? G.schoolMult(S) : 1, lm = f === 'study' ? G.tfx(S).learn : 1;   // thiên phú Sáng dạ, Ngộ tính…
+        for (const [k, v] of Object.entries(F.eff || {})) this.add(k, v * share * (k === 'sm' ? fm * lm : 1));
         for (const [m, v] of Object.entries(F.train || {})) this.gain(m, v * share * 2 * fm);
         if (f === 'train') this.trainYear(share);
         if (f === 'work') this.workYear(share);
         if (f === 'chores') this.gain('Body', 1.5 * share);
         if (f === 'faith' && S.faith) {
           const fav = (J.faiths[S.faith].races.favored || []).includes(S.race) ? 1.5 : 1;
-          S.devotion = Math.min(100, S.devotion + 9 * share * fav);
+          S.devotion = Math.min(100, S.devotion + 9 * share * fav * G.tfx(S).dev);
         }
         if (f === 'study') this.addXp(15 * share * fm);
       }
@@ -477,7 +484,7 @@ window.LifeSim = window.LifeSim || {};
       if (st === 'infant' || st === 'child') m *= G.healerMult(S);
       if (st !== 'infant') m *= 1 + rs.war * (st === 'adult' ? .5 : .2) * (S.flags.soldier ? 2 : 1) + rs.raid * .5;
       if (S.age >= t.leT * .85) m = Math.pow(m, .6);
-      m = G.clamp(m, .25, 9);
+      m = G.clamp(m * G.tfx(S).life, .2, 9);   // thiên phú Tướng sống lâu, Thiên mệnh…
       return 1 - Math.pow(1 - q, m);
     }
     pickCause() {
@@ -521,7 +528,7 @@ window.LifeSim = window.LifeSim || {};
       S.world.lastDeath = S.world.year;
       S.dominant = this.dominant(S);
       // Kết quả trỗi dậy được tung ngay lúc chết (cùng seed thì cùng kết quả).
-      S.rose = this.rnd() < G.REINCARNATE_P ? (S.dominant || { skill: 'Body', value: 5 }) : null;
+      S.rose = this.rnd() < Math.max(G.REINCARNATE_P, G.tfx(S).rise) ?(S.dominant || { skill: 'Body', value: 5 }) : null;
       S.years.push({ age: S.age, yrs: this.years(S), hl: 0, h: Math.round(S.h), so: Math.round(S.so), sm: Math.round(S.sm), gold: S.gold, level: S.level, loc: S.loc });
       this.log(`${S.name} qua đời ở tuổi ${this.years(S)}: ${S.cause}.`, 'death');
       this.hook.death(S);
@@ -612,7 +619,7 @@ window.LifeSim = window.LifeSim || {};
         S.kills[s.id] = (S.kills[s.id] || 0) + count;
         { const key = enc.cell != null ? G.areaKey(enc.cell) : G.zoneKey(enc.zone, G.provOfS(S)); pop[key] = Math.max(.3, (pop[key] ?? 1) - .015 * count); }
         const xp = 60 * Math.pow(1 + Math.max(0, mET), 2) * (.6 + .4 * count) * (adventure ? 1.3 : 1);
-        const loot = Math.round(3 * Math.pow(1 + s.tier, 2) * { normal: 1, elite: 2.5, alpha: 4, lord: 20 }[grade] * (.5 + this.rnd()) * (adventure ? 1.4 : 1));
+        const loot = Math.round(3 * Math.pow(1 + s.tier, 2) * { normal: 1, elite: 2.5, alpha: 4, lord: 20 }[grade] * (.5 + this.rnd()) * (adventure ? 1.4 : 1) * G.tfx(S).loot);
         this.money(loot); this.addXp(xp);
         for (const m of ms) this.gain(m, 1.2);
         if (S.inherited) this.gain(S.inherited.skill, .6);
@@ -624,7 +631,7 @@ window.LifeSim = window.LifeSim || {};
       } else {
         S.hunts.lost++;
         this.add('hl', -(8 + 22 * (1 - pWin) * this.rnd()));
-        const fled = this.rnd() < .45 + S.mastery.Stealth / 250;
+        const fled = this.rnd() < .45 + S.mastery.Stealth / 250 + G.tfx(S).flee;
         const pDie = G.clamp(.006 + .12 * Math.max(0, -diff) + (grade === 'normal' ? 0 : .02), 0, .5) * (S.hl < 25 ? 1.6 : 1) * (fled ? .3 : 1);
         if (this.rnd() < pDie) {
           this.hook.hunt(rec);
@@ -689,8 +696,9 @@ window.LifeSim = window.LifeSim || {};
     if (st === 'elder') hlT -= (S.age - t.leT * .78) * 3;
     let hT = 48 + (S.pct - .5) * 30 + S.so * .2 + (S.gold < 0 ? -15 : 0) + (S.faith ? S.devotion * .08 : 0) - (S.undead ? 15 : 0);
     let soT = S.undead ? 10 + S.fame * .2 : 22 + aliveFam * 5 + (fam.spouse && fam.spouse.alive ? 16 : 0) + fam.kids.filter(k => k.alive).length * 4 + S.fame * .2 + S.traits.social * 12;
+    const tg = G.tfx(S).tgt; hlT += tg.hl; hT += tg.h; soT += tg.so;   // thiên phú (js/talent.js)
     const k = .25;
-    S.hl += (G.clamp(hlT, 5, 95) - S.hl) * k;
+    S.hl +=(G.clamp(hlT, 5, 95) - S.hl) * k;
     S.h += (G.clamp(hT, 5, 95) - S.h) * k;
     S.so += (G.clamp(soT, 3, 95) - S.so) * k;
     if (st === 'elder') S.sm -= .5;

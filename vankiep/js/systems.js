@@ -80,7 +80,7 @@ window.LifeSim = window.LifeSim || {};
     for (const c of [...S.conds]) {
       c.years++;
       const C = G.CONDS[c.id];
-      if (C.heal && X.rnd() < C.heal * (1 + share * 1.2) * (S.q >= 4 ? 1.3 : 1) * (G.healerMult(S) < 1 ? 1.2 : 1)) {
+      if (C.heal && X.rnd() < C.heal * G.tfx(S).heal * (1 + share * 1.2) * (S.q >= 4 ? 1.3 : 1) * (G.healerMult(S) < 1 ? 1.2 : 1)) {
         S.conds.splice(S.conds.indexOf(c), 1);
         X.log(`Khỏi ${C.nameVi.toLowerCase()}.`, 'good');
       } else if (c.id === 'fever' && c.years >= 2) { S.conds.splice(S.conds.indexOf(c), 1); X.cond('frail'); }
@@ -146,6 +146,9 @@ window.LifeSim = window.LifeSim || {};
       // Đang giữ chức (js/org.js): dành thời gian quản lý theo tính hòa đồng; người cai trị nhiều hơn.
       if (G.hasCharge && G.hasCharge(S)) w.govern = 1.5 + T.social * 3 + (S.roles.ruler != null ? 3 : 0) + (S.roles.head != null ? 1 : 0);
     }
+    // Chí hướng (js/talent.js): cộng trọng số focus của chí hướng; thơ ấu, tuổi già một nửa.
+    const A = G.AIMS[S.aim];
+    if (A) for (const [k, v] of Object.entries(A.focus)) w[k] = (w[k] || 0) + v * (st === 'adult' || st === 'teen' ? 1 : .5);
     if (!S.zoneSel) { w.hunt = 0; w.adventure = 0; }
     for (const k of Object.keys(w)) if (!G.focusOK(S, k, st)) delete w[k];
     return X.wkey(w) || 'rest';

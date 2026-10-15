@@ -44,9 +44,10 @@ Ghi ngày 15/10/2026. Hai trang Duyệt Nội Dung Vạn Kiếp và Duyệt Quá
 
 | Nội dung | Ở đâu | Số lượng |
 |---|---|---|
-| Sự kiện đời người, quyết định | `vankiep/js/events.js`, `state.js`, `org.js`, `edu.js`, `noble.js` (`G.EVENTS`, `G.DECISIONS`) | 75 sự kiện, 37 quyết định |
+| Sự kiện đời người, quyết định | `vankiep/js/events.js`, `state.js`, `org.js`, `edu.js`, `noble.js`, `talent.js` (`G.EVENTS`, `G.DECISIONS`) | 76 sự kiện, 43 quyết định (có 6 quyết định, 1 sự kiện của `talent.js`) |
 | Vùng, vùng biển, tàu, nguyên nhân chết | `vankiep/data/world.js` (`G.REGIONS`, `G.SEAS`, `G.SHIPS`, `G.CAUSES`) | 16, 7, 3, 21 |
 | Cấp quái, biến tố tinh anh, trạng thái quái gây ra | `shared/bestiary/rules.js` (`grades`, `affixes`, `playerStatuses`) | 4, 8, 7 |
+| Thiên phú (6 bậc màu), căn cốt, chí hướng | `vankiep/js/talent.js` (`G.TALENTS`, `G.RARITY`, `G.AIMS`) | 40 thiên phú, 6 bậc, 8 chí hướng |
 | Cấu hình game Skeleton Codex | `shared/games/skeleton-codex.js` | 1 |
 
 Các file `org.js`, `edu.js`, `noble.js`, `world.js`, `rules.js` đã nằm trong phạm vi một trang, nên `duyet.sh` chỉ báo "chưa trang nào hiện" khi file đổi mà dữ liệu trang không đổi (tức là phần đổi thuộc các dòng trên).

@@ -17,7 +17,7 @@ Rồi mở `http://localhost:8765/` (trang chủ của kho) hoặc thẳng `http
 - `index.html` — game. `?seed=abc` để chơi lại đúng một đời, `?world=abc` để mở đúng một thế giới.
 - `sim.html` — chạy N đời headless (mặc định 1000) và in phân phối: chênh Tier khi gặp quái, tỉ lệ trỗi dậy, nguyên nhân chết, tuổi thọ theo chủng tộc/sinh kế, Tier cuối đời. Dùng trước khi chỉnh số. Ô "Thế giới" chọn thế giới cho các đời; nút **Thử nhiều thế giới** dựng N thế giới (mặc định 100) và in phân bố mẫu quốc gia, số nước, khu dân cư, tỉ lệ đô thị, đất vô chủ, lỗi. `sim.html?noauto` chỉ nạp dữ liệu, không tự chạy (để thử từng phần trong console).
 
-Điều khiển: tạm dừng (Space), tốc độ ½×–8×, **Tự sống** (nhân vật tự chọn focus và tự quyết theo tính cách), **Kiếp mới**. Bấm một vùng trên bản đồ để xem khu, loài quái, tình trạng (dịch, chiến tranh, thú triều) và lên đường nếu vùng đó giáp chỗ đang ở. Tiến trình tự lưu vào bộ nhớ trình duyệt; mộ các kiếp trước hiện trên bản đồ.
+Điều khiển: tạm dừng (Space), tốc độ ½×–8×, **Tự sống** (nhân vật tự chọn focus và tự quyết theo tính cách), ô **Chí hướng** dưới focus (Tự sống đi theo nó: tính cách, focus, nghề, các lựa chọn; đổi lúc nào cũng được), **Kiếp mới**. Bấm một vùng trên bản đồ để xem khu, loài quái, tình trạng (dịch, chiến tranh, thú triều) và lên đường nếu vùng đó giáp chỗ đang ở. Tiến trình tự lưu vào bộ nhớ trình duyệt; mộ các kiếp trước hiện trên bản đồ.
 
 ## 2. Bản đồ: đại lục, vùng, khu
 
@@ -100,8 +100,10 @@ Thứ **không** bắt chước: ~50 hàm `xxxYear()` gọi cứng. Ở đây m�
 - **Cấp và Tier sức mạnh.** XP từ săn, luyện tập, làm việc. Tier = cấp / 10 (tối đa T5, cấp 60).
 - **Nghề chiến đấu** lấy từ thư viện: `JobLibrary.compose()` với cả 10 chủng tộc và 6 giáo phái (183 nghề). Bắt đầu ở nghề gốc của chủng tộc (Nông Dân, Kẻ Lang Thang…), chuyển nghề khi đủ mastery `req` (+15 nếu trường phái ngoại lai), đủ cấp (T1:3, T2:12, T3:24, T4:36, T5:48) và Devotion nếu là ngọn tín ngưỡng. Thử thách có thể trượt.
 - **Mastery** (26 cái, theo 8 trường phái): bản địa học nhanh ×1,15, ngoại lai ×0,8, bị cấm không học được.
+- **Căn cốt, thiên phú** (`js/talent.js`, `docs/06_Thien_phu_chi_huong.md`): căn cốt sáu bậc màu Trắng → Đỏ là hệ số tu luyện ×0,85–×2 (nhân vào kinh nghiệm và mọi lần rèn kỹ năng), nâng được ở bình cảnh cấp 10, 20, 30, 40, 50; 0–3 thiên phú lúc sinh (40 cái, mỗi cái một bậc màu), thức tỉnh thêm trong đời (chọn 1 trong 3).
+- **Chí hướng**: 8 hướng (mạo hiểm, võ đạo, học vấn, làm giàu, tu hành, quyền thế, gia đình, tự nhiên). Dịch tính cách, focus và nghề ưu tiên; mở quyết định cãi lời gia đình, đổi nghề giữa đời, cơ hội theo chí hướng.
 - **Sinh kế** (nông dân, thợ mỏ, mạo hiểm giả…) quyết định thu nhập và rủi ro; tách khỏi nghề chiến đấu.
-- **Sức mạnh** quy đổi ra Tier: `0,35 + cấp/10 + Tier nghề × 0,12 + mastery tốt nhất/220 + trang bị × 0,05 − hao máu`, trừ khi già. Thắng thua mỗi trận theo logistic của chênh lệch với đe dọa (Tier loài + tinh anh/thủ lĩnh + cỡ + bầy + biến tố).
+- **Sức mạnh** quy đổi ra Tier: `0,35 + cấp/10 + Tier nghề × 0,12 + mastery tốt nhất/220 + trang bị × 0,05 − hao máu + thiên phú`, trừ khi già. Thắng thua mỗi trận theo logistic của chênh lệch với đe dọa (Tier loài + tinh anh/thủ lĩnh + cỡ + bầy + biến tố).
 
 ## 5. Bộ Xương
 
@@ -131,6 +133,7 @@ vankiep/
   js/edu.js                 học viện ba cấp (học phí, học bổng, thi, ngành), sư đồ (làm đệ tử thợ / cao thủ, nhận đệ tử)
   js/noble.js               quý tộc: tước Nam → Công, công trạng, sắc phong, mua tước, kế tước, thái ấp; xuất thân hoàng gia, quý tộc, kế vị ngai vàng, tranh ngôi, thăng tiến theo chính thể, thách đấu giành ngôi
   js/realmev.js             sự kiện quốc gia: 50 đặc tính mẫu, 31 đặc trưng riêng, sự kiện mục 8 (kênh riêng, mỗi lượt 35%)
+  js/talent.js              căn cốt, thiên phú (6 bậc màu), chí hướng; quyết định chí hướng, nối nghiệp nhà, đổi nghề, cơ hội theo chí hướng, thức tỉnh, bình cảnh; hệ con talent
   js/ui.js                  giao diện (chỉ nghe hook)
   docs/                     01 ý tưởng 1in8b · 02 phương án bản đồ · 03 thiết kế bản đồ V2 · 04 mẫu quốc gia · 05 thành phố, làng mạc
 ```

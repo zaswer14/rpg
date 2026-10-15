@@ -38,7 +38,7 @@ window.LifeSim = window.LifeSim || {};
   };
   G.incomeMult = S => {
     const n = G.here(S).n, a = G.attitude(S);
-    let m = (1 - G.taxRate(S)) * (a === 'fav' ? 1.1 : a === 'wary' ? .85 : 1);
+    let m = (1 - G.taxRate(S)) * (a === 'fav' ? 1.1 : a === 'wary' ? .85 : 1) * G.tfx(S).inc;   // thiên phú Đầu óc buôn bán… (js/talent.js)
     if (G.RACES[S.race].construct && n && !n.laws.includes('construct_citizen')) m *= .8;
     if (S.work === 'adventurer') m *= (bldOf(S).includes('guild') ? 1 : .6) * (n && n.laws.includes('bounties') ? 1.15 : 1);
     // Thuế cảng: tàu ghé cảng nộp phí, dân cảng giàu thêm.

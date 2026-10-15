@@ -157,3 +157,11 @@ details summary { cursor: pointer; color: var(--dim); font-size: 12px; text-tran
 .roles .role.mgr span { color: var(--gold); }
 .roles button { font-size: 10.5px; white-space: nowrap; padding: 0 6px; border-radius: 8px; background: transparent; color: var(--dim); border: 1px solid #4a4038; cursor: pointer; }
 .roles button:hover { color: var(--text, #f3e6c8); border-color: #7a6a58; }
+
+/* Thiên phú (js/talent.js): chip viền theo bậc màu Trắng → Đỏ; ô Chí hướng dưới focus. */
+.tal { display: flex; flex-wrap: wrap; gap: 4px; }
+.tchip { font-size: 11px; padding: 1px 8px; border-radius: 10px; background: var(--panel2); border: 1px solid; cursor: help; }
+.tchip.root { font-weight: 600; }
+.aim { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--dim); }
+.aim select { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; color: var(--ink); font: inherit; }
+.aim small { color: var(--faint); }
