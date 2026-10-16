@@ -86,6 +86,7 @@
 <script src="js/status.js"></script>
 <script src="js/econ.js"></script>
 <script src="js/inst.js"></script>
+<script src="js/fate.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -130,6 +131,9 @@ $('run').onclick = () => {
     // Kinh tế bốn vòng (bước C, js/econ.js).
     const ECK = ['rework', 'patron_learn', 'patron_elixir', 'patron_gold', 'artSold', 'artMasterN', 'wrath', 'wrathFired', 'runeGear'];
     // Học viện, gia tộc, đấu giá, mỏ ma tinh (bước D, js/inst.js).
+    // Kỳ ngộ, mặt trái (bước E, js/fate.js).
+    const EK = ['ring_wear', 'ring_sell', 'ring_no', 'ringPast', 'ringEvil', 'ringResist', 'ringHurt', 'ringPossessed', 'ringEnlight', 'unstuck', 'grave_dig', 'grave_pray', 'ruinIn', 'ruinWin', 'ruinDie', 'ruin_book', 'ruin_pill', 'ruin_gear', 'ruin_fruit', 'ruin_gold',
+      'rob_fight', 'rob_pay', 'rob_flee', 'robWin', 'robLose', 'robFled', 'robDie', 'greedN', 'greed_rob', 'greed_guard', 'greed_no', 'greedWin', 'greedLose', 'greedSeen', 'forbN', 'forb_learn', 'forb_report', 'forb_no', 'forbCaught', 'forbQuit', 'devN', 'dev_hold', 'dev_drop', 'dev_no', 'devDie', 'reawaken'];
     const DK = ['academyIn', 'academyNo', 'tourney', 'tourneyWin', 'tourneyTop', 'auction_elixir', 'auction_gear', 'auction_core', 'auction_art', 'auction_sell', 'bloodBorn', 'bloodWake', 'matchYes', 'matchNo', 'mine_dig', 'mineGood', 'mine_army'];
     const TALK = ['talAwaken', 'talBreak', 'defy_stay', 'defy_both', 'defy_leave', 'workSwitch', 'toAdv', 'aimChance', 'hermit', 'tradeWin', 'askWin'];
     const ORGK = ['advJoin', 'quests', 'advBranch', 'orgJoin', 'mercJoin', 'mercC', 'orgOfficer', 'orgLead', 'orgFound', 'headElect', 'foundVillage', 'foundTown', 'upTown', 'upCity', 'office', 'office2', 'foundNation', 'rebelOK', 'rebelFail'];
@@ -158,7 +162,7 @@ $('run').onclick = () => {
       const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
         adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver, teachAt: S.flags.teachAt, job: S.job, race: S.race,   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
         st: { pct: S.pct, q: S.q, office: !!S.flags.office, office2: !!S.flags.office2, head: !!S.flags.headElect, officer: !!S.flags.orgOfficer, lead: !!(S.flags.orgLead || S.flags.advBranch || S.flags.orgFound), noble: S.flags.nobleMax || 0, ret: !!S.flags.retainer, elix: S.flags.elixirY || 0, promo: S.flags.promoMax || 0, gold: S.gold, med: G.median(G.REGION[S.loc]) } };   // địa vị (js/status.js)
-      { const F = S.flags; for (const k of [...STK, ...ECK, ...DK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
+      { const F = S.flags; for (const k of [...STK, ...ECK, ...DK, ...EK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
         const o = F.royal ? 'Hoàng tộc' : F.house || F.houseLeft ? 'Nhà quý tộc' : 'Thường dân', b = B.root[o] || (B.root[o] = [0, 0, 0, 0]); b[0]++; b[1] += G.RARITY[G.RANK[F.root0] || 0].rate; if (F.rootBlood) { b[2]++; b[3] += F.rootBlood; } }
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
@@ -210,6 +214,13 @@ $('run').onclick = () => {
         row('Đấu giá: dược tề', 'auction_elixir'), row('Đấu giá: vũ khí ma pháp', 'auction_gear'), row('Đấu giá: ma tinh hạch', 'auction_core'), row('Đấu giá: tác phẩm danh gia', 'auction_art'), row('Đấu giá: bán tác phẩm của mình', 'auction_sell'),
         row('Sinh ra có huyết mạch', 'bloodBorn'), row('Thức tỉnh huyết mạch', 'bloodWake'), row('Liên hôn', 'matchYes'), row('Từ chối liên hôn', 'matchNo'), row('Đi đào mỏ ma tinh', 'mine_dig'), row('Đào mỏ có lời', 'mineGood'), row('Theo quân giành mỏ', 'mine_army')],
         ['', 'Đời', '% mọi đời'], { note: 'js/inst.js. Số mỏ ma tinh mới lộ ở bảng Thế giới động.' })); }
+    // Kỳ ngộ, mặt trái (bước E, docs/07 mục 4.13).
+    { const row = (t, k) => [t, B.k[k] || 0, pct(B.k[k] || 0, N)];
+      out.push(table('Kỳ ngộ, mặt trái (đời đầu)', [row('Nhẫn cổ: đeo', 'ring_wear'), row('Nhẫn cổ: bán', 'ring_sell'), row('Nhẫn là kiếp trước', 'ringPast'), row('Ma hồn thử đoạt xá', 'ringEvil'), row('Giữ được mình, nhẫn vỡ', 'ringResist'), row('Bị đoạt xá, chết', 'ringPossessed'), row('Linh hồn giảng đạo, ngộ đạo', 'ringEnlight'), row('Thoát kẹt gate (nhẫn, cấm thuật)', 'unstuck'),
+        row('Mở mộ kiếp trước', 'grave_dig'), row('Thắp hương mộ kiếp trước', 'grave_pray'), row('Vào bí cảnh', 'ruinIn'), row('Qua bí cảnh', 'ruinWin'), row('Chết trong bí cảnh', 'ruinDie'), row('Bí cảnh: bí kíp', 'ruin_book'), row('Bí cảnh: linh thảo', 'ruin_pill'), row('Bí cảnh: bảo khí', 'ruin_gear'), row('Bí cảnh: kỳ quả (căn cốt +1)', 'ruin_fruit'),
+        row('Bị phục kích: đánh', 'rob_fight'), row('Bị phục kích: nộp của', 'rob_pay'), row('Bị phục kích: chạy', 'rob_flee'), row('Đánh thắng bọn cướp', 'robWin'), row('Chạy thoát', 'robFled'), row('Bị giết đoạt bảo', 'robDie'), row('Gặp kẻ yếu mang ngọc', 'greedN'), row('Gặp kẻ yếu mang ngọc: cướp', 'greed_rob'), row('Cướp xong bị thấy, truy nã', 'greedSeen'), row('Gặp kẻ yếu mang ngọc: hộ tống', 'greed_guard'),
+        row('Gặp hắc ma pháp sư', 'forbN'), row('Học cấm thuật', 'forb_learn'), row('Báo quan', 'forb_report'), row('Luyện cấm thuật bị phát hiện', 'forbCaught'), row('Bỏ cấm thuật (tán công)', 'forbQuit'), row('Tẩu hỏa nhập ma', 'devN'), row('Tẩu hỏa: áp chế', 'dev_hold'), row('Tẩu hỏa: tán công', 'dev_drop'), row('Chết vì tẩu hỏa (áp chế hỏng)', 'devDie'), row('Thức tỉnh lại', 'reawaken')],
+        ['', 'Đời', '% mọi đời'], { note: 'js/fate.js. Mộ kiếp trước chỉ có khi kiếp sau sinh vào cùng thế giới (trò chơi), sim mỗi đời một thế giới mới nên thường là 0.' })); }
     out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
     { const ad = A.lives.filter(r => r.adult), M = Math.max(1, ad.length), avgOf = (l, f) => l.length ? avg(l, f).toFixed(2) : '—';   // docs/08 mục 9: tháp Tier (docs/07 mục 6), level trong Tier, sức lúc vào Tier / ở max level

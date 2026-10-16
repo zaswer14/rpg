@@ -386,6 +386,49 @@ Chỗ lệch, để lại:
 - Căn cốt con nghiêng theo bạn đời liên hôn: bạn đời có căn cốt nhưng con của người chơi là NPC, chưa dùng tới. Phòng trưng bày chưa tách khỏi đấu giá. Đấu giá chưa có giết người đoạt bảo (bước E).
 - Không thử 100 thế giới dựng (bản đồ, quốc gia): bước D không đổi `realm.js`.
 
+### 4.13. Kết quả bước E: kỳ ngộ, mặt trái (16/10/2026)
+
+Làm theo mục 4.8 và bảng mục 5 (`cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken`). Mã mới ở `js/fate.js` (hệ con `fate` sau `inst`); chỗ nối: bọc `G.teachList` (nguồn `ring`, `notes`, `dark`), `G.cultRate` (cấm thuật), `G.onDeath` (ghi mộ vào `W.graves`), `promote`, `cv_lifespan` (hỏng thì có thể tẩu hỏa), `cv_auction`, `cv_tourney`, `cv_mine` (đồ quý bị nhắm); bệnh mới `qi`, ba nguyên nhân chết mới (trọng số 0, chỉ do quyết định). `sim.html` có bảng Kỳ ngộ, mặt trái. Tab "Kỳ ngộ, mặt trái" trên trang Duyệt Nội Dung.
+
+| Phần | Số chốt (`G.FATE`) |
+|---|---|
+| Linh hồn trong nhẫn (`cv_ring`) | mỗi năm 0,05% (thiếu niên, người trẻ), một lần một đời; một nửa cùng trường phái với mình; có mộ kiếp trước từ Tier 3 thì một nửa là chính kiếp đó. Đeo: thầy trường phái của linh hồn tới Tier 4 (Tier 5 vẫn chỉ tự ngộ, docs/09), chỉ đường khi kẹt gate, Thủ Hộ Giả max level cùng trường phái ngộ đạo × 3. 20% là ma hồn, mỗi năm 12% thử đoạt xá: giữ được mình (40% + Hiểu biết / 200 + 5% × Tier + Tinh thần) thì nhẫn vỡ; không thì 25% chết, còn lại bị nguyền, mất nhẫn |
+| Mộ các kiếp (`cv_grave`) | lúc chết ghi mộ vào thế giới (`W.graves`, tối đa 40). Kiếp sau cùng thế giới ở đúng vùng có mộ của kiếp từ Tier 2: đào (trang bị của kiếp đó nếu tốt hơn, bút ký là nguồn dạy trường phái đó tới Tier của kiếp đó, tối đa 4, 120 × Tier điểm rèn, 15% bị nguyền; mỗi mộ đào một lần), thắp hương (60 × Tier điểm rèn) |
+| Bí cảnh (`cv_ruin`) | mỗi di tích 15 năm mở một lần (lệch theo di tích); chỉ Tier 0–1, người trẻ, ở đúng vùng có di tích. Hai trận ở tầng trên; qua thì bí kíp 300 điểm rèn / linh thảo hai năm dược tề thượng hạng / bảo khí trang bị +2 / kỳ quả căn cốt +1 / đồ cổ; 15% bị kẻ vào cùng chặn đường |
+| Giết người đoạt bảo (`cv_rob`) | đồ quý (đấu giá, bí cảnh, vô địch tỉ thí, mỏ, mộ) bị nhắm 3 năm, mỗi năm 8% (đi săn, phiêu lưu × 1,4): đánh (bọn cướp 0,8–1,3 × sức mình; thua mất của, 10% chết), nộp của, chạy (theo Nhanh). Người có cấp mỗi năm 0,6% gặp kẻ yếu mang bảo vật: cướp (30% có người thấy: truy nã), hộ tống, bỏ qua |
+| Cấm thuật (`cv_forbidden`) | trưởng thành dưới Tier 4, mỗi năm 0,2% (max level từ 4 năm × 3, Hắc Giáo × 2, chí hướng Sức mạnh × 1,5), tối đa hai lần một đời. Học: rèn × 2, thầy Tử thuật, Bóng tối tới Tier 3, thoát kẹt gate; mỗi năm −2 Sinh lực, 7% bị phát hiện, 6% tẩu hỏa. Báo quan: 2 × trung vị, danh vọng, công trạng |
+| Tẩu hỏa nhập ma (`cv_deviate`) | từ cấm thuật, thử thách chuyển nghề hỏng (4%), liều đột phá lúc già hỏng (30%). Áp chế (20–85% theo Hiểu biết, Tinh thần; hỏng thì bệnh "Tẩu hỏa nhập ma", nguy cơ chết × 1,6, 5% chết), tán công (hai kỹ năng cao nhất tụt một bậc, bỏ cấm thuật), mặc kệ (thành bệnh) |
+| Thức tỉnh lại (`cv_reawaken`) | Phàm Nhân trưởng thành, cuối năm Sinh lực dưới 15: 20%, một lần một đời; căn cốt +2 bậc (30% +3) |
+| Lối thoát khi kẹt gate (`G.unstick`) | nhẫn, cấm thuật: bỏ kỹ năng không thuộc gate nào khỏi chỗ nâng (vẫn giữ bậc), đưa cặp gate của hướng đi vào; level giảm |
+
+1000 đời, chế độ tự động. Hai seed gốc (`can-bang`, `kiem-tra`) cho cả bản bước D và bản bước E, vì thêm lượt bốc ngẫu nhiên làm lệch chuỗi:
+
+| Đo | Bước D (`can-bang` / `kiem-tra`) | Bước E (`can-bang` / `kiem-tra`) | Mục tiêu |
+|---|---|---|---|
+| Trận vượt Tier + 1 | 0 / 0 | 0 (65 201 trận) / 0 | 0 |
+| Trỗi dậy | 20,6% / 22,0% | 20,0% / 23,5% | ~20% |
+| Chết vì quái | 10,4% / 9,1% | 10,5% / 8,0% | ~10% |
+| Tháp Tier 0–5 | 58,7 / 26,5 / 8,8 / 4,8 / 0,9 / 0,2; 56,4 / 28,0 / 8,9 / 4,9 / 1,6 / 0,1 | 56,5 / 27,1 / 10,0 / 6,0 / 0,5 / 0; 56,2 / 27,8 / 10,4 / 4,0 / 1,5 / 0 | 60 / 27 / 10 / 2,5 / 0,5 / 0,05 |
+| 40 đời cùng seed (máy cloud) | 3,5–3,8 giây | 3,9–4,4 giây | |
+
+Siêu Việt Giả lệch 4,8 → 6,0% ở seed đầu nhưng 4,9 → 4,0% ở seed sau: nhiễu, bước E không đẩy tháp lên.
+
+Sự kiện (mọi đời, `can-bang`): đeo nhẫn 0,5%, bán 0,1%, ma hồn thử đoạt xá 0,3%; vào bí cảnh 9,2%, qua 3,8%, chết trong đó 0,2%; bị phục kích 3,5% (thắng 1,6%, chết 0,2%); gặp kẻ yếu mang bảo vật 8,6% (cướp 2,9%, bị truy nã 0,6%, hộ tống 2,8%); gặp hắc ma pháp sư 9,6% (học 0,9%, báo quan 4,9%, bị phát hiện 0,6%); tẩu hỏa 2,0%; thức tỉnh lại 0,2%. Mộ kiếp trước không đo được bằng sim (mỗi đời một thế giới mới); thử 12 thế giới × 8 kiếp nối nhau: 9 / 96 kiếp đào mộ kiếp trước, nhẫn mang linh hồn kiếp trước có xảy ra (tăng tỉ lệ nhẫn lên 2% để thấy). Thế giới động không đổi (50 × 300 năm: trung vị 5 nước, ít nhất 2, tỉnh đổi chủ 7,28 / 100 năm).
+
+Đường đi tới số chốt:
+
+- Bản đầu dùng sự kiện có trọng số cho hắc ma pháp sư và kẻ yếu mang bảo vật: gặp hắc ma pháp sư 73% đời dù trọng số rất nhỏ. Lý do: sự kiện không lặp lại dùng hết dần, về già nhóm sự kiện đủ điều kiện chỉ còn vài cái, nên sự kiện trọng số nhỏ vẫn bị chọn gần như chắc. Chuyển hai thứ này sang xác suất mỗi năm trong hệ con `fate`. **Các sự kiện hiếm có sẵn (trọng số nhỏ) cũng bị như vậy; xem lại ở bước F.**
+- Hắc ma pháp sư lúc đầu dạy Tier 3 mọi trường phái: Siêu Việt Giả 4,8 → 7,3%. Thu về Tử thuật, Bóng tối.
+- Bí cảnh cho cả vùng kề: 20–25% đời vào, 2% chết trong đó. Chỉ vùng có di tích, 15 năm một lần: 9%.
+- Mộ kiếp trước cho cả vùng kề, đào lại được ở mỗi kiếp: 35% kiếp. Chỉ đúng vùng, mỗi mộ đào một lần: 9%.
+
+Chỗ lệch, để lại:
+
+- Kẹt gate vẫn 0% đời trong sim (docs/08), nên lối thoát chưa lần nào chạy trong 1000 đời; đã thử bằng tay. "Kẹt" thật hay gặp là max level mà thiếu người dạy Tier sau; cấm thuật nhắm vào người đó.
+- NPC chưa nhớ ai cướp của mình; giáo hội Quang Minh chưa truy kẻ luyện cấm thuật (giáo hội đối đầu vẫn chưa có cơ chế, bước D để lại).
+- Bộ Xương không về mộ của mình qua `cv_grave` (đã có sự kiện `sk_grave`); linh hồn kiếp trước trong nhẫn chỉ khi kiếp đó từ Tier 3.
+- Không thử 100 thế giới dựng: bước E không đổi `realm.js`, `dynamic.js`.
+
 ## 5. Từ đầu truyện thành sự kiện, quyết định
 
 Mã đề xuất có tiền tố `cv_` để khỏi trùng tên quyết định sẵn có (xem nhắc ở `TIEN_DO.md` mục 3).
@@ -442,7 +485,7 @@ Mỗi bước theo cách làm ở `TIEN_DO.md` mục 5 (sim 1000 đời, thử t
 | B (xong 16/10/2026, mục 4.10) | Địa vị: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên (dược tề); `cv_test`, `cv_scorn`, `cv_license`, `cv_levy`, `cv_bully`, `cv_kin`, `cv_lifespan` | `state.js`, `org.js`, `noble.js`, `talent.js`, `data/nations.js` |
 | C (xong 16/10/2026, mục 4.11) | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
 | D (xong 16/10/2026, mục 4.12) | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
-| E | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken` | `cult.js`, `events.js` |
+| E (xong 16/10/2026, mục 4.13) | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken`; lối thoát khi kẹt gate | `js/fate.js` mới |
 | F | Đặt tên kỹ năng (bản đầu không tên), cân lại tháp | `cult.js`, `sim.html` |
 
 ## 8. Người dùng đã chốt (15/10/2026)

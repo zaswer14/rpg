@@ -124,7 +124,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh'], ['status', 'Địa vị']
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -133,6 +133,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
   // ---- Danh sách mục duyệt theo tab ----
+  const FRULES = [['ring', 'Linh hồn trong nhẫn'], ['grave', 'Mộ các kiếp'], ['ruin', 'Bí cảnh'], ['rob', 'Giết người đoạt bảo'], ['forb', 'Cấm thuật'], ['deviate', 'Tẩu hỏa nhập ma'], ['reawaken', 'Thức tỉnh lại'], ['unstick', 'Lối thoát khi kẹt gate']];
   const IRULES = [['academy', 'Học viện danh tiếng, lớp tài năng'], ['tourney', 'Đại hội tỉ thí'], ['auction', 'Đấu giá hội'], ['blood', 'Huyết mạch'], ['match', 'Liên hôn'], ['mine', 'Mỏ ma tinh']];
   const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
   const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
@@ -146,6 +147,7 @@ code{font-family:var(--font-mono);font-size:12px}
     noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
     promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
     work: Object.entries(D.works).sort((a, b) => a[1].ring - b[1].ring).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    fate: [...FRULES.map(([id, name]) => ({ kind: 'frule', id, name })), ...D.fate.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     inst: [...IRULES.map(([id, name]) => ({ kind: 'irule', id, name })), ...D.inst.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     econ: [...[1, 2, 3, 4].map(r => ({ kind: 'ring', id: String(r), name: D.econ.ringVi[r] })), ...Object.entries(D.econ.demandVi).map(([id, n]) => ({ kind: 'demand', id, name: n })), ...D.econ.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') })),
@@ -165,7 +167,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate);
   }
 
   // ---- Tab ----
@@ -349,6 +351,28 @@ code{font-family:var(--font-mono);font-size:12px}
       + grid(part('Luật', rules) + part('Quyết định', decs));
   }
 
+  // ---- Kỳ ngộ, mặt trái (vankiep/js/fate.js, bước E; docs/07 mục 4.8, 4.13) ----
+  function fateView() {
+    const F = D.fate, C = F.cfg, fp = v => String(+(v * 100).toFixed(v < .01 ? 2 : 1)).replace('.', ',') + '%';
+    const RULE = {
+      ring: `<p style="margin:0">Kiểu Bàn Long, Đấu Phá: một chiếc nhẫn cổ giữ linh hồn một cao thủ đã chết. Mỗi năm ${fp(C.ringP)} (thiếu niên, người trẻ), một lần một đời. Linh hồn dạy trường phái của nó tới Tier ${C.ringT} (không ai dạy được Huyền Thoại Giả; Thủ Hộ Giả max level cùng trường phái được giảng đạo, ngộ đạo × ${num(C.ringEnlight)}), chỉ đường khi kẹt gate. ${fp(C.ringEvil)} là ma hồn: mỗi năm ${fp(C.possessP)} thử đoạt xá. Có mộ kiếp trước từ Tier 3 thì một nửa số nhẫn mang linh hồn chính kiếp đó.</p>`,
+      grave: `<p style="margin:0">Trùng sinh: mỗi kiếp chết để lại mộ trong thế giới (tối đa 40 mộ). Kiếp sau sinh vào cùng thế giới, đi qua vùng có mộ của một kiếp từ Tier ${C.graveT} thì mơ thấy chỗ mình chôn rương: di vật, bút ký là nguồn dạy trường phái của kiếp đó tới Tier của nó (tối đa 4). Mỗi mộ chỉ đào được một lần. Sim chạy mỗi đời một thế giới mới nên không gặp; chỉ có trong trò chơi.</p>`,
+      ruin: `<p style="margin:0">Kiểu Phàm Nhân (Huyết Sắc Cấm Địa): mỗi di tích ${C.ruinEvery} năm mở một bí cảnh, kết giới chỉ cho người tới Tier ${C.ruinMaxT} lọt qua. ${C.ruinFights} trận ở tầng trên (luật Tier như đánh hang, không gặp quái quá Tier + 1); qua thì có bảo vật, và ${fp(C.ruinRival)} bị kẻ vào cùng chặn đường lúc ra.</p>`,
+      rob: `<p style="margin:0">Người vừa có đồ quý (trúng đấu giá, ra khỏi bí cảnh, vô địch tỉ thí, đào mỏ có lời, mở mộ) bị nhắm trong ${C.lootYrs} năm: mỗi năm ${fp(C.robP)} bị phục kích; thua thì ${fp(C.robDie)} chết. Chạy thoát theo chỉ số Nhanh. Người có cấp cũng có lúc nổi lòng tham (mỗi năm ${fp(C.greedP)} gặp kẻ yếu mang bảo vật); ra tay mà có người thấy (${fp(C.witness)}) thì bị truy nã.</p>`,
+      forb: `<p style="margin:0">Hắc ma pháp, huyết tế là đường tắt (docs/07 mục 4.8): rèn × ${num(C.forbMult)}, hắc ma pháp sư dạy ${esc(F.forbSchools.join(', '))} tới Tier ${C.forbT}. Người đứng ở max level từ ${C.forbStuck} năm dễ gặp hắn hơn (× ${num(C.forbStuckX)}). Giá phải trả mỗi năm: −${C.forbHl} Sinh lực, ${fp(C.forbSeen)} bị phát hiện (bắt như phạm luật, truy nã ở nước đó), ${fp(C.forbDev)} tẩu hỏa.</p>`,
+      deviate: `<p style="margin:0">Mất kiểm soát khi tu luyện: do cấm thuật, thử thách chuyển nghề hỏng (${fp(C.devPromote)}), liều đột phá lúc già hỏng (${fp(C.devPush)}). Bệnh mới "Tẩu hỏa nhập ma" (nguy cơ chết × 1,6, khó lành). Áp chế hỏng thì ${fp(C.devDie)} chết.</p>`,
+      reawaken: `<p style="margin:0">Kiểu Solo Leveling: Phàm Nhân trưởng thành nằm giữa sống và chết (Sinh lực dưới 15 cuối năm) có ${fp(C.reawakenP)} thức tỉnh lại, một lần một đời: căn cốt nhảy hai bậc. Khác thức tỉnh thiên phú (thêm một thiên phú).</p>`,
+      unstick: '<p style="margin:0">Max level mà cặp gate của mọi nghề kế tiếp không nằm trong mười kỹ năng được nâng thì kẹt (docs/08 mục 12). Linh hồn trong nhẫn, cấm thuật gỡ được: bỏ kỹ năng không thuộc gate nào ra khỏi chỗ nâng (vẫn giữ bậc, vẫn lắp được), đưa cặp gate của hướng đi vào; level giảm, rèn lại cặp đó là lên.</p>'
+    };
+    const rules = FRULES.filter(([id]) => passes('frule', id)).map(([id, name]) => card('frule', id, name, RULE[id]));
+    const decs = F.decs.filter(d => passes('dec', d.id)).map(d => card('dec', d.id, d.title, `<div class="meta">quyết định · ưu tiên ${d.prio}</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(d.when)}</dd></dl>${d.texts.length ? `<ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${d.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${d.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`));
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Kỳ ngộ, mặt trái', 'Bước E của định hướng xã hội tu luyện (docs/07 mục 4.8, 5): những cơ duyên hiếm của truyện tu luyện (nhẫn cổ, bí cảnh, trùng sinh về mộ cũ, thức tỉnh lại) và cái giá của đường tắt (cấm thuật, tẩu hỏa, giết người đoạt bảo). Câu chữ trích từ mã nguồn; ‹…› là chỗ game điền vào.')
+      + grid(part('Luật', rules) + part('Quyết định', decs));
+  }
+
   // ---- Kinh tế bốn vòng (vankiep/js/econ.js, bước C; docs/07 mục 4.6, 4.11) ----
   function econView() {
     const E = D.econ, C = E.cfg, works = r => Object.entries(D.works).filter(([, w]) => w.ring === r).map(([, w]) => `<span class="chip">${esc(w.nameVi)}${w.tier ? ' · T' + w.tier : ''}</span>`).join('');
@@ -505,7 +529,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
