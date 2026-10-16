@@ -65,6 +65,8 @@ window.LifeSim = window.LifeSim || {};
     if (w.biomes && !w.biomes.includes(reg.biome)) return false;
     if (w.needSm && S.sm < w.needSm) return false;
     if (w.needFaith && !S.faith) return false;
+    if (w.tier && G.tierOf(S) < w.tier) return false;   // nghề của người có cấp (bước C, js/econ.js)
+    if (w.demand && G.demandOf && G.demandOf(S, w.demand) < G.ECON.minDemand) return false;   // nơi ở không đủ cầu
     if (w.banLaw && n && n.laws.includes(w.banLaw)) return false;
     // Đẳng cấp: không vào được nghề mà mức thu nhập thấp nhất đã cao hơn tầng lớp của mình.
     if (n && n.laws.includes('caste') && w.pct[0] > G.CLASSES[S.q].pctRange[1]) return false;

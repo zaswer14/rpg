@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -89,6 +89,13 @@ const SDEC = {
   cv_retainer: ['Lời mời cung phụng', 'Siêu Phàm Giả trở lên, trưởng thành, chưa làm cung phụng, không phải người cai trị: mỗi năm 8% × (Tier − 1) có lời mời từ triều đình (từ Siêu Việt Giả), một nhà quý tộc (từ Siêu Việt Giả chỉ nhà từ Bá tước) hoặc một hội có trụ sở ở khu nhà. Mỗi năm 10% phải ra tay cho chủ.'],
   cv_elixir: ['Dược tề', 'Trưởng thành, có tiền đủ ba năm dược tề thường; hỏi lại mỗi lần lên Tier. Chế độ tự động: chí hướng Tu luyện võ đạo, Phiêu lưu, Quyền thế mua loại đắt nhất mà tiền đủ 4 năm; Thuận theo tự nhiên, Gia đình đủ 15 năm; chí hướng khác 8 năm.']
 };
+// Kinh tế bốn vòng (vankiep/js/econ.js, bước C).
+const EDEC = {
+  cv_rework: ['Nghề của người có cấp', 'Trưởng thành, có nghề, mỗi lần lên Tier (từ Chức Nghiệp Giả) mà nơi ở có nghề cần Tier đó. Chào tối đa 3 nghề trả cao nhất. Chế độ tự động đổi khi nghề mới trả cao hơn rõ (45% + 30% × tính gan).'],
+  cv_patron: ['Chủ nhà để mắt', 'Làm nghề vòng 4 từ 4 năm, mỗi năm 7%, một lần một đời. Chủ nhà là lãnh chúa thái ấp của khu, hoặc một nhà quý tộc của nước. Học cùng con chủ: nguồn dạy Tier 2 (chủ từ Bá tước hoặc ở kinh đô: Tier 3). Dược tề: 5 năm dược tề tốt không mất tiền. Thưởng: 3 × thu nhập trung vị.'],
+  cv_art: ['Tác phẩm được nhận', 'Sự kiện, cách 4 năm: Điêu khắc gia, Họa sĩ, Thợ kim hoàn, Nghệ nhân làm từ 5 năm. Bán đấu giá 2–8 × thu nhập trung vị, danh vọng +4; 20% + danh vọng / 300 thành danh gia (phân vị +0,12, danh vọng +10), một lần.'],
+  cv_wrath: ['Chủ nổi giận', 'Sự kiện, cách 10 năm, nghề vòng 4 làm từ 2 năm. 40% chỉ bị mắng; còn lại một nửa bị đuổi việc (phân vị × 0,7, phải tìm nghề khác), một nửa bị đánh (mất 6–16 Sinh lực).']
+};
 const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
 const data = {
@@ -144,6 +151,9 @@ const data = {
   })(),
   tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }),
   // Địa vị theo Tier (vankiep/js/status.js, docs/09 mục 6.4, docs/07 mục 4.3 và 4.10).
+  econ: { ringVi: G.RING_VI, demandVi: G.DEMAND_VI, cfg: G.ECON,
+    decs: Object.entries(EDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
+      return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) },
   status: { st: G.STATUS, titleTier: G.TITLE_TIER, grace: G.TITLE_GRACE, head: G.HEAD_TIER, office: G.OFFICE_TIER, org: G.ORG_TIER, tw: G.PROMO_TW, ret: G.RET_PAY, elixir: G.ELIXIR, blood: G.BLOOD, strict: G.STRICT, lax: G.LAX,
     decs: Object.entries(SDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) }

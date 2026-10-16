@@ -49,7 +49,9 @@ window.LifeSim = window.LifeSim || {};
         const land = rural ? shuffled.find(([id]) => LAND.includes(id)) : null;
         // Nghề hợp chí hướng, nghề đã định khi rời nhà (js/talent.js G.aimWorks) luôn có mặt nếu làm được ở đây.
         const want = G.aimWorks(S).filter(id => id !== 'adventurer' && (!land || id !== land[0])).map(id => shuffled.find(e => e[0] === id)).filter(Boolean).slice(0, 2);
-        const pick = [...(land ? [land] : []), ...want, ...shuffled.filter(e => e !== land && !want.includes(e))].slice(0, 3);
+        // Ở kinh đô, thành phố của nước ban tước, thái ấp: nhà quyền quý luôn cần người (nghề vòng 4, js/econ.js).
+        const lux = !rural && G.demandOf && G.demandOf(S, 'noble') >= .8 ? shuffled.find(([id]) => G.WORKS[id].ring === 4 && !want.some(e => e[0] === id)) : null;
+        const pick = [...(land ? [land] : []), ...(lux ? [lux] : []), ...want, ...shuffled.filter(e => e !== land && e !== lux && !want.includes(e))].slice(0, 3);
         pick.push(['adventurer', G.WORKS.adventurer]);
         return { title: 'Kiếm sống bằng gì?', body: `Bạn đã trưởng thành ở ${home(S, X)}. Thu nhập tính theo phân vị trong vùng (${reg.nameVi}, trung vị ${G.coin(Math.round(G.median(reg)))}/năm).`,
           choices: pick.map(([id, w]) => { const m = G.incomeMult({ ...S, work: id }), fee = G.workFee(S, id);
@@ -66,7 +68,7 @@ window.LifeSim = window.LifeSim || {};
         // Không có thiên hướng rõ: người ở vùng quê, làng, thôn nghiêng về nghề đất (ngoài đời phần lớn dân là nông dân).
         const LAND = ['farmer', 'herder', 'fisher', 'woodcutter', 'miner'], rural = !S.urban || ['village', 'hamlet'].includes((G.here(S).s || {}).tier);
         const rest = d.choices.filter(c => c.k !== 'adventurer');
-        return rest.length ? X.wpick(rest, c => rural && LAND.includes(c.k) ? 4 : 1).k : 'adventurer';
+        return rest.length ? X.wpick(rest, c => rural && LAND.includes(c.k) ? 4 : G.WORKS[c.k].ring === 4 ? 1 + T.social * 2 : 1).k : 'adventurer';
       }
     },
     promote: {

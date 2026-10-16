@@ -59,8 +59,31 @@ window.LifeSim = window.LifeSim || {};
     priest:     { nameVi:'Tu sĩ',          pct:[.30,.70], risk:.7,  trains:{ Spirit:3, Soul:1 }, bld:['temple'], needFaith:true },
     sailor:     { nameVi:'Thủy thủ',       pct:[.18,.55], risk:1.9, trains:{ Throwing:1, Body:2 }, role:['port'], town:true, cause:'shipwreck', seaBand:1 },
     thief:      { nameVi:'Kẻ trộm',        pct:[.05,.60], risk:2.2, trains:{ Dagger:3, Stealth:3, Trap:1 }, town:true, cause:'hanged' },
-    adventurer: { nameVi:'Mạo hiểm giả',   pct:[.10,.95], risk:1.0, trains:{}, adventurer:true }
+    adventurer: { nameVi:'Mạo hiểm giả',   pct:[.10,.95], risk:1.0, trains:{}, adventurer:true },
+    // ── Bước C của docs/07 (mục 4.6, kết quả mục 4.11): nghề bốn vòng. ring: 1 người có cấp sống bằng sức, 2 phục vụ tu luyện,
+    // 3 sinh kế cơ bản, 4 phục vụ quý tộc xa hoa. tier: Tier tối thiểu. demand: loại cầu ở nơi ở (js/econ.js G.DEMAND), cầu thấp thì không có chỗ làm.
+    bodyguard:  { nameVi:'Hộ vệ thuê',     pct:[.35,.75], risk:1.6, trains:{ Sword:2, Shield:2 }, town:true, tier:1, demand:'trade' },
+    alchemist:  { nameVi:'Dược sư',        pct:[.40,.85], risk:.9,  trains:{ Alchemy:3 }, bld:['healer','market'], tier:1, needSm:40, demand:'cult' },
+    runesmith:  { nameVi:'Khắc văn sư',    pct:[.45,.90], risk:.9,  trains:{ Arcane:2, Engineering:2 }, bld:['smith','school'], town:true, tier:1, demand:'cult' },
+    arraymaster:{ nameVi:'Ma pháp trận sư', pct:[.60,.95], risk:1.0, trains:{ Arcane:3 }, bld:['school'], town:true, tier:2, needSm:50, demand:'cult' },
+    tamer:      { nameVi:'Người luyện thú cưỡi', pct:[.25,.65], risk:1.5, trains:{ Taming:3, Riding:1 }, tier:1, demand:'wild' },
+    appraiser:  { nameVi:'Giám định sư',   pct:[.35,.75], risk:.7,  trains:{ Arcane:1, Alchemy:1 }, bld:['market'], town:true, needSm:50, demand:'cult' },
+    porter:     { nameVi:'Phu khuân vác',  pct:[.15,.45], risk:2.4, trains:{ Body:3 }, cause:'accident', demand:'wild' },
+    skinner:    { nameVi:'Thợ xẻ thú',     pct:[.15,.50], risk:1.2, trains:{ Dagger:2, Engineering:1 }, demand:'wild' },
+    sculptor:   { nameVi:'Điêu khắc gia',  pct:[.20,.92], risk:.8,  trains:{ Engineering:2, Construct:1 }, town:true, demand:'noble', art:true },
+    painter:    { nameVi:'Họa sĩ, thi nhân', pct:[.10,.88], risk:.7, trains:{ Spirit:1 }, town:true, needSm:35, demand:'noble', art:true },
+    cook:       { nameVi:'Đầu bếp',        pct:[.20,.55], risk:.9,  trains:{ Alchemy:1, Dagger:1 }, town:true, demand:'noble' },
+    tailor:     { nameVi:'Thợ may thêu',   pct:[.20,.60], risk:.7,  trains:{ Dagger:1 }, town:true, demand:'noble' },
+    jeweler:    { nameVi:'Thợ kim hoàn',   pct:[.35,.82], risk:.8,  trains:{ Engineering:2, Alchemy:1 }, bld:['market'], town:true, guild:true, demand:'noble', art:true },
+    performer:  { nameVi:'Nghệ nhân',      pct:[.10,.80], risk:.9,  trains:{ Spirit:2, Body:1 }, town:true, demand:'noble', art:true },
+    steward:    { nameVi:'Quản gia',       pct:[.30,.65], risk:.7,  trains:{}, town:true, needSm:35, demand:'noble' },
+    tutor:      { nameVi:'Gia sư',         pct:[.35,.70], risk:.6,  trains:{ Arcane:1 }, town:true, needSm:55, demand:'noble' }
   };
+  // Vòng của nghề có sẵn (docs/07 mục 4.6): thợ mỏ, thợ rèn, thầy thuốc, thương nhân phục vụ tu luyện; lính canh, thợ săn, mạo hiểm giả sống bằng sức.
+  for (const [ids, r] of [[['guard', 'hunter', 'adventurer', 'bodyguard'], 1], [['miner', 'smith', 'healer', 'merchant', 'alchemist', 'runesmith', 'arraymaster', 'tamer', 'appraiser', 'porter', 'skinner'], 2], [['sculptor', 'painter', 'cook', 'tailor', 'jeweler', 'performer', 'steward', 'tutor'], 4]]) for (const id of ids) G.WORKS[id].ring = r;
+  for (const w of Object.values(G.WORKS)) w.ring = w.ring || 3;
+  G.WORKS.hunter.nameVi = 'Thợ săn ma thú';   // bán thịt, da và ma tinh hạch (docs/07 mục 4.6)
+  G.WORKS.miner.demand = 'ore';   // vùng ma lực cao thì mỏ ra ma tinh, thợ mỏ được trả cao hơn
 
   // ── VÙNG ──
   // wealth 0–1, gini, pop (trọng số nơi sinh), danger (áp lực quái nền), magic 0–1.

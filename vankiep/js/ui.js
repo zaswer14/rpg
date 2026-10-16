@@ -217,6 +217,7 @@
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
     if (G.statusTip) { const i = kv.findIndex(r => r[0] === 'Thân phận'); $('cKv').children[i * 2 + 1].title = G.statusTip(S); }
+    if (G.workText && S.work) { const i = kv.findIndex(r => r[0] === 'Sinh kế'); $('cKv').children[i * 2 + 1].title = G.workText(S.work); }   // vòng nghề, cầu (js/econ.js)
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
     // Level, kỹ năng đang rèn, chỉ số (js/cult.js, docs/08).
     const sp = G.skProgress(S), t = sp.t;

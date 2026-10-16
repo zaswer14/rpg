@@ -90,6 +90,7 @@ window.LifeSim = window.LifeSim || {};
     let l = 0, payer = null;
     if (st === 'teen' && S.family.parents.some(p => p.alive)) { l = F.royal ? 3 : F.house ? 2 : S.q >= 5 ? 1 : 0; payer = 'family'; }
     else if (st === 'adult' || st === 'elder') { l = S.elixir != null ? S.elixir : S.auto ? autoElixir(S, X) : 0; payer = 'self'; while (l > 0 && S.gold < G.elixirCost(S, X, l)) l--; }
+    if (F.giftElixir > 0 && payer === 'self') { l = Math.max(l, 2); payer = 'gift'; F.giftElixir -= ypt; }   // chủ nhà ban dược tề (js/econ.js cv_patron)
     if (l > 0 && payer === 'self') X.money(-G.elixirCost(S, X, l));
     F.elixirM = G.ELIXIR[l].mult;
     if (l > 0) { cnt(S, 'elixirY', ypt); F.elixirMax = Math.max(F.elixirMax || 0, l); }

@@ -1,6 +1,6 @@
 # Vạn Kiếp: định hướng mới, xã hội tu luyện
 
-**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), bước B xong (`js/status.js`, kết quả mục 4.10), tiếp theo bước C (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
+**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), bước B xong (`js/status.js`, kết quả mục 4.10), bước C xong (`js/econ.js`, kết quả mục 4.11), tiếp theo bước D (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
 
 Người dùng đổi định hướng game (15/10/2026):
 
@@ -148,7 +148,7 @@ Tuổi thọ × (1 + 0,12 × Tier cảnh giới). Chiến sĩ cấp 9, Thánh V�
 
 Ba đồng tiền: **đồng, bạc, vàng**, 100 đồng = 1 bạc, 100 bạc = 1 vàng. Trong mã vẫn tính một con số theo bạc (`S.gold`, giữ tới 0,01 để có đồng), chỉ đổi cách hiện: `G.coin(n)` in "2 vàng 35 bạc", "40 bạc 50 đồng". Giá nhỏ (tiền ăn, phí qua cầu) giờ ghi được bằng đồng; giá lớn (mua tước, lập thị trấn) ghi bằng vàng.
 
-### 4.6. Kinh tế và nghề: bốn vòng (bước C)
+### 4.6. Kinh tế và nghề: bốn vòng (bước C; bản làm vào mã ở mục 4.11)
 
 | Vòng | Nghề hiện có | Nghề mới đề xuất | Cầu đến từ đâu |
 |---|---|---|---|
@@ -275,6 +275,66 @@ Chỗ khác thiết kế, để lại:
 - Không chạy Thử thế giới động, 100 thế giới: bước B không đổi `dynamic.js`, `realm.js` (người ra trận theo lệnh triệu tập chỉ cộng sức chiến tranh như lính nghĩa vụ cũ, khi có đời người).
 - Bản lưu cũ chạy được: trường mới (`S.elixir`, `S.flags.reg`, `S.roles.retainer`, `p.root`) tự khởi tạo khi cần; người có cấp ở bản lưu cũ chưa đăng ký nên sẽ được hỏi.
 
+### 4.11. Kết quả bước C: kinh tế bốn vòng (16/10/2026)
+
+Làm theo mục 4.6. Mã mới ở `js/econ.js`; dữ liệu nghề ở `data/world.js`; chỗ nối: `state.js` (`G.workOK` xét Tier và cầu), `life.js` (cầu đẩy thu nhập), `events.js` (quyết định `work` chào nghề vòng 4), `talent.js` (chí hướng có nghề mới), `status.js` (dược tề được ban), `ui.js` (tooltip sinh kế), `sim.html` (bảng Theo sinh kế thêm vòng, Tier, phân vị; bảng Kinh tế bốn vòng). Tab Kinh tế bốn vòng trên trang Duyệt Nội Dung; tab Sinh kế ghi vòng, Tier, cầu.
+
+| Vòng | Nghề (Tier tối thiểu, cầu) |
+|---|---|
+| 1 Người có cấp sống bằng sức | Lính canh, Thợ săn ma thú (đổi tên từ Thợ săn), Mạo hiểm giả, **Hộ vệ thuê** (Tier 1, chợ) |
+| 2 Phục vụ tu luyện | Thợ mỏ (cầu ma lực: mỏ ma tinh), Thợ rèn, Thầy thuốc, Thương nhân, **Dược sư** (Tier 1, người có cấp), **Khắc văn sư** (Tier 1), **Ma pháp trận sư** (Tier 2), **Người luyện thú cưỡi** (Tier 1, sơn mạch ma thú), **Giám định sư**, **Phu khuân vác**, **Thợ xẻ thú** (sơn mạch ma thú) |
+| 3 Sinh kế cơ bản | Nông dân, Chăn nuôi, Ngư dân, Tiều phu, Thủy thủ, Tu sĩ, Học giả, Kẻ trộm (không đổi) |
+| 4 Phục vụ quý tộc xa hoa | **Điêu khắc gia, Họa sĩ thi nhân, Đầu bếp, Thợ may thêu, Thợ kim hoàn, Nghệ nhân, Quản gia, Gia sư** (cầu quý tộc) |
+
+Đổi so với đề xuất: "Thuần thú sư" sinh kế đặt tên **Người luyện thú cưỡi** để khỏi trùng nghề Thuần Thú Sư của cây nghề (`docs/10`); Hộ vệ là sinh kế, còn cung phụng là chức (`js/status.js`, bước B); không làm Thợ vườn cảnh, Chủ tửu quán (đủ 16 nghề như đề xuất).
+
+| Núm (`G.ECON`, `G.DEMAND`) | Số chốt |
+|---|---|
+| Cầu tối thiểu để có chỗ làm | 0,35 |
+| Cầu đẩy phân vị thu nhập | (cầu − 1) × 0,15, chặn ±0,1 |
+| Cầu người có cấp | bậc khu (kinh đô 1,3 … thôn 0,25) + Hội Mạo Hiểm 0,2 + doanh trại 0,1 + trường 0,1, × (0,7 + 0,6 × ma lực vùng) |
+| Cầu quý tộc | kinh đô nước ban tước 1,4 (thương nhân 1,1, có người cai trị 0,9); thành phố 1 / 0,8 / 0,45; thị trấn là thái ấp 0,8, nước ban tước 0,4; làng là thái ấp 0,5 |
+| Cầu sơn mạch ma thú | 0,35 + 1,3 × nguy hiểm của vùng + 0,1 mỗi hang ổ (tối đa 0,3) |
+| Chọn nghề lúc trưởng thành | nơi cầu quý tộc ≥ 0,8 luôn có một nghề vòng 4 trong ba lựa chọn; chế độ tự động chọn nghề vòng 4 với trọng số 1 + 2 × tính hòa đồng |
+| Chủ nhà để mắt | làm vòng 4 từ 4 năm, mỗi năm 7%, một lần một đời |
+| Tác phẩm (nghề nghệ thuật) | làm từ 5 năm, sự kiện cách 4 năm; 20% + danh vọng / 300 thành danh gia |
+| Chủ nổi giận | làm từ 2 năm, cách 10 năm; 40% chỉ bị mắng, còn lại nửa bị đuổi, nửa bị đánh |
+| Dược sư, khắc văn sư | dược tề giá × 0,4; mỗi năm 8% đồ +1 |
+
+1000 đời, thế giới `can-bang`, chế độ tự động (cùng seed với số đo cuối của bước B):
+
+| Đo | Bước B | Bước C | Mục tiêu |
+|---|---|---|---|
+| Trận vượt Tier + 1 | 0 | 0 (64 012 trận) | 0 |
+| Trỗi dậy | 20,1% | 19,2% | ~20% |
+| Chết vì quái | 8,7% | 10,0% | ~10% |
+| Tháp Tier 0–5 | 56,2 / 27,7 / 10,0 / 5,2 / 0,8 / 0,1 | 55,6 / 28,6 / 11,0 / 4,0 / 0,8 / 0 | 60 / 27 / 10 / 2,5 / 0,5 / 0,05 |
+| 1000 đời headless | 101 giây | 103–132 giây (cùng lúc máy dựng trang duyệt) | |
+
+Sinh kế lúc chết của đời trưởng thành có nghề:
+
+| Vòng | % | Tier TB | Phân vị TB | Tiền / trung vị |
+|---|---|---|---|---|
+| 1 Người có cấp sống bằng sức | 43,2 | 1,18 | 61 | 22,5 |
+| 2 Phục vụ tu luyện | 16,3 | 0,25 | 41 | 6,5 |
+| 3 Sinh kế cơ bản | 39,5 | 0,29 | 34 | 7,3 |
+| 4 Phục vụ quý tộc xa hoa | 1,0 | 0,11 | 51 | 9,0 |
+
+Nghề mới đông nhất là Phu khuân vác (39 đời), Thợ xẻ thú (20), Người luyện thú cưỡi (10); Dược sư 5, Khắc văn sư 4, Ma pháp trận sư 0. Đổi sang nghề của người có cấp 5,8% đời. Chủ nhà để mắt 1,3% (thưởng 0,9%, dược tề 0,4%, học cùng con chủ 0: chế độ tự động chỉ xin học khi có chí hướng tu luyện hoặc rất gan); tác phẩm được nhận 1,1%, thành danh gia 0,7%; khắc ma văn lên đồ 0,4%; chủ nổi giận 1,6% (bị đuổi 0,9%): phần lớn người làm vòng 4 lâu năm gặp một lần.
+
+Đường đi tới số chốt:
+
+- Lần đầu vòng 4 chỉ 0,6% đời: quyết định `work` bốc ba nghề ngẫu nhiên, người ở kinh đô, thành phố hiếm khi thấy nghề vòng 4; thêm một chỗ cố định cho nghề vòng 4 ở nơi cầu quý tộc ≥ 0,8 thì lên 1,3%.
+- Chủ nổi giận lúc đầu (2,5% × 30 trọng số, cách 6 năm, 40% đuổi) đuổi việc nhiều người gần bằng số người còn làm vòng 4 lúc chết (12 so với 11). Giảm trọng số không đủ (bộ chọn sự kiện chia đều cho số ít sự kiện hợp lệ), nên đổi sang cách 10 năm, làm đủ 2 năm, 40% chỉ bị mắng.
+
+Chỗ lệch, để lại:
+
+- **Vòng 4 vẫn hiếm** (1,0–1,3% qua các lần chạy): phần lớn người chơi sinh ở vùng quê, làng. Nếu muốn đông hơn thì cho người vòng 3 ở thị trấn, thành phố có quyết định "vào phủ làm việc", hoặc chế độ tự động ưu tiên vòng 4 khi ở kinh đô.
+- **Nghề vòng 2 cần Tier ít người làm**: phải lên Tier rồi mới đổi nghề (`cv_rework`), mà người có cấp chủ yếu đã là mạo hiểm giả, thợ săn (vòng 1). Ma pháp trận sư (Tier 2, cần trường ở thị trấn trở lên) chưa ai làm.
+- Phân vị vòng 2 thấp (41) vì phu khuân vác, thợ xẻ thú đông; dược sư, khắc văn sư 54–68.
+- Chưa có: cầu tính theo số người có cấp thật quanh đó (NPC chưa có Tier), chợ dược tề (dược tề vẫn mua thẳng, chỉ dược sư được giá rẻ), phòng đấu giá (`cv_auction`, bước D), nghệ nhân được tiến cử vào học viện. Chủ nhà là người có tên (lãnh chúa thái ấp hoặc nhà quý tộc NPC) nhưng không nhớ qua các năm.
+- Không chạy Thử thế giới động, 100 thế giới: bước C không đổi `dynamic.js`, `realm.js`.
+
 ## 5. Từ đầu truyện thành sự kiện, quyết định
 
 Mã đề xuất có tiền tố `cv_` để khỏi trùng tên quyết định sẵn có (xem nhắc ở `TIEN_DO.md` mục 3).
@@ -329,7 +389,7 @@ Mỗi bước theo cách làm ở `TIEN_DO.md` mục 5 (sim 1000 đời, thử t
 |---|---|---|
 | A (xong 15/10/2026) | Kỹ năng 5 bậc, cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, chuyển nghề theo gate 2 kỹ năng, ma lực nơi ở, người dạy, thọ nguyên, tiền đồng / bạc / vàng; sự kiện `cv_saint`; bảng Cảnh giới trong `sim.html` | `js/cult.js` mới, `life.js`, `events.js`, `talent.js`, `ui.js`, `sim.html` |
 | B (xong 16/10/2026, mục 4.10) | Địa vị: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên (dược tề); `cv_test`, `cv_scorn`, `cv_license`, `cv_levy`, `cv_bully`, `cv_kin`, `cv_lifespan` | `state.js`, `org.js`, `noble.js`, `talent.js`, `data/nations.js` |
-| C | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
+| C (xong 16/10/2026, mục 4.11) | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
 | D | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
 | E | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken` | `cult.js`, `events.js` |
 | F | Đặt tên kỹ năng (bản đầu không tên), cân lại tháp | `cult.js`, `sim.html` |

@@ -122,7 +122,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const TABS = [
     ['ev_tpl', 'Sự kiện: đặc tính mẫu'], ['ev_quirk', 'Sự kiện: đặc trưng riêng'], ['ev_misc', 'Sự kiện: chung'], null,
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
-    ['work', 'Sinh kế'], ['bld', 'Công trình'], null,
+    ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
     ['cult', 'Sức mạnh'], ['status', 'Địa vị']
   ];
@@ -144,7 +144,8 @@ code{font-family:var(--font-mono);font-size:12px}
     edu: [...D.edu.map((l, i) => ({ kind: 'edu', id: String(i + 1), name: l.nameVi })), ...Object.entries(D.tracks).map(([id, t]) => ({ kind: 'track', id, name: t.nameVi }))],
     noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
     promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
-    work: Object.entries(D.works).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    work: Object.entries(D.works).sort((a, b) => a[1].ring - b[1].ring).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    econ: [...[1, 2, 3, 4].map(r => ({ kind: 'ring', id: String(r), name: D.econ.ringVi[r] })), ...Object.entries(D.econ.demandVi).map(([id, n]) => ({ kind: 'demand', id, name: n })), ...D.econ.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') })),
     tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
     aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
@@ -161,7 +162,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderProgress() {
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
-      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld])
+      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
       + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status);
   }
 
@@ -307,7 +308,7 @@ code{font-family:var(--font-mono);font-size:12px}
 
   // ---- Sinh kế ----
   function workView() {
-    const cards = Object.entries(D.works).filter(([id]) => passes('work', id)).map(([id, w]) => {
+    const cards = Object.entries(D.works).sort((a, b) => a[1].ring - b[1].ring).filter(([id]) => passes('work', id)).map(([id, w]) => {
       const bld = id => { const b = D.buildings.find(x => x.id === id); return b ? Object.values(b.name)[0] : id; };
       const need = [
         w.land ? 'sống ở làng, thôn hoặc vùng quê' : '', w.town ? 'sống ở thị trấn trở lên' : '',
@@ -316,7 +317,7 @@ code{font-family:var(--font-mono);font-size:12px}
         w.needFaith ? 'có đạo' : '', w.adventurer ? 'nhận nhiệm vụ của Hiệp Hội Mạo Hiểm' : ''
       ].filter(Boolean);
       const law = [w.guild ? 'phải vào phường hội nếu nước có luật độc quyền' : '', w.banLaw ? `bị cấm nếu nước có luật ${D.laws[w.banLaw] || w.banLaw}` : ''].filter(Boolean);
-      return card('work', id, w.nameVi, `<dl class="kv">
+      return card('work', id, w.nameVi, `<div class="meta">Vòng ${w.ring}: ${esc(D.econ.ringVi[w.ring])}${w.tier ? ' · cần ' + esc(D.cult.tierName[w.tier]) : ''}${w.demand ? ' · cầu: ' + esc(D.econ.demandVi[w.demand]) : ''}${w.art ? ' · nghề nghệ thuật' : ''}</div><dl class="kv">
         <dt>Thu nhập</dt><dd>phân vị ${pct(w.pct[0])} đến ${pct(w.pct[1])}</dd>
         <dt>Rủi ro</dt><dd>× ${num(w.risk)}${w.cause ? `, chết vì ${esc(D.causes[w.cause] || w.cause)}` : ''}${w.seaBand != null ? `, làm ở biển tầng ${w.seaBand ? 'khơi' : 'ven bờ'}` : ''}</dd>
         <dt>Rèn</dt><dd class="chips">${Object.entries(w.trains).map(([m, v]) => `<span class="chip">${esc(mv(m))} ${v}</span>`).join('') || '<span class="chip dash">không</span>'}</dd>
@@ -324,6 +325,21 @@ code{font-family:var(--font-mono);font-size:12px}
         ${law.length ? `<dt>Luật</dt><dd>${esc(law.join('; '))}</dd>` : ''}</dl>`);
     });
     return overview('Sinh kế', 'Nghề sống của nhân vật, khác nghề chiến đấu của thư viện. Thu nhập là khoảng phân vị trong vùng; rủi ro nhân xác suất tai nạn; mỗi năm làm thì rèn các kỹ năng ghi ở đây.') + grid(cards.join(''));
+  }
+
+  // ---- Kinh tế bốn vòng (vankiep/js/econ.js, bước C; docs/07 mục 4.6, 4.11) ----
+  function econView() {
+    const E = D.econ, C = E.cfg, works = r => Object.entries(D.works).filter(([, w]) => w.ring === r).map(([, w]) => `<span class="chip">${esc(w.nameVi)}${w.tier ? ' · T' + w.tier : ''}</span>`).join('');
+    const RINGD = { 1: 'Người có cấp đem sức ra kiếm sống. Thu nhập theo Tier (sàn thu nhập ở tab Địa vị); cung phụng là chức, không phải nghề.', 2: 'Nghề phục vụ người tu luyện: dược tề, ma văn, ma pháp trận, ma tinh, thú cưỡi, giám định, khuân vác vào sơn mạch ma thú. Nhiều nghề chỉ nhận người có cấp.', 3: 'Nghề của phần lớn dân, như trước bước C.', 4: 'Nghề phục vụ quý tộc hưởng thụ. Không có quý tộc quanh đó thì không có chỗ làm. Lọt mắt xanh chủ nhà thì được dạy, được ban dược tề; chủ giận thì bị đuổi, bị đánh.' };
+    const rings = [1, 2, 3, 4].filter(r => passes('ring', String(r))).map(r => card('ring', String(r), `Vòng ${r}: ${E.ringVi[r]}`, `<p style="margin:0">${esc(RINGD[r])}</p><dl class="kv"><dt>Nghề</dt><dd class="chips">${works(r)}</dd></dl>`));
+    const DEMD = { cult: 'Bậc khu (kinh đô 1,3, thành phố 1,1, thị trấn 0,8, làng 0,45, thôn 0,25) + Hội Mạo Hiểm 0,2 + doanh trại 0,1 + trường 0,1, × (0,7 + 0,6 × ma lực vùng).', noble: 'Kinh đô 1,4 ở nước ban tước (Cộng hòa thương nhân 1,1, nước có người cai trị khác 0,9); thành phố 1 (thương nhân 0,8, khác 0,45); thị trấn là thái ấp 0,8, nước ban tước 0,4; làng là thái ấp 0,5, còn lại 0,1.', wild: '0,35 + 1,3 × độ nguy hiểm của vùng + 0,1 mỗi hang ổ trong vùng (tối đa 0,3).', trade: 'Bậc khu (kinh đô 1,2 … thôn 0,15) + chợ 0,15 + cảng 0,1.', ore: '0,7 + 0,8 × ma lực vùng: vùng ma lực cao thì mỏ ra ma tinh.' };
+    const dem = Object.entries(E.demandVi).filter(([id]) => passes('demand', id)).map(([id, n]) => card('demand', id, `Cầu: ${n}`, `<p style="margin:0">${esc(DEMD[id] || '')}</p><dl class="kv"><dt>Nghề</dt><dd class="chips">${Object.values(D.works).filter(w => w.demand === id).map(w => `<span class="chip">${esc(w.nameVi)}</span>`).join('')}</dd></dl>`));
+    const decs = E.decs.filter(d => passes('dec', d.id)).map(d => card('dec', d.id, d.title, `<div class="meta">${d.ev ? 'sự kiện' + (d.rep ? `, lặp lại cách ${d.gap || 1} lượt` : '') : `quyết định · ưu tiên ${d.prio}`}</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(d.when)}</dd></dl>${d.texts.length ? `<ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${d.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${d.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`));
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Kinh tế bốn vòng', `Bước C của định hướng xã hội tu luyện (docs/07 mục 4.6): sinh kế chia bốn vòng; mỗi nghề có Tier tối thiểu và loại cầu ở nơi ở. Cầu dưới ${num(C.minDemand)} thì nghề không có chỗ làm; cầu cao thấp đẩy thu nhập lên xuống (tối đa ±0,1 phân vị). Dược sư mua dược tề với giá × ${num(C.alchemist)}; khắc văn sư mỗi năm ${pct(C.runeGear)} khắc ma văn lên đồ (trang bị +1).`)
+      + grid(part('Bốn vòng', rings) + part('Cầu', dem) + part('Sự kiện, quyết định', decs));
   }
 
   // ---- Công trình ----
@@ -467,7 +483,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

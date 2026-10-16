@@ -657,6 +657,7 @@ window.LifeSim = window.LifeSim || {};
       }
       const skill = Object.keys(W.trains).reduce((a, m) => Math.max(a, S.mastery[m]), 0);
       let target = G.lerp(W.pct[0], W.pct[1], G.clamp(S.sm / 100 * .35 + skill / 100 * .45 + S.so / 100 * .2, 0, 1)) + (S.work === 'merchant' && G.lawHere(S, 'free_trade') ? .05 : 0);
+      if (W.demand && G.demandShift) target += G.demandShift(S, W);   // cầu ở nơi ở (js/econ.js)
       if (G.pctFloor) target = Math.max(target, G.pctFloor(S));   // người có cấp không làm công ăn lương thấp (js/status.js, docs/09 mục 6.4)
       S.pct = G.clamp(S.pct + (target - S.pct) * .12 * share, .005, .995);
       this.money(G.incomeAt(reg, S.pct) * share * G.incomeMult(S));
