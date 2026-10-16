@@ -6,6 +6,11 @@
  *    'faith' = ngọn tín ngưỡng; vào được khi chủng tộc không bị giáo phái xa lánh (bỏ qua cấm trường phái: tín ngưỡng là cánh cửa).
  *  - errors: vi phạm cấu trúc (id trùng, tiền nhiệm thiếu, sai Tier, ngọn mọc từ chủng tộc khác). Có errors thì không dùng kết quả.
  *  - warnings: chỗ chưa thiết kế xong (gate null) hoặc ngọn mọc từ nghề chủng tộc không vào được.
+ * config.overlay (tùy chọn, lớp riêng của một game; không truyền thì kết quả như cũ):
+ *   { add: [nghề mới, như mục trunk; có race thì là ngọn riêng của chủng tộc đó],
+ *     set: { jobId: { trường đổi (nameVi, nameEn, summary…), addFrom: [tiền nhiệm thêm] } },
+ *     displayNames: { race: { jobId: { en, vi } } } }   // đè tên hiển thị riêng của chủng tộc
+ *   Vạn Kiếp dùng lớp này cho cây nghề riêng (vankiep/data/jobtree.js); thư viện nghề không đổi.
  */
 window.JobLibrary = window.JobLibrary || {};
 window.JobLibrary.compose = function compose(config) {
@@ -18,6 +23,8 @@ window.JobLibrary.compose = function compose(config) {
   const jobs = L.trunk.map(t => ({ ...t, from: [...t.from], to: [], shared: true, race: null, faith: null, hidden: false }));
   const byId = Object.fromEntries(jobs.map(j => [j.id, j]));
   const add = j => { if (byId[j.id]) { errors.push('Trùng id nghề: ' + j.id); return null; } jobs.push(j); byId[j.id] = j; return j; };
+  const ov = config.overlay || null;
+  if (ov) for (const t of ov.add || []) if (!t.race) add({ ...t, from: [...t.from], to: [], shared: true, race: null, faith: t.faith || null, hidden: !!t.hidden });
   const originOf = {};
   for (const r of races) {
     const o = add({ ...r.origin, tier: 0, school: 'origin', from: [], to: [], shared: false, race: r.id, faith: null, hidden: false });
@@ -25,6 +32,14 @@ window.JobLibrary.compose = function compose(config) {
     for (const c of r.crowns || []) add({ ...c, from: [...c.from], to: [], shared: false, race: r.id, faith: c.faith || null, hidden: !!c.hidden });
   }
   for (const f of faiths) for (const c of f.crowns || []) add({ ...c, from: [...c.from], to: [], shared: false, race: null, faith: f.id, hidden: !!c.hidden });
+  if (ov) {
+    for (const c of ov.add || []) if (c.race) { if (!L.races[c.race] || !races.includes(L.races[c.race])) continue; add({ ...c, from: [...c.from], to: [], shared: false, faith: c.faith || null, hidden: !!c.hidden }); }
+    for (const [id, s] of Object.entries(ov.set || {})) {
+      const j = byId[id]; if (!j) { if (!s.optional) warnings.push('overlay.set: không có nghề ' + id); continue; }
+      const { addFrom, optional, ...rest } = s; Object.assign(j, rest);
+      for (const f of addFrom || []) if (!j.from.includes(f)) j.from.push(f);
+    }
+  }
 
   // Quyền vào nghề theo chủng tộc.
   const access = {};
@@ -73,6 +88,8 @@ window.JobLibrary.compose = function compose(config) {
   const displayName = (raceId, jobId) => {
     const r = L.races[raceId], j = byId[jobId]; if (!r || !j) return { en: jobId, vi: jobId };
     if (j.race === raceId || j.tier === 0 || (!j.race && j.faith)) return { en: j.nameEn, vi: j.nameVi };
+    const od = ov && ov.displayNames && ov.displayNames[raceId];
+    if (od && od[jobId]) return od[jobId];
     if (r.displayNames && r.displayNames[jobId]) return r.displayNames[jobId];
     return { en: (r.prefix.en ? r.prefix.en + ' ' : '') + j.nameEn, vi: j.nameVi + (r.prefix.viSuffix ? ' ' + r.prefix.viSuffix : '') };
   };

@@ -148,7 +148,7 @@ code{font-family:var(--font-mono);font-size:12px}
     tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
     aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
     tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title })),
-    cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...D.cult.res.map(r => ({ kind: 'res', id: r.id, name: r.nameVi })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
+    cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...D.cult.res.map(r => ({ kind: 'res', id: r.id, name: r.nameVi })), ...D.cult.jobtree.add.map(j => ({ kind: 'jtadd', id: j.id, name: j.nameVi })), ...D.cult.jobtree.set.map(j => ({ kind: 'jtset', id: j.id, name: j.nameVi })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
       ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))]
   };
   const allItems = Object.values(items).flat();
@@ -380,6 +380,10 @@ code{font-family:var(--font-mono);font-size:12px}
           ${t ? `<dt>Thăng hoa khi vào</dt><dd>cả sáu chỉ số +${C.ascend[t]} (cộng dồn từ Tier 1: +${asc(t)})</dd>` : ''}<dt>Trần chỉ số</dt><dd>${C.cap[t]}</dd>
           <dt>Chỗ lắp kỹ năng</dt><dd>${C.loadout[t]}</dd><dt>Thọ nguyên</dt><dd>× ${num(C.lifeF[t])} (người: ~${Math.round(62 * C.lifeF[t])} năm)</dd>
           <dt>Hiệu quả một kỹ năng max khi lắp</dt><dd>+${num(Math.round(C.cfg.skillPow * (1 + C.cfg.skTier * t) * 1000) / 1000)} sức</dd>${t ? `<dt>Trần tỉ lệ qua thử thách vào</dt><dd>${Math.round(C.promoteCap[t] * 100)}%</dd>` : ''}</dl>`));
+    // Cây nghề riêng của Vạn Kiếp (docs/10): nghề thêm, nghề đổi tên hoặc thêm lối lên.
+    const jtAdd = C.jobtree.add.filter(j => passes('jtadd', j.id)).map(j => card('jtadd', j.id, `${j.nameVi} · T${j.tier}`, `<div class="meta">${esc(j.school)} · ${C.tierName[j.tier]} · yêu cầu ${esc(j.req)} · ${esc(j.trial)}</div>
+        <p style="margin:0">${esc(j.summary)}</p><dl class="kv"><dt>Lên từ</dt><dd>${esc(j.from.join(', '))}</dd><dt>Lên tiếp</dt><dd>${esc(j.next.join(', ') || '—')}</dd><dt>Cặp gate</dt><dd>${esc(j.gate.join(', '))}</dd></dl>`));
+    const jtSet = C.jobtree.set.filter(j => passes('jtset', j.id)).map(j => card('jtset', j.id, `${j.nameVi} · T${j.tier}`, `<dl class="kv">${j.old !== j.nameVi ? `<dt>Tên cũ</dt><dd>${esc(j.old)}</dd>` : ''}${j.addFrom.length ? `<dt>Thêm lối lên từ</dt><dd>${esc(j.addFrom.join(', '))}</dd>` : ''}</dl>`));
     const res = C.res.filter(r => passes('res', r.id)).map(r => card('res', r.id, r.nameVi, `<dl class="kv"><dt>Hai kỹ năng</dt><dd>${esc(r.pair)}</dd><dt>Hệ số</dt><dd>${num(r.k)}</dd>
         ${r.flee ? `<dt>Chạy thoát khi thua</dt><dd>+${Math.round(r.flee * 100)}%</dd>` : ''}${r.guard ? `<dt>Nguy cơ chết khi thua</dt><dd>−${Math.round(r.guard * 100)}%</dd>` : ''}<dt>Ý</dt><dd>${esc(r.txt)}</dd></dl>`));
     const RULE = {
@@ -414,8 +418,8 @@ code{font-family:var(--font-mono);font-size:12px}
     const decs = [...dec('cv_learn', 'Nâng kỹ năng mới', C.learn, 'Còn chỗ nâng ở Tier hiện tại và mọi kỹ năng đã nâng đã max (chế độ tự động chọn ngay, không hỏi)'),
       ...dec('promote', 'Thử thách chuyển nghề', C.promote, 'Đủ điều kiện vào ít nhất một nghề kế tiếp')];
     const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
-    return overview('Sức mạnh', `Hệ sức mạnh, level, chuyển nghề (docs/08, người dùng chốt 16/10/2026; bỏ cảnh giới). Danh xưng Tier, thăng hoa, trần chỉ số, cộng hưởng chiêu thức, tháp độ hiếm: docs/09 (chốt 16/10/2026). Danh sách kỹ năng theo nghề lấy chủng tộc Người làm mẫu (${C.jobs.length} nghề, không tính nghề tín ngưỡng, nghề ẩn); ◆ là kỹ năng gate. ${C.named} kỹ năng có tên và thưởng chỉ số riêng (shared/skills.js), còn lại là kỹ năng tạm tới bước F.`)
-      + grid(part('Tier, danh xưng, level', tiers) + part('Luật', rules) + part('Cộng hưởng chiêu thức', res) + part('Chỉ số', stats) + part('Người dạy', teach) + part('Quyết định', decs) + part('Kỹ năng theo nghề (Người)', jobs));
+    return overview('Sức mạnh', `Hệ sức mạnh, level, chuyển nghề (docs/08, người dùng chốt 16/10/2026; bỏ cảnh giới). Danh xưng Tier, thăng hoa, trần chỉ số, cộng hưởng chiêu thức, tháp độ hiếm: docs/09 (chốt 16/10/2026). Cây nghề riêng của Vạn Kiếp (Tier 1 rộng hơn, tên đúng tầm Tier): docs/10, data/jobtree.js. Danh sách kỹ năng theo nghề lấy chủng tộc Người làm mẫu (${C.jobs.length} nghề, không tính nghề tín ngưỡng, nghề ẩn); ◆ là kỹ năng gate. ${C.named} kỹ năng có tên và thưởng chỉ số riêng (shared/skills.js), còn lại là kỹ năng tạm tới bước F.`)
+      + grid(part('Tier, danh xưng, level', tiers) + part('Luật', rules) + part('Cộng hưởng chiêu thức', res) + part('Cây nghề Vạn Kiếp: nghề thêm', jtAdd) + part('Cây nghề Vạn Kiếp: đổi tên, thêm lối lên', jtSet) + part('Chỉ số', stats) + part('Người dạy', teach) + part('Quyết định', decs) + part('Kỹ năng theo nghề (Người)', jobs));
   }
 
   function renderContent() {

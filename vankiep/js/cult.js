@@ -197,11 +197,20 @@ window.LifeSim = window.LifeSim || {};
   const teachF = (S, tier) => tier <= 1 || G.teachOf(S, G.schoolOf(S), jobOf(S.job)) >= tier ? 1 : G.CULT.selfTaught;
 
   // ── Chọn kỹ năng để nâng (docs/08 mục 3.2, 4.1) ──
-  // Hướng đi: nghề kế tiếp cùng trường phái với S.path; không có thì nghề có mastery req mình gần đạt nhất.
+  // Hướng đi: nghề kế tiếp cùng trường phái với S.path trước; trong đó xét mastery req đã gần đạt, độ hợp với đời này
+  // (sinh kế, xuất thân: G.JOB_TREE.lean, docs/10) và một độ lệch riêng của từng đời, để nghề Tier 1 rộng có người đi.
+  // Chọn rồi thì giữ suốt Tier đó (S.flags.dir), trừ khi đường đó không còn mở (người chơi chọn tay kỹ năng khác).
+  const jit = (S, id) => { let h = 2166136261; const s = (S.name || '') + '|' + (S.kiep || 0) + '|' + id; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return ((h >>> 0) % 1000) / 1000; };
   G.skDir = S => {
     const nx = G.succOf(S.race, S.job, S.faith); if (!nx.length) return null;
+    const jt = jobTier(S), F = S.flags || (S.flags = {}), dir = F.dir;
+    if (dir && dir.t === jt && dir.job === S.job) { const d = nx.find(x => x.id === dir.id); if (d && (G.lvFull(S) || G.skOpenDirs(S).includes(d))) return d; }
     const near = d => Object.entries(d.req || {}).reduce((a, [m, v]) => a + Math.min(1, (S.mastery[m] || 0) / Math.max(1, v)), 0) / Math.max(1, Object.keys(d.req || {}).length);
-    return nx.slice().sort((a, b) => ((b.school === S.path) - (a.school === S.path)) || near(b) - near(a))[0];
+    const lean = (G.JOB_TREE && G.JOB_TREE.lean) || {};
+    const score = d => (d.school === S.path ? 10 : 0) + near(d) + (lean[d.id] ? lean[d.id](S) : 0) + .6 * jit(S, d.id);
+    const d = nx.slice().sort((a, b) => score(b) - score(a))[0];
+    if (S.work || S.undead || jt > 0) F.dir = { t: jt, job: S.job, id: d.id };   // chỉ giữ khi đã có sinh kế: trẻ chưa đi làm thì còn đổi theo sinh kế
+    return d;
   };
   // Nghề kế tiếp còn mở được: số kỹ năng gate chưa nằm trong chỗ nâng ≤ số chỗ còn lại.
   G.skOpenDirs = (S, extra) => {

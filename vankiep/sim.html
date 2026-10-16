@@ -68,6 +68,7 @@
 <script src="data/world.js"></script>
 <script src="data/nations.js"></script>
 <script src="data/skills.js"></script>
+<script src="data/jobtree.js"></script>
 <script src="js/map.js"></script>
 <script src="js/realm.js"></script>
 <script src="js/life.js"></script>
@@ -144,7 +145,7 @@ $('run').onclick = () => {
         const ak = S.aim || 'free', a = T.aim[ak] || (T.aim[ak] = [0, 0, 0]); a[0]++; if (S.work === 'adventurer') a[1]++; a[2] += S.level;
         T.nTal += S.tal ? S.tal.list.length : 0; for (const k of TALK) if (F[k]) { T.k[k] = (T.k[k] || 0) + 1; T.n[k] = (T.n[k] || 0) + (typeof F[k] === 'number' ? F[k] : 1); } }
       const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
-        adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver, teachAt: S.flags.teachAt };   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
+        adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver, teachAt: S.flags.teachAt, job: S.job, race: S.race };   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
       for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
@@ -194,6 +195,9 @@ $('run').onclick = () => {
         return [`${t} ${G.tierName(t)}`, l.length, pct(l.length, M), [60, 27, 10, 2.5, .5, .05][t] + '%', t ? pct(ge(t), Math.max(1, ge(t - 1))) : '', l.length ? avg(l, r => r.level).toFixed(1) : '—', pct(mx, Math.max(1, l.length)), avgOf(pin, r => r.powIn[t]), avgOf(pmx, r => r.powMax[t]), gap, avgOf(mo, r => r.mOver[t])]; });
       out.push(table('Tier cuối đời (đời đầu sống tới tuổi trưởng thành)', rows, ['Tier', 'Đời', '%', 'Mục tiêu', 'Qua cửa', 'Level TB', 'Ở max level', 'Sức lúc vào Tier', 'Sức ở max level', 'Chênh với max Tier trước', 'Mastery − req lúc max'],
         { bar: true, note: `docs/09 mục 4–5 (mục tiêu chênh ≥ 0,7). ${ad.length} đời trưởng thành. Kẹt vĩnh viễn (max level, không có cặp gate): ${pct(ad.filter(r => r.stuck).length, M)}. Người dạy cuối đời (theo trường phái đang theo): ${[1, 2, 3, 4, 5].map(c => `Tier ${c} ${pct(ad.filter(r => r.teach === c).length, M)}`).join(', ')}. Nguồn dạy lúc lên Tier: ${[2, 3, 4, 5].map(t => { const c = {}; ad.forEach(r => { const id = r.teachAt && r.teachAt[t]; if (id) c[id] = (c[id] || 0) + 1; }); return `Tier ${t}: ` + (Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + ' ' + n).join(', ') || '—'); }).join('; ')}.` })); }
+    // Cây nghề riêng (docs/10): nghề cuối đời của người trưởng thành, Tier 1–3, để thấy nghề nào có người đi.
+    { const ad = A.lives.filter(r => r.adult && r.tier >= 1 && r.tier <= 3), c = {}; ad.forEach(r => { c[r.job] = (c[r.job] || 0) + 1; });
+      out.push(table('Nghề cuối đời (Tier 1–3)', Object.entries(c).sort((a, b) => G.jobs.byId[a[0]].tier - G.jobs.byId[b[0]].tier || b[1] - a[1]).map(([id, n]) => [`T${G.jobs.byId[id].tier} ${G.jobs.byId[id].nameVi}${G.JOB_TREE.add.some(j => j.id === id) ? ' (mới)' : ''}`, n, pct(n, ad.length)]), ['Nghề', 'Đời', '%'], { bar: true, note: 'docs/10. (mới): nghề thêm ở data/jobtree.js.' })); }
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu docs/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
     out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'docs/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));

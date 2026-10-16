@@ -73,7 +73,7 @@ window.LifeSim = window.LifeSim || {};
       prio: 10, gap: 1,
       when: (S, X) => ['teen', 'adult', 'elder'].includes(X.stage(S)) && G.nextJobs(X).length > 0,
       build(S, X) {
-        const list = G.nextJobs(X).slice(0, 3);
+        const dir = G.skDir(S), list = G.nextJobs(X).sort((a, b) => ((dir && b.job.id === dir.id) - (dir && a.job.id === dir.id))).slice(0, 3);   // hướng đi đã nâng kỹ năng lên đầu
         return { title: 'Thử thách chuyển nghề', body: `Nghề hiện tại: ${X.jobName(S)} (${G.tierName(X.job(S).tier)}), level ${S.level}. Bạn đủ điều kiện dự thử thách.`,
           fact: list[0].job.summary || null,
           choices: [...list.map(e => ({ k: e.job.id, label: `${X.jobName(S, e.job.id)} · ${G.tierName(e.job.tier)}`, sub: `${e.job.trial || 'Thử thách'} · ${Math.round(G.promoteP(S, X, e.job) * 100)}%${e.access === 'foreign' ? ' · ngoại lai' : ''}${e.job.faith ? ' · ' + J.faiths[e.job.faith].nameVi : ''}${e.job.summary ? ' — ' + e.job.summary : ''}` })),
@@ -98,6 +98,8 @@ window.LifeSim = window.LifeSim || {};
       // Nghề đúng hướng chưa đủ điều kiện thì chờ tối đa 3 năm (luyện tập sẽ nhắm vào mastery còn thiếu).
       auto(S, X, d) {
         if (S.hl < 30) return 'wait';
+        const dir = G.skDir(S), cd = dir && d.choices.find(c => c.k === dir.id);
+        if (cd) return cd.k;
         const c = d.choices.find(c => c.k !== 'wait' && G.jobs.byId[c.k].school === S.path);
         if (c) return c.k;
         const soon = G.nextJobs(X, true).some(e => e.job.school === S.path);

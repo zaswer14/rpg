@@ -51,7 +51,7 @@ window.LifeSim = window.LifeSim || {};
         return z;
       });
     }
-    G.jobs = J.compose({ races: Object.keys(J.races) });
+    G.jobs = J.compose({ races: Object.keys(J.races), overlay: G.JOB_TREE });   // cây nghề riêng: data/jobtree.js (docs/10)
     G.MASTERY = {};
     for (const [sid, sc] of Object.entries(J.schools)) for (const m of sc.masteries) G.MASTERY[m] = sid;
     G.check = G.validateWorld(G.B);

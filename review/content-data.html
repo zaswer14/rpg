@@ -11,7 +11,7 @@
 <script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script>
 <script src="../shared/bestiary/bestiary.js"></script><script src="../shared/terrain/ecology.js"></script><script src="../shared/terrain/terrain.js"></script>
 <script src="../shared/names/names.js"></script>
-<script src="../vankiep/js/core.js"></script><script src="../vankiep/data/world.js"></script><script src="../vankiep/data/nations.js"></script><script src="../vankiep/data/skills.js"></script>
+<script src="../vankiep/js/core.js"></script><script src="../vankiep/data/world.js"></script><script src="../vankiep/data/nations.js"></script><script src="../vankiep/data/skills.js"></script><script src="../vankiep/data/jobtree.js"></script>
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
@@ -112,7 +112,13 @@ const data = {
     // Bậc Tier, danh xưng, thăng hoa, trần chỉ số, cộng hưởng (docs/09).
     const kv = G.SK_KIND_VI, res = G.RESONANCE.map(r => ({ id: r.id, nameVi: r.nameVi, k: r.k, flee: r.flee || 0, guard: r.guard || 0, txt: r.txt,
       pair: r.same ? 'hai kỹ năng cùng mastery' : r.job ? 'hai kỹ năng cùng một nghề' : r.kinds[1] === '*' ? `${kv[r.kinds[0]]} + loại khác` : `${kv[r.kinds[0]]} + ${kv[r.kinds[1]]}` }));
-    return { tierName: G.TIER_NAME, ascend: G.ASCEND, cap: G.STAT_CAP, lifeF: G.LIFE_F, promoteCap: G.PROMOTE_CAP, mentorTier: G.MENTOR_TIER, res, kinds: kv,
+    // Cây nghề riêng của Vạn Kiếp (data/jobtree.js, docs/10): nghề thêm, nghề đổi tên, lối lên thêm. Tên gốc lấy từ thư viện nghề.
+    const orig = id => L.trunk.find(t => t.id === id) || Object.values(L.races).flatMap(r => r.crowns || []).find(c => c.id === id) || Object.values(L.faiths).flatMap(f => f.crowns || []).find(c => c.id === id);
+    const jn = id => id === '@origin' ? 'xuất thân' : nm(id);
+    const jobtree = { add: G.JOB_TREE.add.map(j => ({ id: j.id, tier: j.tier, nameVi: j.nameVi, school: (L.schools[j.school] || {}).nameVi, from: j.from.map(jn), req: Object.entries(j.req || {}).map(([m, v]) => `${G.mv(m)} ${v}`).join(', '), trial: j.trial, summary: j.summary,
+        next: G.jobs.jobs.filter(x => x.from.includes(j.id)).map(x => nm(x.id)), gate: G.gatePair(j).map(k => G.skName(j.tier - 1 + ':' + k)) })),
+      set: Object.entries(G.JOB_TREE.set).filter(([id]) => G.jobs.byId[id]).map(([id, s]) => ({ id, tier: G.jobs.byId[id].tier, old: (orig(id) || {}).nameVi || id, nameVi: G.jobs.byId[id].nameVi, addFrom: (s.addFrom || []).map(jn) })) };
+    return { jobtree, tierName: G.TIER_NAME, ascend: G.ASCEND, cap: G.STAT_CAP, lifeF: G.LIFE_F, promoteCap: G.PROMOTE_CAP, mentorTier: G.MENTOR_TIER, res, kinds: kv,
       cost: G.SK_COST, cfg: G.CULT, list: G.SK_LIST, up: G.SK_UP, lvTier: G.LV_TIER, maxLv: G.MAX_LV, loadout: G.LOADOUT,
       stats: G.STATS.map(k => ({ id: k, nameVi: G.STAT_VI[k], ms: Object.keys(G.MASTERY_STAT).filter(m => G.MASTERY_STAT[m] === k).map(G.mv),
         main: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[0] === k).map(([s]) => L.schools[s].nameVi), sub: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[1] === k).map(([s]) => L.schools[s].nameVi),

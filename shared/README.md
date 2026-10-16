@@ -14,7 +14,7 @@ shared/
   trunk.js              34 nghề THÂN CHUNG: 6 T1 · 13 T2 · 13 T3 · 2 T4
   skills.js             THƯỞNG CHỈ SỐ theo bậc của 105 kỹ năng có tên (JobLibrary.skillRewards); Skeleton Codex và Vạn Kiếp cùng đọc
   races/<race>.js       10 chủng tộc: origin T0, thân, quyền trường phái, ngọn riêng, nghề ẩn, body evolution
-  compose.js            compose({races:[...]}) → nghề + cạnh + quyền + kiểm tra cấu trúc
+  compose.js            compose({races:[...], overlay?}) → nghề + cạnh + quyền + kiểm tra cấu trúc; overlay = lớp nghề riêng của một game (Vạn Kiếp: vankiep/data/jobtree.js)
   aspects.js            23 khí chất (Ánh Sáng, Hắc Ám, Tử Linh, Thủy Triều…): màu, trạng thái, luật gợi ý
   faiths.js             6 GIÁO PHÁI (2 lớn: Quang Minh / Hắc Giáo; 4 nhỏ), mở cho mọi chủng tộc; 23 ngọn tín ngưỡng
   archetypes/<school>.js 34 KHUÔN NGHỀ × 278 DẠNG theo chủng tộc và/hoặc giáo phái
