@@ -363,14 +363,16 @@ window.LifeSim = window.LifeSim || {};
     { id: 'ch_coin', st: ['child', 'teen'], w: 2, run(S, X) { X.money(X.int(2, 8)); X.add('h', 4); return { t: 'Bạn nhặt được mấy đồng bạc cũ dưới chân cầu.', k: 'good' }; } },
     { id: 'ch_knight', st: ['child'], w: 3, run(S, X) {
         const j = X.pick(G.jobs.jobs.filter(j => j.tier >= 2 && j.tier <= 4 && !j.race && !j.faith));
-        S.flags.inspired = j.school; X.gain(J.schools[j.school].masteries[0], 3);
+        S.flags.inspired = j.school; S.flags.idol = { job: j.nameVi, tier: j.tier, school: j.school };   // js/story.js: mạch Mộng ước
+        X.gain(J.schools[j.school].masteries[0], 3);
         return { t: `Một ${j.nameVi} ghé quán trọ trong làng. Bạn theo sau suốt ba ngày.`, k: 'info', f: j.summary || null }; } },
     { id: 'ch_letters', st: ['child', 'teen'], w: S => 1 + S.q * .6, run(S, X) { X.add('sm', 8); return { t: 'Một tu sĩ già dạy bạn đọc chữ bằng cách vạch lên cát.', k: 'good' }; } },
     { id: 'ch_raid', st: ['child', 'teen', 'adult'], c: S => !S.undead, w: S => 1 + G.local(S).raid * 12, rep: true, gap: 3, run(S, X) {
         const z = X.reg(S).zones[0], sp = X.monsterIn(z);
         X.add('hl', -X.int(4, 12)); X.add('h', -5);
         const sib = S.family.sibs.find(s => s.alive);
-        if (sib && X.chance(.08)) { sib.alive = false; X.add('h', -15); return { t: `${sp.nameVi} từ ${z.nameVi} tràn vào làng. ${sib.name} không chạy kịp.`, k: 'bad', f: X.factOf(sp) }; }
+        if (sib && X.chance(.08)) { sib.alive = false; X.add('h', -15); S.flags.kinKilled = { sp: sp.id, kin: sib.name, zone: z.id };   // js/story.js mở mạch Báo thù
+        return { t: `${sp.nameVi} từ ${z.nameVi} tràn vào làng. ${sib.name} không chạy kịp.`, k: 'bad', f: X.factOf(sp) }; }
         return { t: `${sp.nameVi} từ ${z.nameVi} tràn vào làng. Cả nhà trốn trong hầm rượu tới sáng.`, k: 'bad', f: X.factOf(sp) }; } },
     { id: 'ch_festival', st: ['child', 'teen', 'adult'], c: S => !S.undead, w: 3, rep: true, gap: 4, run(S, X) { X.add('h', 6); X.add('so', 4); return { t: `Lễ hội mùa gặt ở ${home(S, X)}. Bạn nhảy tới khi đèn lồng tắt.`, k: 'good' }; } },
     { id: 'ch_lost', st: ['child'], w: 2, run(S, X) { const z = X.reg(S).zones[0]; X.gain('Stealth', 3); X.add('h', -3); return { t: `Bạn lạc trong ${z.nameVi} một đêm. Sáng ra bạn tự tìm được đường về.`, k: 'info' }; } },

@@ -511,6 +511,7 @@ window.LifeSim = window.LifeSim || {};
   );
 
   // ═════════ 7. Bọc, hệ con, kiếp sau ═════════
+  G.treeWrap = { event: wrapEvent, decision: wrapDecision };   // js/story.js (nạp sau) bọc nút mới của nó
   for (const e of G.EVENTS) wrapEvent(e);
   for (const e of G.NATION_EVENTS || []) wrapEvent(e);
   for (const [id, D] of Object.entries(G.DECISIONS)) wrapDecision(id, D);

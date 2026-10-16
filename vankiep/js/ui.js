@@ -103,7 +103,7 @@
       box.appendChild(h);
     }
     const d = document.createElement('div'); d.className = 'e ' + e.kind;
-    d.innerHTML = esc(e.text) + (e.fact ? `<span class="f">${esc(e.fact)}</span>` : '');
+    d.innerHTML = (e.arc ? `<span class="arc">${esc(e.arc)}</span>` : '') + esc(e.text) + (e.fact ? `<span class="f">${esc(e.fact)}</span>` : '');   // e.arc: mạch truyện (js/story.js)
     box.appendChild(d);
     if (!bulk && nearBottom) box.scrollTop = box.scrollHeight;
     if (bulk) box.scrollTop = box.scrollHeight;
@@ -216,6 +216,7 @@
       ['Thân phận', G.statusText ? G.statusText(S) : G.tierName(X.ctier(S))],   // địa vị theo Tier (js/status.js, docs/09 mục 6.4)
       ['Danh phận', G.standingText ? G.standingText(S, X) : ''],   // xã hội nhận bạn tới đâu (js/tree.js, docs/12)
       ['Quỹ đạo', G.trajText ? G.trajText(S) : ''],   // hướng đời tích từ việc đã làm (js/tree.js)
+      ['Chương', (G.chapText && G.chapText(S)) || '—'],   // câu hỏi của quãng đời này (js/story.js, docs/13)
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
       ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
@@ -253,6 +254,10 @@
     if (S.flags.labor) chips.push(`<span class="chip">Khổ sai (còn ${S.flags.labor} năm)</span>`);
     $('cConds').innerHTML = chips.join('');
     // Vai trò (js/org.js): trưởng khu, quan, người cai trị, hội; mỗi vai có nút rời / từ chức (không hướng nào bắt buộc).
+    // Người quen (js/story.js): dàn nhân vật, độ thân, mạch đang mở; di chuột xem người đó là ai, giờ ra sao.
+    { const CR = G.castRows ? G.castRows(S) : [];
+      $('cCastBox').hidden = !CR.length;
+      $('cCast').innerHTML = CR.map(r => `<div class="cp${r.bond >= 20 ? ' pos' : r.bond <= -20 ? ' neg' : ''}${r.arc ? ' arc' : ''}${r.dead ? ' dead' : ''}" title="${esc(r.title)}"><b>${esc(r.name)}</b><span class="sub">${esc(r.sub)}</span></div>`).join(''); }
     const RLs = S.dead ? [] : G.roleList(S);
     $('cRolesBox').hidden = !RLs.length;
     $('cRoles').innerHTML = RLs.map(r => `<div class="role${r.mgr ? ' mgr' : ''}"><span>${esc(r.text)}</span><button data-what="${r.what}" data-id="${r.id || ''}">${r.what === 'org' || r.what === 'adv' ? (r.mgr && r.what === 'adv' ? 'Giao chi nhánh' : 'Rời') : r.what === 'ruler' ? 'Thoái vị' : r.what === 'noble' || r.what === 'rank' ? 'Từ bỏ' : 'Từ chức'}</button></div>`).join('');

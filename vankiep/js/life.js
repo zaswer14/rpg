@@ -183,7 +183,7 @@ window.LifeSim = window.LifeSim || {};
 
     // ═════════ Ghi sổ ═════════
     log(text, kind = 'info', fact = null) {
-      const S = this.S, e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact };
+      const S = this.S, e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact, arc: this._tag || null };   // arc: nhãn mạch truyện (js/story.js)
       if (!this.headless) { S.log.push(e); if (S.log.length > 500) S.log.splice(0, S.log.length - 500); }
       this.hook.log(e);
       return e;
