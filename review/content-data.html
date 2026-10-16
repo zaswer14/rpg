@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -96,6 +96,14 @@ const EDEC = {
   cv_art: ['Tác phẩm được nhận', 'Sự kiện, cách 4 năm: Điêu khắc gia, Họa sĩ, Thợ kim hoàn, Nghệ nhân làm từ 5 năm. Bán đấu giá 2–8 × thu nhập trung vị, danh vọng +4; 20% + danh vọng / 300 thành danh gia (phân vị +0,12, danh vọng +10), một lần.'],
   cv_wrath: ['Chủ nổi giận', 'Sự kiện, cách 10 năm, nghề vòng 4 làm từ 2 năm. 40% chỉ bị mắng; còn lại một nửa bị đuổi việc (phân vị × 0,7, phải tìm nghề khác), một nửa bị đánh (mất 6–16 Sinh lực).']
 };
+// Học viện danh tiếng, tỉ thí, đấu giá, huyết mạch, liên hôn, mỏ ma tinh (vankiep/js/inst.js, bước D).
+const DDEC = {
+  cv_academy: ['Thư mời của học viện', 'Tuổi thiếu niên, căn cốt Vàng trở lên (Tím mà Hiểu biết ≥ 55 và rất chăm học), chưa xong trung cấp, kinh đô nước mình có trường. Nhận lời: học thẳng trung cấp, miễn thi (97% đỗ), học bổng trung cấp; cao cấp thi như mọi người; đang học thì mỗi năm thêm điểm rèn.'],
+  cv_tourney: ['Đại hội tỉ thí', 'Mỗi nước bốn năm một kỳ. Thiếu niên hoặc người trẻ (tới 1,6 lần tuổi trưởng thành) có cấp, đang học trung cấp trở lên, hoặc ở lớp tài năng. Ba vòng, đối thủ sức 1,7 / 2,2 / 2,7 (±0,3). Vô địch: bốn năm dược tề thượng hạng, danh vọng +10, 5 × thu nhập trung vị, công trạng 10. Vào trận cuối: hai năm dược tề tốt, danh vọng +4.'],
+  cv_auction: ['Đấu giá hội', 'Trưởng thành, sống ở thành phố hoặc kinh đô, đủ tiền mua ít nhất một món (hoặc là danh gia), cách 5 năm. Dược tề thượng hạng ba năm (giá 0,9 × ba năm), vũ khí ma pháp (trang bị +2), ma tinh hạch (220 điểm rèn), tác phẩm danh gia; danh gia gửi bán tác phẩm của mình 5–15 × thu nhập trung vị.'],
+  cv_match: ['Liên hôn', 'Người nhà quý tộc, hoàng tộc hoặc có tước, trưởng thành tới 15 năm sau tuổi trưởng thành, chưa có bạn đời, nước ban tước; từ chối hai lần thì thôi. Cưới: hồi môn (1 + bậc tước) × thu nhập trung vị, ba năm dược tề tốt, người dạy của nhà bên kia (Tier 3, nhà từ Hầu tước: Tier 4); bạn đời mang căn cốt bốc nghiêng lên.'],
+  cv_mine: ['Mỏ ma tinh', 'Trưởng thành, có mỏ ma tinh ở tỉnh nhà hoặc tỉnh kề mà chưa được hỏi. Đào một mùa: thắng theo sức (so 1,6–2,4) thì được 2–6 × trung vị × (1 + 0,5 × Tier) và 120 điểm rèn; thua mất 10–25 Sinh lực, 2% chết. Tỉnh mỏ có chiến tranh: theo quân một năm, công trạng 4.']
+};
 const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
 const data = {
@@ -151,6 +159,8 @@ const data = {
   })(),
   tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }),
   // Địa vị theo Tier (vankiep/js/status.js, docs/09 mục 6.4, docs/07 mục 4.3 và 4.10).
+  inst: { cfg: G.INST, bloodSchools: G.BLOOD_SCHOOLS.map(s => L.schools[s].nameVi), mine: { p: G.DYN.mineP, max: G.DYN.mineMax, yrs: G.DYN.mineYrs, wealth: G.DYN.mineWealth, war: G.DYN.mineWar },
+    decs: Object.entries(DDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }) },
   econ: { ringVi: G.RING_VI, demandVi: G.DEMAND_VI, cfg: G.ECON,
     decs: Object.entries(EDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) },

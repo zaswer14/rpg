@@ -85,6 +85,7 @@
 <script src="js/cult.js"></script>
 <script src="js/status.js"></script>
 <script src="js/econ.js"></script>
+<script src="js/inst.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -128,6 +129,8 @@ $('run').onclick = () => {
     const B = { k: {}, root: {} };
     // Kinh tế bốn vòng (bước C, js/econ.js).
     const ECK = ['rework', 'patron_learn', 'patron_elixir', 'patron_gold', 'artSold', 'artMasterN', 'wrath', 'wrathFired', 'runeGear'];
+    // Học viện, gia tộc, đấu giá, mỏ ma tinh (bước D, js/inst.js).
+    const DK = ['academyIn', 'academyNo', 'tourney', 'tourneyWin', 'tourneyTop', 'auction_elixir', 'auction_gear', 'auction_core', 'auction_art', 'auction_sell', 'bloodBorn', 'bloodWake', 'matchYes', 'matchNo', 'mine_dig', 'mineGood', 'mine_army'];
     const TALK = ['talAwaken', 'talBreak', 'defy_stay', 'defy_both', 'defy_leave', 'workSwitch', 'toAdv', 'aimChance', 'hermit', 'tradeWin', 'askWin'];
     const ORGK = ['advJoin', 'quests', 'advBranch', 'orgJoin', 'mercJoin', 'mercC', 'orgOfficer', 'orgLead', 'orgFound', 'headElect', 'foundVillage', 'foundTown', 'upTown', 'upCity', 'office', 'office2', 'foundNation', 'rebelOK', 'rebelFail'];
     const A = { tal: { byRoot: {}, end: {}, aim: {}, k: {}, n: {}, nTal: 0 }, dyn: { years: 0, wars: 0, flips: 0, ruins: 0, founded: 0, rebel: 0, newNat: 0, fell: 0, warDeaths: 0, soldiers: 0, soldierDeaths: 0, homeFlip: 0 }, org: { adults: 0, k: {} }, edu: { k: {}, byQ: {}, rank: {} }, orig: { k: {}, promo: {}, ev: {} }, lair: { sum: 0, yrs: 0, made: 0, npc: 0, raid: 0, prov: 0, lives: 0, tries: 0, cleared: 0, dgLives: 0, dgTries: 0, floors: 0, fights: 0, over: 0, deaths: 0 }, lives: [], causes: {}, gaps: {}, byRace: {}, byWork: {}, maxTier: {}, jobTier: {}, rose: 0, chain: 0, region: {}, zoneVisits: {}, gapByZone: {}, bornTier: {}, bornNation: {}, law: { crimes: 0, hanged: 0, served: 0, fled: 0, expelled: 0, wary: 0, fav: 0 }, trip: { lives: 0, trips: 0, roadDeaths: 0, escorts: 0 }, sea: { lives: 0, voyages: 0, fights: 0, storms: 0, wrecks: 0, pirates: 0, deaths: 0 } };
@@ -140,7 +143,7 @@ $('run').onclick = () => {
       sim.runToDeath();
       let S = sim.S;
       // Thế giới động trong đời này (mỗi đời một thế giới mới từ seed): đếm theo năm thế giới đã trôi (docs/03 mục 5.7).
-      { const D = A.dyn, n = S.world.dyn.n; D.years += S.world.year - y0; D.wars += n.wars; D.flips += n.kept + n.rebel + n.join; D.ruins += n.ruins; D.founded += n.founded + n.revived; D.rebel += n.rebel; D.newNat += n.newNat; D.fell += n.fell;
+      { const D = A.dyn, n = S.world.dyn.n; D.years += S.world.year - y0; D.wars += n.wars; D.flips += n.kept + n.rebel + n.join; D.ruins += n.ruins; D.mines = (D.mines || 0) + (n.mines || 0); D.founded += n.founded + n.revived; D.rebel += n.rebel; D.newNat += n.newNat; D.fell += n.fell;
         if (S.causeId === 'war') D.warDeaths++; if (S.flags.served) { D.soldiers++; if (S.causeId === 'war') D.soldierDeaths++; } if (S.flags.homeFlip) D.homeFlip++; }
       { const O = A.orig, F = S.flags; for (const k of ORIGK) if (F[k]) O.k[k] = (O.k[k] || 0) + 1; if (F.promoMax) O.promo[F.promoMax] = (O.promo[F.promoMax] || 0) + 1; for (const id of Object.keys(S.recent)) { const g = id.split('_')[0]; if (['tpl', 'qk', 'nt', 'rl', 'vl'].includes(g)) O.ev[g] = (O.ev[g] || 0) + 1; } }
       { const E = A.edu, F = S.flags; for (const k of EDUK) if (F[k]) E.k[k] = (E.k[k] || 0) + 1; const b = E.byQ[q0] || (E.byQ[q0] = [0, 0, 0, 0]); b[0]++; for (let l = 1; l <= (S.edu ? S.edu.lv : 0); l++) b[l]++; if (F.nobleMax) E.rank[F.nobleMax] = (E.rank[F.nobleMax] || 0) + 1; }
@@ -155,7 +158,7 @@ $('run').onclick = () => {
       const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
         adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver, teachAt: S.flags.teachAt, job: S.job, race: S.race,   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
         st: { pct: S.pct, q: S.q, office: !!S.flags.office, office2: !!S.flags.office2, head: !!S.flags.headElect, officer: !!S.flags.orgOfficer, lead: !!(S.flags.orgLead || S.flags.advBranch || S.flags.orgFound), noble: S.flags.nobleMax || 0, ret: !!S.flags.retainer, elix: S.flags.elixirY || 0, promo: S.flags.promoMax || 0, gold: S.gold, med: G.median(G.REGION[S.loc]) } };   // địa vị (js/status.js)
-      { const F = S.flags; for (const k of [...STK, ...ECK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
+      { const F = S.flags; for (const k of [...STK, ...ECK, ...DK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
         const o = F.royal ? 'Hoàng tộc' : F.house || F.houseLeft ? 'Nhà quý tộc' : 'Thường dân', b = B.root[o] || (B.root[o] = [0, 0, 0, 0]); b[0]++; b[1] += G.RARITY[G.RANK[F.root0] || 0].rate; if (F.rootBlood) { b[2]++; b[3] += F.rootBlood; } }
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
@@ -201,6 +204,12 @@ $('run').onclick = () => {
       const row = (t, k) => [t, B.k[k] || 0, pct(B.k[k] || 0, N), '', '', ''];
       out.push(table('Kinh tế bốn vòng (đời trưởng thành có nghề)', [...rows, row('Đổi sang nghề của người có cấp', 'rework'), row('Chủ nhà để mắt: học cùng con chủ', 'patron_learn'), row('Chủ nhà để mắt: dược tề', 'patron_elixir'), row('Chủ nhà để mắt: thưởng', 'patron_gold'), row('Tác phẩm được nhận', 'artSold'), row('Thành danh gia', 'artMasterN'), row('Chủ nổi giận', 'wrath'), row('Bị chủ đuổi việc', 'wrathFired'), row('Khắc ma văn lên đồ', 'runeGear')],
         ['', 'Đời', '%', 'Tier TB', 'Phân vị lúc chết', 'Tiền / trung vị'], { note: 'js/econ.js. Bốn dòng đầu: % đời trưởng thành có nghề lúc chết; các dòng sau: % mọi đời.' })); }
+    // Học viện, gia tộc, đấu giá, mỏ ma tinh (bước D, docs/07 mục 4.12).
+    { const row = (t, k) => [t, B.k[k] || 0, pct(B.k[k] || 0, N)];
+      out.push(table('Học viện danh tiếng, tỉ thí, đấu giá, huyết mạch, liên hôn, mỏ ma tinh (đời đầu)', [row('Được học viện mời, nhận lời', 'academyIn'), row('Được mời, từ chối', 'academyNo'), row('Dự đại hội tỉ thí', 'tourney'), row('Vô địch tỉ thí', 'tourneyWin'), row('Vào trận cuối', 'tourneyTop'),
+        row('Đấu giá: dược tề', 'auction_elixir'), row('Đấu giá: vũ khí ma pháp', 'auction_gear'), row('Đấu giá: ma tinh hạch', 'auction_core'), row('Đấu giá: tác phẩm danh gia', 'auction_art'), row('Đấu giá: bán tác phẩm của mình', 'auction_sell'),
+        row('Sinh ra có huyết mạch', 'bloodBorn'), row('Thức tỉnh huyết mạch', 'bloodWake'), row('Liên hôn', 'matchYes'), row('Từ chối liên hôn', 'matchNo'), row('Đi đào mỏ ma tinh', 'mine_dig'), row('Đào mỏ có lời', 'mineGood'), row('Theo quân giành mỏ', 'mine_army')],
+        ['', 'Đời', '% mọi đời'], { note: 'js/inst.js. Số mỏ ma tinh mới lộ ở bảng Thế giới động.' })); }
     out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
     { const ad = A.lives.filter(r => r.adult), M = Math.max(1, ad.length), avgOf = (l, f) => l.length ? avg(l, f).toFixed(2) : '—';   // docs/08 mục 9: tháp Tier (docs/07 mục 6), level trong Tier, sức lúc vào Tier / ở max level
@@ -233,7 +242,7 @@ $('run').onclick = () => {
     out.push(table('Đi biển (đời đầu)', [['Đời có đi tàu', A.sea.lives, pct(A.sea.lives, N)], ['Số chuyến tàu', A.sea.voyages, ''], ['Trận trên biển', A.sea.fights, ''], ['Gặp bão', A.sea.storms, ''], ['Đắm tàu', A.sea.wrecks, ''], ['Gặp cướp biển', A.sea.pirates, ''], ['Chết trên biển (kể cả đắm tàu khi làm nghề)', A.sea.deaths, pct(A.sea.deaths, N)]], ['', 'Số', '%'], { note: 'docs/03 mục 7.3. Trận trên biển cũng tính vào bảng phân cấp Tier.' }));
     out.push(table('Luật và thái độ (đời đầu)', [['Từng bị bắt', A.law.crimes, pct(A.law.crimes, N)], ['Bị treo cổ', A.law.hanged, pct(A.law.hanged, N)], ['Đi lính nghĩa vụ', A.law.served, pct(A.law.served, N)], ['Trốn lính', A.law.fled, pct(A.law.fled, N)], ['Bị lệnh trục xuất', A.law.expelled, pct(A.law.expelled, N)], ['Chết ở nước dè chừng mình', A.law.wary, pct(A.law.wary, N)], ['Chết ở nước ưu ái mình', A.law.fav, pct(A.law.fav, N)]], ['', 'Đời', '%'], { note: 'Đếm trên đời đầu (trước khi trỗi dậy). docs/04 mục 3.' }));
     { const D = A.dyn, per = v => (v / Math.max(1, D.years) * 100).toFixed(2);
-      out.push(table('Thế giới động (đời đầu)', [['Năm thế giới đã trôi', D.years, ''], ['Chiến tranh nổ ra', D.wars, per(D.wars)], ['Tỉnh đổi chủ (giữ sau chiến tranh, nổi loạn)', D.flips, per(D.flips)], ['Nổi loạn thành công', D.rebel, per(D.rebel)], ['Nước mới lập', D.newNat, per(D.newNat)], ['Nước diệt vong', D.fell, per(D.fell)], ['Khu dân cư sụp', D.ruins, per(D.ruins)], ['Khu dân cư lập mới, dựng lại', D.founded, per(D.founded)],
+      out.push(table('Thế giới động (đời đầu)', [['Năm thế giới đã trôi', D.years, ''], ['Chiến tranh nổ ra', D.wars, per(D.wars)], ['Tỉnh đổi chủ (giữ sau chiến tranh, nổi loạn)', D.flips, per(D.flips)], ['Nổi loạn thành công', D.rebel, per(D.rebel)], ['Nước mới lập', D.newNat, per(D.newNat)], ['Nước diệt vong', D.fell, per(D.fell)], ['Khu dân cư sụp', D.ruins, per(D.ruins)], ['Khu dân cư lập mới, dựng lại', D.founded, per(D.founded)], ['Mỏ ma tinh mới lộ', D.mines || 0, per(D.mines || 0)],
         ['Đời chết trận', D.warDeaths, pct(D.warDeaths, N)], ['Lính nghĩa vụ chết trận', D.soldierDeaths, pct(D.soldierDeaths, Math.max(1, D.soldiers))], ['Đời có quê đổi chủ', D.homeFlip, pct(D.homeFlip, N)]], ['', 'Số', '/ 100 năm (lính: % lính)'],
         { note: 'docs/03 mục 5.3, 10: tỉnh đổi chủ 3–8 / 100 năm, khu sụp / lập 1–3 / 100 năm. Mỗi đời một thế giới mới từ seed (G.makeWorld).' })); }
     { const H = A.lair, per = v => (v / Math.max(1, A.dyn.years) * 100).toFixed(2);
@@ -279,7 +288,7 @@ $('runHistory').onclick = () => {
     for (let w = 0; w < NW; w++) {
       $('status').textContent = `Đang chạy thế giới động ${w + 1}/${NW}…`; await new Promise(r => setTimeout(r, 0));
       const W = G.runWorld(base + ':h' + w, years), n = W.dyn.n;
-      rs.push({ alive: W.dyn.nat.filter(x => x.alive).length, lairs: (n.lairSum || 0) / Math.max(1, n.lairYrs || 0), lv3: W.dyn.lairs.filter(l => l.empty == null && l.lv === 3).length, lairMade: n.lairs || 0, lairNpc: n.lairNpc || 0, lairBack: n.lairBack || 0, lairRuin: n.lairRuin || 0, raid: (n.raidYrs || 0) / Math.max(1, n.provYrs || 0), flips: n.kept + n.rebel + n.join, ruins: n.ruins, founded: n.founded + n.revived, wars: n.wars, rebel: n.rebel, newNat: n.newNat, fell: n.fell, annex: n.annex, moved: n.moved, kings: n.kings, roads: n.roads });
+      rs.push({ alive: W.dyn.nat.filter(x => x.alive).length, lairs: (n.lairSum || 0) / Math.max(1, n.lairYrs || 0), lv3: W.dyn.lairs.filter(l => l.empty == null && l.lv === 3).length, lairMade: n.lairs || 0, lairNpc: n.lairNpc || 0, lairBack: n.lairBack || 0, lairRuin: n.lairRuin || 0, raid: (n.raidYrs || 0) / Math.max(1, n.provYrs || 0), flips: n.kept + n.rebel + n.join, ruins: n.ruins, founded: n.founded + n.revived, wars: n.wars, rebel: n.rebel, newNat: n.newNat, fell: n.fell, annex: n.annex, moved: n.moved, kings: n.kings, roads: n.roads, mines: n.mines || 0 });
     }
     const ms = Math.round(performance.now() - t0), med = k => { const a = rs.map(r => r[k]).sort((x, y) => x - y); return a[a.length >> 1]; }, per = k => (rs.reduce((a, r) => a + r[k], 0) / NW / years * 100).toFixed(2);
     const pct = (a, b) => (a / b * 100).toFixed(1) + '%';
@@ -287,7 +296,7 @@ $('runHistory').onclick = () => {
     const out = [];
     out.push(table(`${NW} thế giới × ${years} năm`, [['Nước còn sống: trung vị', med('alive'), ''], ['Nước còn sống: ít nhất / nhiều nhất', Math.min(...rs.map(r => r.alive)) + ' / ' + Math.max(...rs.map(r => r.alive)), ''],
       ['Tỉnh đổi chủ', med('flips'), per('flips')], ['Chiến tranh', med('wars'), per('wars')], ['Nổi loạn thành công', med('rebel'), per('rebel')], ['Nước mới lập', med('newNat'), per('newNat')], ['Nước diệt vong', med('fell'), per('fell')],
-      ['Tỉnh vô chủ sáp nhập', med('annex'), per('annex')], ['Khu dân cư sụp', med('ruins'), per('ruins')], ['Khu dân cư lập mới, dựng lại', med('founded'), per('founded')], ['Dời đô', med('moved'), per('moved')], ['Vua băng hà', med('kings'), per('kings')], ['Đoạn đường xuống cấp', med('roads'), per('roads')], ['Hang ổ đang có (trung bình theo năm)', (rs.reduce((a, r) => a + r.lairs, 0) / NW).toFixed(1), ''], ['Sào huyệt lúc kết thúc', med('lv3'), ''], ['Hang mới mọc', med('lairMade'), per('lairMade')], ['Hang trống bị quái chiếm lại', med('lairBack'), per('lairBack')], ['Hang NPC dọn', med('lairNpc'), per('lairNpc')], ['Phế tích thành hang', med('lairRuin'), per('lairRuin')], ['Năm-tỉnh có thú triều', pct(rs.reduce((a, r) => a + r.raid, 0), NW), ''], ['ms / thế giới', Math.round(ms / NW), '']],
+      ['Tỉnh vô chủ sáp nhập', med('annex'), per('annex')], ['Khu dân cư sụp', med('ruins'), per('ruins')], ['Khu dân cư lập mới, dựng lại', med('founded'), per('founded')], ['Dời đô', med('moved'), per('moved')], ['Vua băng hà', med('kings'), per('kings')], ['Đoạn đường xuống cấp', med('roads'), per('roads')], ['Mỏ ma tinh mới lộ', med('mines'), per('mines')], ['Hang ổ đang có (trung bình theo năm)', (rs.reduce((a, r) => a + r.lairs, 0) / NW).toFixed(1), ''], ['Sào huyệt lúc kết thúc', med('lv3'), ''], ['Hang mới mọc', med('lairMade'), per('lairMade')], ['Hang trống bị quái chiếm lại', med('lairBack'), per('lairBack')], ['Hang NPC dọn', med('lairNpc'), per('lairNpc')], ['Phế tích thành hang', med('lairRuin'), per('lairRuin')], ['Năm-tỉnh có thú triều', pct(rs.reduce((a, r) => a + r.raid, 0), NW), ''], ['ms / thế giới', Math.round(ms / NW), '']],
       ['', 'Trung vị / thế giới', '/ 100 năm (trung bình)'], { note: 'Mục tiêu docs/03 mục 10: nước còn sống sau 300 năm trung vị 5–7, không thế giới nào dưới 3; tỉnh đổi chủ 3–8 / 100 năm; khu sụp / lập 1–3 / 100 năm. Hệ số ở G.DYN (js/dynamic.js).' }));
     out.push(table('Số nước còn sống', Object.entries(nAlive).map(([k, v]) => [k + ' nước', v, pct(v, NW)]), ['', 'Thế giới', '%'], { bar: true }));
     $('out').innerHTML = out.join('');

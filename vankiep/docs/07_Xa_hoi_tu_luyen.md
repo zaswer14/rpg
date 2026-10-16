@@ -1,6 +1,6 @@
 # Vạn Kiếp: định hướng mới, xã hội tu luyện
 
-**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), bước B xong (`js/status.js`, kết quả mục 4.10), bước C xong (`js/econ.js`, kết quả mục 4.11), tiếp theo bước D (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
+**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), bước B xong (`js/status.js`, kết quả mục 4.10), bước C xong (`js/econ.js`, kết quả mục 4.11), bước D xong (`js/inst.js`, kết quả mục 4.12), tiếp theo bước E (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
 
 Người dùng đổi định hướng game (15/10/2026):
 
@@ -335,6 +335,57 @@ Chỗ lệch, để lại:
 - Chưa có: cầu tính theo số người có cấp thật quanh đó (NPC chưa có Tier), chợ dược tề (dược tề vẫn mua thẳng, chỉ dược sư được giá rẻ), phòng đấu giá (`cv_auction`, bước D), nghệ nhân được tiến cử vào học viện. Chủ nhà là người có tên (lãnh chúa thái ấp hoặc nhà quý tộc NPC) nhưng không nhớ qua các năm.
 - Không chạy Thử thế giới động, 100 thế giới: bước C không đổi `dynamic.js`, `realm.js`.
 
+### 4.12. Kết quả bước D: học viện, gia tộc, đấu giá, mỏ ma tinh (16/10/2026)
+
+Làm theo mục 4.7 và bảng mục 5 (`cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match`). Mã mới ở `js/inst.js`; mỏ ma tinh trong thế giới động ở `js/dynamic.js`; chỗ nối: `status.js` (dược tề được ban có mức), `econ.js` (thợ mỏ có thêm cầu khi tỉnh có mỏ), `sim.html` (bảng mới, dòng mỏ ma tinh ở hai bảng thế giới động). Tab "Học viện danh tiếng, gia tộc, đấu giá" trên trang Duyệt Nội Dung.
+
+| Phần | Số chốt |
+|---|---|
+| Học viện danh tiếng (`cv_academy`) | thiếu niên căn cốt Vàng trở lên (Tím mà Hiểu biết ≥ 55, rất chăm) được học viện kinh đô mời vào lớp tài năng: học thẳng trung cấp, miễn thi, học bổng trung cấp; đang học thêm 15 điểm rèn mỗi năm. Cao cấp thi như mọi người |
+| Đại hội tỉ thí (`cv_tourney`) | mỗi nước 4 năm một kỳ; người trẻ có cấp, đang học trung cấp trở lên hoặc ở lớp tài năng; ba vòng, đối thủ sức 1,7 / 2,2 / 2,7 (±0,3); vô địch: bốn năm dược tề thượng hạng, danh vọng +10, công trạng 10; vào trận cuối: hai năm dược tề tốt |
+| Đấu giá hội (`cv_auction`) | thành phố, kinh đô, cách 5 năm: dược tề thượng hạng ba năm, vũ khí ma pháp (trang bị +2), ma tinh hạch (220 điểm rèn), tác phẩm danh gia; danh gia gửi bán tác phẩm |
+| Huyết mạch (`cv_bloodline`, làm thành hệ con `inst`) | lúc sinh: hoàng tộc 60%, nhà quý tộc 30%, dân thường 1%; tuổi thiếu niên mỗi năm 12% thức tỉnh: căn cốt +1 bậc (30% +2), rèn trường phái huyết mạch × 1,25, người nhà quý tộc có trưởng lão dòng họ dạy tới Tier 3 |
+| Liên hôn (`cv_match`) | người nhà quý tộc, hoàng tộc, có tước, chưa có bạn đời, tới 15 năm sau tuổi trưởng thành: hồi môn (1 + bậc tước) × trung vị, ba năm dược tề tốt, nhà bên kia dạy tới Tier 3 (từ Hầu tước: Tier 4); bạn đời có căn cốt bốc nghiêng lên |
+| Mỏ ma tinh (`G.DYN.mine*`) | tỉnh có vùng ma lực ≥ 0,55 mỗi năm 0,002 × (ma lực − 0,5) × 2 cơ hội lộ mỏ, tối đa 3 mỏ; mỏ sống 25–70 năm; tỉnh có mỏ giàu thêm 0,15; nước kề tỉnh mỏ của nước khác tuyên chiến × 1,3 (khi còn từ 5 nước); thợ mỏ có thêm cầu 0,6 |
+| Đào mỏ (`cv_mine`) | mỏ ở tỉnh nhà hoặc tỉnh kề, mỗi mỏ hỏi một lần: đào một mùa (thắng theo sức so 1,6–2,4: 2–6 × trung vị × (1 + 0,5 × Tier), 120 điểm rèn; thua mất Sinh lực, 2% chết); tỉnh mỏ có chiến tranh thì theo quân |
+
+1000 đời, thế giới `can-bang`, chế độ tự động (số của lần chạy trước khi giảm hệ số chiến tranh, độ giàu của mỏ; phần đó chỉ đo bằng thế giới động bên dưới):
+
+| Đo | Bước C | Bước D | Mục tiêu |
+|---|---|---|---|
+| Trận vượt Tier + 1 | 0 | 0 (64 402 trận) | 0 |
+| Trỗi dậy | 19,2% | 20,1% | ~20% |
+| Chết vì quái | 10,0% | 10,5% | ~10% |
+| Tháp Tier 0–5 | 55,6 / 28,6 / 11,0 / 4,0 / 0,8 / 0 | 58,2 / 27,7 / 8,7 / 4,1 / 1,0 / 0,2 | 60 / 27 / 10 / 2,5 / 0,5 / 0,05 |
+| Vào cao cấp (học viện kinh đô) | | 12,8% | |
+| 40 đời cùng seed (đo tốc độ) | 6,7 giây | 6,3 giây | |
+
+Sự kiện (mọi đời): được học viện mời 3,5% (nhận 3,4%); dự tỉ thí 18,8%, vô địch 0,1%, vào trận cuối 2,1%; đấu giá: vũ khí ma pháp 0,7%, ma tinh hạch 0,1%, bán tác phẩm 0,8%, dược tề và tác phẩm danh gia 0 (đắt so với chế độ tự động); sinh ra có huyết mạch 1,1%, thức tỉnh 0,4%; liên hôn 0,9%; đi đào mỏ ma tinh 9,7% (có lời 5,2%), theo quân giành mỏ 0,1%.
+
+Thế giới động, 100 thế giới × 300 năm:
+
+| Đo | Trước bước D | Bước D |
+|---|---|---|
+| Nước còn sống: trung vị (ít nhất / nhiều nhất) | 5 (3 / 9) | 5 (2 / 9) |
+| Thế giới còn ≤ 3 nước | 7% | 7% (một thế giới còn 2) |
+| Tỉnh đổi chủ / chiến tranh mỗi 100 năm | 7,40 / 5,95 | 7,72 / 6,26 |
+| Mỏ ma tinh mới lộ mỗi 100 năm | | 1,29 (trung vị 4 mỗi thế giới) |
+| ms / thế giới | 355 | 350–385 |
+
+Đường đi tới số chốt:
+
+- Lần đầu lời mời học viện cho cả căn cốt Lam có Hiểu biết ≥ 40 (22% đời), lớp tài năng chắc vào cao cấp và luyện thêm 25 điểm mỗi năm: Thủ Hộ Giả 1,5%, Huyền Thoại Giả 0,5% (nguồn dạy Tier 4 "Võ bị ở kinh đô" từ 3 lên 14 đời). Siết lời mời (Vàng trở lên), bỏ bảo đảm cao cấp, giảm điểm rèn thêm: Thủ Hộ Giả 1,0%.
+- Mỏ ma tinh lúc đầu 0,004 × …, tối đa 5 mỏ: 16% đời đi đào. Hạ một nửa: 10%.
+- Thế giới động với mỏ ra một thế giới còn 2 nước. Tắt mỏ mà vẫn bốc ngẫu nhiên như cũ (chỉ lệch chuỗi ngẫu nhiên) thì chiến tranh còn nhiều hơn (6,25 / 100 năm), nên phần lớn chênh lệch là nhiễu. Vẫn giảm hệ số tuyên chiến, độ giàu của mỏ và thêm chốt "còn dưới 5 nước thì mỏ thôi kích chiến tranh"; thế giới còn 2 nước vẫn ra y như cũ (chốt không chạm tới nó).
+
+Chỗ lệch, để lại:
+
+- **Thủ Hộ Giả 1,0%, Huyền Thoại Giả 0,2%** (mục tiêu 0,5%, 0,05%; bước C 0,8%, 0): người được mời có căn cốt cao, lại có học bổng cao cấp từ lễ thử thiên phú (bước B), vào ngành Võ bị ở kinh đô là có người dạy Tier 4. Để bước F (cân lại tháp): có thể bắt Võ bị, Pháp thuật dạy Tier 4 chỉ cho người đứng đầu khóa.
+- Một thế giới trong 100 còn 2 nước (mục tiêu docs/03: không dưới 3).
+- **Giáo hội** đối đầu (Quang Minh, Hắc Giáo) chưa có cơ chế mới; giáo hội vẫn chỉ dạy theo Devotion như bước A.
+- Căn cốt con nghiêng theo bạn đời liên hôn: bạn đời có căn cốt nhưng con của người chơi là NPC, chưa dùng tới. Phòng trưng bày chưa tách khỏi đấu giá. Đấu giá chưa có giết người đoạt bảo (bước E).
+- Không thử 100 thế giới dựng (bản đồ, quốc gia): bước D không đổi `realm.js`.
+
 ## 5. Từ đầu truyện thành sự kiện, quyết định
 
 Mã đề xuất có tiền tố `cv_` để khỏi trùng tên quyết định sẵn có (xem nhắc ở `TIEN_DO.md` mục 3).
@@ -390,7 +441,7 @@ Mỗi bước theo cách làm ở `TIEN_DO.md` mục 5 (sim 1000 đời, thử t
 | A (xong 15/10/2026) | Kỹ năng 5 bậc, cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, chuyển nghề theo gate 2 kỹ năng, ma lực nơi ở, người dạy, thọ nguyên, tiền đồng / bạc / vàng; sự kiện `cv_saint`; bảng Cảnh giới trong `sim.html` | `js/cult.js` mới, `life.js`, `events.js`, `talent.js`, `ui.js`, `sim.html` |
 | B (xong 16/10/2026, mục 4.10) | Địa vị: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên (dược tề); `cv_test`, `cv_scorn`, `cv_license`, `cv_levy`, `cv_bully`, `cv_kin`, `cv_lifespan` | `state.js`, `org.js`, `noble.js`, `talent.js`, `data/nations.js` |
 | C (xong 16/10/2026, mục 4.11) | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
-| D | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
+| D (xong 16/10/2026, mục 4.12) | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
 | E | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken` | `cult.js`, `events.js` |
 | F | Đặt tên kỹ năng (bản đầu không tên), cân lại tháp | `cult.js`, `sim.html` |
 

@@ -121,7 +121,7 @@ code{font-family:var(--font-mono);font-size:12px}
   let db = null, dbState = 'connecting';
   const TABS = [
     ['ev_tpl', 'Sự kiện: đặc tính mẫu'], ['ev_quirk', 'Sự kiện: đặc trưng riêng'], ['ev_misc', 'Sự kiện: chung'], null,
-    ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
+    ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
     ['cult', 'Sức mạnh'], ['status', 'Địa vị']
@@ -133,6 +133,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
   // ---- Danh sách mục duyệt theo tab ----
+  const IRULES = [['academy', 'Học viện danh tiếng, lớp tài năng'], ['tourney', 'Đại hội tỉ thí'], ['auction', 'Đấu giá hội'], ['blood', 'Huyết mạch'], ['match', 'Liên hôn'], ['mine', 'Mỏ ma tinh']];
   const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
   const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
@@ -145,6 +146,7 @@ code{font-family:var(--font-mono);font-size:12px}
     noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
     promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
     work: Object.entries(D.works).sort((a, b) => a[1].ring - b[1].ring).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    inst: [...IRULES.map(([id, name]) => ({ kind: 'irule', id, name })), ...D.inst.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     econ: [...[1, 2, 3, 4].map(r => ({ kind: 'ring', id: String(r), name: D.econ.ringVi[r] })), ...Object.entries(D.econ.demandVi).map(([id, n]) => ({ kind: 'demand', id, name: n })), ...D.econ.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     bld: D.buildings.map(b => ({ kind: 'bld', id: b.id, name: Object.values(b.name).join(' / ') })),
     tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
@@ -162,7 +164,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderProgress() {
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
-      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
+      + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
       + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status);
   }
 
@@ -327,6 +329,26 @@ code{font-family:var(--font-mono);font-size:12px}
     return overview('Sinh kế', 'Nghề sống của nhân vật, khác nghề chiến đấu của thư viện. Thu nhập là khoảng phân vị trong vùng; rủi ro nhân xác suất tai nạn; mỗi năm làm thì rèn các kỹ năng ghi ở đây.') + grid(cards.join(''));
   }
 
+  // ---- Học viện danh tiếng, gia tộc, đấu giá, mỏ ma tinh (vankiep/js/inst.js, bước D; docs/07 mục 4.7, 4.12) ----
+  function instView() {
+    const I = D.inst, C = I.cfg, M = I.mine;
+    const RULE = {
+      academy: `<p style="margin:0">Học viện ở kinh đô chọn người theo căn cốt (kiểu học viện ma pháp của Bàn Long): thiếu niên căn cốt Vàng trở lên (Tím mà rất giỏi, rất chăm) được mời vào lớp tài năng. Lớp tài năng học thẳng trung cấp, miễn thi, có học bổng trung cấp (cao cấp thi như mọi người), và mỗi năm đang học được thêm ${C.academyBoost} điểm rèn. Học viện cao cấp vốn chỉ có ở kinh đô; ngành Võ bị, Pháp thuật dạy tới Tier 4.</p>`,
+      tourney: `<p style="margin:0">Mỗi nước ${C.tourneyEvery} năm một kỳ, ở kinh đô, cho người trẻ. Ba vòng; đối thủ mạnh dần (${C.tourneyOpp.map(num).join(' / ')}), thắng mỗi vòng theo chênh sức. Vô địch được ban dược tề thượng hạng, được triều đình ghi công.</p>`,
+      auction: '<p style="margin:0">Phòng đấu giá ở thành phố, kinh đô: chỗ người giàu đổi tiền thành sức mạnh (dược tề, vũ khí ma pháp, ma tinh hạch) và chỗ danh gia bán tác phẩm. Giết người đoạt bảo khi vừa trúng đấu giá là việc của bước E.</p>',
+      blood: `<p style="margin:0">Lúc sinh: hoàng tộc ${pct(C.bloodP.royal)}, nhà quý tộc ${pct(C.bloodP.house)}, dân thường ${pct(C.bloodP.common)} mang huyết mạch chiến sĩ của một trường phái bản địa (${esc(I.bloodSchools.join(', '))}). Tuổi thiếu niên mỗi năm ${pct(C.bloodWake)} thức tỉnh: căn cốt lên một bậc (30% hai bậc), rèn trường phái đó × ${num(C.bloodGain)}; người nhà quý tộc, hoàng tộc được trưởng lão dòng họ dạy kỹ năng của dòng tới Tier 3.</p>`,
+      match: '<p style="margin:0">Quý tộc lấy vợ lấy chồng để giữ dòng máu và mở cửa cho nhau: nhà bên kia cho của hồi môn, dược tề, cho người của mình học thầy nhà họ. Bạn đời mang căn cốt bốc nghiêng lên như người nhà quý tộc.</p>',
+      mine: `<p style="margin:0">Thế giới động: tỉnh có vùng ma lực từ 0,55 mỗi năm có ${num(M.p)} × (ma lực − 0,5) × 2 cơ hội lộ mỏ ma tinh, tối đa ${M.max} mỏ cùng lúc, mỏ sống ${M.yrs[0]}–${M.yrs[1]} năm rồi cạn. Tỉnh có mỏ giàu thêm ${num(M.wealth)} (sức chiến tranh của nước); nước kề tỉnh mỏ của nước khác tuyên chiến × ${num(M.war)}. Có mỏ trong tỉnh thì thợ mỏ có thêm cầu. Sử biên niên ghi lúc mỏ lộ, lúc mỏ cạn.</p>`
+    };
+    const rules = IRULES.filter(([id]) => passes('irule', id)).map(([id, name]) => card('irule', id, name, RULE[id]));
+    const decs = I.decs.filter(d => passes('dec', d.id)).map(d => card('dec', d.id, d.title, `<div class="meta">quyết định · ưu tiên ${d.prio}</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(d.when)}</dd></dl>${d.texts.length ? `<ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${d.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${d.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`));
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Học viện danh tiếng, gia tộc, đấu giá', 'Bước D của định hướng xã hội tu luyện (docs/07 mục 4.7): các thiết chế kiểu Bàn Long nắm người dạy và tài nguyên. Học viện chọn người theo căn cốt, triều đình mở đại hội tỉ thí, nhà quý tộc giữ huyết mạch và liên hôn với nhau, phòng đấu giá bán dược tề và ma tinh hạch, các nước tranh mỏ ma tinh. Câu chữ trích từ mã nguồn; ‹…› là chỗ game điền vào.')
+      + grid(part('Luật', rules) + part('Quyết định', decs));
+  }
+
   // ---- Kinh tế bốn vòng (vankiep/js/econ.js, bước C; docs/07 mục 4.6, 4.11) ----
   function econView() {
     const E = D.econ, C = E.cfg, works = r => Object.entries(D.works).filter(([, w]) => w.ring === r).map(([, w]) => `<span class="chip">${esc(w.nameVi)}${w.tier ? ' · T' + w.tier : ''}</span>`).join('');
@@ -483,7 +505,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

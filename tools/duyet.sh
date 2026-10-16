@@ -15,7 +15,7 @@ PAGES="tree nation content bestiary"
 cover() { case $1 in
   tree)     echo "shared/schools.js shared/trunk.js shared/aspects.js shared/faiths.js shared/compose.js shared/catalog.js shared/races/ shared/archetypes/ review/tree-" ;;
   nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
-  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js vankiep/js/status.js vankiep/js/econ.js vankiep/js/state.js shared/skills.js vankiep/data/world.js vankiep/data/nations.js vankiep/data/skills.js vankiep/data/jobtree.js shared/compose.js review/content-" ;;
+  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js vankiep/js/status.js vankiep/js/econ.js vankiep/js/inst.js vankiep/js/state.js shared/skills.js vankiep/data/world.js vankiep/data/nations.js vankiep/data/skills.js vankiep/data/jobtree.js shared/compose.js review/content-" ;;
   bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).

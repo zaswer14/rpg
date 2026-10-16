@@ -32,7 +32,10 @@ window.LifeSim = window.LifeSim || {};
     spill: [0, .1, .1],   // tầng b quá 1,6 thì tràn ra tầng b − 1 (spill[b − 1]). Sâu không tràn ra ven nữa (bước 8): thú triều đến từ sào huyệt
     // Hang ổ (docs/03 mục 4.1, kết quả ở 4.3): mọc ở tỉnh × tầng (sâu, lõi, vùng chết) có mật độ > 1,4, tối đa lairMax hang / tỉnh;
     // lớn khi mật độ > 1,2; sào huyệt (level 3) tràn lairSpill vào tầng ven; đoàn mạo hiểm NPC dọn theo tuần tra; trống 8–15 năm rồi mọc lại.
-    lairP: .006, lairMax: 3, lairGrow: .04, lairSpill: .3, lairNpc: .25, lairNpcB: [0, 1, .8, .6], lairRuin: .4, lairEmpty: [8, 15]
+    lairP: .006, lairMax: 3, lairGrow: .04, lairSpill: .3, lairNpc: .25, lairNpcB: [0, 1, .8, .6], lairRuin: .4, lairEmpty: [8, 15],
+    // Mỏ ma tinh (bước D của docs/07, kết quả mục 4.12): tỉnh có vùng ma lực ≥ 0,55 mỗi năm có mineP × (ma lực − 0,5) × 2 cơ hội lộ mỏ, tối đa mineMax mỏ cùng lúc;
+    // mỏ sống mineYrs năm rồi cạn; tỉnh có mỏ giàu thêm mineWealth (sức chiến tranh); nước kề tỉnh có mỏ tuyên chiến × mineWar.
+    mineP: .002, mineMax: 3, mineYrs: [25, 70], mineWealth: .15, mineWar: 1.3
   };
 
   // ═════════ Trạng thái động mới cho một thế giới ═════════
@@ -491,6 +494,34 @@ window.LifeSim = window.LifeSim || {};
     }
   }
   // Một năm của hang ổ (cuối G.polityYear, sau khi độ hoang tính lại).
+  // ═════════ Mỏ ma tinh (bước D, docs/07 mục 4.12): D.mines = [{ id, p, since, until }] ═════════
+  const mineIn = (D, p) => !!(D.mines && D.mines.some(m => m.p === p));
+  // Nước b giữ một tỉnh có mỏ kề tỉnh của nước a.
+  const mineNear = (R, D, a, b) => !!(D.mines && D.mines.some(m => D.prov[m.p] === b && neighbors(R, m.p).some(q => D.prov[q] === a)));
+  const provMagic = (R, p) => { const s = R.byId[R.provinces[p].seat]; return s ? (G.REGION[s.region] || {}).magic || 0 : 0; };
+  function mineYear(R, D, X, S, year) {
+    const K = G.DYN, M = D.mines || (D.mines = []), n = D.n;
+    // Mỏ cạn.
+    for (const m of M.slice()) if (year >= m.until) {
+      M.splice(M.indexOf(m), 1); n.mineEnd = (n.mineEnd || 0) + 1;
+      hist(D, year, 'mine', `Mỏ ma tinh ở tỉnh ${pname(R, m.p)} cạn.`);
+      if (S && G.provOfS(S) === m.p) X.log(`Mỏ ma tinh ở ${pname(R, m.p)} cạn. Phu mỏ kéo nhau đi nơi khác.`, 'info');
+    }
+    // Mỏ mới lộ ở tỉnh ma lực cao.
+    for (let p = 0; p < R.provinces.length && M.length < K.mineMax; p++) {
+      const mg = provMagic(R, p); if (mg < .55 || mineIn(D, p)) continue;
+      if (!X.chance(K.mineP * (mg - .5) * 2)) continue;
+      const m = { id: (D.nmine = (D.nmine || 0) + 1), p, since: year, until: year + X.int(K.mineYrs[0], K.mineYrs[1]) };
+      M.push(m); n.mines = (n.mines || 0) + 1;
+      const k = D.prov[p], owner = k >= 0 ? R.nations[k].name : null;
+      hist(D, year, 'mine', `Mỏ ma tinh lộ ra ở tỉnh ${pname(R, p)}${owner ? ` (${owner})` : ', đất vô chủ'}.`);
+      if (S && (G.provOfS(S) === p || neighbors(R, p).includes(G.provOfS(S)))) X.log(`Người ta đào được ma tinh ở ${pname(R, p)}. Cả vùng xôn xao.`, 'big');
+    }
+  }
+  // Mỏ ở tỉnh nhà hoặc tỉnh kề (js/inst.js cv_mine, js/econ.js cầu "ore").
+  G.minesNear = S => { const D = S.world && S.world.dyn, p = G.provOfS(S); if (!D || !D.mines || p < 0) return []; return D.mines.filter(m => m.p === p || neighbors(G.realm, m.p).includes(p)); };
+  G.mineHere = S => { const D = S.world && S.world.dyn, p = G.provOfS(S); return !!(D && p >= 0 && mineIn(D, p)); };
+
   function lairYear(R, D, W, X, S, year) {
     const K = G.DYN, zp = W.zonePop, M = G.map, lp = S ? G.provOfS(S) : NONE;
     if (!D.lairs) { D.lairs = []; D.nlair = 0; }
@@ -670,7 +701,7 @@ window.LifeSim = window.LifeSim || {};
       for (const p of [...front(w.a, w.b), ...front(w.b, w.a)]) D.war[p] = 1;
     }
     // Sức mạnh: Σ tỉnh dân × (.5 + giàu) × quân × (.5 + ổn định).
-    const wealth = p => { const s = R.byId[P[p].seat]; return (G.REGION[s.region].wealth + (s.ship >= 1 && s.tier !== 'ruin' ? .1 : 0)) * (1 - .5 * D.war[p]); };
+    const wealth = p => { const s = R.byId[P[p].seat]; return (G.REGION[s.region].wealth + (s.ship >= 1 && s.tier !== 'ruin' ? .1 : 0) + (mineIn(D, p) ? G.DYN.mineWealth : 0)) * (1 - .5 * D.war[p]); };
     const power = k => { let t = 0; for (const p of provsOf(D, k)) t += P[p].pop * (.5 + wealth(p)); return Math.max(1, t) * NN[k].army * (.5 + D.nat[k].stab) * (tpl(NN[k], 'O3') ? 1 + Math.min(.3, .01 * D.nat[k].peace) : 1) * (qk(NN[k], 'court_mage') || tpl(NN[k], 'E2') ? 1.05 : 1); };
     const wars = k => D.wars.filter(w => w.a === k || w.b === k).length;
     const plagued = k => provsOf(D, k).some(p => (W.regions[R.byId[P[p].seat].region] || {}).plague > 0);
@@ -760,7 +791,8 @@ window.LifeSim = window.LifeSim || {};
         const p = G.DYN.warP * na.ambition * G.clamp(power(a) / power(b), .5, 2) * (na.faith !== nb.faith ? 1.5 : 1) * (1 - .15 * rel) * vas * claim
           * (tpl(na, 'H1') && D.nat[a].stab > .6 && (nb.faith === 'dark' || nb.race === 'skeleton') ? 3 : 1) * (tpl(na, 'D2') && nb.from !== a ? 0 : 1)
           * (qkOn(na, 'old_feud', b) || qkOn(nb, 'old_feud', a) ? 3 : 1) * (qkOn(na, 'royal_match', b) || qkOn(nb, 'royal_match', a) ? 0 : 1)
-          * (tpl(nb, 'S2') && na.faith === 'light' ? 0 : 1) * (na.laws.includes('liberation') && !nb.laws.includes('construct_citizen') ? 2 : 1);
+          * (tpl(nb, 'S2') && na.faith === 'light' ? 0 : 1) * (na.laws.includes('liberation') && !nb.laws.includes('construct_citizen') ? 2 : 1)
+          * (nAlive >= 5 && mineNear(R, D, a, b) ? G.DYN.mineWar : 1);   // bên kia giữ mỏ ma tinh sát biên (còn dưới 5 nước thì thôi, để thế giới không dồn về 2 nước)
         if (!X.chance(p)) continue;
         D.wars.push({ a, b, score: 0, years: 0, start: year, occ: [] }); D.n.wars++;
         hist(D, year, 'war', `${na.name} tuyên chiến với ${nb.name}.`);
@@ -820,6 +852,7 @@ window.LifeSim = window.LifeSim || {};
     roadDecay(R, D, year);
     if (R._dirty.length) G.wildCommit(R);
     lairYear(R, D, W, X, S, year);
+    mineYear(R, D, X, S, year);
     // Nước đổi tên nhãn: tâm lãnh thổ mới.
     for (const n of NN) n.stability = +D.nat[n.idx].stab.toFixed(3);
   };

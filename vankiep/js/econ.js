@@ -51,7 +51,7 @@ window.LifeSim = window.LifeSim || {};
       const s = here(S); if (!live(s)) return .1;
       return ({ capital: 1.2, city: 1, town: .75, village: .3, hamlet: .15 }[s.tier] || .1) + ((s.bld || []).includes('market') ? .15 : 0) + ((s.roles || []).includes('port') ? .1 : 0);
     },
-    ore: S => .7 + .8 * magicOf(S)
+    ore: S => .7 + .8 * magicOf(S) + (G.mineHere && G.mineHere(S) ? .6 : 0)   // mỏ ma tinh trong tỉnh (js/dynamic.js, bước D)
   };
   G.DEMAND_VI = { cult: 'người có cấp quanh đó', noble: 'nhà quý tộc', wild: 'sơn mạch ma thú', trade: 'chợ, cảng, thương đoàn', ore: 'ma lực của mỏ' };
   G.demandOf = (S, k) => (G.DEMAND[k] ? G.DEMAND[k](S) : 1);
