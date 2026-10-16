@@ -87,6 +87,7 @@
 <script src="js/econ.js"></script>
 <script src="js/inst.js"></script>
 <script src="js/fate.js"></script>
+<script src="js/race.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -159,7 +160,7 @@ $('run').onclick = () => {
         b[0]++; b[1] += S.level; b[2] += sim.years(S); if (sim.ctier(S) >= 3) b[3]++; T.end[r1] = (T.end[r1] || 0) + 1;
         const ak = S.aim || 'free', a = T.aim[ak] || (T.aim[ak] = [0, 0, 0]); a[0]++; if (S.work === 'adventurer') a[1]++; a[2] += S.level;
         T.nTal += S.tal ? S.tal.list.length : 0; for (const k of TALK) if (F[k]) { T.k[k] = (T.k[k] || 0) + 1; T.n[k] = (T.n[k] || 0) + (typeof F[k] === 'number' ? F[k] : 1); } }
-      const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
+      const rec = { lax: S.flags.custom === 'lax', outcast: !!S.flags.outcast, race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
         adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver, teachAt: S.flags.teachAt, job: S.job, race: S.race,   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
         st: { pct: S.pct, q: S.q, office: !!S.flags.office, office2: !!S.flags.office2, head: !!S.flags.headElect, officer: !!S.flags.orgOfficer, lead: !!(S.flags.orgLead || S.flags.advBranch || S.flags.orgFound), noble: S.flags.nobleMax || 0, ret: !!S.flags.retainer, elix: S.flags.elixirY || 0, promo: S.flags.promoMax || 0, gold: S.gold, med: G.median(G.REGION[S.loc]) } };   // địa vị (js/status.js)
       { const F = S.flags; for (const k of [...STK, ...ECK, ...DK, ...EK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
@@ -198,8 +199,9 @@ $('run').onclick = () => {
     out.push(table('Trỗi dậy thành Bộ Xương', [['Đời đầu đã chết', N], ['Trỗi dậy', A.rose], ['Tỉ lệ', pct(A.rose, N)], ['Mục tiêu', '20%']], ['', '']));
     const cn = c => { const sk = c.startsWith('(xương) '), id = sk ? c.slice(8) : c; return (sk ? '(Bộ Xương) ' : '') + (id === 'monster' ? 'tử trận trước quái' : (G.CAUSES[id] || { nameVi: id }).nameVi); };
     out.push(table('Nguyên nhân chết', Object.entries(A.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => [cn(c), n, pct(n, N + A.chain)]), ['Nguyên nhân', 'Số', '%'], { bar: true }));
-    out.push(table('Theo chủng tộc', Object.entries(A.byRace).sort((a, b) => b[1].length - a[1].length).map(([r, l]) => [J.races[r].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.turns).toFixed(1), avg(l, x => x.level).toFixed(1)]),
-      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Level TB'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy.' }));
+    out.push(table('Theo chủng tộc', Object.entries(A.byRace).sort((a, b) => b[1].length - a[1].length).map(([r, l]) => { const ad = l.filter(x => x.adult), C = (G.CUSTOMS || {})[r];
+        return [J.races[r].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.turns).toFixed(1), avg(l, x => x.level).toFixed(1), ad.length ? avg(ad, x => x.tier).toFixed(2) : '—', ad.length ? pct(ad.filter(x => x.tier >= 2).length, ad.length) : '—', C ? `${C.nameVi}: bỏ ${pct(l.filter(x => x.lax).length, l.length)}, bị ruồng bỏ ${pct(l.filter(x => x.outcast).length, l.length)}` : '']; }),
+      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Level TB', 'Tier TB (trưởng thành)', 'Tier ≥ 2', 'Tập tục'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy. Tập tục, rèn theo năm, nhận thức: js/race.js, docs/11.' }));
     out.push(table('Theo sinh kế', Object.entries(A.byWork).sort((a, b) => ((G.WORKS[a[0]] || {}).ring || 9) - ((G.WORKS[b[0]] || {}).ring || 9) || b[1].length - a[1].length).map(([w, l]) => [w === '—' ? '— (chết trước khi đi làm)' : G.WORKS[w].nameVi, w === '—' ? '' : G.WORKS[w].ring, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.level).toFixed(1), avg(l, x => x.tier).toFixed(2), avg(l, x => x.st.pct * 100).toFixed(0), pct(l.filter(x => x.cause === 'monster').length, l.length)]),
       ['Sinh kế', 'Vòng', 'Đời', 'Tuổi TB', 'Level TB', 'Tier TB', 'Phân vị lúc chết', 'Chết vì quái'], { note: 'Vòng (docs/07 mục 4.6): 1 người có cấp sống bằng sức, 2 phục vụ tu luyện, 3 sinh kế cơ bản, 4 phục vụ quý tộc xa hoa.' }));
     // Kinh tế bốn vòng (bước C, docs/07 mục 4.11): sinh kế lúc chết của đời trưởng thành theo vòng, sự kiện của js/econ.js.

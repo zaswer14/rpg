@@ -124,7 +124,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái']
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -147,6 +147,7 @@ code{font-family:var(--font-mono);font-size:12px}
     noble: [...D.nobleVi.slice(1).map((n, i) => ({ kind: 'noble', id: String(i + 1), name: n })), ...Object.entries(D.originVi).map(([id, n]) => ({ kind: 'origin', id, name: n }))],
     promo: Object.keys(D.promo).map(id => ({ kind: 'promo', id, name: (D.govs[id] || {}).vi || id })),
     work: Object.entries(D.works).sort((a, b) => a[1].ring - b[1].ring).map(([id, w]) => ({ kind: 'work', id, name: w.nameVi })),
+    race: [{ kind: 'rrule', id: 'year', name: 'Rèn theo năm' }, { kind: 'rrule', id: 'mind', name: 'Nhận thức: trẻ con rèn chậm' }, ...D.race.races.map(r => ({ kind: 'race', id: r.id, name: r.nameVi })), { kind: 'dec', id: 'cv_custom', name: 'Giữ hay bỏ tập tục' }],
     fate: [...FRULES.map(([id, name]) => ({ kind: 'frule', id, name })), ...D.fate.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     inst: [...IRULES.map(([id, name]) => ({ kind: 'irule', id, name })), ...D.inst.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
     econ: [...[1, 2, 3, 4].map(r => ({ kind: 'ring', id: String(r), name: D.econ.ringVi[r] })), ...Object.entries(D.econ.demandVi).map(([id, n]) => ({ kind: 'demand', id, name: n })), ...D.econ.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
@@ -167,7 +168,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race);
   }
 
   // ---- Tab ----
@@ -351,6 +352,23 @@ code{font-family:var(--font-mono);font-size:12px}
       + grid(part('Luật', rules) + part('Quyết định', decs));
   }
 
+  // ---- Giống loài: tuổi thọ, tập tục, nhận thức (vankiep/js/race.js, docs/11) ----
+  function raceView() {
+    const R = D.race, M = R.mind, n2 = v => String(+(+v).toFixed(2)).replace('.', ',');
+    const RULE = {
+      year: `<p style="margin:0">Mỗi lượt của một giống loài là ypt năm (người 1, Tiên Tộc 8). Điểm rèn tính theo năm: một lượt rèn bằng ypt năm, nhân nhịp sống và phần thời gian không dành cho tập tục. Trước đây tính theo lượt, nên Tiên Tộc mỗi năm rèn bằng 1/5 người và cả đời ngang người. Tuổi thọ theo Tier vẫn nhân như cũ (× ${R.lifeF.map(n2).join(' / ')} cho Tier 0–5).</p>`,
+      mind: `<p style="margin:0">Hiệu suất rèn theo nhận thức: độ chín = (tuổi / tuổi trưởng thành − ${n2(M.from)}) / ${n2(1 - M.from)}, thấp nhất ${n2(M.floor)}, cao nhất 1; nhân thêm ${n2(1 - M.sm / 2)} + ${n2(M.sm)} × Hiểu biết / 100. Tuổi trưởng thành theo giống loài nên ấu niên của loài trường thọ dài hơn (Tiên Tộc 100 năm mới đủ độ chín). Bộ Xương mang trí nhớ kiếp trước: chỉ xét Hiểu biết.</p>`
+    };
+    const rules = ['year', 'mind'].filter(id => passes('rrule', id)).map(id => card('rrule', id, id === 'year' ? 'Rèn theo năm' : 'Nhận thức: trẻ con rèn chậm', RULE[id]));
+    const races = R.races.filter(r => passes('race', r.id)).map(r => card('race', r.id, r.nameVi, `<dl class="kv"><dt>Trưởng thành</dt><dd>${r.adult} tuổi</dd><dt>Tuổi thọ kỳ vọng</dt><dd>${r.le} năm (lúc sinh, đã tính chết yểu)</dd><dt>Năm mỗi lượt</dt><dd>${r.ypt}</dd>
+      ${r.custom ? `<dt>Tập tục</dt><dd><b>${esc(r.custom.nameVi)}</b>: ${esc(r.custom.d)}</dd><dt>Giữ</dt><dd>dành ${fp(r.custom.share)} thời gian; nhịp sống ${n2(r.custom.pace)}; rèn × ${n2(r.custom.keep)} mỗi lượt so với người</dd><dt>Bỏ</dt><dd>còn ${fp(r.custom.laxShare)}; rèn × ${n2(r.custom.lax)}; tuổi thọ × ${n2(r.custom.laxLife)}; mỗi lượt Tâm trạng ${R.lax.h}, Quan hệ ${R.lax.so}, ${fp(R.lax.outcast)} bị tộc ruồng bỏ</dd>` : `<dt>Tập tục</dt><dd>${r.undead ? 'Bộ Xương: không' : 'không (sống ngắn, rèn như người)'}</dd>`}</dl>`));
+    const d = R.dec, decs = passes('dec', d.id) ? [card('dec', d.id, d.title, `<div class="meta">quyết định · ưu tiên ${d.prio}</div><dl class="kv"><dt>Khi nào</dt><dd>Giống loài có tập tục, vừa trưởng thành; sau đó cách ${d.gap} lượt nếu đã bỏ tập tục, theo chí hướng Sức mạnh, hoặc đứng ở max level lâu.</dd></dl>${d.texts.length ? `<ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`)] : [];
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Giống loài: tuổi thọ, tập tục', 'Tuổi thọ, tuổi trưởng thành chuẩn theo các dòng RPG, truyện (D&D, Pathfinder, Frieren, Andersen; docs/11). Giống loài trường thọ phải giữ tập tục chiếm phần lớn thời gian nên mỗi năm rèn ít hơn người; bỏ tập tục thì rèn nhanh hơn nhưng tuổi thọ tụt. Trẻ con rèn chậm theo nhận thức.')
+      + grid(part('Luật', rules) + part('Giống loài', races) + part('Quyết định', decs));
+  }
+  const fp = v => String(+(v * 100).toFixed(v < .01 ? 2 : 1)).replace('.', ',') + '%';
+
   // ---- Kỳ ngộ, mặt trái (vankiep/js/fate.js, bước E; docs/07 mục 4.8, 4.13) ----
   function fateView() {
     const F = D.fate, C = F.cfg, fp = v => String(+(v * 100).toFixed(v < .01 ? 2 : 1)).replace('.', ',') + '%';
@@ -529,7 +547,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

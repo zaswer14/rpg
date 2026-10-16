@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -171,6 +171,12 @@ const data = {
   // Địa vị theo Tier (vankiep/js/status.js, docs/09 mục 6.4, docs/07 mục 4.3 và 4.10).
   inst: { cfg: G.INST, bloodSchools: G.BLOOD_SCHOOLS.map(s => L.schools[s].nameVi), mine: { p: G.DYN.mineP, max: G.DYN.mineMax, yrs: G.DYN.mineYrs, wealth: G.DYN.mineWealth, war: G.DYN.mineWar },
     decs: Object.entries(DDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }) },
+  // Tuổi thọ, tập tục giống loài, nhận thức (vankiep/js/race.js, docs/11).
+  race: { mind: G.MIND, lax: G.CUSTOM_LAX, lifeF: G.LIFE_F,
+    races: Object.entries(G.RACES).map(([id, R]) => { const C = G.CUSTOMS[id]; return { id, nameVi: L.races[id].nameVi, adult: R.adult, le: R.le, ypt: R.ypt, undead: !!R.undead, construct: !!R.construct,
+      custom: C ? { nameVi: C.nameVi, d: C.d, share: C.share, pace: C.pace, laxShare: C.laxShare, laxLife: C.laxLife, keep: R.ypt * C.pace * (1 - C.share), lax: R.ypt * C.pace * (1 - C.laxShare) } : null }; }),
+    dec: (() => { const D = G.DECISIONS.cv_custom; return { id: 'cv_custom', title: 'Giữ hay bỏ tập tục', prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; })(),
+    sys: parseRun(G.customYear) },
   fate: { cfg: G.FATE, forbSchools: G.FATE.forbSchools.map(s => L.schools[s].nameVi),
     decs: Object.entries(FDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }) },
   econ: { ringVi: G.RING_VI, demandVi: G.DEMAND_VI, cfg: G.ECON,
