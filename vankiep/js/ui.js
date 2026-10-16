@@ -139,7 +139,7 @@
     const kills = Object.values(S.kills).reduce((a, b) => a + b, 0);
     const topKill = Object.entries(S.kills).sort((a, b) => b[1] - a[1])[0];
     const items = [
-      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Level', `${S.level} / ${G.maxLvOf(S)} · Tier ${sim.ctier(S)}`],
+      ['Nghề', G.jobLine(sim, S)], ['Level', `${S.level} / ${G.maxLvOf(S)} · ${G.tierName(sim.ctier(S))}`],
       ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
       ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
       ['Tiền để lại', G.coin(S.gold)], ['Con cháu', S.family.kids.length || '—'],
@@ -203,8 +203,8 @@
       ? `${S.urban ? `${homeS.name} (${G.TIER_VI[homeS.tier].toLowerCase()}, ${homeS.urban.toLocaleString('vi')} người)` : `vùng quê quanh ${homeS.name} (${G.TIER_VI[homeS.tier].toLowerCase()})`} · ${reg.nameVi} · ${nat ? nat.name : 'đất vô chủ'}`
       : `lang thang ở ${reg.nameVi}${nat ? ' · ' + nat.name : ''}`;
     const kv = [
-      ['Nghề', `${X.jobName(S)} · T${j ? j.tier : 0}`],
-      ['Level', `${S.level} / ${G.maxLvOf(S)} · Tier ${X.ctier(S)}` + (G.stuck(S) ? ' · kẹt' : '')],
+      ['Nghề', G.jobLine(X, S)],
+      ['Level', `${S.level} / ${G.maxLvOf(S)} · ${G.tierName(X.ctier(S))} (Tier ${X.ctier(S)})` + (G.stuck(S) ? ' · kẹt' : '')],
       ['Sức mạnh', `${X.power(S).toFixed(2)} Tier`],
       ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
@@ -220,9 +220,10 @@
     const sp = G.skProgress(S), t = sp.t;
     $('xpBar').style.width = (!t ? 100 : t.pick ? 0 : sp.r / t.cap * 100) + '%'; $('xpBar').parentElement.title = G.skText(S);
     $('xpTxt').textContent = `Level ${S.level}/${G.maxLvOf(S)}` + (!t ? ' · hết kỹ năng học được' : t.pick ? ' · chờ chọn kỹ năng để nâng' : ` · ${G.skName(t.key)} bậc ${Math.floor(sp.r)}/${t.cap}`);
-    const stv = G.statsOf(S), [sa, sb] = G.SCHOOL_STAT[G.schoolOf(S)] || [];
-    $('cCombat').innerHTML = G.STATS.map(k => `<span class="${k === sa || k === sb ? 'main' : ''}">${G.STAT_VI[k]} <b>${stv[k]}</b></span>`).join('');
-    $('cCombat').title = `Chỉ số chính của trường phái đang theo: ${G.STAT_VI[sa]}, ${G.STAT_VI[sb]}. Sức từ chỉ số ${G.statPow(S).toFixed(2)}, từ kỹ năng đang lắp ${G.skillPow(S).toFixed(2)}.`;
+    // Chỉ số chạm trần của Tier thì hiện phần dư chờ lên Tier (docs/09 mục 5).
+    const stv = G.statsOf(S), ov = G.statOver(S), cap = G.statCap(S), [sa, sb] = G.SCHOOL_STAT[G.schoolOf(S)] || [];
+    $('cCombat').innerHTML = G.STATS.map(k => `<span class="${k === sa || k === sb ? 'main' : ''}${stv[k] >= cap ? ' capped' : ''}">${G.STAT_VI[k]} <b>${stv[k]}</b>${ov[k] ? `<i>+${ov[k]}</i>` : ''}</span>`).join('');
+    $('cCombat').title = `Chỉ số chính của trường phái đang theo: ${G.STAT_VI[sa]}, ${G.STAT_VI[sb]}. Trần chỉ số của ${G.tierName(X.ctier(S))}: ${cap}; phần vượt (số nhỏ) được cộng khi lên Tier. Sức từ chỉ số ${G.statPow(S).toFixed(2)}, từ kỹ năng đang lắp và cộng hưởng ${G.skillPow(S).toFixed(2)}.`;
     renderSkills(S, X);
     // Căn cốt, thiên phú (js/talent.js): viền theo bậc màu; di chuột xem hiệu ứng.
     $('cTal').innerHTML = G.talChips(S).map((c, i) => `<span class="tchip${i ? '' : ' root'}" style="border-color:${c.col};color:${c.col}" title="${esc(c.title)}">${esc(c.text)}</span>`).join('') || '<span class="fam">Bản lưu cũ: chưa có thiên phú.</span>';
@@ -274,7 +275,9 @@
     });
     const mine = new Set(list.map(s => s.key));
     const old = Object.keys(S.sk || {}).filter(k => !mine.has(k) && S.sk[k].r >= 1 - 1e-9).sort((a, b) => G.skEff(b, S.sk[b].r) - G.skEff(a, S.sk[a].r)).slice(0, 8);
-    $('cSk').innerHTML = `<div class="sksub">Nâng ${up.length}/${G.SK_UP} · lắp ${eq.length}/${n} · ◆ kỹ năng gate</div>` + rows.join('')
+    // Cộng hưởng chiêu thức của các kỹ năng đang lắp (js/cult.js G.resonance).
+    const rs = G.resOf(S).pairs, resTxt = rs.length ? `<div class="sksub res" title="${esc(rs.map(p => `${p.r.nameVi}: ${p.r.txt}`).join('\n'))}">Cộng hưởng: ${rs.map(p => `${esc(p.r.nameVi)} (${esc(G.skName(p.a))} + ${esc(G.skName(p.b))}) +${p.v.toFixed(2).replace(".", ",")}`).join(' · ')}</div>` : '';
+    $('cSk').innerHTML = `<div class="sksub">Nâng ${up.length}/${G.SK_UP} · lắp ${eq.length}/${n} · ◆ kỹ năng gate</div>` + resTxt + rows.join('')
       + (old.length ? `<div class="sksub">Kỹ năng nghề cũ</div>` + old.map(k => row(k, G.skName(k), `Tier ${k.split(':')[0]}`, '')).join('') : '');
     $('cEqMode').textContent = S.equip ? '· tự chọn' : '· tự lắp';
     $('btnAutoEq').hidden = !S.equip;

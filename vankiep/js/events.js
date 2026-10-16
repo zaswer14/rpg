@@ -74,17 +74,22 @@ window.LifeSim = window.LifeSim || {};
       when: (S, X) => ['teen', 'adult', 'elder'].includes(X.stage(S)) && G.nextJobs(X).length > 0,
       build(S, X) {
         const list = G.nextJobs(X).slice(0, 3);
-        return { title: 'Thử thách chuyển nghề', body: `Nghề hiện tại: ${X.jobName(S)} (Tier ${X.job(S).tier}), level ${S.level}. Bạn đủ điều kiện dự thử thách.`,
+        return { title: 'Thử thách chuyển nghề', body: `Nghề hiện tại: ${X.jobName(S)} (${G.tierName(X.job(S).tier)}), level ${S.level}. Bạn đủ điều kiện dự thử thách.`,
           fact: list[0].job.summary || null,
-          choices: [...list.map(e => ({ k: e.job.id, label: `${X.jobName(S, e.job.id)} · T${e.job.tier}`, sub: `${e.job.trial || 'Thử thách'} · ${Math.round(G.promoteP(S, X, e.job) * 100)}%${e.access === 'foreign' ? ' · ngoại lai' : ''}${e.job.faith ? ' · ' + J.faiths[e.job.faith].nameVi : ''}${e.job.summary ? ' — ' + e.job.summary : ''}` })),
+          choices: [...list.map(e => ({ k: e.job.id, label: `${X.jobName(S, e.job.id)} · ${G.tierName(e.job.tier)}`, sub: `${e.job.trial || 'Thử thách'} · ${Math.round(G.promoteP(S, X, e.job) * 100)}%${e.access === 'foreign' ? ' · ngoại lai' : ''}${e.job.faith ? ' · ' + J.faiths[e.job.faith].nameVi : ''}${e.job.summary ? ' — ' + e.job.summary : ''}` })),
             { k: 'wait', label: 'Chưa phải lúc', sub: 'Luyện thêm một năm.' }] };
       },
       apply(S, X, k) {
         if (k === 'wait') return 'Bạn chờ thêm.';
         const j = G.jobs.byId[k], p = G.promoteP(S, X, j);
         if (X.rnd() < p) {
-          S.jobHist.push(S.job); S.job = k; G.skSync(X); G.equipFill(S); S.fame = Math.min(100, S.fame + j.tier * 2); X.add('h', 6);
-          return `Vượt qua. Bạn trở thành ${X.jobName(S)}.` + (j.marker ? ` Dấu hiệu nghề: ${j.marker}.` : '');
+          const over = G.statOver(S);
+          (S.flags.teachAt = S.flags.teachAt || {})[j.tier] = (G.teachBest(S, j.school, j) || {}).id;   // nguồn dạy lúc lên Tier (sim.html)
+          S.jobHist.push(S.job); S.job = k; G.skSync(X); G.equipFill(S); S.fame = Math.min(100, S.fame + j.tier * (j.tier >= 4 ? 8 : 2)); X.add('h', 6);
+          // Thăng hoa (docs/09 mục 5): cả sáu chỉ số cộng thêm, trần chỉ số nâng nên phần dư của Tier trước được cộng vào.
+          const after = G.statOver(S), freed = Object.entries(over).map(([s, n]) => [s, n - (after[s] || 0)]).filter(x => x[1] > 0);
+          const rel = freed.length ? ` Phần chỉ số dồn nén ở Tier trước được cộng: ${freed.map(([s, n]) => G.STAT_VI[s] + ' +' + n).join(', ')}.` : '';
+          return `Vượt qua. Bạn trở thành ${X.jobName(S)}, một ${G.tierName(j.tier)}. Thăng hoa: cả sáu chỉ số +${G.ASCEND[j.tier]}.${rel}` + (j.marker ? ` Dấu hiệu nghề: ${j.marker}.` : '');
         }
         X.add('hl', -6); X.add('h', -4);
         return 'Thất bại. Vết bầm sẽ lành; năm sau thử lại.';
@@ -307,10 +312,11 @@ window.LifeSim = window.LifeSim || {};
 
   G.gearCost = n => Math.round(40 * Math.pow(n, 1.7));
   // Tỉ lệ qua thử thách chuyển nghề (docs/08 mục 7.2): sức so với Tier đích, mastery chính vượt req bao nhiêu, Sinh lực.
+  G.PROMOTE_CAP = [.95, .95, .9, .8, .6, .4];   // trần tỉ lệ qua theo Tier đích (docs/09 mục 4)
   G.promoteP = (S, X, j) => {
     const [m, v] = Object.entries(j.req || {})[0] || [null, 0], bonus = X.access(S, j.school) === 'foreign' ? 15 : 0;
     const over = m ? (S.mastery[m] || 0) - v - bonus : 0;
-    return G.clamp(.45 + .25 * (X.power(S) - j.tier + 1) + over / 100 + S.hl / 400, .15, .95);
+    return G.clamp(.45 + .25 * (X.power(S) - j.tier + 1) + over / 100 + S.hl / 400, .15, G.PROMOTE_CAP[j.tier]);
   };
 
   // Di chuyển sang vùng khác: G.moveTo ở js/travel.js (hành trình có đường đi, gặp quái dọc đường, trạm biên giới).

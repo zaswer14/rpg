@@ -23,16 +23,33 @@ window.LifeSim = window.LifeSim || {};
   G.MAX_LV = 60;
   G.LOADOUT = [2, 3, 5, 6, 6, 6];   // chỗ lắp theo Tier nghề, như Skeleton Codex (platform/docs/06 luật 9)
   // Điểm rèn để max một kỹ năng (5 bậc) theo Tier; mỗi bậc 1/5 (docs/08 mục 4.3, chốt bằng sim).
-  G.SK_COST = [260, 450, 900, 1500, 2200, 3000];
+  G.SK_COST = [480, 2000, 3200, 4000, 5000, 6000];
+  // Mastery theo điểm rèn tính trên giá cũ của docs/08 (trước khi giá tăng để tháp hẹp lại, docs/09 mục 9): tay nghề lúc max level vẫn như cũ.
+  G.SK_MCOST = [260, 450, 900, 1500, 2200, 3000];
   G.CULT = {
     rate: 1,           // nhân chung điểm rèn (núm cân tháp Tier)
     base: 35,          // điểm rèn mỗi năm ai cũng có (luyện ngoài giờ)
     selfTaught: .4,    // rèn kỹ năng Tier cao hơn người dạy đang có: tự mò
     mPt: .004,         // mastery mỗi điểm rèn dồn vào kỹ năng (theo giá gốc, chưa tính tự mò)
-    statPow: .12,      // sức mỗi điểm chỉ số trên nền
-    skillPow: .1,      // sức mỗi kỹ năng lắp: × (Tier + 1) × bậc / 5
-    life: .12          // thọ nguyên × (1 + life × Tier)
+    statPow: .05,      // sức mỗi điểm chỉ số trên nền
+    skillPow: .05,     // sức mỗi kỹ năng lắp: × (1 + skTier × Tier) × bậc / 5
+    skTier: .5,
+    powBase: 1.25,     // sức nền (life.js power)
+    resPow: .01,       // cộng hưởng: sức mỗi cặp × (Tier thấp hơn của cặp + 1) × độ hợp
+    overW: .3,         // trọng số quái Tier + 1 trong bảng gặp quái (Tier sau áp đảo nên hiếm gặp hơn, docs/09 mục 9)
+    enlight: .0015     // Thủ Hộ Giả max level: tỉ lệ ngộ đạo mỗi năm (mở đường vào Tier 5, docs/09 mục 6.1)
   };
+
+  // ── Bậc Tier, danh xưng (docs/09, người dùng chốt 16/10/2026) ──
+  G.TIER_NAME = ['Phàm Nhân', 'Chức Nghiệp Giả', 'Siêu Phàm Giả', 'Siêu Việt Giả', 'Thủ Hộ Giả', 'Huyền Thoại Giả'];
+  G.tierName = t => G.TIER_NAME[G.clamp(t, 0, 5)];
+  // Dòng nghề trên thẻ nhân vật: Tier 0 là chưa vào nghề, nghề gốc chỉ là xuất thân.
+  G.jobLine = (X, S) => jobTier(S) ? `${X.jobName(S)} · ${G.tierName(jobTier(S))}` : `Chưa vào nghề · xuất thân ${X.jobName(S)}`;
+  G.LIFE_F = [1, 1.12, 1.24, 1.36, 2, 3];   // thọ nguyên theo Tier (docs/09 mục 6.3)
+  // Thăng hoa: vào Tier t thì cả sáu chỉ số + ASCEND[t]. Trần chỉ số của Tier t: STAT_CAP[t]; phần thưởng vượt trần được giữ,
+  // lên Tier mới (trần nâng) thì tự cộng vào (docs/09 mục 5).
+  G.ASCEND = [0, 13, 14, 15, 16, 17];
+  G.STAT_CAP = [10, 28, 47, 67, 88, 110];
 
   // ── Chỉ số nhân vật (docs/08 mục 6.1) ──
   G.STATS = ['STR', 'DEX', 'AGI', 'VIT', 'INT', 'WIL'];
@@ -55,7 +72,7 @@ window.LifeSim = window.LifeSim || {};
   // Trường phái đang theo: của nghề (Tier ≥ 1), không thì hướng đi, không thì trường phái bản địa đầu tiên.
   G.schoolOf = S => { const j = jobOf(S.job); return j && j.tier > 0 ? j.school : (S.path || J.races[S.race].schools.native[0]); };
   G.tierOf = S => jobTier(S);
-  G.lifeF = S => 1 + G.CULT.life * jobTier(S);
+  G.lifeF = S => G.LIFE_F[jobTier(S)];
   G.manaMult = S => { const R = G.REGION && G.REGION[S.loc]; return R ? .7 + .6 * R.magic : 1; };
 
   // ── Danh sách kỹ năng của nghề (docs/08 mục 3.1) ──
@@ -133,28 +150,29 @@ window.LifeSim = window.LifeSim || {};
   const OFFICER = { merc: ['combat', 'ranged', 'martial', 'beast'], craft: ['craft'], lore: ['arcane', 'death'], shadow: ['shadow'] };
   G.TEACHERS = [
     { id: 'self', nameVi: 'Tự học', tier: 1, schools: null, cond: 'ai cũng có' },
-    { id: 'guild', nameVi: 'Phường hội, đoàn lính đánh thuê, quân ngũ, Hiệp Hội từ hạng Bạc', tier: 2, schools: null, cond: 'là thành viên một hội, từng đi lính' },
+    { id: 'guild', nameVi: 'Quân ngũ, người có chức trong hội', tier: 2, schools: null, cond: 'đang tại ngũ, hoặc giữ chức từ quản sự trong một hội (chỉ là thành viên, đã xuất ngũ, hạng Hiệp Hội thì không: Siêu Phàm Giả là tinh anh, docs/09 mục 9)' },
     { id: 'edu2', nameVi: 'Học viện trung cấp', tier: 2, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
     { id: 'edu3', nameVi: 'Học viện cao cấp', tier: 3, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
-    { id: 'vo', nameVi: 'Học viện cao cấp ngành Võ bị', tier: 4, schools: WAR, cond: 'ngành Võ bị' },
-    { id: 'phap', nameVi: 'Học viện cao cấp ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'ngành Pháp thuật' },
+    { id: 'vo', nameVi: 'Học viện cao cấp ở kinh đô, ngành Võ bị', tier: 4, schools: WAR, cond: 'ngành Võ bị, học ở kinh đô (docs/09 mục 6.1)' },
+    { id: 'phap', nameVi: 'Học viện cao cấp ở kinh đô, ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'ngành Pháp thuật, học ở kinh đô' },
     { id: 'officer', nameVi: 'Chức trong hội (quản sự, phó đoàn, hội trưởng)', tier: 3, schools: 'theo loại hội: đoàn lính đánh thuê dạy trường phái chiến sĩ; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối', cond: 'giữ chức từ quản sự trở lên' },
     { id: 'office', nameVi: 'Quan chức nhà nước', tier: 3, schools: null, cond: 'làm Quan tỉnh hoặc Đại thần (nhà nước mướn thầy cho người của mình)' },
     { id: 'master', nameVi: 'Sư phụ cao thủ Tier s', tier: 's', schools: 'của sư phụ', cond: 'là đệ tử (cả sau khi xuất sư)' },
     { id: 'noble', nameVi: 'Nhà quý tộc', tier: 3, schools: null, cond: 'sinh ra trong nhà quý tộc hoặc có tước' },
-    { id: 'noble3', nameVi: 'Nhà từ Bá tước', tier: 4, schools: null, cond: 'tước hoặc nhà từ Bá tước' },
-    { id: 'royal', nameVi: 'Hoàng tộc', tier: 5, schools: null, cond: 'hoàng tộc, dòng chính hoặc dòng phụ' },
+    { id: 'noble3', nameVi: 'Nhà từ Hầu tước', tier: 4, schools: null, cond: 'tước hoặc nhà từ Hầu tước (mướn một Thủ Hộ Giả về dạy)' },
+    { id: 'royal', nameVi: 'Hoàng tộc', tier: 4, schools: null, cond: 'hoàng tộc, dòng chính hoặc dòng phụ (Thủ Hộ Giả của triều đình)' },
+    { id: 'enlight', nameVi: 'Ngộ đạo', tier: 5, schools: null, cond: 'Thủ Hộ Giả max level, tự ngộ ra (không ai dạy được Huyền Thoại Giả)' },
     { id: 'faith', nameVi: 'Giáo hội', tier: 'Devotion 40 / 75 / 95 → 2 / 3 / 4', schools: 'nghề tín ngưỡng của giáo phái mình', cond: 'làm Tu sĩ hoặc đang ở nghề tín ngưỡng' }
   ];
   // Các nguồn dạy đang có cho một trường phái (job: nghề muốn vào / đang làm, để xét giáo hội). Trả [{ t, id, nameVi }].
   G.teachList = (S, school, job) => {
-    const F = S.flags || {}, r = S.roles || {}, adv = r.adv && G.advRank ? G.advRank(S) : -1, cur = jobOf(S.job);
+    const F = S.flags || {}, r = S.roles || {}, cur = jobOf(S.job);
     const E = S.edu, eLv = E ? Math.max(E.lv || 0, E.cur ? E.cur.lv : 0) : 0, track = E && (E.track || (E.cur && E.cur.track));
     const M = S.mentor && S.mentor.kind === 'martial' ? S.mentor : null, nb = r.noble ? r.noble.rank : 0, hs = F.house ? F.house.rank : 0;
     const T = id => G.TEACHERS.find(x => x.id === id), out = [];
     const push = (t, id, nameVi) => out.push({ t, id, nameVi: nameVi || T(id).nameVi });
     push(1, 'self');
-    if (adv >= 2 || F.soldier > 0 || F.served || (r.orgs && Object.keys(r.orgs).length)) push(2, 'guild');
+    if (F.soldier > 0 || Object.values(r.orgs || {}).some(m => m.rank >= 1)) push(2, 'guild');
     if (eLv >= 2) push(2, 'edu2');
     if (eLv >= 3) push(3, 'edu3');
     for (const [id, m] of Object.entries(r.orgs || {})) {   // chức từ quản sự trở lên: hội có người dạy giỏi cho người của mình
@@ -162,17 +180,20 @@ window.LifeSim = window.LifeSim || {};
       if (o && (OFFICER[o.kind] || []).includes(school)) { push(3, 'officer'); break; }
     }
     if (r.office) push(3, 'office');
-    if (eLv >= 3 && track === 'vo' && WAR.includes(school)) push(4, 'vo');
-    if (eLv >= 3 && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
+    const capEdu = E && (E.capital || (E.cur && E.cur.lv >= 3 && G.isCapital(E.cur.school)));
+    if (eLv >= 3 && capEdu && track === 'vo' && WAR.includes(school)) push(4, 'vo');
+    if (eLv >= 3 && capEdu && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
     if (M && (!M.school || M.school === school)) push(M.tier, 'master', `Sư phụ ${M.name || ''} (Tier ${M.tier})`.replace('  ', ' '));
-    if (nb || hs) push(nb >= 3 || hs >= 3 ? 4 : 3, nb >= 3 || hs >= 3 ? 'noble3' : 'noble');
-    if (F.legacy || F.royal) push(5, 'royal');
+    if (nb || hs) push(nb >= 4 || hs >= 4 ? 4 : 3, nb >= 4 || hs >= 4 ? 'noble3' : 'noble');
+    if (F.legacy || F.royal) push(4, 'royal');
+    if (F.enlight) push(5, 'enlight');
     const fj = job && job.faith ? job : null, priest = S.work === 'priest' || (cur && cur.faith);
     if (fj && S.faith === fj.faith && priest) { const d = S.devotion || 0; if (d >= 40) push(d >= 95 ? 4 : d >= 75 ? 3 : 2, 'faith'); }
     return out;
   };
   G.teachOf = (S, school, job) => Math.max(...G.teachList(S, school, job).map(x => x.t));
   G.teachBest = (S, school, job) => G.teachList(S, school, job).sort((a, b) => b.t - a.t)[0];
+  G.isCapital = sid => !!(G.realm && G.realm.nations.some(n => n.capital === sid));
   const teachF = (S, tier) => tier <= 1 || G.teachOf(S, G.schoolOf(S), jobOf(S.job)) >= tier ? 1 : G.CULT.selfTaught;
 
   // ── Chọn kỹ năng để nâng (docs/08 mục 3.2, 4.1) ──
@@ -197,7 +218,7 @@ window.LifeSim = window.LifeSim || {};
   };
   const pick = (S, s) => {
     upOf(S, s.tier).push(s.key);
-    if (!S.sk[s.key]) S.sk[s.key] = { r: 0, m: s.m };
+    if (!S.sk[s.key]) S.sk[s.key] = { r: 0, m: s.m, j: s.job };
     S.flags.learnPick = false;
   };
   G.skPick = (S, key) => { const s = G.skCands(S).find(x => x.key === key); if (s) pick(S, s); return !!s; };
@@ -228,11 +249,11 @@ window.LifeSim = window.LifeSim || {};
         if (m) X.gain(m, left * C.mPt * .5);
         break;
       }
-      if (!S.sk[t.key]) S.sk[t.key] = { r: 0, m: t.s.m };
+      if (!S.sk[t.key]) S.sk[t.key] = { r: 0, m: t.s.m, j: t.s.job };
       const sk = S.sk[t.key], tier = tierOfKey(t.key), per = G.SK_COST[tier] / 5 / teachF(S, tier);
       const take = Math.min(left / per, t.cap - sk.r), r0 = sk.r;
       sk.r = take >= t.cap - sk.r - 1e-9 ? t.cap : sk.r + take; left -= take * per;
-      X.gain(sk.m, take * G.SK_COST[tier] / 5 * C.mPt);
+      X.gain(sk.m, take * G.SK_MCOST[tier] / 5 * C.mPt);
       if (Math.floor(sk.r) > Math.floor(r0)) onRank(X, t.key, Math.floor(r0), Math.floor(sk.r));
     }
     G.skSync(X);
@@ -245,6 +266,8 @@ window.LifeSim = window.LifeSim || {};
     if (r1 >= 5 && up) X.log(`${G.skName(key)} đạt bậc 5.${Object.keys(got).length ? ' ' + statTxt(got) + '.' : ''} Level ${G.lvOf(S)}.`, 'good');
     else if (Object.keys(got).length) X.log(`${G.skName(key)} lên bậc ${r1}. ${statTxt(got)}.`, 'good');
   };
+  // Chỉ số đã chạm trần của Tier: phần vượt chờ lên Tier mới được cộng.
+  const over = S => { const o = G.statOver(S), ks = Object.keys(o); return ks.length ? ` Chỉ số chạm trần ${G.statCap(S)} (${ks.map(k => G.STAT_VI[k] + ' dư ' + o[k]).join(', ')}), lên Tier mới được cộng.` : ''; };
   // Đồng bộ S.level; báo một lần khi chạm max level của Tier.
   G.skSync = X => {
     const S = X.S, L = G.lvOf(S), F = S.flags; S.level = L;
@@ -254,10 +277,10 @@ window.LifeSim = window.LifeSim || {};
     if (L >= G.maxLvOf(S) && F.maxLog !== jt) {
       F.maxLog = jt; (F.powMax = F.powMax || {})[jt] = +X.power(S).toFixed(2);
       { const d = G.skDir(S), e = d && Object.entries(d.req || {})[0]; if (e) (F.mOver = F.mOver || {})[jt] = Math.round((S.mastery[e[0]] || 0) - e[1]); }
-      if (jt >= 5) { X.log(`Level ${L}: đỉnh của Tier 5, không còn gì trên nữa.`, 'big'); return; }
+      if (jt >= 5) { X.log(`Level ${L}: đỉnh của ${G.tierName(5)}, không còn gì trên nữa.`, 'big'); return; }
       const open = G.succOf(S.race, S.job, S.faith).filter(d => G.gateOk(S, d));
-      X.log(open.length ? `Level ${L}, đỉnh của Tier ${jt}. Có thể thử vào ${open.map(d => X.jobName(S, d.id)).join(', ')}.`
-        : `Level ${L}, đỉnh của Tier ${jt}. Trong mười kỹ năng đã nâng không có trọn cặp kỹ năng của nghề Tier ${jt + 1} nào: không còn đường lên.`, open.length ? 'big' : 'bad');
+      X.log(open.length ? `Level ${L}, đỉnh của ${G.tierName(jt)}.${over(S)} Có thể thử vào ${open.map(d => X.jobName(S, d.id)).join(', ')}.`
+        : `Level ${L}, đỉnh của ${G.tierName(jt)}. Trong mười kỹ năng đã nâng không có trọn cặp kỹ năng của nghề Tier ${jt + 1} nào: không còn đường lên.`, open.length ? 'big' : 'bad');
     }
   };
   // Cặp gate của nghề đích nằm trong chỗ nâng của Tier hiện tại và đã max.
@@ -265,21 +288,97 @@ window.LifeSim = window.LifeSim || {};
   // Kẹt: max level, có nghề kế tiếp nhưng không có trọn cặp gate nào trong 10 kỹ năng được nâng (nghề cuối đường không tính là kẹt).
   G.stuck = S => { const nx = jobTier(S) < 5 && G.lvFull(S) ? G.succOf(S.race, S.job, S.faith) : []; return nx.length > 0 && !nx.some(d => G.gateOk(S, d)); };
 
-  // ── Chỉ số, lắp kỹ năng, sức (docs/08 mục 6) ──
-  G.statsOf = S => {
-    init(S);
-    const st = {}, tilt = (G.RACES[S.race] || {}).stat || {};
-    for (const k of G.STATS) st[k] = 5 + (tilt[k] || 0);
+  // ── Chỉ số, lắp kỹ năng, sức (docs/08 mục 6; trần chỉ số, thăng hoa, cộng hưởng: docs/09 mục 5) ──
+  // Kết quả tính theo dấu của S (nghề + tổng bậc kỹ năng + chỗ lắp tay): bậc chỉ tăng nên tổng bậc đổi mỗi lần lên bậc.
+  const CACHE = new WeakMap();
+  const sig = S => { let n = 0; for (const k in S.sk) n += Math.floor(S.sk[k].r + 1e-9); return S.job + '|' + n + '|' + (S.equip ? S.equip.join(',') : '') + '|' + (S.equipN || 0); };
+  const memo = (S, name, f) => {
+    let c = CACHE.get(S); const s = sig(S);
+    if (!c || c.sig !== s) CACHE.set(S, c = { sig: s });
+    return name in c ? c[name] : (c[name] = f());
+  };
+  // Chỉ số thô: nền chủng tộc + thưởng kỹ năng + thăng hoa của các Tier đã vào.
+  G.statsRaw = S => memo(init(S), 'raw', () => {
+    const st = {}, tilt = (G.RACES[S.race] || {}).stat || {}, jt = jobTier(S);
+    let asc = 0; for (let t = 1; t <= jt; t++) asc += G.ASCEND[t];
+    for (const k of G.STATS) st[k] = 5 + (tilt[k] || 0) + asc;
     for (const [key, v] of Object.entries(S.sk)) for (const [r, m] of Object.entries(G.skRewards(key, v.m))) if (v.r >= +r) for (const [s, n] of Object.entries(m)) st[s] += n;
     return st;
-  };
+  });
+  // Chỉ số dùng được: không quá trần của Tier đang ở. Phần vượt (G.statOver) giữ lại, lên Tier thì tự cộng vào.
+  G.statCap = S => G.STAT_CAP[jobTier(S)];
+  G.statsOf = S => memo(init(S), 'st', () => { const raw = G.statsRaw(S), cap = G.statCap(S), st = {}; for (const k of G.STATS) st[k] = Math.min(raw[k], cap); return st; });
+  G.statOver = S => { const raw = G.statsRaw(S), cap = G.statCap(S), o = {}; for (const k of G.STATS) if (raw[k] > cap) o[k] = raw[k] - cap; return o; };
   G.statPow = S => { const st = G.statsOf(S), [a, b] = G.SCHOOL_STAT[G.schoolOf(S)] || ['STR', 'VIT']; return ((2 * st[a] + st[b] + st.VIT) / 4 - 5) * G.CULT.statPow; };
   G.slotsOf = S => G.LOADOUT[jobTier(S)];
-  G.skEff = (key, r) => G.CULT.skillPow * (tierOfKey(key) + 1) * Math.min(5, Math.floor(r + 1e-9)) / 5;
+  G.skEff = (key, r) => G.CULT.skillPow * (1 + G.CULT.skTier * tierOfKey(key)) * Math.min(5, Math.floor(r + 1e-9)) / 5;
+
+  // Cộng hưởng chiêu thức: hai kỹ năng đang lắp hợp nhau thì cộng sức, có cặp còn giúp chạy thoát hoặc ít chết khi thua.
+  // Cùng nghề dễ cộng hưởng nhất (độ hợp 1; cùng trường phái 0,6; khác 0,3), cùng nghề thì cặp nào cũng thành Đồng môn.
+  const KIND_M = { Sword: 'atk', Axe: 'atk', Unarmed: 'atk', Dagger: 'atk', Spear: 'atk', Bow: 'atk', Crossbow: 'atk', Firearm: 'atk', Throwing: 'atk',
+    Stealth: 'mov', Riding: 'mov', Shield: 'def', Body: 'def',
+    Fire: 'mag', Frost: 'mag', Lightning: 'mag', Arcane: 'mag', Necromancy: 'mag', Soul: 'mag', Curse: 'mag',
+    Alchemy: 'sup', Construct: 'sup', Engineering: 'sup', Trap: 'sup', Taming: 'sup', Spirit: 'sup' };
+  G.SK_KIND_VI = { atk: 'công', mov: 'thân pháp', def: 'thủ', mag: 'phép', sup: 'trợ' };
+  G.skKind = (key, m) => {
+    const id = idOfKey(key);
+    if (/dash|step|roll|leap|evade|dodge|sprint|blink|stride|vault|slide|feint/.test(id)) return 'mov';
+    if (/guard|block|brace|parry|shield|ward|bulwark|stance/.test(id)) return 'def';
+    return KIND_M[m] || 'atk';
+  };
+  G.RESONANCE = [
+    { id: 'dodge', nameVi: 'Công né', kinds: ['atk', 'mov'], k: 1, flee: .06, txt: 'thân pháp phối hợp đòn đánh: công mạnh hơn, dễ chạy thoát' },
+    { id: 'guard', nameVi: 'Công thủ', kinds: ['atk', 'def'], k: 1, guard: .12, txt: 'vừa đánh vừa đỡ: ít chết khi thua' },
+    { id: 'ward', nameVi: 'Pháp thủ', kinds: ['mag', 'def'], k: 1, guard: .12, txt: 'giữ thế thủ khi niệm phép' },
+    { id: 'blink', nameVi: 'Pháp né', kinds: ['mag', 'mov'], k: 1, flee: .06, txt: 'vừa lùi vừa niệm phép' },
+    { id: 'combo', nameVi: 'Liên chiêu', same: true, k: .8, txt: 'hai chiêu cùng một tay nghề nối liền nhau' },
+    { id: 'aid', nameVi: 'Trợ chiến', kinds: ['sup', '*'], k: .6, txt: 'bẫy, dược, thú, máy mở đường cho đòn chính' },
+    { id: 'kin', nameVi: 'Đồng môn', job: true, k: .5, txt: 'hai chiêu của cùng một nghề, vốn sinh ra để dùng chung' }
+  ];
+  // Nghề đã dạy kỹ năng: ghi ở S.sk[k].j lúc học; bản lưu cũ thì tìm trong các nghề đã qua.
+  const skJob = (S, key) => {
+    const v = S.sk[key]; if (v.j) return v.j;
+    for (const job of [S.job, ...(S.jobHist || [])]) if (G.jobSkills(S.race, job, S.faith).some(s => s.key === key)) return v.j = job;
+    return v.j = S.job;
+  };
+  const schoolOfJob = (S, job) => { const j = jobOf(job); return j && j.tier > 0 ? j.school : J.races[S.race].schools.native[0]; };
+  const pairRes = (S, a, b) => {
+    const A = S.sk[a], B = S.sk[b], ka = G.skKind(a, A.m), kb = G.skKind(b, B.m), ja = skJob(S, a), jb = skJob(S, b);
+    const fam = ja === jb ? 1 : schoolOfJob(S, ja) === schoolOfJob(S, jb) ? .6 : .3;
+    const has = r => r.same ? A.m === B.m : r.job ? ja === jb : r.kinds[1] === '*' ? (ka === r.kinds[0]) !== (kb === r.kinds[0]) : (ka === r.kinds[0] && kb === r.kinds[1]) || (ka === r.kinds[1] && kb === r.kinds[0]);
+    const r = G.RESONANCE.find(has); if (!r) return null;
+    const lo = Math.min(tierOfKey(a), tierOfKey(b)), rk = Math.min(5, Math.floor(Math.min(A.r, B.r) + 1e-9)) / 5;
+    return { a, b, r, v: G.CULT.resPow * r.k * fam * (lo + 1) * rk };
+  };
+  // Ghép cặp tham lam (mỗi kỹ năng một cặp). Trả { pow, flee, guard, pairs }.
+  G.resonance = (S, keys) => {
+    const all = [];
+    for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) { const p = pairRes(S, keys[i], keys[j]); if (p && p.v > 0) all.push(p); }
+    all.sort((x, y) => y.v - x.v);
+    const used = new Set(), pairs = []; let pow = 0, flee = 0, guard = 0;
+    for (const p of all) { if (used.has(p.a) || used.has(p.b)) continue; used.add(p.a); used.add(p.b); pairs.push(p); pow += p.v; flee += p.r.flee || 0; guard += p.r.guard || 0; }
+    return { pow, flee: Math.min(.25, flee), guard: Math.min(.4, guard), pairs };
+  };
   const learned = S => Object.keys(init(S).sk).filter(k => S.sk[k].r >= 1 - 1e-9);
-  G.autoEquip = S => learned(S).sort((a, b) => G.skEff(b, S.sk[b].r) - G.skEff(a, S.sk[a].r)).slice(0, G.slotsOf(S));
+  const setPow = (S, ks) => ks.reduce((a, k) => a + G.skEff(k, S.sk[k].r), 0) + G.resonance(S, ks).pow;
+  // Tự lắp: lấy kỹ năng hiệu quả cao nhất, rồi đổi từng chỗ nếu cộng hưởng làm tổng sức cao hơn.
+  G.autoEquip = S => memo(init(S), 'auto', () => {
+    const n = G.slotsOf(S), cand = learned(S).sort((a, b) => G.skEff(b, S.sk[b].r) - G.skEff(a, S.sk[a].r)).slice(0, n + 10);
+    const pick = cand.slice(0, n); let best = setPow(S, pick);
+    for (let pass = 0; pass < 2; pass++) {
+      let moved = false;
+      for (let i = 0; i < pick.length; i++) for (const c of cand) {
+        if (pick.includes(c)) continue;
+        const old = pick[i]; pick[i] = c; const v = setPow(S, pick);
+        if (v > best + 1e-9) { best = v; moved = true; } else pick[i] = old;
+      }
+      if (!moved) break;
+    }
+    return pick;
+  });
   G.loadout = S => S.equip ? S.equip.filter(k => S.sk[k] && S.sk[k].r >= 1 - 1e-9).slice(0, G.slotsOf(S)) : G.autoEquip(S);
-  G.skillPow = S => G.loadout(S).reduce((a, k) => a + G.skEff(k, S.sk[k].r), 0);
+  G.resOf = S => memo(init(S), 'res', () => G.resonance(S, G.loadout(S)));
+  G.skillPow = S => memo(init(S), 'pow', () => G.loadout(S).reduce((a, k) => a + G.skEff(k, S.sk[k].r), 0) + G.resOf(S).pow);
   // Người chơi lắp / tháo: chuyển sang tự chọn. Trả false khi hết chỗ.
   G.equipToggle = (S, key) => {
     if (!S.equip) S.equip = G.autoEquip(S);
@@ -299,7 +398,7 @@ window.LifeSim = window.LifeSim || {};
   G.skProgress = S => { const t = G.skTarget(S); return !t || t.pick ? { t, r: 0 } : { t, r: G.rankOf(S, t.key) }; };
   G.skText = S => {
     const jt = jobTier(S), up = upOf(S, jt), tb = G.teachBest(S, G.schoolOf(S), jobOf(S.job));
-    return `Level ${G.lvOf(S)} / ${G.maxLvOf(S)}. Nâng ${up.length} / ${G.SK_UP} kỹ năng của Tier ${jt}. Người dạy: ${tb.nameVi} (Tier ${tb.t}).`;
+    return `${G.tierName(jt)} (Tier ${jt}). Level ${G.lvOf(S)} / ${G.maxLvOf(S)}. Nâng ${up.length} / ${G.SK_UP} kỹ năng. Trần chỉ số ${G.statCap(S)}. Người dạy: ${tb.nameVi}${/Tier/.test(tb.nameVi) ? "" : ` (Tier ${tb.t})`}.`;
   };
 
   // ── Bản lưu cũ ──
@@ -370,6 +469,11 @@ window.LifeSim = window.LifeSim || {};
     const st = X.stage(S); if (!['teen', 'adult', 'elder'].includes(st)) return;
     const f = (S.aim === 'free' || S.aim === 'family' ? .6 : 1) * (st === 'elder' ? .5 : 1) * (.7 + .3 * (S.traits.bold + S.traits.studious));
     X.addXp(G.CULT.base * f);
+    // Ngộ đạo: không ai dạy được Huyền Thoại Giả. Thủ Hộ Giả max level mỗi năm có một cơ hội tự ngộ (docs/09 mục 6.1).
+    if (jobTier(S) === 4 && G.lvFull(S) && !S.flags.enlight && X.chance(G.CULT.enlight * G.cultRate(S) * (.5 + S.sm / 100))) {
+      S.flags.enlight = S.age;
+      X.log(`Bạn ngộ ra điều mà không người thầy nào nói được. Cánh cửa lên ${G.tierName(5)} đã mở.`, 'big');
+    }
   };
   { const k = G.SYSTEMS.findIndex(s => s.id === 'career'); G.SYSTEMS.splice(k + 1, 0, { id: 'cult', when: S => !S.dead, run: (S, X) => G.cultYear(S, X) }); }
 })(window.LifeSim);

@@ -118,6 +118,7 @@ window.LifeSim = window.LifeSim || {};
         if (cur.track) trainTrack(S, X, cur.track, 1 + sh);
         if (cur.y >= cur.need) {
           E.lv = cur.lv; E.cur = null; if (cur.track) E.track = cur.track;
+          if (cur.lv >= 3) E.capital = !!(G.isCapital && G.isCapital(cur.school));   // học viện kinh đô dạy tới Tier 4 (js/cult.js)
           flag(S, 'grad' + E.lv);
           S.fame = Math.min(100, S.fame + [0, 0, 1, 3][E.lv]);
           X.log(`Bạn tốt nghiệp ${G.EDU[E.lv].nameVi.toLowerCase()} ở ${sc.name}${cur.track ? ', ngành ' + G.TRACKS[cur.track].nameVi : ''}.`, E.lv >= 2 ? 'big' : 'good');
@@ -159,7 +160,10 @@ window.LifeSim = window.LifeSim || {};
   { const k = G.SYSTEMS.findIndex(s => s.id === 'career'); G.SYSTEMS.splice(k, 0, { id: 'edu', when: S => !S.dead, run: (S, X) => G.eduYear(S, X) }); }
 
   // ═════════ Sư đồ: được nhận làm đệ tử ═════════
-  // Mỗi lượt có thể có người để ý: thợ lành nghề (dạy sinh kế của mình) hoặc cao thủ (Tier 3–5, dạy một trường phái, phải thắng một trận thử tay).
+  // Mỗi lượt có thể có người để ý: thợ lành nghề (dạy sinh kế của mình) hoặc cao thủ (Tier 2–4, dạy một trường phái, phải thắng một trận thử tay).
+  // Tier cao thủ để ý tới mình: Tier 2 75%, Tier 3 20%, Tier 4 5%; Huyền Thoại Giả không bao giờ tình cờ gặp (docs/09 mục 6.2).
+  G.MENTOR_TIER = [[2, .75], [3, .2], [4, .05]];
+  G.mentorTier = X => { let r = X.rnd(); for (const [t, w] of G.MENTOR_TIER) { if ((r -= w) < 0) return t; } return 2; };
   DEC.mentor = {
     prio: 5, gap: 3,
     when(S, X) {
@@ -178,8 +182,8 @@ window.LifeSim = window.LifeSim || {};
       // Cao thủ: chỉ để ý người có năng khiếu (một mastery ≥ 15, hoặc level ≥ 10).
       const top = Object.entries(S.mastery).sort((a, b) => b[1] - a[1])[0];
       if (top && (top[1] >= 15 || S.level >= 10)) {
-        const school = G.MASTERY[top[0]], tier = X.int(3, 5), nm = X.name(X.pick(Object.keys(G.RACES).filter(r => !G.RACES[r].undead && !G.RACES[r].construct)), X.chance(.5) ? 'm' : 'f');
-        ch.push({ k: 'martial', label: `Bái ${nm} làm thầy`, sub: `Cao thủ ${J.schools[school].nameVi.toLowerCase()} (Tier ${tier}) để ý tới bạn. Phải qua một trận thử tay; theo thầy 5 năm.`, kind: 'martial', school, tier, name: nm, need: 5 });
+        const school = G.MASTERY[top[0]], tier = G.mentorTier(X), nm = X.name(X.pick(Object.keys(G.RACES).filter(r => !G.RACES[r].undead && !G.RACES[r].construct)), X.chance(.5) ? 'm' : 'f');
+        ch.push({ k: 'martial', label: `Bái ${nm} làm thầy`, sub: `Cao thủ ${J.schools[school].nameVi.toLowerCase()}, một ${G.tierName(tier)} (Tier ${tier}), để ý tới bạn. Phải qua một trận thử tay; theo thầy 5 năm.`, kind: 'martial', school, tier, name: nm, need: 5 });
       }
       if (!ch.length) { S.recentDec.mentor = S.age; return null; }
       return { title: 'Sư phụ', body: 'Có người muốn nhận bạn làm đệ tử.', choices: [...ch, { k: 'no', label: 'Tự học', sub: '' }] };

@@ -133,7 +133,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
   // ---- Danh sách mục duyệt theo tab ----
-  const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
+  const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
   const items = {
     ev_tpl: D.events.filter(e => e.kind === 'tpl').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
@@ -148,7 +148,7 @@ code{font-family:var(--font-mono);font-size:12px}
     tal: [...D.rarity.map(r => ({ kind: 'root', id: r.id, name: r.root })), ...D.talents.map(t => ({ kind: 'tal', id: t.id, name: t.nameVi }))],
     aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
     tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title })),
-    cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: 'Tier ' + t })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
+    cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...D.cult.res.map(r => ({ kind: 'res', id: r.id, name: r.nameVi })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
       ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))]
   };
   const allItems = Object.values(items).flat();
@@ -371,10 +371,17 @@ code{font-family:var(--font-mono);font-size:12px}
   // ---- Sức mạnh: kỹ năng nghề, level, chỉ số, lắp kỹ năng, người dạy, thọ nguyên, tiền tệ (vankiep/js/cult.js, docs/08) ----
   function cultView() {
     const C = D.cult, chips = a => a.map(x => `<span class="chip">${esc(x)}</span>`).join('');
-    const tiers = [0, 1, 2, 3, 4, 5].filter(t => passes('tierlv', String(t))).map(t => card('tierlv', String(t), `Tier ${t}`, `<div class="meta">${t ? 'nghề Tier ' + t : 'nghề gốc'} · gặp quái tới Tier ${Math.min(5, t + 1)}</div>
-        <dl class="kv"><dt>Level</dt><dd>${C.lvTier * t}–${C.lvTier * (t + 1)} (max level ${C.lvTier * (t + 1)})</dd><dt>Điểm rèn mỗi kỹ năng</dt><dd>${C.cost[t].toLocaleString('vi')} (mỗi bậc ${(C.cost[t] / 5).toLocaleString('vi')})</dd>
-          <dt>Chỗ lắp kỹ năng</dt><dd>${C.loadout[t]}</dd><dt>Thọ nguyên</dt><dd>× ${num(Math.round((1 + C.cfg.life * t) * 100) / 100)} (người: ~${Math.round(62 * (1 + C.cfg.life * t))} năm)</dd>
-          <dt>Hiệu quả một kỹ năng max khi lắp</dt><dd>+${num(Math.round(C.cfg.skillPow * (t + 1) * 100) / 100)} sức</dd></dl>`));
+    // docs/09 mục 3–4: tháp dân số (~3 triệu dân, 7 nước), tháp đời người chơi mục tiêu.
+    const POP = ['~96,7% dân', '~3% dân (mỗi nước ~13 000)', '~0,3% dân (mỗi nước ~1 300)', '~300 trên 1 triệu (mỗi tỉnh ~20)', '~25 trên 1 triệu (mỗi nước ~10)', '~4 trên 1 triệu (1–2 người mỗi chủng tộc)'];
+    const LIFE = ['60', '27', '10', '2,5', '0,5', '0,05'], asc = t => C.ascend.slice(1, t + 1).reduce((a, b) => a + b, 0);
+    const tiers = [0, 1, 2, 3, 4, 5].filter(t => passes('tierlv', String(t))).map(t => card('tierlv', String(t), `Tier ${t} · ${C.tierName[t]}`, `<div class="meta">${t ? 'nghề Tier ' + t : 'chưa vào nghề (nghề gốc là xuất thân)'} · gặp quái tới Tier ${Math.min(5, t + 1)}</div>
+        <dl class="kv"><dt>Bao nhiêu người</dt><dd>${POP[t]}; đời người chơi mục tiêu ~${LIFE[t]}%</dd>
+          <dt>Level</dt><dd>${C.lvTier * t}–${C.lvTier * (t + 1)} (max level ${C.lvTier * (t + 1)})</dd><dt>Điểm rèn mỗi kỹ năng</dt><dd>${C.cost[t].toLocaleString('vi')} (mỗi bậc ${(C.cost[t] / 5).toLocaleString('vi')})</dd>
+          ${t ? `<dt>Thăng hoa khi vào</dt><dd>cả sáu chỉ số +${C.ascend[t]} (cộng dồn từ Tier 1: +${asc(t)})</dd>` : ''}<dt>Trần chỉ số</dt><dd>${C.cap[t]}</dd>
+          <dt>Chỗ lắp kỹ năng</dt><dd>${C.loadout[t]}</dd><dt>Thọ nguyên</dt><dd>× ${num(C.lifeF[t])} (người: ~${Math.round(62 * C.lifeF[t])} năm)</dd>
+          <dt>Hiệu quả một kỹ năng max khi lắp</dt><dd>+${num(Math.round(C.cfg.skillPow * (1 + C.cfg.skTier * t) * 1000) / 1000)} sức</dd>${t ? `<dt>Trần tỉ lệ qua thử thách vào</dt><dd>${Math.round(C.promoteCap[t] * 100)}%</dd>` : ''}</dl>`));
+    const res = C.res.filter(r => passes('res', r.id)).map(r => card('res', r.id, r.nameVi, `<dl class="kv"><dt>Hai kỹ năng</dt><dd>${esc(r.pair)}</dd><dt>Hệ số</dt><dd>${num(r.k)}</dd>
+        ${r.flee ? `<dt>Chạy thoát khi thua</dt><dd>+${Math.round(r.flee * 100)}%</dd>` : ''}${r.guard ? `<dt>Nguy cơ chết khi thua</dt><dd>−${Math.round(r.guard * 100)}%</dd>` : ''}<dt>Ý</dt><dd>${esc(r.txt)}</dd></dl>`));
     const RULE = {
       skill: `<p style="margin:0">Mỗi nghề có ${C.list} kỹ năng cùng Tier: cặp kỹ năng gate của mọi nghề kế tiếp (thư viện nghề), rồi kỹ năng tạm cho đủ. Học một kỹ năng là có bậc 1; <b>mỗi Tier chỉ ${C.up} kỹ năng được nâng</b> lên bậc 2–5, còn lại dừng ở bậc 1. Kỹ năng thành "được nâng" khi nâng lên bậc 2 lần đầu, chọn rồi không đổi.</p>
         <dl class="kv"><dt>Chọn kỹ năng để nâng</dt><dd>quyết định "Nâng kỹ năng mới"; tự động: cặp gate của nghề theo hướng đi trước, rồi cặp gate nghề khác, rồi kỹ năng thưởng chỉ số hợp trường phái</dd>
@@ -383,13 +390,15 @@ code{font-family:var(--font-mono);font-size:12px}
           <dt>Hết chỗ học</dt><dd>điểm rèn chỉ còn tăng mastery theo hướng đi</dd></dl>`,
       level: `<p style="margin:0"><b>Level = số kỹ năng được nâng đã đạt bậc 5. ${C.lvTier} level là 1 Tier</b>, level 0–${C.maxLv}. Vào nghề Tier t thì level đúng bằng ${C.lvTier}t.</p>`,
       promote: `<p style="margin:0">Vào nghề kế tiếp khi đủ: <b>đạt max level của Tier</b>; <b>cặp gate của nghề đích nằm trong ${C.up} kỹ năng được nâng</b> (nên đã max); mastery đạt yêu cầu (ngoại lai +15); có người dạy Tier ≥ Tier đích cho trường phái đó; nghề tín ngưỡng thêm Devotion. Không có cặp gate nào trong ${C.up} kỹ năng thì <b>kẹt ở Tier đó</b>, không gỡ được.</p>
-        <dl class="kv"><dt>Tỉ lệ qua thử thách</dt><dd>0,45 + 0,25 × (sức − Tier đích + 1) + (mastery chính − yêu cầu) / 100 + Sinh lực / 400, trong 15–95%</dd><dt>Trượt</dt><dd>−6 Sinh lực, −4 Tâm trạng, chờ một năm</dd></dl>`,
-      power: `<p style="margin:0"><b>Sức = chỉ số + hiệu quả kỹ năng đang lắp + đồ + thiên phú + buff.</b> Level, Tier nghề, mastery không cộng thẳng vào sức.</p>
+        <dl class="kv"><dt>Tỉ lệ qua thử thách</dt><dd>0,45 + 0,25 × (sức − Tier đích + 1) + (mastery chính − yêu cầu) / 100 + Sinh lực / 400, từ 15% tới trần theo Tier đích (${C.promoteCap.slice(1).map((p, i) => 'T' + (i + 1) + ' ' + Math.round(p * 100) + '%').join(', ')})</dd><dt>Trượt</dt><dd>−6 Sinh lực, −4 Tâm trạng, chờ một năm</dd></dl>`,
+      ascend: `<p style="margin:0"><b>Tier sau áp đảo Tier trước</b> (docs/09 mục 5.1): vào Tier mới thì <b>thăng hoa</b>, cả sáu chỉ số cộng thêm (${C.ascend.slice(1).map((n, i) => 'T' + (i + 1) + ' +' + n).join(', ')}). Mỗi Tier có <b>trần chỉ số</b> (${C.cap.map((n, t) => 'T' + t + ' ' + n).join(', ')}): thưởng kỹ năng vượt trần được giữ lại, chưa dùng được; lên Tier thì trần nâng nên phần dư tự cộng vào (tối đa 5 mỗi chỉ số mỗi lần). Mục tiêu: người vừa vào Tier t + 1 hơn người max level Tier t ít nhất 0,7 sức (thắng ≥ 90%).</p>`,
+      res: `<p style="margin:0"><b>Cộng hưởng chiêu thức</b> (docs/09 mục 5.2): hai kỹ năng đang lắp hợp nhau thì thành một cặp, cộng sức ${num(C.cfg.resPow)} × hệ số × độ hợp × (Tier thấp hơn + 1) × bậc thấp hơn / 5. <b>Độ hợp: cùng nghề 1, cùng trường phái 0,6, khác 0,3</b>; cùng nghề thì cặp nào cũng ít nhất là Đồng môn. Mỗi kỹ năng vào một cặp. Loại kỹ năng theo mastery: ${Object.entries(C.kinds).map(([k, v]) => v).join(', ')}. Tự lắp xét cả cộng hưởng.</p>`,
+      power: `<p style="margin:0"><b>Sức = chỉ số (đã chặn trần) + hiệu quả kỹ năng đang lắp + cộng hưởng + đồ + thiên phú + buff.</b> Level, Tier nghề, mastery không cộng thẳng vào sức.</p>
         <dl class="kv"><dt>Sức từ chỉ số</dt><dd>((2 × chỉ số chính + chỉ số phụ + Thể) / 4 − 5) × ${num(C.cfg.statPow)}; chính, phụ theo trường phái đang theo</dd>
-          <dt>Hiệu quả một kỹ năng lắp</dt><dd>${num(C.cfg.skillPow)} × (Tier kỹ năng + 1) × bậc / 5</dd><dt>Đồ</dt><dd>+0,05 mỗi cấp (0–10)</dd>
+          <dt>Hiệu quả một kỹ năng lắp</dt><dd>${num(C.cfg.skillPow)} × (1 + ${num(C.cfg.skTier)} × Tier kỹ năng) × bậc / 5</dd><dt>Đồ</dt><dd>+0,05 mỗi cấp (0–10)</dd>
           <dt>Trừ</dt><dd>thương tật, Sinh lực thấp, tuổi già, thiếu niên</dd></dl>`,
       equip: `<p style="margin:0">Số chỗ lắp theo Tier nghề: ${C.loadout.map((n, t) => 'T' + t + ' ' + n).join(', ')}. Lắp được mọi kỹ năng đã học (cả nghề cũ, cả bậc 1). <b>Mặc định tự lắp kỹ năng mạnh nhất</b>; người chơi bấm Lắp / Tháo lúc nào cũng được, khi đó game giữ lựa chọn của người chơi và chỉ lấp chỗ mới mở khi lên Tier; nút "Tự lắp lại" quay về mặc định.</p>`,
-      life: `<p style="margin:0">Tuổi thọ kỳ vọng × (1 + ${num(C.cfg.life)} × Tier nghề), tuổi già cũng lùi theo. Phần trẻ em của bảng sống giữ nguyên.</p>`,
+      life: `<p style="margin:0">Tuổi thọ kỳ vọng × ${C.lifeF.map((f, t) => 'T' + t + ' ' + num(f)).join(', ')} (docs/09 mục 6.3), tuổi già cũng lùi theo. Phần trẻ em của bảng sống giữ nguyên.</p>`,
       coin: `<p style="margin:0">100 đồng = 1 bạc, 100 bạc = 1 vàng. Trong mã vẫn là một con số theo bạc, chỉ đổi cách hiện.</p>
         <dl class="kv"><dt>Ví dụ</dt><dd class="chips">${C.coin.map(([n, s]) => `<span class="chip">${num(n)} bạc → ${esc(s)}</span>`).join('')}</dd></dl>`
     };
@@ -405,8 +414,8 @@ code{font-family:var(--font-mono);font-size:12px}
     const decs = [...dec('cv_learn', 'Nâng kỹ năng mới', C.learn, 'Còn chỗ nâng ở Tier hiện tại và mọi kỹ năng đã nâng đã max (chế độ tự động chọn ngay, không hỏi)'),
       ...dec('promote', 'Thử thách chuyển nghề', C.promote, 'Đủ điều kiện vào ít nhất một nghề kế tiếp')];
     const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
-    return overview('Sức mạnh', `Hệ sức mạnh, level, chuyển nghề (docs/08, người dùng chốt 16/10/2026; bỏ cảnh giới). Danh sách kỹ năng theo nghề lấy chủng tộc Người làm mẫu (${C.jobs.length} nghề, không tính nghề tín ngưỡng, nghề ẩn); ◆ là kỹ năng gate. ${C.named} kỹ năng có tên và thưởng chỉ số riêng (shared/skills.js), còn lại là kỹ năng tạm tới bước F.`)
-      + grid(part('Tier, level', tiers) + part('Luật', rules) + part('Chỉ số', stats) + part('Người dạy', teach) + part('Quyết định', decs) + part('Kỹ năng theo nghề (Người)', jobs));
+    return overview('Sức mạnh', `Hệ sức mạnh, level, chuyển nghề (docs/08, người dùng chốt 16/10/2026; bỏ cảnh giới). Danh xưng Tier, thăng hoa, trần chỉ số, cộng hưởng chiêu thức, tháp độ hiếm: docs/09 (chốt 16/10/2026). Danh sách kỹ năng theo nghề lấy chủng tộc Người làm mẫu (${C.jobs.length} nghề, không tính nghề tín ngưỡng, nghề ẩn); ◆ là kỹ năng gate. ${C.named} kỹ năng có tên và thưởng chỉ số riêng (shared/skills.js), còn lại là kỹ năng tạm tới bước F.`)
+      + grid(part('Tier, danh xưng, level', tiers) + part('Luật', rules) + part('Cộng hưởng chiêu thức', res) + part('Chỉ số', stats) + part('Người dạy', teach) + part('Quyết định', decs) + part('Kỹ năng theo nghề (Người)', jobs));
   }
 
   function renderContent() {

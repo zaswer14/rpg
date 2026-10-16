@@ -174,7 +174,7 @@ window.LifeSim = window.LifeSim || {};
     power(S = this.S) {
       const st = this.stage(S);
       // Thiên phú (js/talent.js) cộng thẳng vào sức; boost: đồng đội gánh bớt trong một chuyến (cơ hội theo chí hướng).
-      let p = 1.05 + G.statPow(S) + G.skillPow(S) + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
+      let p = G.CULT.powBase + G.statPow(S) + G.skillPow(S) + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
       for (const c of S.conds) p += (G.CONDS[c.id].power || 0);
       if (st === 'elder') p -= .25 + (S.age - this.lt(S).leT * .78) * .02;
       if (st === 'teen') p -= .15;
@@ -552,7 +552,7 @@ window.LifeSim = window.LifeSim || {};
     encounterTable(zone, ct, reckless, feat, fam) {
       const cap = ct + (reckless ? 2 : 1), F = (feat && G.FEATURE_SPAWN[feat]) || {};
       return Object.entries(zone.spawns).map(([id, w]) => ({ s: G.B.byId[id], w })).filter(x => x.s && x.s.tier <= cap)
-        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? .5 : 1) * (x.s.tier < ct - 1 ? .4 : 1) * ((F.behavior || {})[x.s.behavior] || 1) * ((F.family || {})[x.s.family] || 1) * (fam && x.s.family === fam ? 4 : 1) }));
+        .map(x => ({ ...x, w: x.w * (x.s.tier > ct ? G.CULT.overW : 1) * (x.s.tier < ct - 1 ? .4 : 1) * ((F.behavior || {})[x.s.behavior] || 1) * ((F.family || {})[x.s.family] || 1) * (fam && x.s.family === fam ? 4 : 1) }));
     }
     // Gặp quái ở một ô ngẫu nhiên của khu (opt.cell để chỉ định); địa hình ô đó đổi trọng số loài.
     // opt.fam: họ quái chủ của hang; opt.boss: trận cuối của hang / tầng di tích, lấy loài Tier cao nhất bảng cho phép.
@@ -620,8 +620,8 @@ window.LifeSim = window.LifeSim || {};
       } else {
         S.hunts.lost++;
         this.add('hl', -(8 + 22 * (1 - pWin) * this.rnd()));
-        const fled = this.rnd() < .45 + S.mastery.Stealth / 250 + G.tfx(S).flee;
-        const pDie = G.clamp(.006 + .12 * Math.max(0, -diff) + (grade === 'normal' ? 0 : .02), 0, .5) * (S.hl < 25 ? 1.6 : 1) * (fled ? .3 : 1);
+        const res = G.resOf(S), fled = this.rnd() < .45 + S.mastery.Stealth / 250 + G.tfx(S).flee + res.flee;   // cộng hưởng chiêu thức (js/cult.js)
+        const pDie = G.clamp(.006 + .12 * Math.max(0, -diff) + (grade === 'normal' ? 0 : .02), 0, .5) * (S.hl < 25 ? 1.6 : 1) * (fled ? .3 : 1) * (1 - res.guard);
         if (this.rnd() < pDie) {
           this.hook.hunt(rec);
           this.die({ id: 'monster', text: `tử trận trước ${what} ở ${where}`, species: s.id });

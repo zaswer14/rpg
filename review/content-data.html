@@ -109,7 +109,11 @@ const data = {
         next: G.succOf('human', j.id, null).map(d => nm(d.id)),
         skills: G.jobSkills('human', j.id, null).map(s => ({ name: G.skName(s.key), d: G.skDesc(s.key), m: G.mv(s.m), gate: s.gateFor.map(nm), rw: stTxt(G.skRewards(s.key, s.m)), named: !s.id.includes('#') })) }));
     const D1 = G.DECISIONS.cv_learn, D2 = G.DECISIONS.promote;
-    return { cost: G.SK_COST, cfg: G.CULT, list: G.SK_LIST, up: G.SK_UP, lvTier: G.LV_TIER, maxLv: G.MAX_LV, loadout: G.LOADOUT,
+    // Bậc Tier, danh xưng, thăng hoa, trần chỉ số, cộng hưởng (docs/09).
+    const kv = G.SK_KIND_VI, res = G.RESONANCE.map(r => ({ id: r.id, nameVi: r.nameVi, k: r.k, flee: r.flee || 0, guard: r.guard || 0, txt: r.txt,
+      pair: r.same ? 'hai kỹ năng cùng mastery' : r.job ? 'hai kỹ năng cùng một nghề' : r.kinds[1] === '*' ? `${kv[r.kinds[0]]} + loại khác` : `${kv[r.kinds[0]]} + ${kv[r.kinds[1]]}` }));
+    return { tierName: G.TIER_NAME, ascend: G.ASCEND, cap: G.STAT_CAP, lifeF: G.LIFE_F, promoteCap: G.PROMOTE_CAP, mentorTier: G.MENTOR_TIER, res, kinds: kv,
+      cost: G.SK_COST, cfg: G.CULT, list: G.SK_LIST, up: G.SK_UP, lvTier: G.LV_TIER, maxLv: G.MAX_LV, loadout: G.LOADOUT,
       stats: G.STATS.map(k => ({ id: k, nameVi: G.STAT_VI[k], ms: Object.keys(G.MASTERY_STAT).filter(m => G.MASTERY_STAT[m] === k).map(G.mv),
         main: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[0] === k).map(([s]) => L.schools[s].nameVi), sub: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[1] === k).map(([s]) => L.schools[s].nameVi),
         races: Object.entries(G.RACES).filter(([, R]) => (R.stat || {})[k]).map(([r, R]) => `${L.races[r].nameVi} ${R.stat[k] > 0 ? '+' : ''}${R.stat[k]}`) })),
