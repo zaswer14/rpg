@@ -146,7 +146,7 @@ window.LifeSim = window.LifeSim || {};
       }
       if (lost) { X.log(`Bạn mất chức ${G.OFFICE_VI[of.rank].toLowerCase()} của ${n.name}: ${lost}.`, 'bad'); r.office = null; }
       else {
-        if (of.rank === 1 && year - of.since >= (G.eduLv && G.eduLv(S) >= 3 ? 4 : 6) && (S.fame >= 40 || S.sm >= 70 || (r.noble && r.noble.rank >= 3)) && X.chance(.12 * (.5 + gov) * ypt)) {
+        if (of.rank === 1 && G.tierOf(S) >= G.OFFICE_TIER[2] && year - of.since >= (G.eduLv && G.eduLv(S) >= 3 ? 4 : 6) && (G.tierOf(S) >= 4 || S.fame >= 40 || S.sm >= 70 || (r.noble && r.noble.rank >= 3)) && X.chance(.12 * (.5 + gov) * ypt)) {
           of.rank = 2; flag(S, 'office2'); X.log(`Bạn được triệu về kinh làm Đại thần của ${n.name}.`, 'big');
           Dn().hist(D, year, 'office', `${S.name} được phong Đại thần của ${n.name}.`);
         }
@@ -304,13 +304,14 @@ window.LifeSim = window.LifeSim || {};
       return T.social + T.bold > 1.4 ? d.choices[0].k : 'no';
     }
   };
-  // ── Bầu trưởng khu (khu đang ở chưa có người chơi làm trưởng; kinh đô không có)
+  // ── Bầu trưởng khu (khu đang ở chưa có người chơi làm trưởng; kinh đô không có). Thị trấn cần Chức Nghiệp Giả, thành phố Siêu Phàm Giả;
+  // mỗi Tier bớt 6 danh vọng cần có (js/status.js G.HEAD_TIER, docs/09 mục 6.4).
   const headFame = { hamlet: 15, village: 22, town: 38, city: 55 };
   DEC.head_elect = {
     prio: 5, gap: 4,
     when(S, X) {
       const h = homeS(S), r = roles(S);
-      return tierOK(S, X) && live(h) && r.head == null && r.ruler == null && headFame[h.tier] != null && S.fame >= headFame[h.tier] && !(h.head && h.head.player) && (h.tier !== 'city' || S.q >= 3);
+      return tierOK(S, X) && live(h) && r.head == null && r.ruler == null && headFame[h.tier] != null && G.tierOf(S) >= (G.HEAD_TIER || {})[h.tier] && S.fame >= Math.max(5, headFame[h.tier] - 6 * G.tierOf(S)) && !(h.head && h.head.player) && (h.tier !== 'city' || S.q >= 3);
     },
     build(S, X) {
       const h = homeS(S), t = G.HEAD_VI[h.tier];
@@ -352,12 +353,12 @@ window.LifeSim = window.LifeSim || {};
     },
     auto: (S, X, d) => d.choices[0].k
   };
-  // ── Ra làm quan (nước đang sống, ở khu có chủ)
+  // ── Ra làm quan (nước đang sống, ở khu có chủ): cần Siêu Phàm Giả; Siêu Việt Giả trở lên thì không cần thêm điều kiện nào (js/status.js G.OFFICE_TIER).
   DEC.office = {
     prio: 4, gap: 5,
     when(S, X) {
       const r = roles(S), h = homeS(S);
-      return tierOK(S, X) && !r.office && r.ruler == null && S.nation != null && live(h) && h.nation === S.nation && h.province >= 0 && ((S.sm >= 55 && S.q >= 3) || S.sm >= 70 || S.fame >= 40 || (G.eduLv && (G.eduLv(S) >= 3 || (G.eduLv(S) >= 2 && S.sm >= 45))) || (r.noble && r.noble.k === S.nation && r.noble.rank >= 2)) && !(S.flags.wanted && S.flags.wanted[S.nation]);
+      return tierOK(S, X) && !r.office && r.ruler == null && S.nation != null && live(h) && h.nation === S.nation && h.province >= 0 && G.tierOf(S) >= G.OFFICE_TIER[1] && (G.tierOf(S) >= 3 || (S.sm >= 55 && S.q >= 3) || S.sm >= 70 || S.fame >= 40 || (G.eduLv && (G.eduLv(S) >= 3 || (G.eduLv(S) >= 2 && S.sm >= 45))) || (r.noble && r.noble.k === S.nation && r.noble.rank >= 2)) && !(S.flags.wanted && S.flags.wanted[S.nation]);
     },
     build(S, X) {
       const n = G.realm.nations[S.nation], p = homeS(S).province;
@@ -370,7 +371,7 @@ window.LifeSim = window.LifeSim || {};
       roles(S).office = { k: S.nation, p, rank: 1, since: W.year, ruler: ru ? ru.name : null }; flag(S, 'office');
       return `Bạn nhận ấn Quan tỉnh ${G.realm.provinces[p].name}.`;
     },
-    auto: (S) => S.traits.studious > .8 && S.traits.pious < .8 ? 'yes' : 'no'
+    auto: (S) => (S.traits.studious > .8 && S.traits.pious < .8) || (G.tierOf(S) >= 2 && (S.traits.social > .45 || S.aim === 'power')) ? 'yes' : 'no'   // người có cấp được trọng dụng nên dễ nhận hơn
   };
   // ── Lập nước: làm trưởng thị trấn trở lên ở tỉnh vô chủ có ≥ 2 khu dân cư
   const templatesFor = S => { const race = S.race; const t = G.NATION_TEMPLATES.filter(x => x.race === race); return t.length ? t : G.NATION_TEMPLATES.filter(x => x.race === 'human'); };
@@ -520,20 +521,22 @@ window.LifeSim = window.LifeSim || {};
       return 'no';
     }
   };
-  // ── Được bầu quản lý: quản sự → hội trưởng (hội trưởng NPC), trưởng chi nhánh Hiệp Hội (hạng Vàng, khu có Hội Mạo Hiểm)
+  // ── Được bầu quản lý: quản sự → hội trưởng (hội trưởng NPC), trưởng chi nhánh Hiệp Hội (hạng Vàng, khu có Hội Mạo Hiểm).
+  // Quản sự cần Chức Nghiệp Giả; hội trưởng, trưởng chi nhánh cần Siêu Phàm Giả (js/status.js G.ORG_TIER).
+  const orgT = (S, rank) => G.tierOf(S) >= (G.ORG_TIER ? G.ORG_TIER[rank] : 0);
   DEC.org_lead = {
     prio: 5, gap: 4,
     when(S, X) {
       if (!adultish(S, X)) return false;
       const r = roles(S), h = homeS(S);
-      if (r.adv && !r.adv.branch && G.advRank(S) >= 3 && live(h) && (h.bld || []).includes('guild')) return true;
-      return Object.entries(r.orgs).some(([id, m]) => { const o = G.orgById(S.world, id); return o && ((m.rank === 0 && m.offer) || (m.rank === 1 && !o.leader.player && S.world.year - m.since >= 3)); });
+      if (r.adv && !r.adv.branch && G.advRank(S) >= 3 && orgT(S, 2) && live(h) && (h.bld || []).includes('guild')) return true;
+      return Object.entries(r.orgs).some(([id, m]) => { const o = G.orgById(S.world, id); return o && ((m.rank === 0 && m.offer && orgT(S, 1)) || (m.rank === 1 && !o.leader.player && S.world.year - m.since >= 3 && orgT(S, 2))); });
     },
     build(S, X) {
       const r = roles(S), h = homeS(S), ch = [];
-      if (r.adv && !r.adv.branch && G.advRank(S) >= 3 && live(h) && (h.bld || []).includes('guild')) ch.push({ k: 'adv', label: `Làm trưởng chi nhánh ${h.name}`, sub: 'Chia việc, giữ bảng nhiệm vụ, nhận một phần tiền thưởng.' });
-      for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 0 && m.offer) ch.push({ k: 'o' + id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[1]} ${o.name}`, sub: 'Lo sổ sách, chia việc; có phụ cấp. Mở focus Quản lý.' }); }
-      for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 1 && !o.leader.player && S.world.year - m.since >= 3) ch.push({ k: id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}`, sub: `${o.leader.name} già yếu muốn nhường. ${o.members} người.` }); }
+      if (r.adv && !r.adv.branch && G.advRank(S) >= 3 && orgT(S, 2) && live(h) && (h.bld || []).includes('guild')) ch.push({ k: 'adv', label: `Làm trưởng chi nhánh ${h.name}`, sub: 'Chia việc, giữ bảng nhiệm vụ, nhận một phần tiền thưởng.' });
+      for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 0 && m.offer && orgT(S, 1)) ch.push({ k: 'o' + id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[1]} ${o.name}`, sub: 'Lo sổ sách, chia việc; có phụ cấp. Mở focus Quản lý.' }); }
+      for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 1 && !o.leader.player && S.world.year - m.since >= 3 && orgT(S, 2)) ch.push({ k: id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}`, sub: `${o.leader.name} già yếu muốn nhường. ${o.members} người.` }); }
       if (!ch.length) return null;
       return { title: 'Đề cử', body: 'Người ta muốn bạn đứng đầu.', choices: [...ch, { k: 'no', label: 'Chỉ làm thành viên', sub: '' }] };
     },
@@ -551,6 +554,7 @@ window.LifeSim = window.LifeSim || {};
   // ── Lập hội (không có hội cùng loại ở khu nhà)
   const foundable = (S, X) => {
     const h = homeS(S); if (!live(h) || !adultish(S, X)) return [];
+    if (!orgT(S, 1)) return [];   // lập hội: ít nhất Chức Nghiệp Giả
     const has = kind => orgs(S.world).some(o => !o.gone && o.kind === kind && o.seat === h.id);
     const out = [];
     for (const [kind, K] of Object.entries(G.ORG_KINDS)) {

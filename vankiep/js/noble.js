@@ -42,7 +42,7 @@ window.LifeSim = window.LifeSim || {};
     royalYear(S, X, W, R, D, r, med);
     if (S.dead) return;
     // Con thứ nhà quý tộc thành người thừa kế khi mọi anh chị đã mất.
-    if (F.house && !F.house.heir && !F.house.done && S.family.sibs.length && S.family.sibs.every(s => !s.alive)) { F.house.heir = true; X.log(`Anh chị bạn đều đã mất. Tước ${G.NOBLE_VI[F.house.rank]} của nhà giờ sẽ về bạn.`, 'bad'); }
+    if (F.house && !F.house.heir && !F.house.done && !F.house.lost && S.family.sibs.length && S.family.sibs.every(s => !s.alive)) { F.house.heir = true; X.log(`Anh chị bạn đều đã mất. Tước ${G.NOBLE_VI[F.house.rank]} của nhà giờ sẽ về bạn.`, 'bad'); }
     // Kế tước khi người giữ tước (cha, không có cha thì mẹ) mất.
     if (F.house && F.house.heir && !r.noble && !F.house.done) {
       const holder = S.family.parents[1] || S.family.parents[0];
@@ -52,6 +52,13 @@ window.LifeSim = window.LifeSim || {};
           r.noble = { k: F.house.k, rank: F.house.rank, since: W.year, fief: null }; flag(S, 'nobleInherit'); F.nobleMax = Math.max(F.nobleMax || 0, F.house.rank);
           reg(W, F.house.k, S, F.house.rank);
           X.log(`Bạn kế tước ${G.NOBLE_VI[F.house.rank]} của ${R.nations[F.house.k].name}.`, 'big');
+          // Tước cần Tier tối thiểu (js/status.js G.TITLE_TIER): chưa đủ thì giữ tạm, có hạn G.TITLE_GRACE năm tính từ lúc trưởng thành.
+          const need = G.TITLE_TIER ? G.TITLE_TIER[F.house.rank] : 0, T = G.tierOf(S);
+          if (T < need) {
+            const ypt = X.R(S).ypt, from = Math.max(S.age, X.R(S).adult / ypt);
+            r.noble.due = { t: need, by: from + G.TITLE_GRACE / ypt }; flag(S, 'titleDue');
+            X.log(`Theo lệ, ${G.NOBLE_VI[F.house.rank]} phải là ${G.tierName(need)}. Bạn còn ${G.TITLE_GRACE} năm${S.age < from ? ' kể từ lúc trưởng thành' : ''} để đạt tới, không thì bị giáng tước.`, 'bad');
+          }
         } else X.log('Tước của nhà bạn không còn: nước ban tước đã mất hoặc đổi chính thể.', 'bad');
       }
     }
@@ -100,6 +107,7 @@ window.LifeSim = window.LifeSim || {};
     nb.fief = near.id;
     X.log(`Bạn được ban thái ấp ${near.name}.`, 'good');
   }
+  G.dropFief = S => dropFief(S, S.world);   // js/status.js giáng tước dưới Bá thì mất thái ấp
   function dropFief(S, W) {
     const nb = roles(S).noble; if (!nb || !nb.fief) return;
     const f = G.SET[nb.fief]; if (f && f.fief && f.fief.player) Dn().setField(W.dyn, f, 'fief', null);
@@ -115,7 +123,7 @@ window.LifeSim = window.LifeSim || {};
       const k = S.nation; if (!G.grantsTitles(k) || S.dead || !['adult', 'elder'].includes(X.stage(S))) return false;
       const nb = roles(S).noble; if (nb && nb.k !== k) return false;
       const r = nextRank(S); if (r > 5) return false;
-      return ((S.merit || {})[k] || 0) >= G.NOBLE.merit[r] && S.fame >= G.NOBLE.fame[r] && !(S.flags.wanted && S.flags.wanted[k]);
+      return ((S.merit || {})[k] || 0) >= G.NOBLE.merit[r] && S.fame >= G.NOBLE.fame[r] && G.tierOf(S) >= (G.TITLE_TIER ? G.TITLE_TIER[r] : 0) && !(S.flags.wanted && S.flags.wanted[k]);   // phong vì công trạng: đủ Tier của tước (js/status.js)
     },
     build(S, X) {
       const k = S.nation, n = G.realm.nations[k], r = nextRank(S), ru = S.world.dyn.nat[k].ruler;
@@ -315,6 +323,8 @@ window.LifeSim = window.LifeSim || {};
     horde:       { names: ['Kỵ sĩ', 'Bách phu trưởng', 'Vạn phu trưởng'],                      val: S => S.fame + S.level * .5,                                thr: [25, 45, 65], unit: 'danh vọng và cấp' }
   };
   const J = window.JobLibrary;
+  // Giá trị xét nhân theo Tier (js/status.js G.PROMO_TW: pháp quyền rất cao, quân quản, bộ lạc, hãn quốc cao; thương nhân thấp).
+  G.promoVal = (S, o, X) => { const v = o.P.val(S, o.n, X); return v > 0 && G.PROMO_TW ? v * (1 + (G.PROMO_TW[o.n.gov] || 0) * G.tierOf(S)) : v; };
   const promoOf = S => { const k = S.nation; if (k == null || k < 0) return null; const n = G.realm.nations[k]; return n && n.alive !== false && G.PROMO[n.gov] ? { k, n, P: G.PROMO[n.gov] } : null; };
   DEC.gov_rank = {   // (không đặt tên "promote": tên đó là quyết định lên bậc nghề ở js/events.js)
     prio: 6, gap: 2,
@@ -322,11 +332,11 @@ window.LifeSim = window.LifeSim || {};
       if (S.dead || !['adult', 'elder'].includes(X.stage(S))) return false;
       const o = promoOf(S); if (!o) return false;
       const rk = roles(S).rank, cur = rk && rk.k === o.k && rk.gov === o.n.gov ? rk.r : 0;
-      return cur < o.P.names.length && o.P.val(S, o.n, X) >= o.P.thr[cur] && S.fame >= [0, 15, 30, 50][cur] && !(S.flags.wanted && S.flags.wanted[o.k]) && !(S.flags.promoNo >= 2);
+      return cur < o.P.names.length && G.promoVal(S, o, X) >= o.P.thr[cur] && S.fame >= [0, 15, 30, 50][cur] && !(S.flags.wanted && S.flags.wanted[o.k]) && !(S.flags.promoNo >= 2);
     },
     build(S, X) {
       const o = promoOf(S), rk = roles(S).rank, cur = rk && rk.k === o.k && rk.gov === o.n.gov ? rk.r : 0, nm = o.P.names[cur];
-      return { title: G.GOVS[o.n.gov].nameVi, body: `${o.n.name} mời bạn lên bậc ${nm} (${G.GOVS[o.n.gov].promo.toLowerCase()}; xét theo ${o.P.unit}).`,
+      return { title: G.GOVS[o.n.gov].nameVi, body: `${o.n.name} mời bạn lên bậc ${nm} (${G.GOVS[o.n.gov].promo.toLowerCase()}; xét theo ${o.P.unit}${G.PROMO_TW && G.PROMO_TW[o.n.gov] && G.tierOf(S) ? `, nhân ${String(+(1 + G.PROMO_TW[o.n.gov] * G.tierOf(S)).toFixed(2)).replace('.', ',')} vì bạn là ${G.tierName(G.tierOf(S))}` : ''}).`,
         choices: [{ k: 'yes', label: `Nhận bậc ${nm}`, sub: `Bổng lộc, danh vọng; bậc ${cur + 1}/${o.P.names.length}.` }, { k: 'no', label: 'Không nhận', sub: '' }] };
     },
     apply(S, X, k) {

@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -32,7 +32,7 @@ const COND = {
   nt_history: ['Nhắc lại sử', 'Thế giới có dòng biên niên từ trước năm bạn sinh']
 };
 // Biểu thức ${…} trong câu: thay bằng nhãn dễ đọc.
-const slot = e => /^[gfcn]$|gear/.test(e) ? '‹số›' : e === 'h.y' ? '‹năm›' : e === 'h.t' ? '‹dòng sử›' : /prophecy/.test(e) ? '‹lời tiên tri›'
+const slot = e => /tierName/.test(e) ? '‹danh xưng›' : /^G\.coin\(/.test(e) ? '‹tiền›' : /NOBLE_VI/.test(e) ? '‹tước›' : /^[gfcn]$|gear/.test(e) ? '‹số›' : e === 'h.y' ? '‹năm›' : e === 'h.t' ? '‹dòng sử›' : /prophecy/.test(e) ? '‹lời tiên tri›'
   : /faith/.test(e) && /nameVi/.test(e) ? '‹tên đạo›' : /WORKS|\bw\.nameVi|cur\b/.test(e) ? '‹nghề›' : /AIMS|A\.dream/.test(e) ? '‹chí hướng›'
   : /RARITY|rarityOf|\br\.nameVi/.test(e) ? '‹bậc màu›' : /TALENTS|\bt\.nameVi/.test(e) ? '‹thiên phú›' : /\bz\b/.test(e) ? '‹khu›'
   : /rootText/.test(e) ? '‹căn cốt›' : /talText/.test(e) ? '‹căn cốt, thiên phú›' : /homeName/.test(e) ? '‹làng›' : /ruler/.test(e) ? '‹người cai trị›' : /kid\.name/.test(e) ? '‹tên con›' : /name/.test(e) ? '‹tên›' : '‹…›';
@@ -74,6 +74,20 @@ const TDEC = {
   aim_chance: ['Cơ hội theo chí hướng', 'Sự kiện báo tin (trọng số 1,5, cách 5 năm) gieo cờ, quyết định mở năm sau. Câu chữ từng chí hướng ở tab Chí hướng.'],
   tal_awaken: ['Thiên phú thức tỉnh', 'Mỗi lượt 0,6%, cộng 1,5% nếu đêm sinh có sao chổi, 6% nếu Sinh lực dưới 22, thêm theo thời gian Tu hành / Luyện tập. Chào 3 thiên phú, bậc nghiêng lên; tối đa 5.'],
   tal_break: ['Bình cảnh', 'Chạm mỗi Tier cảnh giới (1 → 5, js/cult.js), mỗi mốc một lần, căn cốt chưa phải Đỏ. Thuốc tẩy tủy 62% (giảm 9 điểm mỗi bậc), bế quan 30% (giảm 5 điểm mỗi bậc, cộng theo tính chăm).']
+};
+// Địa vị theo Tier (vankiep/js/status.js, bước B): tên và điều kiện ghi tay, câu chữ trích từ mã (sự kiện: run; quyết định: build + apply).
+const SDEC = {
+  cv_test: ['Lễ thử thiên phú', 'Sự kiện, thơ ấu (0,33–0,55 tuổi trưởng thành của chủng tộc, ~6–10 tuổi người), một lần một đời. Căn cốt Tím trở lên: học viện để mắt (chắc có học bổng trung cấp; Vàng trở lên cả cao cấp), danh vọng +3. Con nhà quý tộc, hoàng tộc căn cốt Trắng hoặc Lục: mở "Bị coi thường".'],
+  cv_scorn: ['Bị coi thường', 'Con nhà quý tộc hoặc hoàng tộc: tuổi thiếu niên sau lễ thử ra căn cốt Trắng, Lục; hoặc trưởng thành ba năm mà vẫn là Phàm Nhân. Một lần một đời. Con trưởng nhẫn nhịn hoặc hẹn ước hỏng thì mất quyền kế tước; bỏ nhà đi thì mất người dạy của gia tộc.'],
+  cv_license: ['Sổ người có cấp', 'Chức Nghiệp Giả tới Thủ Hộ Giả, trưởng thành, ở nước quản chặt, chưa đăng ký ở nước đó. Lệ phí 0,5 × Tier × thu nhập trung vị; thi chứng chỉ gấp đôi, đậu 35% + 20% × (sức − Tier − 0,5) + Hiểu biết / 300 (10–90%).'],
+  cv_unreg: ['Không đăng ký', 'Sự kiện, cách 3 năm: người có cấp đã chọn không đăng ký mà vẫn ở nước quản chặt. Nửa số lần bị bắt (phạt như phạm luật), nửa số lần lẩn được.'],
+  cv_levy: ['Lệnh triệu tập', 'Nước đang có chiến tranh, trưởng thành, không đang tại ngũ, một lần mỗi cuộc chiến. Nước quản chặt gọi người đã đăng ký; nước khác gọi từ Siêu Phàm Giả. Ra trận: một năm tại ngũ (người từ Siêu Việt Giả cộng vào sức chiến tranh của nước) và một trận mở màn theo sức: thắng được công trạng 5 × Tier, danh vọng 2 × Tier, tiền; thua mất 12–30 Sinh lực, chết 12% / Tier. Nộp tiền miễn: 2 × Tier × thu nhập trung vị. Trốn: bị truy nã.'],
+  cv_bully_ev: ['Kẻ có cấp (báo tin)', 'Sự kiện, cách 6 năm, ở nước quản lỏng: mở quyết định "Kẻ có cấp" năm sau. Phàm Nhân gặp kẻ Tier 1 (15% Tier 2); người có cấp gặp kẻ bằng hoặc kém mình một Tier.'],
+  cv_bully: ['Kẻ có cấp', 'Sau sự kiện báo tin. Phàm Nhân: nhịn (mất ít tiền, Tâm trạng −6) hay chống lại; người có cấp: ra tay can hay đi qua. Thắng theo sức so với Tier của kẻ kia + 0,3: danh vọng +3 + Tier, Quan hệ +6. Chống lại mà thua: 4% chết.'],
+  cv_kin: ['Tóc bạc', 'Siêu Phàm Giả trở lên, đang ở tuổi trưởng thành, bạn đời còn sống đã quá 80% tuổi thọ chủng tộc của người ấy. Một lần mỗi bạn đời. Thuốc trường thọ: 3 × Tier × thu nhập trung vị, trẻ lại 10% tuổi thọ.'],
+  cv_lifespan: ['Thọ nguyên sắp cạn', 'Tuổi già, dưới Thủ Hộ Giả, đã max level của Tier. Một lần một đời. Liều đột phá: 5% + 3% mỗi bậc căn cốt + Hiểu biết / 800 (3–25%); thành thì có nguồn dạy Tier kế tiếp ("Đột phá lúc tuổi già"); hỏng thì mất 20–40 Sinh lực, 25% chết. Truyền nghề cần con còn sống hoặc đệ tử.'],
+  cv_retainer: ['Lời mời cung phụng', 'Siêu Phàm Giả trở lên, trưởng thành, chưa làm cung phụng, không phải người cai trị: mỗi năm 8% × (Tier − 1) có lời mời từ triều đình (từ Siêu Việt Giả), một nhà quý tộc (từ Siêu Việt Giả chỉ nhà từ Bá tước) hoặc một hội có trụ sở ở khu nhà. Mỗi năm 10% phải ra tay cho chủ.'],
+  cv_elixir: ['Dược tề', 'Trưởng thành, có tiền đủ ba năm dược tề thường; hỏi lại mỗi lần lên Tier. Chế độ tự động: chí hướng Tu luyện võ đạo, Phiêu lưu, Quyền thế mua loại đắt nhất mà tiền đủ 4 năm; Thuận theo tự nhiên, Gia đình đủ 15 năm; chí hướng khác 8 năm.']
 };
 const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
@@ -128,7 +142,11 @@ const data = {
       learn: { prio: D1.prio, ...parseRun(both(D1.build, D1.apply)) }, promote: { prio: D2.prio, ...parseRun(both(D2.build, D2.apply)) },
       coin: [0.35, 12.5, 245, 12000].map(n => [n, G.coin(n)]) };
   })(),
-  tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; })
+  tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; }),
+  // Địa vị theo Tier (vankiep/js/status.js, docs/09 mục 6.4, docs/07 mục 4.3 và 4.10).
+  status: { st: G.STATUS, titleTier: G.TITLE_TIER, grace: G.TITLE_GRACE, head: G.HEAD_TIER, office: G.OFFICE_TIER, org: G.ORG_TIER, tw: G.PROMO_TW, ret: G.RET_PAY, elixir: G.ELIXIR, blood: G.BLOOD, strict: G.STRICT, lax: G.LAX,
+    decs: Object.entries(SDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
+      return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) }
 };
 document.getElementById('out').textContent = JSON.stringify(data);
 </script>

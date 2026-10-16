@@ -282,9 +282,11 @@ window.LifeSim = window.LifeSim || {};
       if (T.chance(.04)) S.flags.omen = T.pick(['fire', 'frost', 'storm', 'moon', 'light', 'dark']);
       if (T.chance(.012) && q <= 3) S.flags.bastard = true;
       // Căn cốt, thiên phú (js/talent.js); chí hướng bắt đầu ở Thuận theo tự nhiên.
-      const talTxt = G.birthTalents(this);
+      let talTxt = G.birthTalents(this);
       // Xuất thân hoàng gia, quý tộc (js/noble.js): đổi tầng lớp, tên cha mẹ trước lời mở đầu.
       const origTxt = G.birthOrigin ? G.birthOrigin(this, st, opt.origin) : null;
+      // Căn cốt theo cha mẹ (js/status.js): nhà quý tộc, hoàng tộc nghiêng lên; đổi thì viết lại dòng căn cốt.
+      if (G.bloodRoot && G.bloodRoot(this)) talTxt.text = G.talText(S);
       // Định vị trên bản đồ.
       S.pos = G.homePos(st, urban, T.rnd); S.path2.push(S.pos);
       // Lời mở đầu.
@@ -650,11 +652,12 @@ window.LifeSim = window.LifeSim || {};
       const S = this.S, reg = this.reg(S), W = G.WORKS[S.work];
       // Thu nhập sau thuế, theo thái độ chủng tộc và luật (js/state.js G.incomeMult).
       if (!W || W.adventurer) { // làm thuê vặt; mạo hiểm giả sống bằng săn quái và lệnh treo thưởng
-        this.money(G.incomeAt(reg, Math.min(.3, S.pct)) * share * .7 * G.incomeMult(S));
+        this.money(G.incomeAt(reg, Math.max(Math.min(.3, S.pct), G.pctFloor ? G.pctFloor(S) : 0)) * share * .7 * G.incomeMult(S));   // sàn thu nhập theo Tier (js/status.js)
         return;
       }
       const skill = Object.keys(W.trains).reduce((a, m) => Math.max(a, S.mastery[m]), 0);
-      const target = G.lerp(W.pct[0], W.pct[1], G.clamp(S.sm / 100 * .35 + skill / 100 * .45 + S.so / 100 * .2, 0, 1)) + (S.work === 'merchant' && G.lawHere(S, 'free_trade') ? .05 : 0);
+      let target = G.lerp(W.pct[0], W.pct[1], G.clamp(S.sm / 100 * .35 + skill / 100 * .45 + S.so / 100 * .2, 0, 1)) + (S.work === 'merchant' && G.lawHere(S, 'free_trade') ? .05 : 0);
+      if (G.pctFloor) target = Math.max(target, G.pctFloor(S));   // người có cấp không làm công ăn lương thấp (js/status.js, docs/09 mục 6.4)
       S.pct = G.clamp(S.pct + (target - S.pct) * .12 * share, .005, .995);
       this.money(G.incomeAt(reg, S.pct) * share * G.incomeMult(S));
       for (const [m, v] of Object.entries(W.trains)) this.gain(m, v * share);

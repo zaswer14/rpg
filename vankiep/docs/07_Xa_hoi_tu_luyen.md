@@ -1,6 +1,6 @@
 # Vạn Kiếp: định hướng mới, xã hội tu luyện
 
-**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), tiếp theo bước B (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
+**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), bước B xong (`js/status.js`, kết quả mục 4.10), tiếp theo bước C (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
 
 Người dùng đổi định hướng game (15/10/2026):
 
@@ -132,6 +132,8 @@ Mỗi năm, thời gian Luyện tập, săn quái, phiêu lưu, làm nghề, h�
 
 ### 4.3. Địa vị theo cảnh giới (bước B)
 
+Đề xuất ban đầu, viết theo cảnh giới. Bản làm vào mã đọc theo Tier và bảng `09` mục 6.4; số chốt ở mục 4.10.
+
 - **Thân phận pháp lý.** Từ cấp 3 (Tier 2) là người có cấp chính danh: miễn thuế đầu người và lệnh nghĩa vụ phàm, nhưng phải đăng ký ở nước quản chặt và bị triệu tập khi chiến tranh. Luật "giấy phép pháp sư" mở rộng thành giấy phép cho mọi người có cấp. Nước có luật bắt giữ vì phép thì ma pháp sư phải giấu mình.
 - **Thu nhập.** Sàn phân vị thu nhập theo Tier: Tier 1 ≥ 0,25, Tier 2 ≥ 0,45, Tier 3 ≥ 0,65, Tier 4 ≥ 0,82, Tier 5 ≥ 0,93. Thêm vị trí **cung phụng / hộ vệ riêng** cho nhà quý tộc, hội, nước, cần từ Tier 2.
 - **Chức quyền.** Quan tỉnh cần cấp 3, Đại thần cấp 5, trưởng thành phố, kinh đô cần cấp 3. Thang thăng tiến `G.PROMO` cộng cảnh giới vào giá trị xét, trọng số theo chính thể: pháp quyền rất cao; quân quản, bộ lạc, hãn quốc cao; quân chủ, đế chế, triều đình Yêu Tinh, thần quyền, dòng tu vừa; hội đồng, thương nhân thấp.
@@ -205,6 +207,74 @@ Chỗ lệch và lý do:
 - **Đời dài hơn** vì thọ nguyên theo cảnh giới, nên mô phỏng thế giới động chạy nhiều năm hơn; đo 30 đời cùng seed: 1 779 năm thế giới so với 1 491. Tổng thời gian 1000 đời vẫn khoảng 103 giây.
 - Các lần chỉnh trước khi ra số trên (đều trên 300 đời): người dạy tới Tier 5 quá dễ có (40%, Thánh Vực 5,4%); Devotion cao mở người dạy cho cả người không đi tu; hạng Hiệp Hội không phân biệt được ai vì danh vọng của thợ săn, mạo hiểm giả thành công đều chạm 100; dân thường thiếu mastery nên kẹt ở nghề gốc. Sửa lần lượt: giáo hội chỉ dạy tu sĩ, Hiệp Hội chỉ dạy tới Tier 2, có luyện ngoài giờ nhắm vào mastery còn thiếu, người dạy Tier c mở tới nghề Tier c.
 
+### 4.10. Kết quả bước B: địa vị theo Tier (16/10/2026)
+
+Làm theo mục 4.3 và bảng `09` mục 6.4, đọc theo Tier (không còn cảnh giới). Mã mới ở `js/status.js`; chỗ nối: `state.js` (thuế, nghĩa vụ, luật cấm phép, giấy phép pháp sư), `org.js` (chức), `noble.js` (kế tước, phong tước, thăng tiến), `life.js` (sàn thu nhập, căn cốt theo cha mẹ), `systems.js` (phân vị mạo hiểm giả), `cult.js` (dược tề nhân điểm rèn, nguồn dạy), `ui.js` (dòng Thân phận), `sim.html` (bảng Địa vị theo Tier, bảng sự kiện bước B, bảng căn cốt theo xuất thân). Tab Địa vị trên trang Duyệt Nội Dung.
+
+| Phần | Số chốt |
+|---|---|
+| Thân phận | từ Chức Nghiệp Giả là người có cấp: miễn thuế đầu người (sự kiện `law_tax_up`), miễn lệnh nghĩa vụ của dân thường |
+| Sàn phân vị thu nhập (Tier 1–5) | 0,35 / 0,6 / 0,8 / 0,93 / 0,97, áp ngay mỗi năm (bảng `09` mục 6.4; Huyền Thoại Giả tự đặt) |
+| Thuế | × 0,85 / 0,75 / 0,6 / 0,4 / 0; ở nước quản chặt phải đăng ký mới được giảm |
+| Tầng lớp tối thiểu | Siêu Phàm Giả: Thợ thuyền; từ Siêu Việt Giả: Thương gia (nước có luật Đẳng cấp thì không đổi) |
+| Nước quản chặt | chính thể Quân quản, Pháp quyền, Đế chế, Thần quyền, hoặc có luật Giấy phép pháp sư, Nghĩa vụ, Đẳng cấp, Khổ sai: bắt đăng ký (`cv_license`), không đăng ký thì có lúc bị bắt (`cv_unreg`); đã đăng ký thì không nộp phí giấy phép pháp sư riêng (luật giấy phép pháp sư mở rộng thành sổ người có cấp) |
+| Triệu tập (`cv_levy`) | nước đang chiến tranh gọi người đã đăng ký (nước quản chặt) hoặc từ Siêu Phàm Giả (nước khác), một lần mỗi cuộc chiến: ra trận một năm, nộp 2 × Tier × trung vị, hoặc trốn |
+| Huyền Thoại Giả | không thuế, không bị bắt vì luật cấm phép, không phải đăng ký |
+| Trưởng khu | thị trấn Tier 1, thành phố Tier 2; mỗi Tier bớt 6 danh vọng cần có |
+| Quan tỉnh / Đại thần | Tier 2 / Tier 3; từ Tier 3 (Đại thần: Tier 4) không cần thêm điều kiện học vấn, danh vọng; người có cấp nhận chức dễ hơn ở chế độ tự động |
+| Hội | quản sự và lập hội Tier 1; hội trưởng, trưởng chi nhánh Hiệp Hội Tier 2 |
+| Tước | giữ tước: Nam, Tử Tier 1; Bá Tier 2; Hầu, Công Tier 3. Kế tước khi chưa đủ: giữ tạm 12 năm (tính từ lúc trưởng thành), quá hạn giáng xuống bậc Tier giữ được, Phàm Nhân thì mất tước; phong vì công trạng phải đủ Tier; mua tước, hoàng tộc được phong không xét |
+| Thăng tiến theo chính thể | giá trị xét × (1 + trọng số × Tier): Pháp quyền 0,5; Quân quản 0,4; Bộ lạc, Hãn quốc 0,35; Hội dòng, Liên minh lỏng 0,25; Thần quyền 0,2; Hội đồng 0,15; Thương nhân 0,1 |
+| Cung phụng (`cv_retainer`) | từ Siêu Phàm Giả, mỗi năm 8% × (Tier − 1) có lời mời (triều đình từ Siêu Việt Giả, nhà quý tộc, hội ở khu nhà); bổng 1,2 / 2,5 / 5 / 9 × trung vị (Tier 2–5); mỗi năm 10% phải ra tay |
+| Dược tề (`cv_elixir`) | điểm rèn × 1,2 / 1,35 / 1,5; giá 0,6 / 1,8 / 5 × trung vị × (1 + 0,6 × Tier) mỗi năm; thiếu niên do nhà mua (Quý tộc loại thường, nhà quý tộc loại tốt, hoàng tộc thượng hạng) |
+| Căn cốt theo cha mẹ | cha mẹ có căn cốt (nhà quý tộc nghiêng lên 0,35, hoàng tộc 0,6); con 40% lấy bậc trung bình của cha mẹ (làm tròn ngẫu nhiên) |
+| Sự kiện, quyết định | `cv_test` (lễ thử thiên phú: Tím trở lên chắc có học bổng), `cv_scorn` (con nhà quý tộc căn cốt kém hoặc mãi là Phàm Nhân; hẹn ước ba năm phải lên 3 level), `cv_bully` (nước quản lỏng), `cv_kin` (bạn đời già đi), `cv_lifespan` (tuổi già ở max level: liều đột phá 2–15%, thành thì có nguồn dạy Tier kế tiếp, hỏng 10% chết) |
+| Nguồn dạy | "Hội trưởng" thay cho "chức trong hội" ở Tier 3 (quản sự chỉ còn Tier 2); bỏ "quan chức nhà nước" (Quan tỉnh đã cần Siêu Phàm Giả, nguồn này chỉ đẩy thêm người lên Tier 3, `09` mục 9) |
+
+1000 đời, thế giới `can-bang`, chế độ tự động, so với HEAD trước bước B (`10cfe51`, cùng máy):
+
+| Đo | Trước | Sau | Mục tiêu |
+|---|---|---|---|
+| Trận vượt Tier + 1 | 0 | 0 (67 533 trận) | 0 |
+| Trỗi dậy | 19,7% | 20,1% | ~20% |
+| Chết vì quái | 9,3% | 8,7% (hai lần chạy trước: 9,8%, 10,0%) | ~10% |
+| Tháp Tier 0–5 (đời trưởng thành) | 57,9 / 27,7 / 9,6 / 4,3 / 0,5 / 0 | 56,2 / 27,7 / 10,0 / 5,2 / 0,8 / 0,1 | 60 / 27 / 10 / 2,5 / 0,5 / 0,05 |
+| Ra làm quan / Đại thần (% đời trưởng thành) | 18,2 / 12,2 | 8,2 / 2,5 | |
+| Quản sự / hội trưởng | 15,3 / 14,9 | 7,1 / 4,1 | |
+| Trưởng khu | 4,9 | 6,5 | |
+| Được phong tước vì công trạng / mất tước (% mọi đời) | 8,0 / 0,5 | 5,6 / 1,6 | |
+| Lên bậc thăng tiến của chính thể | 38,0 | 39,6 | |
+| Đời chết trận (chiến tranh) | | 3,2% (lính chết trận 6,6% số lính) | |
+| 1000 đời headless | 113 giây | 101 giây | |
+
+Địa vị theo Tier cuối đời (đời trưởng thành):
+
+| Tier | Phân vị TB | Tiền / trung vị | Quan tỉnh | Có tước | Cung phụng | Dùng dược tề |
+|---|---|---|---|---|---|---|
+| 0 Phàm Nhân | 30 | 4,3 | 0% | 0,6% | 0% | 4,8% |
+| 1 Chức Nghiệp Giả | 60 | 9,9 | 0% | 4,1% | 0% | 45% |
+| 2 Siêu Phàm Giả | 86 | 44 | 36% | 22% | 10% | 75% |
+| 3 Siêu Việt Giả | 90 | 86 | 78% | 59% | 70% | 96% |
+| 4 Thủ Hộ Giả (7 đời) | 96 | 230 | 4 / 7 | 5 / 7 | 5 / 7 | 6 / 7 |
+
+Sự kiện (mọi đời): đăng ký 20%, có chứng chỉ 12,5%, không đăng ký 4,7%; ra trận theo lệnh triệu tập 8,7% (chế độ tự động không nộp tiền, không trốn lần nào); cung phụng 4,7%; có năm dùng dược tề 25%; liều đột phá lúc già 8,5% (thành 0,9%, chết 0,4%), truyền nghề 4,4%; bạn đời già 4,6%; kẻ có cấp ức hiếp 1,4%; bị coi thường trong nhà quý tộc 1,4% (hẹn ước thành 2 / 6). Căn cốt lúc sinh của dân thường vẫn × 1,001.
+
+Đường đi tới số chốt:
+
+- Lần đầu (dược tề × 1,25–1,6, nhà khá giả mua cho con, liều đột phá 8–45%, 25% chết khi hỏng): 41% đời dùng dược tề, tháp phình (Siêu Việt Giả 5,5%, Siêu Phàm Giả 10,9%), 3% đời chết vì liều đột phá; Quan tỉnh 3,1% vì chế độ tự động chỉ nhận chức khi rất chăm học; hẹn ước "lên Tier sau trong ba năm" không ai làm nổi; phân vị của người có cấp thấp hơn sàn vì phân vị trôi chậm (0,12 mỗi năm).
+- Sửa: dược tề rẻ hơn về hiệu quả, đắt hơn về giá, nhà chỉ mua khi là Quý tộc; liều đột phá 2–15%, hỏng 10% chết, chế độ tự động chỉ liều khi rất gan; người có cấp nhận chức theo tính hòa đồng hoặc chí hướng Quyền thế; hẹn ước tính bằng 3 level; sàn áp ngay.
+- Lỗi tìm thấy khi xem dòng Thân phận: bộ đếm số đời đăng ký ghi vào cùng cờ `S.flags.reg` với bảng đăng ký, nên người đã đăng ký không được giảm thuế và nước quản chặt không triệu tập ai. Đổi bộ đếm thành `regYes`; số trên là sau khi sửa.
+
+Chỗ khác thiết kế, để lại:
+
+- **Thân phận từ Tier 1** (bảng `09` mục 6.4), không từ "cấp 3" như mục 4.3; sàn theo `09`, không theo mục 4.3. **Bá tước cần Siêu Phàm Giả**, không phải Siêu Việt Giả như `09` ghi: Bá tước có thái ấp, nhà Bá tước có người dạy Tier 3, đòi Tier 3 thì gần như nhà nào cũng bị giáng.
+- **Siêu Việt Giả 5,2%** (mục tiêu 2,5%, trước bước B 4,3%): chênh với HEAD gần mức nhiễu (46 so với 38 đời; ba lần chạy của bản mới ra 4,9–5,2%), phần dôi chủ yếu nhờ dược tề. Bỏ nguồn dạy quan chức không hạ được vì các nguồn khác bù vào (hội trưởng, học viện kinh đô, sư phụ, nhà quý tộc). Để cho bước cân lại tháp (bước F).
+- **Chức ít đi nhiều** (Quan tỉnh 18% → 8%, hội trưởng 15% → 4%): đúng ý "người tu cao nắm chức quyền", nhưng Phàm Nhân giờ chỉ còn trưởng làng, trưởng thôn và lập làng. Nếu muốn dân thường có đường làm quan nhỏ thì thêm chức dưới Quan tỉnh (thư lại, lý trưởng) ở bước C.
+- Chưa làm: nhà quý tộc ba đời không ai đạt Tier thì bị giáng (NPC chưa mang Tier); NPC chưa có Tier theo tháp dân (`09` mục 3), nên quan, quý tộc, cung phụng NPC chưa so được với người chơi; dược tề chưa có người bán (dược sư ở bước C); Huyền Thoại Giả "vua chúa đối đãi ngang hàng" mới chỉ là không thuế, không bị bắt.
+- Dấy binh thành công 1,5–2,5% qua các lần chạy (HEAD 1,4%), chưa xem vì sao. Mất tước 1,6% (HEAD 0,5%): người dấy binh mất tước của nước mình, cộng vài người bị giáng hết tước vì không đạt Tier.
+- Không chạy Thử thế giới động, 100 thế giới: bước B không đổi `dynamic.js`, `realm.js` (người ra trận theo lệnh triệu tập chỉ cộng sức chiến tranh như lính nghĩa vụ cũ, khi có đời người).
+- Bản lưu cũ chạy được: trường mới (`S.elixir`, `S.flags.reg`, `S.roles.retainer`, `p.root`) tự khởi tạo khi cần; người có cấp ở bản lưu cũ chưa đăng ký nên sẽ được hỏi.
+
 ## 5. Từ đầu truyện thành sự kiện, quyết định
 
 Mã đề xuất có tiền tố `cv_` để khỏi trùng tên quyết định sẵn có (xem nhắc ở `TIEN_DO.md` mục 3).
@@ -258,7 +328,7 @@ Mỗi bước theo cách làm ở `TIEN_DO.md` mục 5 (sim 1000 đời, thử t
 | Bước | Nội dung | File chính |
 |---|---|---|
 | A (xong 15/10/2026) | Kỹ năng 5 bậc, cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, chuyển nghề theo gate 2 kỹ năng, ma lực nơi ở, người dạy, thọ nguyên, tiền đồng / bạc / vàng; sự kiện `cv_saint`; bảng Cảnh giới trong `sim.html` | `js/cult.js` mới, `life.js`, `events.js`, `talent.js`, `ui.js`, `sim.html` |
-| B | Địa vị: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên (dược tề); `cv_test`, `cv_scorn`, `cv_license`, `cv_levy`, `cv_bully`, `cv_kin`, `cv_lifespan` | `state.js`, `org.js`, `noble.js`, `talent.js`, `data/nations.js` |
+| B (xong 16/10/2026, mục 4.10) | Địa vị: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên (dược tề); `cv_test`, `cv_scorn`, `cv_license`, `cv_levy`, `cv_bully`, `cv_kin`, `cv_lifespan` | `state.js`, `org.js`, `noble.js`, `talent.js`, `data/nations.js` |
 | C | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
 | D | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
 | E | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken` | `cult.js`, `events.js` |

@@ -85,7 +85,7 @@ code{font-family:var(--font-mono);font-size:12px}
 
 <div class="page">
   <h1>Duyệt Nội Dung Vạn Kiếp</h1>
-  <p class="lede">Nội dung đời người của Vạn Kiếp từ bước 4 trở đi: sự kiện quốc gia, hội và tổ chức, học viện, tước quý tộc, thang thăng tiến theo chính thể, sinh kế và công trình; thiên phú, căn cốt, chí hướng và các quyết định định hướng đời nhân vật. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa mã nguồn trong <code>vankiep/</code>.</p>
+  <p class="lede">Nội dung đời người của Vạn Kiếp từ bước 4 trở đi: sự kiện quốc gia, hội và tổ chức, học viện, tước quý tộc, thang thăng tiến theo chính thể, sinh kế và công trình; thiên phú, căn cốt, chí hướng và các quyết định định hướng đời nhân vật; hệ sức mạnh và địa vị theo Tier. Đánh dấu từng mục là giữ, cần sửa hoặc bỏ, ghi chú chỗ muốn đổi; Claude đọc lại kết quả để sửa mã nguồn trong <code>vankiep/</code>.</p>
   <div class="progress" id="progress"></div>
   <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
   <div class="bar2">
@@ -124,7 +124,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], null,
     ['work', 'Sinh kế'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh']
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -133,6 +133,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
   // ---- Danh sách mục duyệt theo tab ----
+  const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
   const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
   const items = {
@@ -149,7 +150,8 @@ code{font-family:var(--font-mono);font-size:12px}
     aim: Object.entries(D.aims).map(([id, a]) => ({ kind: 'aim', id, name: a.nameVi })),
     tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title })),
     cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...D.cult.res.map(r => ({ kind: 'res', id: r.id, name: r.nameVi })), ...D.cult.jobtree.add.map(j => ({ kind: 'jtadd', id: j.id, name: j.nameVi })), ...D.cult.jobtree.set.map(j => ({ kind: 'jtset', id: j.id, name: j.nameVi })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
-      ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))]
+      ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))],
+    status: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'stier', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...SRULES.map(([id, name]) => ({ kind: 'srule', id, name })), ...D.status.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))]
   };
   const allItems = Object.values(items).flat();
   const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
@@ -160,7 +162,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo]) + part('Sinh kế, công trình', [...items.work, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status);
   }
 
   // ---- Tab ----
@@ -422,10 +424,50 @@ code{font-family:var(--font-mono);font-size:12px}
       + grid(part('Tier, danh xưng, level', tiers) + part('Luật', rules) + part('Cộng hưởng chiêu thức', res) + part('Cây nghề Vạn Kiếp: nghề thêm', jtAdd) + part('Cây nghề Vạn Kiếp: đổi tên, thêm lối lên', jtSet) + part('Chỉ số', stats) + part('Người dạy', teach) + part('Quyết định', decs) + part('Kỹ năng theo nghề (Người)', jobs));
   }
 
+  // ---- Địa vị theo Tier (vankiep/js/status.js, bước B; docs/09 mục 6.4, docs/07 mục 4.10) ----
+  function statusView() {
+    const T = D.status, tn = t => D.cult.tierName[t], chipL = a => a.map(x => `<span class="chip">${esc(x)}</span>`).join('');
+    const NOB = D.nobleVi, headAt = t => Object.entries(T.head).filter(([, v]) => v === t && t).map(([k]) => 'trưởng ' + TIER[k]);
+    const unlock = t => !t ? [] : [...headAt(t), ...(T.office[1] === t ? ['Quan tỉnh'] : []), ...(T.office[2] === t ? ['Đại thần'] : []), ...(T.org[1] === t ? ['quản sự, lập hội'] : []), ...(T.org[2] === t ? ['hội trưởng, trưởng chi nhánh Hiệp Hội'] : []),
+      ...NOB.map((n, r) => r && T.titleTier[r] === t ? n : null).filter(Boolean), ...(t === 2 ? ['cung phụng'] : []), ...(t === 3 ? ['cung phụng triều đình'] : [])];
+    const tiers = [0, 1, 2, 3, 4, 5].filter(t => passes('stier', String(t))).map(t => { const s = T.st[t]; return card('stier', String(t), `Tier ${t} · ${tn(t)}`, `<p style="margin:0">${esc(s.d)}</p>
+        <dl class="kv"><dt>Sàn thu nhập</dt><dd>${s.floor ? 'phân vị ' + pct(s.floor) : 'không có'}</dd><dt>Thuế</dt><dd>× ${num(s.tax)}${t && t < 5 ? ' (ở nước quản chặt phải đăng ký mới được giảm)' : ''}</dd>
+          ${s.q ? `<dt>Tầng lớp ít nhất</dt><dd>${esc(D.classes[s.q - 1])} (trừ nước có luật Đẳng cấp)</dd>` : ''}
+          <dt>Mở thêm</dt><dd class="chips">${chipL(unlock(t)) || '<span class="chip dash">không</span>'}</dd>
+          ${T.ret[t] ? `<dt>Bổng cung phụng</dt><dd>${num(T.ret[t])} × thu nhập trung vị mỗi năm</dd>` : ''}
+          <dt>Giá dược tề</dt><dd>× ${num(+(1 + .6 * t).toFixed(1))} giá gốc</dd></dl>`); });
+    const govs = l => chipL(l.map(g => (D.govs[g] || {}).vi || g)), laws = l => chipL(l.map(x => D.laws[x] || x));
+    const RULE = {
+      office: `<dl class="kv"><dt>Trưởng khu</dt><dd>${Object.entries(T.head).map(([k, v]) => `${TIER[k]}: ${v ? tn(v) : 'ai cũng được'}`).join('; ')}. Mỗi Tier bớt 6 danh vọng cần có.</dd>
+          <dt>Quan tỉnh</dt><dd>${tn(T.office[1])}; từ ${tn(3)} thì không cần thêm điều kiện học vấn, danh vọng</dd><dt>Đại thần</dt><dd>${tn(T.office[2])}; từ ${tn(4)} thì không cần thêm danh vọng, Hiểu biết</dd>
+          <dt>Hội</dt><dd>quản sự và lập hội: ${tn(T.org[1])}; hội trưởng, trưởng chi nhánh Hiệp Hội: ${tn(T.org[2])}</dd></dl>`,
+      title: `<dl class="kv"><dt>Tier để giữ tước</dt><dd>${NOB.slice(1).map((n, i) => `${n}: ${tn(T.titleTier[i + 1])}`).join('; ')}</dd>
+          <dt>Kế tước khi chưa đủ</dt><dd>giữ tạm, hạn ${T.grace} năm (kế tước khi còn nhỏ thì tính từ lúc trưởng thành); đủ Tier thì triều đình xác nhận, quá hạn thì giáng xuống bậc cao nhất mà Tier giữ được (Phàm Nhân thì mất tước). Dưới Bá tước thì mất thái ấp.</dd>
+          <dt>Phong vì công trạng</dt><dd>phải đủ Tier của tước được phong</dd><dt>Không xét Tier</dt><dd>mua tước Nam, Tử; hoàng tộc được phong Công, Hầu tước</dd></dl>`,
+      promo: `<p style="margin:0">Giá trị xét của thang thăng tiến (tab Thăng tiến) × (1 + trọng số × Tier).</p><dl class="kv">${Object.entries(T.tw).map(([g, w]) => `<dt>${esc((D.govs[g] || {}).vi || g)}</dt><dd>${num(w)} (${tn(3)}: × ${num(+(1 + 3 * w).toFixed(2))})</dd>`).join('')}</dl>`,
+      strict: `<dl class="kv"><dt>Quản chặt: chính thể</dt><dd class="chips">${govs(T.strict.gov)}</dd><dt>hoặc có luật</dt><dd class="chips">${laws(T.strict.law)}</dd>
+          <dt>Ở nước quản chặt</dt><dd>người có cấp phải đăng ký (Sổ người có cấp) mới được giảm thuế, bị triệu tập khi chiến tranh; đã đăng ký thì không nộp phí giấy phép pháp sư riêng</dd>
+          <dt>Quản lỏng: chính thể</dt><dd class="chips">${govs(T.lax.gov)}</dd><dt>hoặc có luật</dt><dd class="chips">${laws(T.lax.law)}</dd><dt>Ở nước quản lỏng</dt><dd>người có cấp ức hiếp phàm nhân (Kẻ có cấp)</dd>
+          <dt>Mọi nước</dt><dd>người có cấp miễn thuế đầu người, miễn nghĩa vụ của dân thường; ${tn(5)} không nộp thuế, không bị bắt vì luật cấm phép</dd></dl>`,
+      retainer: `<p style="margin:0">Từ ${tn(2)}: triều đình (từ ${tn(3)}), nhà quý tộc hoặc hội ở khu nhà mời về nuôi. Bổng mỗi năm khi còn ở nước đó: ${T.ret.map((v, t) => v ? tn(t) + ' ' + num(v) : null).filter(Boolean).join(', ')} × thu nhập trung vị. Mỗi năm 10% phải ra tay (hộ tống, giữ nhà, đấu thay chủ): thắng thì có thưởng, công trạng; thua thì bị thương. Rời nước thì mất chỗ.</p>`,
+      elixir: `<p style="margin:0">Mua mỗi năm, điểm rèn năm sau nhân theo loại. Giá × thu nhập trung vị × (1 + 0,6 × Tier). Thiếu tiền thì tự hạ xuống loại rẻ hơn.</p>
+        <dl class="kv">${T.elixir.slice(1).map(e => `<dt>${esc(e.nameVi)}</dt><dd>điểm rèn × ${num(e.mult)} · ${num(e.cost)} × trung vị mỗi năm</dd>`).join('')}<dt>Tuổi thiếu niên</dt><dd>nhà mua: Thương gia loại thường, Quý tộc hoặc nhà quý tộc loại tốt, hoàng tộc thượng hạng</dd></dl>`,
+      blood: `<p style="margin:0">Lúc sinh, cha mẹ cũng có căn cốt (bốc như con; nhà quý tộc nghiêng lên ${num(T.blood.house)}, hoàng tộc ${num(T.blood.royal)}). Con có ${pct(T.blood.inherit)} cơ hội lấy bậc trung bình của cha mẹ (làm tròn), còn lại giữ bậc tự bốc. Dân thường vì vậy trung bình gần như không đổi; nhà quyền quý giỏi hơn qua nhiều đời.</p>`
+    };
+    const rules = SRULES.filter(([id]) => passes('srule', id)).map(([id, name]) => card('srule', id, name, RULE[id]));
+    const decs = T.decs.filter(d => passes('dec', d.id)).map(d => card('dec', d.id, d.title, `<div class="meta">${d.ev ? 'sự kiện' + (d.rep ? `, lặp lại cách ${d.gap || 1} lượt` : ', một lần một đời') : `quyết định · ưu tiên ${d.prio}`}</div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(d.when)}</dd></dl>
+        ${d.texts.length ? `<ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${d.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${d.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`));
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Địa vị theo Tier', 'Bước B của định hướng xã hội tu luyện (docs/07 mục 4.3, bảng docs/09 mục 6.4): Tier là thân phận. Từ Chức Nghiệp Giả là người có cấp, được ghi tên vào sổ; Tier càng cao thì sàn thu nhập, chức quan, tước, chỗ cung phụng càng cao. Câu chữ của sự kiện, quyết định trích từ mã nguồn; ‹…› là chỗ game điền vào.')
+      + grid(part('Thân phận theo Tier', tiers) + part('Luật', rules) + part('Sự kiện, quyết định', decs));
+  }
+
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

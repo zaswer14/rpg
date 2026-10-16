@@ -155,8 +155,7 @@ window.LifeSim = window.LifeSim || {};
     { id: 'edu3', nameVi: 'Học viện cao cấp', tier: 3, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
     { id: 'vo', nameVi: 'Học viện cao cấp ở kinh đô, ngành Võ bị', tier: 4, schools: WAR, cond: 'ngành Võ bị, học ở kinh đô (docs/09 mục 6.1)' },
     { id: 'phap', nameVi: 'Học viện cao cấp ở kinh đô, ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'ngành Pháp thuật, học ở kinh đô' },
-    { id: 'officer', nameVi: 'Chức trong hội (quản sự, phó đoàn, hội trưởng)', tier: 3, schools: 'theo loại hội: đoàn lính đánh thuê dạy trường phái chiến sĩ; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối', cond: 'giữ chức từ quản sự trở lên' },
-    { id: 'office', nameVi: 'Quan chức nhà nước', tier: 3, schools: null, cond: 'làm Quan tỉnh hoặc Đại thần (nhà nước mướn thầy cho người của mình)' },
+    { id: 'officer', nameVi: 'Hội trưởng', tier: 3, schools: 'theo loại hội: đoàn lính đánh thuê dạy trường phái chiến sĩ; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối', cond: 'là hội trưởng, đoàn trưởng (quản sự, phó đoàn chỉ có nguồn Tier 2 ở dòng trên; bước B, docs/07 mục 4.10)' },
     { id: 'master', nameVi: 'Sư phụ cao thủ Tier s', tier: 's', schools: 'của sư phụ', cond: 'là đệ tử (cả sau khi xuất sư)' },
     { id: 'noble', nameVi: 'Nhà quý tộc', tier: 3, schools: null, cond: 'sinh ra trong nhà quý tộc hoặc có tước' },
     { id: 'noble3', nameVi: 'Nhà từ Hầu tước', tier: 4, schools: null, cond: 'tước hoặc nhà từ Hầu tước (mướn một Thủ Hộ Giả về dạy)' },
@@ -175,11 +174,11 @@ window.LifeSim = window.LifeSim || {};
     if (F.soldier > 0 || Object.values(r.orgs || {}).some(m => m.rank >= 1)) push(2, 'guild');
     if (eLv >= 2) push(2, 'edu2');
     if (eLv >= 3) push(3, 'edu3');
-    for (const [id, m] of Object.entries(r.orgs || {})) {   // chức từ quản sự trở lên: hội có người dạy giỏi cho người của mình
-      const o = m.rank >= 1 && G.orgById ? G.orgById(S.world, id) : null;
+    for (const [id, m] of Object.entries(r.orgs || {})) {   // hội trưởng: hội mướn người dạy giỏi (quản sự chỉ có nguồn "guild" Tier 2; docs/07 mục 4.10)
+      const o = m.rank >= 2 && G.orgById ? G.orgById(S.world, id) : null;
       if (o && (OFFICER[o.kind] || []).includes(school)) { push(3, 'officer'); break; }
     }
-    if (r.office) push(3, 'office');
+    // Quan chức không còn là nguồn dạy (bước B, docs/07 mục 4.10): Quan tỉnh đã cần Siêu Phàm Giả, nguồn này chỉ đẩy thêm người lên Tier 3.
     const capEdu = E && (E.capital || (E.cur && E.cur.lv >= 3 && G.isCapital(E.cur.school)));
     if (eLv >= 3 && capEdu && track === 'vo' && WAR.includes(school)) push(4, 'vo');
     if (eLv >= 3 && capEdu && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
@@ -246,7 +245,7 @@ window.LifeSim = window.LifeSim || {};
   const autoLearn = X => X.headless || (X.S.auto && X.autoDecide) || (X.S.learnAuto || {})[jobTier(X.S)];
   G.skTrain = (X, pts) => {
     const S = init(X.S), C = G.CULT;
-    let left = pts * G.manaMult(S) * C.rate + (S.skBank || 0); S.skBank = 0;
+    let left = pts * G.manaMult(S) * C.rate * (S.flags.elixirM || 1) + (S.skBank || 0); S.skBank = 0;   // dược tề (js/status.js)
     for (let n = 0; n < 60 && left > 1e-6; n++) {
       const t = G.skTarget(S);
       if (t && t.pick) {

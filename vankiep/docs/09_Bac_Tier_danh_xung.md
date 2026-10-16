@@ -177,7 +177,7 @@ Tier 1 giờ đã hiếm (3% dân) nên thân phận chính danh nên bắt đ�
 | 4 Thủ Hộ Giả | nước nào cũng muốn giữ: phong tước, đất; nước khác coi như một đạo quân; sàn 0,93 |
 | 5 Huyền Thoại Giả | đứng ngoài luật của một nước; vua chúa phải đối đãi ngang hàng |
 
-Bảng này thay cách đọc "cấp r thành Tier ⌈r / 2⌉" ở `08` mục 7.3. Số cụ thể chốt ở bước B.
+Bảng này thay cách đọc "cấp r thành Tier ⌈r / 2⌉" ở `08` mục 7.3. Số cụ thể chốt ở bước B (16/10/2026, `07` mục 4.10, `js/status.js`): sàn đúng như bảng, Huyền Thoại Giả 0,97; kế tước Bá cần Siêu Phàm Giả (không phải Siêu Việt Giả), Hầu, Công cần Siêu Việt Giả.
 
 ### 6.5. Danh sách Thủ Hộ Giả, Huyền Thoại Giả (đề xuất, làm sau)
 
@@ -259,7 +259,7 @@ Nguồn dạy lúc lên Tier (đếm trên đời trưởng thành): Tier 2 nh�
 
 Chỗ lệch, để lại:
 
-- **Siêu Việt Giả 4,1%**, trên mục tiêu 2,5%: nguồn dạy Tier 3 từ chức trong hội và quan chức (thêm ở `08` mục 12.1 khi Tier 3 còn thiếu) giờ hơi dư. Núm: bỏ quan chức khỏi nguồn dạy Tier 3, hoặc chỉ tính hội trưởng.
+- **Siêu Việt Giả 4,1%**, trên mục tiêu 2,5%: nguồn dạy Tier 3 từ chức trong hội và quan chức (thêm ở `08` mục 12.1 khi Tier 3 còn thiếu) giờ hơi dư. Núm: bỏ quan chức khỏi nguồn dạy Tier 3, hoặc chỉ tính hội trưởng. Bước B làm cả hai (`07` mục 4.10) mà vẫn 4,9–5,2%: các nguồn khác bù vào, dược tề đẩy thêm.
 - **Huyền Thoại Giả** 0–3 đời mỗi 1000 đời qua các lần chạy: số nhỏ, muốn đo chắc cần 5 000 đời.
 - **Mastery dư +25 đến +47** so với yêu cầu nghề kế tiếp lúc max level (trước +10 đến +23): giá mới làm mỗi Tier dài hơn, săn quái, sinh kế cũng cho mastery suốt thời gian đó. Thử thách chuyển nghề vì thế gần như chắc qua; chỗ nghẽn thật là người dạy.
 - Chỉ số mới chỉ vào sức; thăng hoa chưa đổi gì khác (Thể giảm chết, Nhanh chạy thoát… vẫn là việc sau, `08` mục 6.1). Cộng hưởng chỉ có bảy kiểu theo loại kỹ năng; khi kỹ năng có hiệu quả riêng (bước F) thì thêm cộng hưởng theo tên.

@@ -34,6 +34,7 @@ window.LifeSim = window.LifeSim || {};
     let t = n.tax;
     if (S.work === 'merchant' && n.laws.includes('free_trade')) t /= 2;
     if (n.laws.includes('ancestor_tithe')) t += .05;
+    if (G.statusTax) t *= G.statusTax(S);   // người có cấp: miễn thuế đầu người, Tier cao giảm nhiều hơn (js/status.js)
     return t;
   };
   G.incomeMult = S => {
@@ -46,6 +47,7 @@ window.LifeSim = window.LifeSim || {};
     // Hội viên phường nghề đúng nghề mình (js/org.js).
     if (G.orgIncome) m *= G.orgIncome(S);
     if (G.eduIncome) m *= G.eduIncome(S);   // học vấn (js/edu.js)
+    if (G.statusIncome) m *= G.statusIncome(S);   // chứng chỉ người có cấp (js/status.js)
     return m;
   };
 
@@ -122,13 +124,15 @@ window.LifeSim = window.LifeSim || {};
     if (!n || S.undead) return;
     if (n.laws.includes('ancestor_tithe')) X.add('h', 1);
     // Lệnh nghĩa vụ: một lần trong 10 năm đầu tuổi trưởng thành.
-    if (n.laws.includes('conscript') && st === 'adult' && !S.flags.conscript && S.age * R.ypt - R.adult < 10) S.flags.conscriptQ = n.idx;
-    if (st === 'teen' || st === 'adult' || st === 'elder') {
+    if (n.laws.includes('conscript') && st === 'adult' && !S.flags.conscript && !(G.sTier && G.sTier(S)) && S.age * R.ypt - R.adult < 10) S.flags.conscriptQ = n.idx;
+    // Huyền Thoại Giả đứng ngoài luật của một nước (js/status.js); người có cấp đã đăng ký thì giấy phép nằm trong sổ, không nộp phí riêng.
+    const above = G.sTier && G.sTier(S) >= 5, inReg = G.regOf && G.regOf(S) > 0;
+    if ((st === 'teen' || st === 'adult' || st === 'elder') && !above) {
       if (n.laws.includes('ban_death') && (best(S, ['Necromancy', 'Soul', 'Curse']) >= 15 || S.faith === 'dark') && X.chance(.04)) G.caught(X, n, 'tử thuật');
       if (S.dead) return;
       if (best(S, ['Arcane', 'Fire', 'Frost', 'Lightning']) >= 15) {
         if (n.laws.includes('ban_arcane')) { if (X.chance(.04)) G.caught(X, n, 'luyện phép'); }
-        else if (n.laws.includes('mage_license') && !(n.template === 'E2' && S.race === n.race)) {
+        else if (n.laws.includes('mage_license') && !(n.template === 'E2' && S.race === n.race) && !inReg) {
           const fee = 8 * (1 + X.ctier(S));
           if (S.gold >= fee) { X.money(-fee); if (S.flags.license == null || S.age - S.flags.license >= 5) { S.flags.license = S.age; X.log(`Nộp ${G.coin(fee)} gia hạn giấy phép pháp sư của ${n.name}.`, 'info'); } }
           else if (X.chance(.04)) G.caught(X, n, 'hành nghề phép không giấy phép');
@@ -205,7 +209,7 @@ window.LifeSim = window.LifeSim || {};
         if (X.chance(.6)) { X.add('so', 5); return { t: 'Bạn giữ đúng lời hứa trả nợ trước tiết đông chí. Khế ước tự cháy thành tro.', k: 'good', f: G.LAWS.contract_law.desc }; }
         X.cond('curse'); X.add('h', -6);
         return { t: 'Bạn lỡ hẹn trả một món nợ nhỏ. Sáng hôm sau, khế ước đã khắc vào da tay bạn.', k: 'bad', f: G.LAWS.contract_law.desc }; } },
-    { id: 'law_tax_up', st: ['adult', 'elder'], c: S => flesh(S) && !!G.here(S).n && G.here(S).n.tax >= .2, w: 1, rep: true, gap: 4, run(S, X) {
+    { id: 'law_tax_up', st: ['adult', 'elder'], c: S => flesh(S) && !!G.here(S).n && G.here(S).n.tax >= .2 && !(G.sTier && G.sTier(S)), w: 1, rep: true, gap: 4, run(S, X) {
         const n = G.here(S).n, t = Math.round(Math.max(0, S.gold) * .1); X.money(-t); X.add('h', -3);
         return { t: `${n.name} thu thêm một khoản thuế đầu người. Bạn nộp ${G.coin(t)}.`, k: 'bad' }; } }
   );

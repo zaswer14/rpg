@@ -105,7 +105,7 @@ window.LifeSim = window.LifeSim || {};
   G.careerYear = function (S, X) {
     const st = X.stage(S);
     if (st === 'adult' && !S.work && !S.undead) S.flags.workQ = true;
-    if (S.work === 'adventurer') S.pct = G.clamp(.1 + S.fame / 110, .05, .97);
+    if (S.work === 'adventurer') S.pct = Math.max(G.clamp(.1 + S.fame / 110, .05, .97), G.pctFloor ? G.pctFloor(S) : 0);   // sàn theo Tier (js/status.js)
   };
 
   G.placeYear = function (S, X) {

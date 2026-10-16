@@ -208,6 +208,7 @@
       ['Sức mạnh', `${X.power(S).toFixed(2)} Tier`],
       ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
+      ['Thân phận', G.statusText ? G.statusText(S) : G.tierName(X.ctier(S))],   // địa vị theo Tier (js/status.js, docs/09 mục 6.4)
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
       ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
@@ -215,6 +216,7 @@
       ['Nước', nat ? `${nat.name} · thuế ${Math.round(G.taxRate(S) * 100)}%${{ fav: ' · được ưu ái', wary: ' · bị dè chừng' }[G.attitude(S)] || ''}` : 'đất vô chủ']
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
+    if (G.statusTip) { const i = kv.findIndex(r => r[0] === 'Thân phận'); $('cKv').children[i * 2 + 1].title = G.statusTip(S); }
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
     // Level, kỹ năng đang rèn, chỉ số (js/cult.js, docs/08).
     const sp = G.skProgress(S), t = sp.t;
