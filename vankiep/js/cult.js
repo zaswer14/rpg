@@ -105,8 +105,12 @@ window.LifeSim = window.LifeSim || {};
   };
   G.mySkills = S => G.jobSkills(S.race, S.job, S.faith);
   G.skRewards = (key, m) => (J.skillRewards || {})[idOfKey(key)] || { 5: { [G.MASTERY_STAT[m] || 'VIT']: 1 } };
-  // Tên tạm tới bước F: kỹ năng tạm theo nghề, kỹ năng có id theo id.
+  // Tên, mô tả (data/skills.js G.SKILL_NAMES, bước F): tra theo khóa đủ (bộ chung `2:combat#3`), rồi theo id (kỹ năng có tên,
+  // gate tạm `paladin#g1`). Không có thì tên tạm như trước.
+  const nameRec = key => { const N = G.SKILL_NAMES || {}; return N[key] || N[idOfKey(key)] || null; };
+  G.skDesc = key => { const r = nameRec(key); return r ? r[1] : ''; };
   G.skName = key => {
+    const r = nameRec(key); if (r) return r[0];
     const id = idOfKey(key), h = id.indexOf('#');
     if (h < 0) { const s = id.replace(/_/g, ' '); return s[0].toUpperCase() + s.slice(1); }
     const head = id.slice(0, h), tail = id.slice(h + 1), sc = J.schools[head];
@@ -299,10 +303,25 @@ window.LifeSim = window.LifeSim || {};
   };
 
   // ── Bản lưu cũ ──
+  // S.v 3 trước bộ kỹ năng chung (16/10/2026): kỹ năng tạm theo nghề `<Tier>:<nghề>#k` đổi sang kỹ năng bộ chung
+  // còn trống trong danh sách của chính nghề đó (giữ bậc, chỗ nâng, chỗ lắp).
+  const poolMigrate = S => {
+    const chain = [...(S.jobHist || []), S.job], ren = {};
+    for (const job of chain) {
+      const old = Object.keys(S.sk).filter(k => { const id = idOfKey(k), h = id.indexOf('#'); return h > 0 && id.slice(0, h) === job && /^\d+$/.test(id.slice(h + 1)); });
+      if (!old.length) continue;
+      const free = G.jobSkills(S.race, job, S.faith).filter(s => !S.sk[s.key] && !s.gateFor.length).map(s => s.key);
+      old.forEach((k, i) => { if (free[i]) ren[k] = free[i]; });
+    }
+    if (!Object.keys(ren).length) return;
+    for (const [a, b] of Object.entries(ren)) { S.sk[b] = S.sk[a]; delete S.sk[a]; }
+    for (const t in S.up) S.up[t] = S.up[t].map(k => ren[k] || k);
+    if (S.equip) S.equip = S.equip.map(k => ren[k] || k);
+  };
   // S.v 2 trước bước A (S.sk chưa có, level 1–60 theo kinh nghiệm) hoặc bước A (S.sk là 6 mảng, level 0–22):
   // nghề đã qua max đủ 10 kỹ năng (giữ cặp gate của nghề kế trên đường đi), nghề đang làm max theo tỉ lệ tiến độ cũ.
   G.skMigrate = S => {
-    if (S.v >= 3 && S.sk && !Array.isArray(S.sk)) return;
+    if (S.v >= 3 && S.sk && !Array.isArray(S.sk)) { poolMigrate(S); return; }
     const old = S.sk, L = S.level || 0, jt = jobTier(S);
     S.sk = {}; S.up = {}; S.equip = null;
     const f = Array.isArray(old) ? G.clamp((L - (jt ? 2 + 4 * (jt - 1) : 0)) / (jt ? 4 : 2), 0, 1) : G.clamp((L - 10 * jt) / 10, 0, 1);
@@ -331,7 +350,7 @@ window.LifeSim = window.LifeSim || {};
         const lose = open.filter(d => !G.skOpenDirs(S, s.key).includes(d));
         const rw = G.skRewards(s.key, s.m), r5 = Object.entries(rw).map(([r, m]) => `bậc ${r}: ${statTxt(m)}`).join('; ');
         const gate = s.gateFor.length ? ` · gate vào ${s.gateFor.map(id => X.jobName(S, id)).join(', ')}` : '';
-        return { k: s.key, label: G.skName(s.key), sub: `${G.mv(s.m)}${gate} · ${r5}` + (lose.length ? ` · ⚠ không còn chỗ cho cặp gate vào ${lose.map(d => X.jobName(S, d.id)).join(', ')}` : '') };
+        return { k: s.key, label: G.skName(s.key), sub: `${G.skDesc(s.key) ? G.skDesc(s.key) + ' · ' : ''}${G.mv(s.m)}${gate} · ${r5}` + (lose.length ? ` · ⚠ không còn chỗ cho cặp gate vào ${lose.map(d => X.jobName(S, d.id)).join(', ')}` : '') };
       });
       return { title: 'Nâng kỹ năng mới', body: `${X.jobName(S)}: còn ${left} / ${G.SK_UP} chỗ nâng ở Tier ${jt}. Kỹ năng không được nâng chỉ học tới bậc 1. Muốn lên nghề Tier ${jt + 1} thì cặp kỹ năng của nghề đó phải nằm trong mười kỹ năng được nâng.`,
         choices: [...choices, { k: 'auto', label: 'Để tự chọn cả Tier này', sub: 'Ưu tiên cặp kỹ năng của nghề theo hướng đi.' }] };

@@ -400,7 +400,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const teach = C.teachers.filter(t => passes('teacher', t.id)).map(t => card('teacher', t.id, t.nameVi, `<dl class="kv"><dt>Dạy tới</dt><dd>Tier ${esc(t.tier)}</dd><dt>Trường phái</dt><dd>${esc(t.schools)}</dd><dt>Điều kiện</dt><dd>${esc(t.cond)}</dd></dl>`));
     const jobs = C.jobs.filter(j => passes('jobsk', j.id)).map(j => card('jobsk', j.id, `${j.nameVi} · T${j.tier}`, `<div class="meta">${esc(j.school)}${j.req ? ' · yêu cầu ' + esc(j.req) : ''}${j.trial ? ' · ' + esc(j.trial) : ''}</div>
         <dl class="kv"><dt>Nghề kế tiếp</dt><dd>${j.next.length ? esc(j.next.join(', ')) : 'không còn (nghề cuối đường)'}</dd></dl>
-        <ul class="lines">${j.skills.map(s => `<li>${s.gate.length ? '◆ ' : ''}${esc(s.name)} <small>· ${esc(s.m)}${s.gate.length ? ' · gate vào ' + esc(s.gate.join(', ')) : ''} · ${esc(s.rw)}</small></li>`).join('')}</ul>`));
+        <ul class="lines">${j.skills.map(s => `<li>${s.gate.length ? '◆ ' : ''}${esc(s.name)} <small>· ${s.d ? esc(s.d) + ' · ' : ''}${esc(s.m)}${s.gate.length ? ' · gate vào ' + esc(s.gate.join(', ')) : ''} · ${esc(s.rw)}</small></li>`).join('')}</ul>`));
     const dec = (id, title, d, when) => passes('dec', id) ? [card('dec', id, title, `<div class="meta">ưu tiên ${d.prio}</div><dl class="kv"><dt>Khi nào</dt><dd>${esc(when)}</dd></dl><ul class="lines">${d.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`)] : [];
     const decs = [...dec('cv_learn', 'Nâng kỹ năng mới', C.learn, 'Còn chỗ nâng ở Tier hiện tại và mọi kỹ năng đã nâng đã max (chế độ tự động chọn ngay, không hỏi)'),
       ...dec('promote', 'Thử thách chuyển nghề', C.promote, 'Đủ điều kiện vào ít nhất một nghề kế tiếp')];

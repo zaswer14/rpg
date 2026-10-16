@@ -11,7 +11,7 @@
 <script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script>
 <script src="../shared/bestiary/bestiary.js"></script><script src="../shared/terrain/ecology.js"></script><script src="../shared/terrain/terrain.js"></script>
 <script src="../shared/names/names.js"></script>
-<script src="../vankiep/js/core.js"></script><script src="../vankiep/data/world.js"></script><script src="../vankiep/data/nations.js"></script>
+<script src="../vankiep/js/core.js"></script><script src="../vankiep/data/world.js"></script><script src="../vankiep/data/nations.js"></script><script src="../vankiep/data/skills.js"></script>
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
@@ -107,7 +107,7 @@ const data = {
     const jobs = G.jobs.jobs.filter(j => ['native', 'foreign', 'origin'].includes(acc[j.id]) || j.id === L.races.human.origin.id).filter(j => !j.hidden && !j.faith).sort((a, b) => a.tier - b.tier)
       .map(j => ({ id: j.id, nameVi: nm(j.id), tier: j.tier, school: j.tier ? (L.schools[j.school] || {}).nameVi : 'nghề gốc', req: Object.entries(j.req || {}).map(([m, v]) => `${G.mv(m)} ${v}`).join(', '), trial: j.trial || '',
         next: G.succOf('human', j.id, null).map(d => nm(d.id)),
-        skills: G.jobSkills('human', j.id, null).map(s => ({ name: G.skName(s.key), m: G.mv(s.m), gate: s.gateFor.map(nm), rw: stTxt(G.skRewards(s.key, s.m)), named: !s.id.includes('#') })) }));
+        skills: G.jobSkills('human', j.id, null).map(s => ({ name: G.skName(s.key), d: G.skDesc(s.key), m: G.mv(s.m), gate: s.gateFor.map(nm), rw: stTxt(G.skRewards(s.key, s.m)), named: !s.id.includes('#') })) }));
     const D1 = G.DECISIONS.cv_learn, D2 = G.DECISIONS.promote;
     return { cost: G.SK_COST, cfg: G.CULT, list: G.SK_LIST, up: G.SK_UP, lvTier: G.LV_TIER, maxLv: G.MAX_LV, loadout: G.LOADOUT,
       stats: G.STATS.map(k => ({ id: k, nameVi: G.STAT_VI[k], ms: Object.keys(G.MASTERY_STAT).filter(m => G.MASTERY_STAT[m] === k).map(G.mv),

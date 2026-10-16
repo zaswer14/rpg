@@ -37,6 +37,7 @@ Trang duyệt nhanh (claude.ai, lưu quyết định trong db, collection `revie
 |---|---|
 | `data/world.js` | chủng tộc, tầng lớp, sinh kế (`G.WORKS`: bld / role / town / land / guild / banLaw / seaBand), 16 vùng × 4 khu, `G.SEAS` (7 vùng biển × 4 tầng, thời tiết), `G.SEA_BAND_W`, `G.SHIPS`, `G.BAND_W`, nguyên nhân chết (có `shipwreck`), `G.DUNGEON_TIERS` (dải Tier 3 tầng di tích theo biome), `validateWorld` (kiểm vùng đất, vùng biển, tầng di tích `G.DG`); gán `G.TERRAIN`, `G.FEATURES`, `G.FEATURE_SPAWN`, `G.NAMES` từ phần chung |
 | `data/nations.js` | `G.GOVS`, `G.LAWS`, `G.RACE_SETTLE`, `G.BUILDINGS`, `G.NATION_TEMPLATES` (50), `G.QUIRKS` |
+| `data/skills.js` | tên, mô tả kỹ năng `G.SKILL_NAMES` (docs/08 mục 3.1): id, bộ chung `<Tier>:<trường phái>#k`, gate tạm `<nghề>#g1/g2`; `js/cult.js` `G.skName`, `G.skDesc` đọc |
 | `../shared/terrain/terrain.js` | (phần chung) `JobLibrary.terrain`: `biomes` = `G.TERRAIN` (lệch độ cao / ẩm / nhiệt, `no`, `wild`), `features` = `G.FEATURES`, `featureSpawn` = `G.FEATURE_SPAWN` |
 | `../shared/terrain/ecology.js` | (phần chung) 10 biome + 44 loài thêm vào bestiary thư viện (8 loài biển cuối danh sách) |
 | `../shared/names/names.js` | (phần chung) kho tên `JobLibrary.names` = `G.NAMES` |

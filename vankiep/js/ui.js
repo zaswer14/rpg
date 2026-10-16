@@ -269,7 +269,7 @@
     };
     const rows = list.map(s => {
       const isUp = up.includes(s.key), cap = !isUp && up.length >= G.SK_UP;
-      const sub = `${G.mv(s.m)}${s.gateFor.length ? ' · gate vào ' + s.gateFor.map(id => X.jobName(S, id)).join(', ') : ''} · ${isUp ? 'được nâng' : cap ? 'chỉ tới bậc 1' : 'chưa chọn nâng'}`;
+      const sub = `${G.skDesc(s.key) ? G.skDesc(s.key) + ' · ' : ''}${G.mv(s.m)}${s.gateFor.length ? ' · gate vào ' + s.gateFor.map(id => X.jobName(S, id)).join(', ') : ''} · ${isUp ? 'được nâng' : cap ? 'chỉ tới bậc 1' : 'chưa chọn nâng'}`;
       return row(s.key, G.skName(s.key), sub, (s.gateFor.length ? 'gate ' : '') + (cap ? 'cap' : ''));
     });
     const mine = new Set(list.map(s => s.key));
