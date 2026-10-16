@@ -73,7 +73,7 @@ window.LifeSim = window.LifeSim || {};
   };
 
   // Đường bộ từ ô a tới ô b. Trả về { cells, cost, days, locked (số ô tầng khóa), lockedTier, onRoad (tỉ lệ ô trên đường), cap } hoặc null.
-  G.capOf = S => G.tierOf(S.level) + (S.reckless ? 2 : 1);
+  G.capOf = S => G.tierOf(S) + (S.reckless ? 2 : 1);
   G.findRoute = function (a, b, S, opt = {}) {
     if (a == null || b == null) return null;
     const W = G.map.W, cap = G.capOf(S), T = tables(), TC = T.cost, LO = T.lo, esc = !!opt.escort;

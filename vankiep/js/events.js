@@ -74,16 +74,16 @@ window.LifeSim = window.LifeSim || {};
       when: (S, X) => ['teen', 'adult', 'elder'].includes(X.stage(S)) && G.nextJobs(X).length > 0,
       build(S, X) {
         const list = G.nextJobs(X).slice(0, 3);
-        return { title: 'Thử thách chuyển nghề', body: `Nghề hiện tại: ${X.jobName(S)} (Tier ${X.job(S).tier}). Bạn đủ điều kiện dự thử thách.`,
+        return { title: 'Thử thách chuyển nghề', body: `Nghề hiện tại: ${X.jobName(S)} (Tier ${X.job(S).tier}), level ${S.level}. Bạn đủ điều kiện dự thử thách.`,
           fact: list[0].job.summary || null,
-          choices: [...list.map(e => ({ k: e.job.id, label: `${X.jobName(S, e.job.id)} · T${e.job.tier}`, sub: `${e.job.trial || 'Thử thách'}${e.access === 'foreign' ? ' · ngoại lai' : ''}${e.job.faith ? ' · ' + J.faiths[e.job.faith].nameVi : ''}${e.job.summary ? ' — ' + e.job.summary : ''}` })),
+          choices: [...list.map(e => ({ k: e.job.id, label: `${X.jobName(S, e.job.id)} · T${e.job.tier}`, sub: `${e.job.trial || 'Thử thách'} · ${Math.round(G.promoteP(S, X, e.job) * 100)}%${e.access === 'foreign' ? ' · ngoại lai' : ''}${e.job.faith ? ' · ' + J.faiths[e.job.faith].nameVi : ''}${e.job.summary ? ' — ' + e.job.summary : ''}` })),
             { k: 'wait', label: 'Chưa phải lúc', sub: 'Luyện thêm một năm.' }] };
       },
       apply(S, X, k) {
         if (k === 'wait') return 'Bạn chờ thêm.';
-        const j = G.jobs.byId[k], p = G.clamp(.5 + (X.power(S) - j.tier) * .25 + S.hl / 400, .2, .95);
+        const j = G.jobs.byId[k], p = G.promoteP(S, X, j);
         if (X.rnd() < p) {
-          S.jobHist.push(S.job); S.job = k; G.skSync(X); S.fame = Math.min(100, S.fame + j.tier * 2); X.add('h', 6);
+          S.jobHist.push(S.job); S.job = k; G.skSync(X); G.equipFill(S); S.fame = Math.min(100, S.fame + j.tier * 2); X.add('h', 6);
           return `Vượt qua. Bạn trở thành ${X.jobName(S)}.` + (j.marker ? ` Dấu hiệu nghề: ${j.marker}.` : '');
         }
         X.add('hl', -6); X.add('h', -4);
@@ -306,6 +306,12 @@ window.LifeSim = window.LifeSim || {};
   };
 
   G.gearCost = n => Math.round(40 * Math.pow(n, 1.7));
+  // Tỉ lệ qua thử thách chuyển nghề (docs/08 mục 7.2): sức so với Tier đích, mastery chính vượt req bao nhiêu, Sinh lực.
+  G.promoteP = (S, X, j) => {
+    const [m, v] = Object.entries(j.req || {})[0] || [null, 0], bonus = X.access(S, j.school) === 'foreign' ? 15 : 0;
+    const over = m ? (S.mastery[m] || 0) - v - bonus : 0;
+    return G.clamp(.45 + .25 * (X.power(S) - j.tier + 1) + over / 100 + S.hl / 400, .15, .95);
+  };
 
   // Di chuyển sang vùng khác: G.moveTo ở js/travel.js (hành trình có đường đi, gặp quái dọc đường, trạm biên giới).
 
@@ -430,9 +436,9 @@ window.LifeSim = window.LifeSim || {};
         const z = G.ZONE[S.zoneSel].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null;
         const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(30 * Math.pow(1 + sp.tier, 2)) };
         return { t: `Bảng tin Hội có lệnh mới: thủ lĩnh ${sp.nameVi} ở ${z.nameVi}.`, k: 'info' }; } },
-    { id: 'ad_lord', st: ['adult', 'elder'], undead: 'any', c: S => { const R = X0(S); return R.lord && !S.world.lordSeen[R.lord.species] && S.level >= 16; }, w: 4, run(S, X) {
+    { id: 'ad_lord', st: ['adult', 'elder'], undead: 'any', c: S => { const R = X0(S); return R.lord && !S.world.lordSeen[R.lord.species] && S.level >= 40; }, w: 4, run(S, X) {
         S.flags.lordQ = { ...X0(S).lord }; return { t: `Mặt đất ở ${X0(S).nameVi} rung. Chúa vùng đang thức.`, k: 'big' }; } },
-    { id: 'ad_lord_far', st: ['child', 'teen', 'adult', 'elder'], c: S => { const R = X0(S); return R.lord && S.level < 16; }, w: .8, rep: true, gap: 15, run(S, X) {
+    { id: 'ad_lord_far', st: ['child', 'teen', 'adult', 'elder'], c: S => { const R = X0(S); return R.lord && S.level < 40; }, w: .8, rep: true, gap: 15, run(S, X) {
         const sp = G.B.byId[X0(S).lord.species]; X.add('h', -4); return { t: `${sp.nameVi} nổi lên ở rìa ${X0(S).nameVi}. Ba làng bị xóa khỏi bản đồ. Người ta đếm xác cả tháng.`, k: 'bad', f: sp.note }; } },
     { id: 'ad_war', st: ['adult'], c: S => G.local(S).war > 0 && !S.undead, w: 6, rep: true, gap: 1, run(S, X) {
         if (['guard', 'adventurer'].includes(S.work) || S.traits.bold > .7) {

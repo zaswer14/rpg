@@ -384,7 +384,7 @@ window.LifeSim = window.LifeSim || {};
             S.fame = Math.min(100, S.fame + won); X.add('so', 3);
             return won === 2 ? 'Chuyến đi trót lọt. Đoàn mời bạn lần sau đi tiếp.' : won ? 'Một thắng một thua; cả đoàn về đủ người.' : 'Chuyến đi hỏng. Cả đoàn lếch thếch quay về.';
           }
-        case 'porter': X.addXp(35 * (1 + S.level * .14)); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cả tháng, nghe hết chuyện của dân mạo hiểm.';
+        case 'porter': X.addXp(60); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cả tháng, nghe hết chuyện của dân mạo hiểm.';
         case 'kneel': if (X.chance(kneelP(S))) return hermit(S, X); X.add('hl', -8); X.add('h', -4); return 'Cửa không mở. Bạn xuống núi với hai đầu gối sưng.';
         case 'pay': X.money(-gift(S, X)); if (X.chance(.6)) return hermit(S, X); return 'Ông nhận lễ, uống một chén trà rồi tiễn bạn về.';
         case 'visit': X.trainYear(.35); X.add('h', 4); return 'Sư phụ xem bạn đánh một bài, sửa đúng hai chỗ.';
@@ -442,9 +442,9 @@ window.LifeSim = window.LifeSim || {};
     }
   };
 
-  // ── Bình cảnh: chạm mỗi Tier cảnh giới (1 → 5, js/cult.js) thì có cơ hội tẩy tủy, nâng căn cốt một bậc. Khóa cờ giữ số cũ 10 × Tier để bản lưu cũ không bị hỏi lại.
+  // ── Bình cảnh: vào mỗi Tier nghề (1 → 5, js/cult.js G.tierOf) thì có cơ hội tẩy tủy, nâng căn cốt một bậc. Khóa cờ giữ số cũ 10 × Tier để bản lưu cũ không bị hỏi lại.
   const BREAKS = [10, 20, 30, 40, 50];
-  const nextBreak = S => BREAKS.find(L => G.tierOf(S.level) * 10 >= L && !(S.flags.brk || {})[L]);
+  const nextBreak = S => BREAKS.find(L => G.tierOf(S) * 10 >= L && !(S.flags.brk || {})[L]);
   const elixir = (S, X) => Math.round(G.median(X.reg(S)) * 1.5 * (1 + G.RANK[S.tal.root]));
   const pElixir = S => .62 - G.RANK[S.tal.root] * .09;
   const pSeclude = S => G.clamp(.3 - G.RANK[S.tal.root] * .05 + S.traits.studious * .1, .05, .5);
@@ -453,7 +453,7 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !!S.tal && G.RANK[S.tal.root] < 5 && ['teen', 'adult', 'elder'].includes(X.stage(S)) && nextBreak(S) != null,
     build(S, X) {
       const L = nextBreak(S), rk = G.RANK[S.tal.root], c = elixir(S, X);
-      return { title: `Bình cảnh Tier ${L / 10}`, body: `Lên tới ${G.realmName(S)}, bạn thấy mình chững lại. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
+      return { title: `Bình cảnh Tier ${L / 10}`, body: `Lên tới Tier ${G.tierOf(S)}, bạn thấy mình chững lại. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
         choices: [...(S.gold >= c ? [{ k: 'elixir', label: `Mua thuốc tẩy tủy (${G.coin(c)})`, sub: `${Math.round(pElixir(S) * 100)}% thành công.` }] : []),
           { k: 'seclude', label: 'Bế quan tự ngộ', sub: `${Math.round(pSeclude(S) * 100)}% thành công; hỏng thì tổn thương.` }, { k: 'no', label: 'Thuận theo tự nhiên', sub: 'Không thử lần này.' }] };
     },

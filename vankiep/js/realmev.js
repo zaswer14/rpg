@@ -102,7 +102,7 @@ window.LifeSim = window.LifeSim || {};
   Q('lost_treasure', AD, (S, X) => { const d = (G.realm.dungeons || []).find(x => x.nation === nat(S).idx); return d ? { t: `Người ta kể kho báu thất lạc của nước nằm dưới ${d.name}.`, k: 'info' } : null; });
   Q('academy', TA, (S, X) => { X.add('sm', 4); return { t: 'Học viện danh tiếng mở buổi giảng cho dân thường.', k: 'good' }; });
   Q('arena', AD, (S, X) => {
-    const z = X.recommendedZone(S); if (!z || S.hl < 55 || S.level < 2) return null; const enc = X.rollEncounter(z.zone, { grade: 'elite' }); if (!enc) return null;
+    const z = X.recommendedZone(S); if (!z || S.hl < 55 || S.level < 5) return null; const enc = X.rollEncounter(z.zone, { grade: 'elite' }); if (!enc) return null;
     const rec = X.fight(enc, false); if (S.dead) return null;
     if (rec.win) { const g = Math.round(med(X, S) * (.5 + X.ctier(S) * .4)); X.money(g); S.fame += 3; return { t: `Bạn thắng một trận ở đấu trường. Đám đông hô tên bạn. +${G.coin(g)}.`, k: 'big' }; }
     return { t: 'Bạn thua ở đấu trường, được khiêng ra qua cổng phụ.', k: 'bad' };

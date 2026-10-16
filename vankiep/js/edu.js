@@ -175,9 +175,9 @@ window.LifeSim = window.LifeSim || {};
         const w = S.work && works.includes(S.work) ? S.work : X.pick(works), fee = Math.round(med * .3), nm = X.name(race, X.chance(.5) ? 'm' : 'f');
         ch.push({ k: 'craft', name: nm, label: `Theo ${G.WORKS[w].nameVi.toLowerCase()} ${nm}`, sub: `Thợ lành nghề nhất vùng nhận bạn học việc 4 năm; ${S.gold >= fee ? G.coin(fee) + ' lễ nhập môn' : 'làm không công thay học phí'}.`, kind: 'craft', work: w, fee: S.gold >= fee ? fee : 0, need: 4 });
       }
-      // Cao thủ: chỉ để ý người có năng khiếu (một kỹ năng ≥ 15, hoặc cấp ≥ 8).
+      // Cao thủ: chỉ để ý người có năng khiếu (một mastery ≥ 15, hoặc level ≥ 10).
       const top = Object.entries(S.mastery).sort((a, b) => b[1] - a[1])[0];
-      if (top && (top[1] >= 15 || S.level >= 3)) {
+      if (top && (top[1] >= 15 || S.level >= 10)) {
         const school = G.MASTERY[top[0]], tier = X.int(3, 5), nm = X.name(X.pick(Object.keys(G.RACES).filter(r => !G.RACES[r].undead && !G.RACES[r].construct)), X.chance(.5) ? 'm' : 'f');
         ch.push({ k: 'martial', label: `Bái ${nm} làm thầy`, sub: `Cao thủ ${J.schools[school].nameVi.toLowerCase()} (Tier ${tier}) để ý tới bạn. Phải qua một trận thử tay; theo thầy 5 năm.`, kind: 'martial', school, tier, name: nm, need: 5 });
       }

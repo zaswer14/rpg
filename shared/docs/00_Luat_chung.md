@@ -11,10 +11,11 @@
 
 ## 2. Chuyển nghề
 
-- **Gate** = 2 skill Tier n − 1, mới so với mọi tiền nhiệm trên mọi tuyến (luật V12). `gate: null` là chưa thiết kế: `compose()` liệt kê trong `warnings`, không chặn.
+- **Gate** = 2 skill Tier n − 1, mới so với mọi tiền nhiệm trên mọi tuyến (luật V12). `gate: null` là chưa thiết kế: `compose()` liệt kê trong `warnings`, không chặn. Vạn Kiếp thêm điều kiện riêng (`vankiep/docs/08` mục 7.1): mỗi Tier chỉ 10 kỹ năng được nâng, phải đạt max level của Tier (10 kỹ năng đó đã max) và cặp gate của nghề đích nằm trong 10 kỹ năng đó.
 - **Quyền trường phái**: `native` vào từ T1; `foreign` gate Mastery +15, không có ngọn T4–T5 trừ nghề lai ghi rõ; `forbidden` chỉ qua nghề `hidden` hoặc ngọn tín ngưỡng. `blockedJobs` cấm từng nghề, `allowDespiteForbidden` mở từng nghề.
 - **Ngọn riêng** của chủng tộc mọc từ nghề chung T2–T4 hoặc nghề cùng chủng tộc, bắt đầu từ T3; mỗi chủng tộc 5–8 ngọn (chủng tộc chủ lực của game được nhiều hơn).
 - **Giáo phái**: mọi chủng tộc vào được trừ `shunned`; `favored` Devotion × 1,5, `wary` gate +15. Ngọn tín ngưỡng bỏ qua cấm trường phái.
+- **Thưởng chỉ số** theo bậc của từng kỹ năng (STR, DEX, VIT, INT, WIL, AGI) nằm ở `skills.js` (`JobLibrary.skillRewards`), Skeleton Codex và Vạn Kiếp cùng đọc.
 - Nguồn: `README.md` mục 3, `docs/03_Faiths.md`, `platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
 
 ## 3. Quái

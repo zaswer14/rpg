@@ -7,7 +7,7 @@
 <script src="../shared/races/human.js"></script><script src="../shared/races/elf.js"></script><script src="../shared/races/dwarf.js"></script>
 <script src="../shared/races/orc.js"></script><script src="../shared/races/beastfolk.js"></script><script src="../shared/races/fae.js"></script>
 <script src="../shared/races/merfolk.js"></script><script src="../shared/races/dragonkin.js"></script><script src="../shared/races/construct.js"></script>
-<script src="../shared/races/skeleton.js"></script><script src="../shared/faiths.js"></script><script src="../shared/compose.js"></script>
+<script src="../shared/races/skeleton.js"></script><script src="../shared/faiths.js"></script><script src="../shared/compose.js"></script><script src="../shared/skills.js"></script>
 <script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script>
 <script src="../shared/bestiary/bestiary.js"></script><script src="../shared/terrain/ecology.js"></script><script src="../shared/terrain/terrain.js"></script>
 <script src="../shared/names/names.js"></script>
@@ -99,10 +99,25 @@ const data = {
   rarity: G.RARITY.map((r, i) => ({ id: r.id, nameVi: r.nameVi, col: r.col, w: r.w, rate: r.rate, root: G.ROOT_VI[i] })),
   talents: Object.values(G.TALENTS).map(t => ({ id: t.id, r: t.r, nameVi: t.nameVi, d: t.d, fx: G.fxText(t.fx) })),
   aims: pickF(G.AIMS, (a, k) => ({ nameVi: a.nameVi, icon: a.icon, d: a.d, trait: a.trait, focus: a.focus, works: a.works, schools: a.schools, dream: a.dream || null, side: a.side || null, sign: a.sign || null, chance: G.AIM_CHANCE[k] ? parseRun(G.AIM_CHANCE[k]).texts : [] })),
-  // Kỹ năng, cấp, cảnh giới, thọ nguyên, tiền tệ (vankiep/js/cult.js, docs/07 mục 4.1–4.5).
-  cult: { slots: G.SK_SLOTS, cost: G.SK_COST, cfg: G.CULT, caps: [0, 1, 2, 3, 4, 5].map(G.lvCap),
-    ranks: [...Array(11).keys()].map(r => ({ r, war: G.rankName(r, false), mage: G.rankName(r, true), lv: r === 0 ? '0–2' : r === 10 ? '21–22, rồi đột phá' : `${2 * r + 1}–${2 * r + 2}`, tier: r ? Math.min(5, Math.ceil(r / 2)) : 0 })),
-    saint: { prio: G.DECISIONS.cv_saint.prio, ...parseRun(both(G.DECISIONS.cv_saint.build, G.DECISIONS.cv_saint.apply)) }, coin: [0.35, 12.5, 245, 12000].map(n => [n, G.coin(n)]) },
+  // Sức mạnh: kỹ năng nghề, level, chỉ số, lắp kỹ năng, người dạy, thọ nguyên, tiền tệ (vankiep/js/cult.js, docs/08).
+  cult: (() => {
+    if (!G.jobs) G.init();
+    const stTxt = rw => Object.entries(rw).map(([r, m]) => `bậc ${r}: ` + Object.entries(m).map(([s, n]) => `${G.STAT_VI[s]} +${n}`).join(', ')).join('; ');
+    const acc = G.jobs.access.human, nm = id => (G.jobs.displayName('human', id) || {}).vi || G.jobs.byId[id].nameVi;
+    const jobs = G.jobs.jobs.filter(j => ['native', 'foreign', 'origin'].includes(acc[j.id]) || j.id === L.races.human.origin.id).filter(j => !j.hidden && !j.faith).sort((a, b) => a.tier - b.tier)
+      .map(j => ({ id: j.id, nameVi: nm(j.id), tier: j.tier, school: j.tier ? (L.schools[j.school] || {}).nameVi : 'nghề gốc', req: Object.entries(j.req || {}).map(([m, v]) => `${G.mv(m)} ${v}`).join(', '), trial: j.trial || '',
+        next: G.succOf('human', j.id, null).map(d => nm(d.id)),
+        skills: G.jobSkills('human', j.id, null).map(s => ({ name: G.skName(s.key), m: G.mv(s.m), gate: s.gateFor.map(nm), rw: stTxt(G.skRewards(s.key, s.m)), named: !s.id.includes('#') })) }));
+    const D1 = G.DECISIONS.cv_learn, D2 = G.DECISIONS.promote;
+    return { cost: G.SK_COST, cfg: G.CULT, list: G.SK_LIST, up: G.SK_UP, lvTier: G.LV_TIER, maxLv: G.MAX_LV, loadout: G.LOADOUT,
+      stats: G.STATS.map(k => ({ id: k, nameVi: G.STAT_VI[k], ms: Object.keys(G.MASTERY_STAT).filter(m => G.MASTERY_STAT[m] === k).map(G.mv),
+        main: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[0] === k).map(([s]) => L.schools[s].nameVi), sub: Object.entries(G.SCHOOL_STAT).filter(([, v]) => v[1] === k).map(([s]) => L.schools[s].nameVi),
+        races: Object.entries(G.RACES).filter(([, R]) => (R.stat || {})[k]).map(([r, R]) => `${L.races[r].nameVi} ${R.stat[k] > 0 ? '+' : ''}${R.stat[k]}`) })),
+      teachers: G.TEACHERS.map(t => ({ ...t, schools: Array.isArray(t.schools) ? t.schools.map(s => L.schools[s].nameVi).join(', ') : t.schools || 'mọi trường phái' })),
+      jobs, named: Object.keys(L.skillRewards || {}).length,
+      learn: { prio: D1.prio, ...parseRun(both(D1.build, D1.apply)) }, promote: { prio: D2.prio, ...parseRun(both(D2.build, D2.apply)) },
+      coin: [0.35, 12.5, 245, 12000].map(n => [n, G.coin(n)]) };
+  })(),
   tdecs: Object.entries(TDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id]; return { id, title, when, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) }; })
 };
 document.getElementById('out').textContent = JSON.stringify(data);

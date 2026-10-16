@@ -72,13 +72,13 @@
   function save() { if (sim && sim.S) store.set(SAVE, { seed: sim.seed, rs: sim.rs, S: sim.S, world: G.realm.seed }); }
   function load() {
     const d = store.get(SAVE);
-    if (!d || !d.S || d.S.v !== 2) return false;
+    if (!d || !d.S || (d.S.v !== 2 && d.S.v !== 3)) return false;
     try {
       if (urlWorld && d.world !== urlWorld) return false;   // ?world=… trên URL: bắt đầu đời mới ở thế giới đó
       if (d.world && d.world !== G.realm.seed) useWorld(d.world);
       sim = new G.Sim({ seed: d.seed, hook: hook() });
       sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
-      G.skMigrate(d.S);   // bản lưu trước kỹ năng 5 bậc: cấp 1–60 cũ quy ra số kỹ năng max (js/cult.js)
+      G.skMigrate(d.S);   // bản lưu S.v 2 (trước docs/08): quy ra kỹ năng của từng nghề, level 0–60 (js/cult.js)
       G.bindWorld(d.S.world);
       clearLog(); for (const e of d.S.log) appendLog(e, true);
       selRegion = d.S.loc;
@@ -139,7 +139,7 @@
     const kills = Object.values(S.kills).reduce((a, b) => a + b, 0);
     const topKill = Object.entries(S.kills).sort((a, b) => b[1] - a[1])[0];
     const items = [
-      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Cảnh giới', `${G.realmName(S)} · cấp ${S.level} · Tier ${sim.ctier(S)}`],
+      ['Nghề', `${sim.jobName(S)} (T${sim.job(S).tier})`], ['Level', `${S.level} / ${G.maxLvOf(S)} · Tier ${sim.ctier(S)}`],
       ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
       ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
       ['Tiền để lại', G.coin(S.gold)], ['Con cháu', S.family.kids.length || '—'],
@@ -188,7 +188,7 @@
     }
     c.setLineDash([4, 4]); c.strokeStyle = '#e8c26a'; c.lineWidth = 1.5; c.beginPath();
     ys.forEach((r, i) => i ? c.lineTo(x(i), y(r.level / G.MAX_LV * 100)) : c.moveTo(x(i), y(r.level / G.MAX_LV * 100))); c.stroke(); c.setLineDash([]);
-    $('chartLegend').innerHTML = series.map(([k, n]) => `<span><i style="background:var(--${k})"></i>${n}</span>`).join('') + '<span><i style="background:#e8c26a"></i>Cấp (0–22)</span>';
+    $('chartLegend').innerHTML = series.map(([k, n]) => `<span><i style="background:var(--${k})"></i>${n}</span>`).join('') + '<span><i style="background:#e8c26a"></i>Level (0–60)</span>';
   }
 
   // ───────── Bảng nhân vật ─────────
@@ -204,7 +204,7 @@
       : `lang thang ở ${reg.nameVi}${nat ? ' · ' + nat.name : ''}`;
     const kv = [
       ['Nghề', `${X.jobName(S)} · T${j ? j.tier : 0}`],
-      ['Cảnh giới', `${G.realmName(S)} · cấp ${S.level} · Tier ${X.ctier(S)}`],
+      ['Level', `${S.level} / ${G.maxLvOf(S)} · Tier ${X.ctier(S)}` + (G.stuck(S) ? ' · kẹt' : '')],
       ['Sức mạnh', `${X.power(S).toFixed(2)} Tier`],
       ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
@@ -216,9 +216,14 @@
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
-    const sp = G.skProgress(S);   // bậc của kỹ năng đang rèn (js/cult.js)
-    $('xpBar').style.width = (sp.t == null ? 100 : sp.r / 5 * 100) + '%'; $('xpBar').parentElement.title = G.skText(S);
-    $('xpTxt').textContent = `Cấp ${S.level}` + (sp.t == null ? ' · hết kỹ năng học được' : ` · rèn kỹ năng T${sp.t} bậc ${Math.floor(sp.r)}/5`);
+    // Level, kỹ năng đang rèn, chỉ số (js/cult.js, docs/08).
+    const sp = G.skProgress(S), t = sp.t;
+    $('xpBar').style.width = (!t ? 100 : t.pick ? 0 : sp.r / t.cap * 100) + '%'; $('xpBar').parentElement.title = G.skText(S);
+    $('xpTxt').textContent = `Level ${S.level}/${G.maxLvOf(S)}` + (!t ? ' · hết kỹ năng học được' : t.pick ? ' · chờ chọn kỹ năng để nâng' : ` · ${G.skName(t.key)} bậc ${Math.floor(sp.r)}/${t.cap}`);
+    const stv = G.statsOf(S), [sa, sb] = G.SCHOOL_STAT[G.schoolOf(S)] || [];
+    $('cCombat').innerHTML = G.STATS.map(k => `<span class="${k === sa || k === sb ? 'main' : ''}">${G.STAT_VI[k]} <b>${stv[k]}</b></span>`).join('');
+    $('cCombat').title = `Chỉ số chính của trường phái đang theo: ${G.STAT_VI[sa]}, ${G.STAT_VI[sb]}. Sức từ chỉ số ${G.statPow(S).toFixed(2)}, từ kỹ năng đang lắp ${G.skillPow(S).toFixed(2)}.`;
+    renderSkills(S, X);
     // Căn cốt, thiên phú (js/talent.js): viền theo bậc màu; di chuột xem hiệu ứng.
     $('cTal').innerHTML = G.talChips(S).map((c, i) => `<span class="tchip${i ? '' : ' root'}" style="border-color:${c.col};color:${c.col}" title="${esc(c.title)}">${esc(c.text)}</span>`).join('') || '<span class="fam">Bản lưu cũ: chưa có thiên phú.</span>';
     $('cStats').innerHTML = STAT.map(([k, n]) => `<div class="stat"><span>${n}</span><div class="bar"><i style="width:${S[k]}%;background:var(--${k})"></i></div><span>${Math.round(S[k])}</span></div>`).join('');
@@ -253,6 +258,32 @@
     $('cFam').innerHTML = rows.join('') || '<span>Không ai.</span>';
   }
 
+  // Kỹ năng nghề: 12 kỹ năng của nghề đang làm (nâng / chỉ bậc 1 / chưa học, gate của nghề nào), rồi kỹ năng nghề cũ đã học.
+  // Nút Lắp / Tháo: mặc định tự lắp mạnh nhất; người chơi sửa thì sang tự chọn, "Tự lắp lại" quay về (docs/08 mục 6.2).
+  function renderSkills(S, X) {
+    const jt = X.job(S) ? X.job(S).tier : 0, up = (S.up || {})[jt] || [], eq = G.loadout(S), n = G.slotsOf(S), list = G.mySkills(S);
+    const pips = r => { const f = Math.floor(r + 1e-9); return `<span class="pips">${'●'.repeat(f)}<i>${'●'.repeat(5 - f)}</i></span>`; };
+    const row = (key, nm, sub, cls) => {
+      const r = G.rankOf(S, key), on = eq.includes(key), can = r >= 1 - 1e-9 && !S.dead && (on || eq.length < n);
+      return `<div class="skrow ${cls}" title="${esc(sub)}"><span class="nm">${esc(nm)}</span>${pips(r)}<button data-k="${key}" class="${on ? 'on' : ''}"${can ? '' : ' disabled'}>${on ? 'Tháo' : 'Lắp'}</button></div>`;
+    };
+    const rows = list.map(s => {
+      const isUp = up.includes(s.key), cap = !isUp && up.length >= G.SK_UP;
+      const sub = `${G.mv(s.m)}${s.gateFor.length ? ' · gate vào ' + s.gateFor.map(id => X.jobName(S, id)).join(', ') : ''} · ${isUp ? 'được nâng' : cap ? 'chỉ tới bậc 1' : 'chưa chọn nâng'}`;
+      return row(s.key, G.skName(s.key), sub, (s.gateFor.length ? 'gate ' : '') + (cap ? 'cap' : ''));
+    });
+    const mine = new Set(list.map(s => s.key));
+    const old = Object.keys(S.sk || {}).filter(k => !mine.has(k) && S.sk[k].r >= 1 - 1e-9).sort((a, b) => G.skEff(b, S.sk[b].r) - G.skEff(a, S.sk[a].r)).slice(0, 8);
+    $('cSk').innerHTML = `<div class="sksub">Nâng ${up.length}/${G.SK_UP} · lắp ${eq.length}/${n} · ◆ kỹ năng gate</div>` + rows.join('')
+      + (old.length ? `<div class="sksub">Kỹ năng nghề cũ</div>` + old.map(k => row(k, G.skName(k), `Tier ${k.split(':')[0]}`, '')).join('') : '');
+    $('cEqMode').textContent = S.equip ? '· tự chọn' : '· tự lắp';
+    $('btnAutoEq').hidden = !S.equip;
+  }
+  $('cSk').addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b || !sim.S || sim.S.dead) return;
+    if (G.equipToggle(sim.S, b.dataset.k)) { dirty = true; save(); }
+  });
+  $('btnAutoEq').onclick = () => { if (sim.S) { G.equipReset(sim.S); dirty = true; save(); } };
   $('cRoles').addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b || !sim.S || sim.S.dead) return;
     const txt = G.leaveRole(sim.S, sim, b.dataset.what, b.dataset.id || null);
@@ -396,7 +427,7 @@
     $('chron').innerHTML = H.slice(-40).reverse().map(h => `<div class="prow"><b>Năm ${h.y}</b> · ${esc(h.t)}</div>`).join('') || '<div class="prow">Chưa có gì đáng ghi.</div>';
     const L = S.lineage || [];
     $('lineageBox').hidden = !L.length;
-    $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} cấp ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
+    $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} level ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
   }
 
   function renderYear() {

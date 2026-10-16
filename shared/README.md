@@ -12,6 +12,7 @@ Thư viện nghề trả lời một câu hỏi: **một game chọn vài chủn
 shared/
   schools.js            8 trường phái + mastery + 3 mức quyền (native / foreign / forbidden)
   trunk.js              34 nghề THÂN CHUNG: 6 T1 · 13 T2 · 13 T3 · 2 T4
+  skills.js             THƯỞNG CHỈ SỐ theo bậc của 105 kỹ năng có tên (JobLibrary.skillRewards); Skeleton Codex và Vạn Kiếp cùng đọc
   races/<race>.js       10 chủng tộc: origin T0, thân, quyền trường phái, ngọn riêng, nghề ẩn, body evolution
   compose.js            compose({races:[...]}) → nghề + cạnh + quyền + kiểm tra cấu trúc
   aspects.js            23 khí chất (Ánh Sáng, Hắc Ám, Tử Linh, Thủy Triều…): màu, trạng thái, luật gợi ý

@@ -15,7 +15,7 @@ PAGES="tree nation content bestiary"
 cover() { case $1 in
   tree)     echo "shared/schools.js shared/trunk.js shared/aspects.js shared/faiths.js shared/compose.js shared/catalog.js shared/races/ shared/archetypes/ review/tree-" ;;
   nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
-  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js vankiep/data/world.js vankiep/data/nations.js review/content-" ;;
+  content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js shared/skills.js vankiep/data/world.js vankiep/data/nations.js review/content-" ;;
   bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).
@@ -36,8 +36,12 @@ browser() {
 root_url() { local d; d=$(pwd -W 2>/dev/null || pwd); echo "file:///${d#/}"; }
 # JSON dữ liệu của một trang (khối pre#out của review/TRANG-data.html, bỏ mã hóa HTML).
 data_of() {
-  "$BR" --headless --disable-gpu --allow-file-access-from-files --dump-dom "$(root_url)/review/$1-data.html" 2>/dev/null \
-    | sed -n 's/.*<pre id="out">\(.*\)<\/pre>.*/\1/p' | sed 's/&lt;/</g;s/&gt;/>/g;s/&quot;/"/g;s/&amp;/\&/g'
+  # Windows: gọi Edge thẳng từ Git Bash thì mất stdout (16/10/2026), nên đi qua PowerShell với UTF-8.
+  if command -v powershell.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; & '$(cygpath -w "$BR")' --headless --disable-gpu --allow-file-access-from-files --dump-dom '$(root_url)/review/$1-data.html' 2>\$null"
+  else
+    "$BR" --headless --disable-gpu --allow-file-access-from-files --dump-dom "$(root_url)/review/$1-data.html" 2>/dev/null
+  fi | sed -n 's/.*<pre id="out">\(.*\)<\/pre>.*/\1/p' | sed 's/&lt;/</g;s/&gt;/>/g;s/&quot;/"/g;s/&amp;/\&/g'
 }
 pub_field() { tr -d '\r' < "$PUB" | awk -F'\t' -v p="$1" -v n="$2" '$1 == p { print $n }'; }
 

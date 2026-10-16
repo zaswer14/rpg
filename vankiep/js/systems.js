@@ -136,7 +136,7 @@ window.LifeSim = window.LifeSim || {};
       if (yrs < 6 && !R.construct) return 'play';
       w = { play: 3, study: 1 + T.studious * 4, train: T.bold * 4, chores: S.q <= 2 ? 3 : 1, faith: S.faith ? T.pious * 2 : 0 };
     } else if (st === 'teen') {
-      w = { train: 1 + T.bold * 5, study: 1 + T.studious * 4, work: S.q <= 2 ? 3 : 1, hunt: T.bold > .55 && S.level >= 1 ? 3 : 0, faith: S.faith ? T.pious * 2 : 0, family: T.social * 1.5 };
+      w = { train: 1 + T.bold * 5, study: 1 + T.studious * 4, work: S.q <= 2 ? 3 : 1, hunt: T.bold > .55 && S.level >= 3 ? 3 : 0, faith: S.faith ? T.pious * 2 : 0, family: T.social * 1.5 };
     } else {
       if (S.hl < 35) return 'rest';
       const hunter = S.work === 'adventurer' || S.undead || S.work === 'hunter' && T.bold > .5;

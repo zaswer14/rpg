@@ -1,6 +1,6 @@
 # Vạn Kiếp: thiết kế lại hệ sức mạnh, lên cấp, chuyển nghề
 
-**Ngày:** 16/10/2026 · **Trạng thái:** người dùng đã chốt (mục 11, hai vòng); chưa làm trong mã. · **Thay cho:** `07` mục 4.1–4.2 (bước A) và **bỏ cảnh giới** của `07`. Phần còn lại của `07` (địa vị, nghề bốn vòng, tổ chức, sự kiện `cv_*`) giữ nguyên, đọc theo Tier (mục 7.3). · **Đọc kèm:** luật chung `../../shared/docs/00_Luat_chung.md` mục 1–2, luật kỹ năng và chỉ số của Skeleton Codex `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md` (thưởng chỉ số từng kỹ năng: `REWARD_BY_SKILL` trong `../../platform/skill-system.js`).
+**Ngày:** 16/10/2026 · **Trạng thái:** người dùng đã chốt (mục 11, hai vòng); đã làm vào mã 16/10/2026, kết quả mục 12. · **Thay cho:** `07` mục 4.1–4.2 (bước A) và **bỏ cảnh giới** của `07`. Phần còn lại của `07` (địa vị, nghề bốn vòng, tổ chức, sự kiện `cv_*`) giữ nguyên, đọc theo Tier (mục 7.3). · **Đọc kèm:** luật chung `../../shared/docs/00_Luat_chung.md` mục 1–2, luật kỹ năng và chỉ số của Skeleton Codex `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md` (thưởng chỉ số từng kỹ năng: `REWARD_BY_SKILL` trong `../../platform/skill-system.js`).
 
 Người dùng nói (16/10/2026): hệ sức mạnh, cách lên cấp, cách chuyển nghề còn thiếu logic và không nhất quán. Mục 1 là chỗ hỏng của bản bước A, mục 2 nguyên tắc, mục 3–7 thiết kế mới, mục 10 việc trong mã.
 
@@ -36,7 +36,7 @@ Gốc chung: **kỹ năng không gắn vào nghề và không có tác dụng**,
 Mỗi nghề (cả nghề gốc) có **12 kỹ năng**, cùng Tier với nghề:
 
 - **Cặp gate của mọi nghề kế tiếp** trong thư viện nghề. Ví dụ Chiến Binh: `rough_three_cut`, `shield_tap` (vào Vệ Binh), `sword_cleave` (vào Kiếm Sĩ, chung `rough_three_cut`), cặp gate của các nhánh khác. Nghề đích có `gate: null` thì dùng kỹ năng tạm `<nghề đích>#g1`, `#g2`.
-- Thêm kỹ năng tạm `<nghề>#1`, `#2`… cho đủ 12. Nghề cuối đường (không nghề kế) dùng kỹ năng tạm hết.
+- Thêm kỹ năng tạm `<nghề>#1`, `#2`… cho đủ 12. Nghề cuối đường (không nghề kế) dùng kỹ năng tạm hết. Nghề có nhiều nghề kế tới mức cặp gate vượt 12 thì danh sách dài hơn 12, không cắt.
 
 Tên tạm hiện là "Kỹ năng 3 của Kiếm Sĩ", "Gate 1 vào Kiếm Hào". Đặt tên tiếng Việt là bước F (`07` mục 7).
 
@@ -44,7 +44,7 @@ Mỗi kỹ năng có ba thẻ:
 
 | Thẻ | Lấy từ | Dùng vào |
 |---|---|---|
-| **Mastery** | kỹ năng gate của nghề D: một mục trong `D.req`; kỹ năng tạm: `req` của nghề, hoặc mastery của trường phái | rèn kỹ năng thì mastery đó tăng theo (mục 4.1) |
+| **Mastery** | kỹ năng gate của nghề D: một mục trong `D.req` (tên kỹ năng chứa tên mastery thì lấy đúng mục đó: `shield_tap` → Shield); kỹ năng tạm: `req` của nghề, hoặc mastery của trường phái | rèn kỹ năng thì mastery đó tăng theo (mục 4.1) |
 | **Chỉ số** | `REWARD_BY_SKILL` nếu có; không thì theo mastery (mục 6.1) | thưởng khi đạt bậc 5 |
 | **Tier** | Tier của nghề | giá rèn, hiệu quả khi lắp |
 
@@ -81,7 +81,7 @@ Dồn vào **kỹ năng đang rèn**, theo thứ tự tự động:
 
 Quyết định **`cv_learn` Nâng kỹ năng mới**: mỗi lần mở một chỗ nâng, người chơi chọn trong các kỹ năng chưa được nâng của danh sách. Mỗi dòng ghi mastery, chỉ số thưởng, và **cảnh báo khi chọn nó làm mất đường vào một nghề** ("Còn 1 chỗ: chọn kỹ năng này thì không còn đủ chỗ cho cặp gate vào Vệ Binh"). Tự động: cặp gate của nghề kế tiếp theo hướng đi (`S.path`, chí hướng) trước, rồi cặp gate của nghề kế tiếp khác, rồi kỹ năng có thưởng chỉ số hợp trường phái.
 
-Rèn kỹ năng gắn mastery m thì m tăng qua `X.gain` (giữ giảm dần `1 − m / 115` và quyền trường phái native / foreign). Hệ số cân sao cho max đủ 10 kỹ năng thì mastery theo hướng đi vừa chạm `req` của nghề kế tiếp (mục 9).
+Rèn kỹ năng gắn mastery m thì m tăng qua `X.gain` theo số điểm rèn đã dồn (`G.CULT.mPt` = 0,004 mastery mỗi điểm, tính theo giá gốc; giữ giảm dần `1 − m / 115` và quyền trường phái native / foreign). Tính theo điểm chứ không theo bậc, để kỹ năng Tier cao (đắt hơn) cũng đẩy tay nghề nhiều hơn.
 
 Sinh kế không phải luyện võ (làm ruộng, buôn bán) vẫn cho mastery sinh kế như cũ (`G.WORKS.trains`) và ít điểm rèn. Mastery từ sinh kế là tay nghề kiếm sống, không tự mở nghề chiến đấu.
 
@@ -106,11 +106,11 @@ Giá một kỹ năng (5 bậc) theo Tier; mỗi bậc 1/5 giá. **Bỏ hệ s�
 
 | Tier kỹ năng | 0 | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|---|
-| Giá đề xuất (điểm rèn) | 300 | 1 000 | 2 000 | 3 000 | 4 000 | 5 000 |
-| Tổng điểm để vào Tier kế (10 kỹ năng) | 3 000 | 13 000 | 33 000 | 63 000 | 103 000 | (max level 60: 153 000) |
-| Bản bước A (ghi ở `cult.js`) | 2 700 | 12 600 | 32 000 | 63 000 | 103 000 | |
+| Giá chốt bằng sim (`G.SK_COST`) | 220 | 450 | 900 | 1 500 | 2 200 | 3 000 |
+| Tổng điểm để vào Tier kế (10 kỹ năng) | 2 200 | 6 700 | 15 700 | 30 700 | 52 700 | (max level 60: 82 700) |
+| Đề xuất ban đầu | 300 | 1 000 | 2 000 | 3 000 | 4 000 | 5 000 |
 
-Đường cong gần bản cũ để tháp Tier không vỡ ngay. Học bậc 1 hai kỹ năng không nâng thêm 2 × 1/5 giá. Số chốt bằng sim (mục 9).
+Đề xuất ban đầu giữ đường cong của bước A, nhưng bước A còn nhân điểm luyện tập theo cấp; bỏ hệ số đó thì lên quá chậm (1000 đời: Tier 0 cuối đời 59%), nên giá hạ khoảng một nửa (mục 12). Học bậc 1 hai kỹ năng không nâng thêm 2 × 1/5 giá.
 
 ## 5. Người dạy
 
@@ -128,13 +128,13 @@ Thay `G.teachCap` bằng bảng dữ liệu `G.TEACHERS` (để duyệt được
 | Học viện cao cấp | 3 | mọi | |
 | Học viện cao cấp ngành Võ bị | 4 | Chiến đấu, Tầm xa, Võ thuật, Dã thú, Bóng tối | |
 | Học viện cao cấp ngành Pháp thuật | 4 | Huyền thuật, Tử thuật, Chế tác | |
-| Sư phụ cao thủ Tier s | s − 1 (s = 5 thì 5) | trường phái của sư phụ | là đệ tử |
+| Sư phụ cao thủ Tier s | s | trường phái của sư phụ | là đệ tử, cả sau khi xuất sư |
 | Nhà quý tộc (sinh ra hoặc có tước) / nhà từ Bá tước | 3 / 4 | mọi (nhà thuê thầy) | |
 | Hoàng tộc | 5 | mọi | |
 | Giáo hội | Devotion 40 / 75 / 95 → 2 / 3 / 4 | chỉ **nghề tín ngưỡng** của giáo phái mình | đang trong hàng tu sĩ |
 | Kỳ ngộ (`cv_ring`, bước E) | 5 | trường phái của linh hồn trong nhẫn | |
 
-Nguồn Tier 4–5 dạy theo trường phái; giáo hội dạy nghề tín ngưỡng chứ không dạy mọi nghề cho người làm Tu sĩ (người dùng chốt 16/10/2026).
+Nguồn Tier 4–5 dạy theo trường phái; giáo hội dạy nghề tín ngưỡng chứ không dạy mọi nghề cho người làm Tu sĩ (người dùng chốt 16/10/2026). Sư phụ dạy tới đúng Tier của mình (bước A: Tier − 1): khi sư phụ chỉ dạy theo trường phái của mình, dạy tới Tier − 1 thì gần như mọi người Tier 2 đã max level kẹt vì thiếu người dạy Tier 3 (đo 16/10/2026: 11 / 12 người), Tier 3 trở lên chỉ còn 9% đời.
 
 ## 6. Sức mạnh
 
@@ -182,13 +182,13 @@ Lý do để lắp khác mặc định có ở bước F, khi kỹ năng có tê
 ### 6.3. Gộp
 
 ```
-sức = 0,35 + sức chỉ số + hiệu quả kỹ năng
+sức = 0,95 + sức chỉ số + hiệu quả kỹ năng
     + 0,05 × đồ (0–10) + thiên phú (G.tfx.pow)
     + buff: đồng đội gánh (S.flags.boost), dược tề (bước B)
     − thương tật, Sinh lực thấp, tuổi già, thiếu niên (như cũ)
 ```
 
-Ước lượng theo đường ngắn nhất (thưởng chỉ số dồn ~70% vào chỉ số chính, phụ, Thể; tự lắp): vừa vào Tier t thì sức ≈ t + 0,1 (Tier 1) đến t + 0,6 (Tier 5), ở max level của Tier t thì ≈ t + 0,9 (Tier 1) đến t + 1,6 (Tier 5): kỹ năng Tier cao khi lắp đáng giá hơn hẳn. Hằng số 0,12, 0,1 chốt bằng sim để giữ "không trận nào vượt Tier + 1" và chết vì quái ~10%.
+Ước lượng ban đầu (nền 0,35): vừa vào Tier t thì sức ≈ t + 0,1 đến t + 0,6, ở max level ≈ t + 0,9 đến t + 1,6. Sim cho thấy người Tier thấp yếu quá (chết vì quái 16,8%), nên nền chốt 0,95; số đo thật ở mục 12.
 
 Bộ Xương mang mastery kiếp trước (`S.inherited`): trước cộng sức qua `mastery / 220`, giờ đổi thành rèn kỹ năng gắn mastery đó nhanh hơn (× 1,3).
 
@@ -302,3 +302,40 @@ Vòng 2 (thay phần cấp, gate của vòng 1):
 9. **Bỏ cảnh giới** (Phàm nhân, cấp 1–9, Thánh Vực).
 
 Còn mở (Claude đề xuất, chưa hỏi): danh sách 12 kỹ năng mỗi nghề (mục 3.1); sáu chỉ số theo Skeleton Codex và tên tiếng Việt (mục 6.1); kẹt vĩnh viễn không gỡ được hay có lối thoát hiếm ở bước E (mục 7.4); tách `REWARD_BY_SKILL` sang `shared/` (mục 10).
+
+## 12. Kết quả làm vào mã (16/10/2026)
+
+Làm theo mục 10: `js/cult.js` viết lại; `life.js` (`power`, `trainYear`, `G.nextJobs`, `ctier`), `events.js` (`promote`, `G.promoteP`), `talent.js` (bình cảnh theo Tier nghề), `data/world.js` (`stat` của chủng tộc), `ui.js` + `index.html` + `style.css` (sáu chỉ số, danh sách kỹ năng nghề, nút Lắp / Tháo / Tự lắp lại, "Level a / b"), `sim.html` (bảng Tier cuối đời thay bảng Cảnh giới); ngưỡng level cũ ở `edu.js`, `org.js`, `realmev.js`, `systems.js`, `noble.js`, `dynamic.js`, `travel.js` quy sang thang 0–60. Thưởng chỉ số tách sang `shared/skills.js`, Skeleton Codex đọc từ đó (đã mở `platform/index.html` kiểm: thưởng hiện đúng). Trang Duyệt Nội Dung có tab Sức mạnh.
+
+Số chốt bằng sim: `G.SK_COST` = 220 / 450 / 900 / 1 500 / 2 200 / 3 000; sức nền 0,95 (thay 0,35 của mục 6.3: bỏ Tier nghề và mastery khỏi sức làm người Tier thấp yếu đi, chết vì quái lên 16,8%); `G.CULT.mPt` = 0,004; sư phụ dạy tới đúng Tier của mình (mục 5).
+
+1000 đời, thế giới `can-bang`, chế độ tự động:
+
+| Đo | Kết quả | Mục tiêu |
+|---|---|---|
+| Trận vượt Tier + 1 | 0 (64 887 trận) | 0 |
+| Trỗi dậy | 20,6% | ~20% |
+| Chết vì quái (mọi cái chết) | 11,8% | ~10% (bước A 10,1%) |
+| Kẹt vĩnh viễn ở chế độ tự động | 0% | ≈ 0 |
+| 1000 đời headless | 150 giây | (bước A ~103 giây) |
+
+Tháp Tier cuối đời, 887 đời sống tới tuổi trưởng thành:
+
+| Tier | Đời | Mục tiêu | Level TB | Ở max level | Sức lúc vào Tier | Sức ở max level | Mastery − req lúc max |
+|---|---|---|---|---|---|---|---|
+| 0 | 31,2% | 35% | 6,5 | 10% | 0,87 | 1,25 | +12 |
+| 1 | 35,6% | 30% | 13,8 | 10% | 1,37 | 2,16 | +15 |
+| 2 | 20,5% | 18% | 27,9 | 73% | 2,59 | 3,62 | +23 |
+| 3 | 6,4% | 10% | 37,1 | 61% | 3,93 | 5,20 | +23 |
+| 4 | 4,5% | 5% | 49,4 | 90% | 5,30 | 6,50 | +10 |
+| 5 | 1,7% | 2% | 59,5 | 93% | 6,66 | 7,91 | |
+
+Người dạy lúc chết (theo trường phái đang theo): tự học 50%, Tier 2 27%, Tier 3 11%, Tier 4 8%, Tier 5 4%.
+
+Chỗ lệch:
+
+- **Tier 3 thiếu, Tier 2 dư.** 73% người Tier 2 đã max level mà chưa lên được, gần như tất cả vì thiếu người dạy Tier 3 đúng trường phái. Núm: thêm nguồn dạy Tier 3 (sĩ quan quân đội, đoàn trưởng lính đánh thuê, Hiệp Hội hạng cao khi danh vọng phân biệt được người giỏi), hoặc học viện cao cấp nhận nhiều hơn.
+- **Chết vì quái 11,8%**, trên mục tiêu một chút; mạo hiểm giả chết vì quái 42%. Nâng sức nền tiếp thì Tier cao càng mạnh hơn mục tiêu.
+- **Sức ở Tier cao vượt mục tiêu** (vào Tier 5 ≈ 6,7). Không phá luật Tier vì quái vẫn bị chặn ở Tier + 1; nếu muốn sát hơn thì giảm `skillPow` theo Tier.
+- **Mastery dư +10 đến +23** so với yêu cầu nghề kế tiếp lúc max level (mục tiêu ± 5): ngoài kỹ năng, săn quái và sinh kế cũng cho mastery. Không hại gì ngoài làm thử thách chuyển nghề dễ qua hơn.
+- **Chậm hơn ~45%** (150 so với 103 giây): `G.statsOf` và `G.autoEquip` chạy lại mỗi trận. Nếu cần thì cache theo phiên bản `S.sk`.

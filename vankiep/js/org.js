@@ -488,17 +488,17 @@ window.LifeSim = window.LifeSim || {};
   };
   // ── Vào hội (phường nghề theo sinh kế, đoàn lính đánh thuê theo sức) — hội có trụ sở trong tỉnh nhà
   const orgsHere = (S, f) => { const h = homeS(S), W = S.world; if (!live(h)) return []; return orgs(W).filter(o => !o.gone && G.SET[o.seat] && G.SET[o.seat].province === h.province && f(o)); };
-  const canJoin = (S, X, o) => !roles(S).orgs[o.id] && (o.kind === 'merc' ? S.level >= 4 && X.stage(S) === 'adult' : (G.ORG_KINDS[o.kind].works || []).includes(S.work));
+  const canJoin = (S, X, o) => !roles(S).orgs[o.id] && (o.kind === 'merc' ? S.level >= 12 && X.stage(S) === 'adult' : (G.ORG_KINDS[o.kind].works || []).includes(S.work));
   DEC.org_join = {
     prio: 4, gap: 3,
     when(S, X) {
       if (!adultish(S, X)) return false;
       const r = roles(S);
-      return (!r.adv && S.level >= 1) || orgsHere(S, o => canJoin(S, X, o) && !Object.keys(r.orgs).some(id => { const m = G.orgById(S.world, id); return m && m.kind === o.kind; })).length > 0;
+      return (!r.adv && S.level >= 3) || orgsHere(S, o => canJoin(S, X, o) && !Object.keys(r.orgs).some(id => { const m = G.orgById(S.world, id); return m && m.kind === o.kind; })).length > 0;
     },
     build(S, X) {
       const r = roles(S), ch = [], fee = Math.round(G.median(X.reg(S)) * .3);
-      if (!r.adv && S.level >= 1) ch.push({ k: 'adv', label: 'Ghi tên Hiệp Hội Mạo Hiểm', sub: 'Mọi nghề đều nhận. Bảng nhiệm vụ, tiền thưởng, hạng theo danh vọng.' });
+      if (!r.adv && S.level >= 3) ch.push({ k: 'adv', label: 'Ghi tên Hiệp Hội Mạo Hiểm', sub: 'Mọi nghề đều nhận. Bảng nhiệm vụ, tiền thưởng, hạng theo danh vọng.' });
       for (const o of orgsHere(S, o => canJoin(S, X, o)).slice(0, 2)) ch.push({ k: o.id, label: `Vào ${o.name}`, sub: `${o.members} người, ${o.kind === 'merc' ? 'nhận hợp đồng đánh thuê và hộ tống' : `thu nhập +${Math.round(G.ORG_KINDS[o.kind].inc[0] * 100)}%`}; lệ phí ${G.coin(fee)}. ${G.ORG_KINDS[o.kind].ranks[2][0].toUpperCase() + G.ORG_KINDS[o.kind].ranks[2].slice(1)}: ${o.leader.name}.`, fee });
       if (!ch.length) return null;
       return { title: 'Hội, đoàn', body: 'Người trong nghề rủ bạn vào hội. Vào thì có chỗ dựa; không vào thì không ai đòi hội phí.', choices: [...ch, { k: 'no', label: 'Không vào', sub: '' }] };
@@ -555,7 +555,7 @@ window.LifeSim = window.LifeSim || {};
     const out = [];
     for (const [kind, K] of Object.entries(G.ORG_KINDS)) {
       if (has(kind)) continue;
-      if (kind === 'merc') { if (S.level >= 6 && S.fame >= 30 && S.gold >= 500 && G.TIER_RANK[h.tier] <= 3) out.push(kind); continue; }
+      if (kind === 'merc') { if (S.level >= 18 && S.fame >= 30 && S.gold >= 500 && G.TIER_RANK[h.tier] <= 3) out.push(kind); continue; }
       if (K.works.includes(S.work) && S.fame >= 20 && S.gold >= 300 && (G.TIER_RANK[h.tier] <= 2 || kind === 'craft' || kind === 'farm')) out.push(kind);
     }
     return out;

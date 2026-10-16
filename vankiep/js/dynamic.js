@@ -716,7 +716,7 @@ window.LifeSim = window.LifeSim || {};
     for (const w of D.wars.slice()) {
       const a = w.a, b = w.b, Pa = power(a), Pb = power(b);
       let bonus = 0;
-      if (S && S.flags && S.flags.soldier > 0 && (S.nation === a || S.nation === b)) { const t = G.tierOf(S.level); if (t >= 3) bonus = (S.nation === a ? 1 : -1) * .05 * (t - 2); }
+      if (S && S.flags && S.flags.soldier > 0 && (S.nation === a || S.nation === b)) { const t = G.tierOf(S); if (t >= 3) bonus = (S.nation === a ? 1 : -1) * .05 * (t - 2); }
       const coast = k => { const c = R.byId[D.nat[k].cap]; return !!(c && c.seaCells); };
       const edge = (k, o) => (w.years === 0 && tpl(NN[k], 'O1') ? .3 : 0) + ((tpl(NN[k], 'M2') || qk(NN[k], 'strong_navy')) && coast(o) ? .1 : 0) + (tpl(NN[k], 'B1') && k === b ? .08 : 0);
       bonus += edge(a, b) - edge(b, a);

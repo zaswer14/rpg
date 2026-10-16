@@ -56,6 +56,7 @@
 <script src="../shared/races/skeleton.js"></script>
 <script src="../shared/faiths.js"></script>
 <script src="../shared/compose.js"></script>
+<script src="../shared/skills.js"></script>
 <script src="../shared/bestiary/rules.js"></script>
 <script src="../shared/bestiary/species.js"></script>
 <script src="../shared/bestiary/biomes.js"></script>
@@ -142,7 +143,7 @@ $('run').onclick = () => {
         const ak = S.aim || 'free', a = T.aim[ak] || (T.aim[ak] = [0, 0, 0]); a[0]++; if (S.work === 'adventurer') a[1]++; a[2] += S.level;
         T.nTal += S.tal ? S.tal.list.length : 0; for (const k of TALK) if (F[k]) { T.k[k] = (T.k[k] || 0) + 1; T.n[k] = (T.n[k] || 0) + (typeof F[k] === 'number' ? F[k] : 1); } }
       const rec = { race: S.race, years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, work: S.work || '—', rose: !!S.rose, hunts: S.hunts,
-        rank: G.rankOf(S), adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachCap(S), extra: G.skExtra(S) };   // cảnh giới, người dạy (js/cult.js)
+        adult: sim.years(S) >= G.RACES[S.race].adult, teach: G.teachOf(S, G.schoolOf(S), sim.job(S)), stuck: G.stuck(S), powIn: S.flags.powIn, powMax: S.flags.powMax, mOver: S.flags.mOver };   // level, người dạy, sức theo Tier (js/cult.js, docs/08)
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
       for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
@@ -178,15 +179,17 @@ $('run').onclick = () => {
     const cn = c => { const sk = c.startsWith('(xương) '), id = sk ? c.slice(8) : c; return (sk ? '(Bộ Xương) ' : '') + (id === 'monster' ? 'tử trận trước quái' : (G.CAUSES[id] || { nameVi: id }).nameVi); };
     out.push(table('Nguyên nhân chết', Object.entries(A.causes).sort((a, b) => b[1] - a[1]).map(([c, n]) => [cn(c), n, pct(n, N + A.chain)]), ['Nguyên nhân', 'Số', '%'], { bar: true }));
     out.push(table('Theo chủng tộc', Object.entries(A.byRace).sort((a, b) => b[1].length - a[1].length).map(([r, l]) => [J.races[r].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.turns).toFixed(1), avg(l, x => x.level).toFixed(1)]),
-      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Cấp TB'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy.' }));
+      ['Chủng tộc', 'Đời', 'Tuổi TB (năm)', 'Lượt TB', 'Level TB'], { note: 'Lượt = năm / ypt. Bộ Xương: tuổi tính từ khi trỗi dậy.' }));
     out.push(table('Theo sinh kế', Object.entries(A.byWork).sort((a, b) => b[1].length - a[1].length).map(([w, l]) => [w === '—' ? '— (chết trước khi đi làm)' : G.WORKS[w].nameVi, l.length, avg(l, x => x.years).toFixed(0), avg(l, x => x.level).toFixed(1), pct(l.filter(x => x.cause === 'monster').length, l.length)]),
-      ['Sinh kế', 'Đời', 'Tuổi TB', 'Cấp TB', 'Chết vì quái']));
+      ['Sinh kế', 'Đời', 'Tuổi TB', 'Level TB', 'Chết vì quái']));
     out.push(table('Tier sức mạnh cuối đời', Object.entries(A.maxTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Tier', 'Đời', '%'], { bar: true }));
     out.push(table('Tier nghề cuối đời', Object.entries(A.jobTier).map(([t, n]) => ['T' + t, n, pct(n, N)]), ['Nghề', 'Đời', '%'], { bar: true }));
-    { const ad = A.lives.filter(r => r.adult), cnt = new Array(11).fill(0); for (const r of ad) cnt[r.rank]++;   // docs/07 mục 6: mục tiêu theo Tier, chia đều 2 bậc
-      const tierRow = t => { const ks = t === 0 ? [0] : t === 5 ? [9, 10] : [2 * t - 1, 2 * t]; const n = ks.reduce((a, k) => a + cnt[k], 0); return [`Tier ${t}`, n, pct(n, Math.max(1, ad.length)), [35, 30, 18, 10, 5, 2][t] + '%']; };
-      out.push(table('Cảnh giới cuối đời (đời đầu sống tới tuổi trưởng thành)', [...cnt.map((n, r) => [G.rankName(r, false).replace('Chiến sĩ ', ''), n, pct(n, Math.max(1, ad.length)), '']), ...[0, 1, 2, 3, 4, 5].map(tierRow)], ['Cảnh giới', 'Đời', '%', 'Mục tiêu'],
-        { bar: true, note: `docs/07 mục 6. ${ad.length} đời trưởng thành. Kỹ năng thừa (chỉ cộng sức) trung bình ${avg(ad, r => r.extra).toFixed(1)}. Người dạy cuối đời: ${[1, 2, 3, 5].map(c => `tới Tier ${c} ${pct(ad.filter(r => r.teach === c).length, Math.max(1, ad.length))}`).join(', ')}.` })); }
+    { const ad = A.lives.filter(r => r.adult), M = Math.max(1, ad.length), avgOf = (l, f) => l.length ? avg(l, f).toFixed(2) : '—';   // docs/08 mục 9: tháp Tier (docs/07 mục 6), level trong Tier, sức lúc vào Tier / ở max level
+      const rows = [0, 1, 2, 3, 4, 5].map(t => { const l = ad.filter(r => r.tier === t), mx = l.filter(r => r.level >= 10 * (t + 1)).length;
+        const pin = A.lives.filter(r => r.powIn && r.powIn[t] != null), pmx = A.lives.filter(r => r.powMax && r.powMax[t] != null), mo = A.lives.filter(r => r.mOver && r.mOver[t] != null);
+        return [`Tier ${t}`, l.length, pct(l.length, M), [35, 30, 18, 10, 5, 2][t] + '%', l.length ? avg(l, r => r.level).toFixed(1) : '—', pct(mx, Math.max(1, l.length)), avgOf(pin, r => r.powIn[t]), avgOf(pmx, r => r.powMax[t]), avgOf(mo, r => r.mOver[t])]; });
+      out.push(table('Tier cuối đời (đời đầu sống tới tuổi trưởng thành)', rows, ['Tier', 'Đời', '%', 'Mục tiêu', 'Level TB', 'Ở max level', 'Sức lúc vào Tier', 'Sức ở max level', 'Mastery − req lúc max'],
+        { bar: true, note: `docs/08 mục 9. ${ad.length} đời trưởng thành. Kẹt vĩnh viễn (max level, không có cặp gate): ${pct(ad.filter(r => r.stuck).length, M)}. Người dạy cuối đời (theo trường phái đang theo): ${[1, 2, 3, 4, 5].map(c => `Tier ${c} ${pct(ad.filter(r => r.teach === c).length, M)}`).join(', ')}. Mục tiêu sức: vào Tier t ≈ t + 0,1–0,6, max level ≈ t + 0,9–1,6.` })); }
     out.push(table('Nơi sinh', Object.entries(A.region).sort((a, b) => b[1] - a[1]).map(([r, n]) => [G.REGION[r].nameVi, n, pct(n, N)]), ['Vùng', 'Đời', '%'], { bar: true }));
     out.push(table('Nơi sinh: thành thị, nông thôn', Object.entries(A.bornTier).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nơi', 'Đời', '%'], { bar: true, note: 'Mục tiêu docs/05: 70–85% sinh ở nông thôn (vùng quê, thôn).' }));
     out.push(table('Hành trình (đời đầu)', [['Đời có đi xa', A.trip.lives, pct(A.trip.lives, N)], ['Số chuyến', A.trip.trips, ''], ['Chết dọc đường', A.trip.roadDeaths, pct(A.trip.roadDeaths, N)], ['Lần thuê hộ tống', A.trip.escorts, '']], ['', 'Số', '%'], { note: 'docs/03 mục 6; mục tiêu chết dọc đường dưới 8% số cái chết.' }));
@@ -217,9 +220,9 @@ $('run').onclick = () => {
         { note: 'docs/03 mục 5.10. Bậc thăng tiến cao nhất: ' + Object.entries(O.promo).sort((a, b) => a[0] - b[0]).map(([r, n]) => `bậc ${r}: ${n}`).join(', ') + '. Sự kiện quốc gia đã xảy ra (mỗi sự kiện tính một lần mỗi đời): ' + Object.entries(ev).map(([g, t]) => `${t} ${O.ev[g] || 0}`).join(', ') + '.' })); }
     { const T = A.tal;
       out.push(table('Căn cốt lúc sinh (đời đầu)', G.RARITY.map(r => { const b = T.byRoot[r.id] || [0, 0, 0, 0]; return [`${r.nameVi} (×${r.rate})`, b[0], pct(b[0], N), (b[1] / Math.max(1, b[0])).toFixed(1), (b[2] / Math.max(1, b[0])).toFixed(0), pct(b[3], Math.max(1, b[0])), T.end[r.id] || 0]; }),
-        ['Căn cốt', 'Đời', '%', 'Cấp TB', 'Tuổi TB', 'Tier ≥ 3', 'Lúc chết'], { bar: true, note: `Trọng số lúc sinh 46 / 27 / 15 / 8 / 3,4 / 0,6. Cột "Lúc chết": căn cốt sau các lần tẩy tủy ở bình cảnh. Thiên phú trung bình mỗi đời lúc chết: ${(T.nTal / N).toFixed(2)}.` }));
+        ['Căn cốt', 'Đời', '%', 'Level TB', 'Tuổi TB', 'Tier ≥ 3', 'Lúc chết'], { bar: true, note: `Trọng số lúc sinh 46 / 27 / 15 / 8 / 3,4 / 0,6. Cột "Lúc chết": căn cốt sau các lần tẩy tủy ở bình cảnh. Thiên phú trung bình mỗi đời lúc chết: ${(T.nTal / N).toFixed(2)}.` }));
       out.push(table('Chí hướng lúc chết (đời đầu)', Object.entries(T.aim).sort((a, b) => b[1][0] - a[1][0]).map(([k, a]) => [(G.AIMS[k] || { nameVi: k }).nameVi, a[0], pct(a[0], N), pct(a[1], a[0]), (a[2] / a[0]).toFixed(1)]),
-        ['Chí hướng', 'Đời', '%', 'Làm mạo hiểm giả', 'Cấp TB'], { bar: true, note: 'Chế độ tự động: chí hướng bốc ở quyết định aim_pick tuổi thiếu niên theo tính cách, thiên phú; chết trước tuổi đó thì là Thuận theo tự nhiên.' }));
+        ['Chí hướng', 'Đời', '%', 'Làm mạo hiểm giả', 'Level TB'], { bar: true, note: 'Chế độ tự động: chí hướng bốc ở quyết định aim_pick tuổi thiếu niên theo tính cách, thiên phú; chết trước tuổi đó thì là Thuận theo tự nhiên.' }));
       const row = (t, k) => [t, T.k[k] || 0, pct(T.k[k] || 0, N), T.n[k] || 0];
       out.push(table('Thiên phú, đổi hướng (đời đầu)', [row('Thiên phú thức tỉnh', 'talAwaken'), row('Tẩy tủy thành công (căn cốt lên bậc)', 'talBreak'), row('Nối nghiệp nhà: nghe lời', 'defy_stay'), row('Nối nghiệp nhà: vừa làm vừa tập', 'defy_both'), row('Nối nghiệp nhà: bỏ đi', 'defy_leave'),
         row('Đổi nghề', 'workSwitch'), row('Đổi sang mạo hiểm giả', 'toAdv'), row('Nhận cơ hội theo chí hướng', 'aimChance'), row('Được cao nhân nhận dạy', 'hermit'), row('Góp vốn có lãi', 'tradeWin'), row('Xin được việc ở phủ', 'askWin')],

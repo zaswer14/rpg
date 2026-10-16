@@ -285,7 +285,7 @@ const COMBOS={
  necro:{title:'Necromancer — combo điều khiển summon',steps:['Summon Guard','Soul Bolt','Bone Bind','Command Strike'],note:'Khống chế kẻ địch để triệu hồi tấn công; có thời gian hồi summon và chi phí Soul Energy.'},
  engineer:{title:'Bone Architect — combo bố trí công trình',steps:['Deploy Wall','Place Turret','Lure Enemy','Detonate Trap'],note:'Combo không phụ thuộc tốc độ đòn tay, mạnh nhờ bố trí không gian màn chơi.'}
 };function renderCombo(){let c=COMBOS[document.getElementById('comboSelect').value];document.getElementById('comboDetail').innerHTML=`<h3>${c.title}</h3><div class="combo-track">${c.steps.map((x,i)=>`${i?'<span class="combo-arrow">→</span>':''}<span class="combo-step">${x}</span>`).join('')}</div><p>${c.note}</p>`;}document.getElementById('comboSelect').addEventListener('change',renderCombo);renderCombo();
-</script><script src="skill-system.js"></script><script src="tier0-design.js"></script>
+</script><script src="../shared/skills.js"></script><script src="skill-system.js"></script><script src="tier0-design.js"></script>
 <script src="../shared/aspects.js"></script><script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script><script src="../shared/bestiary/bestiary.js"></script>
 <script src="game-v10.js"></script><script src="v11-page.js"></script>
 <script src="../shared/schools.js"></script><script src="../shared/trunk.js"></script>
