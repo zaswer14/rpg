@@ -36,9 +36,11 @@ Gốc chung: **kỹ năng không gắn vào nghề và không có tác dụng**,
 Mỗi nghề (cả nghề gốc) có **12 kỹ năng**, cùng Tier với nghề:
 
 - **Cặp gate của mọi nghề kế tiếp** trong thư viện nghề. Ví dụ Chiến Binh: `rough_three_cut`, `shield_tap` (vào Vệ Binh), `sword_cleave` (vào Kiếm Sĩ, chung `rough_three_cut`), cặp gate của các nhánh khác. Nghề đích có `gate: null` thì dùng kỹ năng tạm `<nghề đích>#g1`, `#g2`.
-- Thêm kỹ năng tạm `<nghề>#1`, `#2`… cho đủ 12. Nghề cuối đường (không nghề kế) dùng kỹ năng tạm hết. Nghề có nhiều nghề kế tới mức cặp gate vượt 12 thì danh sách dài hơn 12, không cắt.
+- Chỗ còn lại lấy từ **bộ kỹ năng chung của trường phái ở Tier đó** (`G.poolSkills`: 12 kỹ năng `<trường phái>#1` … `#12`, mastery xoay vòng theo trường phái), ưu tiên kỹ năng gắn mastery mà nghề đòi. Mọi nghề cùng trường phái, cùng Tier dùng chung một bộ; nghề gốc dùng bộ của trường phái bản địa đầu tiên của chủng tộc. Nghề có nhiều nghề kế tới mức cặp gate vượt 12 thì danh sách dài hơn 12, không cắt.
 
-Tên tạm hiện là "Kỹ năng 3 của Kiếm Sĩ", "Gate 1 vào Kiếm Hào". Đặt tên tiếng Việt là bước F (`07` mục 7).
+Bản đầu (16/10/2026) cho mỗi nghề kỹ năng tạm riêng (`<nghề>#k`): cả game 2 167 kỹ năng, 2 108 là tạm. Dùng bộ chung (người dùng đồng ý cùng ngày) còn **754**: 59 có tên, 431 thuộc bộ chung (tối đa 8 trường phái × 6 Tier × 12 = 576), 264 là cặp gate tạm của nghề đích chưa có `gate` trong thư viện. Theo Tier: 20 / 80 / 145 / 226 / 187 / 96. Mỗi chủng tộc dùng 410–500. Bản lưu có kỹ năng tạm theo nghề vẫn đọc được (tên hiện "Kỹ năng k của <nghề>").
+
+Tên tạm hiện là "Chiến đấu T2 · 3" (bộ chung), "Gate 1 vào Kiếm Hào" (gate tạm). Đặt tên tiếng Việt là bước F (`07` mục 7).
 
 Mỗi kỹ năng có ba thẻ:
 
@@ -238,7 +240,7 @@ Chế độ tự động luôn chọn cặp gate trước (mục 4.1) nên gần
 ### 7.5. Cách hiện cho người chơi
 
 - Thẻ nhân vật: nghề, Tier, level (vd "Level 27 / 30"); sáu chỉ số; danh sách 12 kỹ năng của nghề (bậc, được nâng hay chỉ bậc 1, cặp gate của nghề nào, đang lắp hay không, nút lắp / tháo); chỗ nâng còn lại (vd "Nâng 7 / 10"); người dạy (nguồn, Tier, trường phái).
-- Nhật ký: "Kỹ năng 2 của Kiếm Sĩ đạt bậc 5. Lực +1. Level 27." Chạm max level: "Level 30, đỉnh của Tier 2. Có thể thử vào Kiếm Hào." hoặc "… Không còn đường lên nghề Tier 3."
+- Nhật ký: "Chiến đấu T2 · 3 đạt bậc 5. Lực +1. Level 27." Chạm max level: "Level 30, đỉnh của Tier 2. Có thể thử vào Kiếm Hào." hoặc "… Không còn đường lên nghề Tier 3."
 
 ## 8. Một đời mẫu
 

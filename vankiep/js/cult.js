@@ -2,7 +2,7 @@
  *
  * Người dùng chốt 16/10/2026 (docs/08 mục 11):
  *   - mỗi nghề có G.SK_LIST (12) kỹ năng cùng Tier với nghề: cặp gate của mọi nghề kế tiếp (trường `gate` của thư viện nghề,
- *     null thì id tạm `<nghề đích>#g1/#g2`) rồi kỹ năng tạm `<nghề>#k` cho đủ;
+ *     null thì id tạm `<nghề đích>#g1/#g2`) rồi bộ kỹ năng chung của trường phái ở Tier đó (`<trường phái>#k`, G.poolSkills) cho đủ;
  *   - học một kỹ năng là có bậc 1; mỗi Tier chỉ G.SK_UP (10) kỹ năng được nâng lên bậc 2–5, còn lại dừng ở bậc 1;
  *   - level = số kỹ năng được nâng đã đạt bậc 5; 10 level là 1 Tier (level 0–60);
  *   - chuyển nghề: đạt max level của Tier (10 × (Tier + 1)) và cặp gate của nghề đích nằm trong 10 kỹ năng được nâng,
@@ -91,10 +91,17 @@ window.LifeSim = window.LifeSim || {};
       if (!mb) mb = ms.find(m => m !== ma) || ms[0];
       add(a, ma, d.id); add(b, mb, d.id);
     }
-    let own = j && j.tier > 0 ? [...Object.keys(j.req || {}), ...schoolMs(j.school)] : J.races[race].schools.native.flatMap(schoolMs);
-    if (!own.length) own = ['Body'];
-    for (let k = 1; list.length < G.SK_LIST; k++) add(`${jobId}#${k}`, own[(k - 1) % own.length]);
+    // Chỗ còn lại lấy từ bộ kỹ năng chung của trường phái ở Tier đó (G.poolSkills), ưu tiên kỹ năng gắn mastery nghề này đòi.
+    // Mọi nghề cùng trường phái, cùng Tier dùng chung một bộ, nên số kỹ năng cần đặt tên (bước F) ít đi nhiều (docs/08 mục 3.1).
+    const sc = j && j.tier > 0 ? j.school : J.races[race].schools.native[0], want = Object.keys((j && j.req) || {});
+    const pool = G.poolSkills(sc, tier).slice().sort((a, b) => (want.includes(b.m) - want.includes(a.m)) || a.k - b.k);
+    for (const p of pool) { if (list.length >= G.SK_LIST) break; add(p.id, p.m); }
     return LIST[key] = list;
+  };
+  // Bộ kỹ năng chung của một trường phái ở một Tier: G.SK_LIST kỹ năng `<trường phái>#k`, mastery xoay vòng theo trường phái.
+  G.poolSkills = (school, tier) => {
+    const ms = schoolMs(school).length ? schoolMs(school) : ['Body'];
+    return Array.from({ length: G.SK_LIST }, (_, i) => ({ id: `${school}#${i + 1}`, k: i + 1, m: ms[i % ms.length], tier }));
   };
   G.mySkills = S => G.jobSkills(S.race, S.job, S.faith);
   G.skRewards = (key, m) => (J.skillRewards || {})[idOfKey(key)] || { 5: { [G.MASTERY_STAT[m] || 'VIT']: 1 } };
@@ -102,7 +109,9 @@ window.LifeSim = window.LifeSim || {};
   G.skName = key => {
     const id = idOfKey(key), h = id.indexOf('#');
     if (h < 0) { const s = id.replace(/_/g, ' '); return s[0].toUpperCase() + s.slice(1); }
-    const j = jobOf(id.slice(0, h)), n = j ? j.nameVi : id.slice(0, h), tail = id.slice(h + 1);
+    const head = id.slice(0, h), tail = id.slice(h + 1), sc = J.schools[head];
+    if (sc) return `${sc.nameVi} T${tierOfKey(key)} · ${tail}`;   // bộ chung của trường phái
+    const j = jobOf(head), n = j ? j.nameVi : head;   // gate tạm của nghề đích; bản lưu cũ còn kỹ năng tạm theo nghề
     return tail[0] === 'g' ? `Gate ${tail.slice(1)} vào ${n}` : `Kỹ năng ${tail} của ${n}`;
   };
 
