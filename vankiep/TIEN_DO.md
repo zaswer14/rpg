@@ -1,8 +1,8 @@
 # Vạn Kiếp: tiến độ và việc tiếp theo
 
-**Cập nhật:** 15/10/2026 · **Commit mới nhất:** `1ceef33` xã hội tu luyện bước A (thiết kế `e5b7013`; bước 10 bản đồ V2: `8850989`) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
+**Cập nhật:** 16/10/2026 · **Commit mới nhất:** `1ceef33` xã hội tu luyện bước A (thiết kế `e5b7013`; bước 10 bản đồ V2: `8850989`) · **Đọc file này trước** khi được bảo "làm tiếp Vạn Kiếp".
 
-Bản đồ V2 (`docs/03`) xong 10 bước, thêm thiên phú, chí hướng (`docs/06`). **Định hướng mới (15/10/2026): xã hội tu luyện kiểu Bàn Long** (`docs/07`, người dùng đã chốt mục 8): cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, không tông môn, tiền đồng / bạc / vàng. **Bước A xong** (`js/cult.js`: kỹ năng 5 bậc, cảnh giới, người dạy, thọ nguyên, tiền tệ; `1ceef33`). **Tiếp: bước B** (địa vị theo cảnh giới, `docs/07` mục 7).
+Bản đồ V2 (`docs/03`) xong 10 bước, thêm thiên phú, chí hướng (`docs/06`). **Định hướng mới (15/10/2026): xã hội tu luyện kiểu Bàn Long** (`docs/07`, người dùng đã chốt mục 8): cấp = số kỹ năng max tới hạn mức nghề, cảnh giới cấp 1–9 và Thánh Vực, không tông môn, tiền đồng / bạc / vàng. **Bước A xong** (`js/cult.js`: kỹ năng 5 bậc, cảnh giới, người dạy, thọ nguyên, tiền tệ; `1ceef33`). **Đang làm (16/10/2026): thiết kế lại hệ sức mạnh, lên cấp, chuyển nghề** (`docs/08`, đã chốt mục 11: level 0–60, 10 level một Tier, mỗi Tier 10 kỹ năng được nâng, chuyển nghề khi max level và cặp gate nằm trong 10 kỹ năng đó, sức = chỉ số + kỹ năng đang lắp + đồ + thiên phú + buff, **bỏ cảnh giới**); tiếp là làm vào mã theo `docs/08` mục 10, xong mới tới bước B.
 
 ## 1. Đã xong
 
@@ -61,7 +61,7 @@ Trang duyệt nhanh (claude.ai, lưu quyết định trong db, collection `revie
 
 Người dùng đổi định hướng ngày 15/10/2026: tu luyện khai mở tiềm năng nên người tu cao có địa vị, chức quyền; tu luyện là mục tiêu của số đông; nghề xoay quanh phục vụ tu luyện và sinh kế cơ bản; quý tộc hưởng thụ nên cần nghề phục vụ xa hoa. `docs/07` có tra cứu (Bàn Long là kiểu đã chọn, cùng 16 bộ khác), thiết kế và thứ tự làm A → F (mục 7). Người dùng chốt ngày 15/10/2026 (`docs/07` mục 8): cấp theo luật thư viện nghề (cấp = số kỹ năng max, chỉ tính tới hạn mức 2 + 4 × Tier nghề, kỹ năng thừa chỉ cộng sức); ai cũng tu được; tháp cảnh giới ở `docs/07` mục 6; phong cách phương Tây kiểu Bàn Long, không tông môn; thọ nguyên × (1 + 0,12 × Tier); tiền đồng, bạc, vàng tỉ lệ 100 : 1.
 
-**Việc kế tiếp:** bước B (địa vị theo cảnh giới: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên dược tề; `docs/07` mục 4.3, 7), rồi C → F. Bước A xong (`docs/07` mục 4.9). Đây là hướng ưu tiên; các hướng cũ bên dưới làm sau hoặc lồng vào (ví dụ hôn nhân quý tộc thành `cv_match` ở bước D).
+**Việc kế tiếp:** **trước hết là `docs/08`** (thiết kế lại hệ sức mạnh, lên cấp, chuyển nghề; thay `docs/07` mục 4.1–4.2 và bỏ cảnh giới; người dùng đã chốt mục 11; làm theo mục 10 của file đó). Sau đó bước B (địa vị theo cảnh giới: sàn thu nhập, thân phận và luật, cảnh giới cho chức quan, `G.PROMO`, kế tước, căn cốt theo cha mẹ, tài nguyên dược tề; `docs/07` mục 4.3, 7), rồi C → F. Bước A xong (`docs/07` mục 4.9). Đây là hướng ưu tiên; các hướng cũ bên dưới làm sau hoặc lồng vào (ví dụ hôn nhân quý tộc thành `cv_match` ở bước D).
 
 Các hướng cũ (trước định hướng mới), theo thứ tự đề xuất:
 

@@ -1,6 +1,6 @@
 # Vạn Kiếp: định hướng mới, xã hội tu luyện
 
-**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), tiếp theo bước B (mục 7). · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
+**Ngày:** 15/10/2026 · **Trạng thái:** người dùng đã chốt (mục 8); bước A xong (`js/cult.js`, kết quả mục 4.9), tiếp theo bước B (mục 7). · **Hệ cấp, kỹ năng, chuyển nghề (mục 4.1–4.2) được thay bằng `08_He_suc_manh.md` (16/10/2026): level 0–60, 10 level một Tier, bỏ cảnh giới. Chỗ nào ở file này ghi cảnh giới "cấp r" thì đọc là Tier ⌈r / 2⌉.** · **Đọc kèm:** `06_Thien_phu_chi_huong.md` (căn cốt, thiên phú, chí hướng), `03` mục 5.8–5.10 (tổ chức, học viện, quý tộc, thăng tiến), luật cấp và kỹ năng của thư viện nghề: `../../platform/docs/06_Skill_Ranks_Level_And_Tier_Gates.md`.
 
 Người dùng đổi định hướng game (15/10/2026):
 
