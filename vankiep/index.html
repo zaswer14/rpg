@@ -15,13 +15,18 @@
     <span class="sub">Mô phỏng một đời ở đại lục Varen</span>
   </div>
   <div class="controls">
-    <button id="btnPause" class="btn" title="Tạm dừng / tiếp tục (Space)">⏸</button>
-    <div class="speeds" id="speeds"></div>
+    <button id="btnRun" class="btn" title="Cho thời gian tự trôi; bấm lại để dừng">▶ Tự chạy</button>
+    <div class="speeds" id="speeds" hidden></div>
     <label class="toggle" title="Nhân vật tự chọn focus và tự quyết định theo tính cách"><input type="checkbox" id="autoLife"> Tự sống</label>
-    <button id="btnNew" class="btn">Kiếp mới</button>
-    <select id="origin" class="btn" title="Xuất thân của kiếp mới"><option value="">Xuất thân: ngẫu nhiên</option><option value="royal_main">Hoàng gia, dòng chính</option><option value="royal_side">Hoàng gia, dòng phụ</option><option value="noble">Quý tộc</option></select>
-    <button id="btnWorld" class="btn" title="Tạo một đại lục mới: quốc gia, thành phố, làng mạc khác">Thế giới mới</button>
-    <span class="seed" id="seedLabel"></span>
+    <details class="menu" id="menu">
+      <summary class="btn" title="Kiếp mới, thế giới mới">☰</summary>
+      <div class="menubody">
+        <select id="origin" class="btn" title="Xuất thân của kiếp mới"><option value="">Xuất thân: ngẫu nhiên</option><option value="royal_main">Hoàng gia, dòng chính</option><option value="royal_side">Hoàng gia, dòng phụ</option><option value="noble">Quý tộc</option></select>
+        <button id="btnNew" class="btn">Kiếp mới</button>
+        <button id="btnWorld" class="btn" title="Tạo một đại lục mới: quốc gia, thành phố, làng mạc khác">Thế giới mới</button>
+        <span class="seed" id="seedLabel"></span>
+      </div>
+    </details>
   </div>
 </header>
 
@@ -33,38 +38,72 @@
       <div class="meta" id="cMeta"></div>
       <div class="meta" id="cPlace"></div>
     </div>
-    <div class="kv" id="cKv"></div>
-    <div class="xp"><div class="bar"><i id="xpBar"></i></div><span id="xpTxt"></span></div>
-    <div class="cstat" id="cCombat"></div>
     <div class="stats" id="cStats"></div>
+    <div class="xp"><div class="bar"><i id="xpBar"></i></div><span id="xpTxt"></span></div>
+    <div class="kv" id="cKv"></div>
+    <div class="cstat" id="cCombat"></div>
     <h3>Căn cốt, thiên phú</h3>
     <div class="tal" id="cTal"></div>
     <div class="chips" id="cConds"></div>
     <div id="cRolesBox" hidden><h3>Vai trò</h3><div class="roles" id="cRoles"></div></div>
+    <h3>Gia đình</h3>
+    <div class="fam" id="cFam"></div>
     <h3 class="skh">Kỹ năng nghề <span id="cEqMode"></span><button class="mini" id="btnAutoEq" hidden>Tự lắp lại</button></h3>
     <div class="sklist" id="cSk"></div>
     <h3>Tay nghề</h3>
     <div class="mast" id="cMast"></div>
-    <h3>Gia đình</h3>
-    <div class="fam" id="cFam"></div>
   </section>
 
-  <!-- Bản đồ -->
-  <section class="panel mapwrap">
+  <!-- Cuộc đời: nhật ký là phần chính; quyết định và thanh hành động ở dưới -->
+  <section class="panel lifewrap">
     <div class="year">
       <span id="yLabel"></span>
       <div class="bar thin"><i id="yBar"></i></div>
     </div>
-    <div class="canvasbox">
-      <canvas id="map" width="1200" height="900" aria-label="Bản đồ đại lục Varen"></canvas>
-      <div class="viewbtns" id="viewBtns" role="group" aria-label="Chế độ xem bản đồ"><button data-v="region">Vùng</button><button data-v="terrain">Địa hình</button><button data-v="political">Chính trị</button><button data-v="danger">Nguy hiểm</button><button data-v="sea">Biển</button></div>
-      <div class="maplegend" id="mapLegend" hidden><span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span></div>
-      <div class="tip" id="tip" hidden></div>
+    <nav class="tabs" id="tabs" role="tablist">
+      <button data-t="log" class="on">Cuộc đời</button>
+      <button data-t="chron">Biên niên sử <span id="chronCount"></span></button>
+      <button data-t="peers">Đồng niên <span id="peerCount"></span></button>
+      <button data-t="lineage" id="lineageTab" hidden>Các kiếp trước</button>
+    </nav>
+    <div class="log pane" id="log" aria-live="polite"></div>
+    <div class="pane list" id="chron" hidden></div>
+    <div class="pane list" id="peers" hidden></div>
+    <div class="pane list" id="lineage" hidden></div>
+    <!-- Quyết định: hiện ngay dưới nhật ký, thời gian dừng tới khi chọn -->
+    <div class="decision" id="decBox" hidden>
+      <div class="dtitle" id="dTitle"></div>
+      <div class="dbody" id="dBody"></div>
+      <div class="dfact" id="dFact"></div>
+      <div class="dchoices" id="dChoices"></div>
     </div>
-    <div class="focus">
-      <h3>Năm nay dồn sức vào</h3>
-      <div class="focusbtns" id="focusBtns"></div>
-      <div class="aim"><label for="aimSel">Chí hướng</label><select id="aimSel" title="Tự sống sẽ đi theo chí hướng: focus, nghề, các lựa chọn"></select><small id="aimTip"></small></div>
+    <div class="actbar">
+      <div class="focus">
+        <span class="lbl">Năm nay dồn sức vào</span>
+        <div class="focusbtns" id="focusBtns"></div>
+      </div>
+      <div class="actrow">
+        <div class="aim"><label for="aimSel">Chí hướng</label><select id="aimSel" title="Tự sống sẽ đi theo chí hướng: focus, nghề, các lựa chọn"></select><small id="aimTip"></small></div>
+        <button id="btnNext" class="next" title="Sống hết năm này (Space)">Sang năm ▸</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bản đồ (nhỏ, phóng to được) + khu săn + vùng đang chọn -->
+  <section class="panel side">
+    <div class="mapcard" id="mapCard">
+      <div class="viewbtns" id="viewBtns" role="group" aria-label="Chế độ xem bản đồ"><button data-v="region">Vùng</button><button data-v="terrain">Địa hình</button><button data-v="political">Chính trị</button><button data-v="danger">Nguy hiểm</button><button data-v="sea">Biển</button></div>
+      <div class="canvasbox" id="canvasBox">
+        <canvas id="map" width="1200" height="900" aria-label="Bản đồ đại lục Varen"></canvas>
+        <div class="zoombtns" role="group" aria-label="Phóng to, thu nhỏ bản đồ">
+          <button id="zIn" title="Phóng to (lăn chuột lên)">+</button>
+          <button id="zOut" title="Thu nhỏ (lăn chuột xuống)">−</button>
+          <button id="zMe" title="Về chỗ nhân vật">⌖</button>
+          <button id="zBig" title="Mở rộng bản đồ (M)">⛶</button>
+        </div>
+        <div class="maplegend" id="mapLegend" hidden></div>
+        <div class="tip" id="tip" hidden></div>
+      </div>
     </div>
     <div class="huntbox">
       <div class="hhead">
@@ -76,34 +115,8 @@
     </div>
     <div class="region" id="regionPanel" hidden></div>
   </section>
-
-  <!-- Nhật ký -->
-  <section class="panel logwrap">
-    <details class="peers" id="peersBox">
-      <summary>Đồng niên <span id="peerCount"></span></summary>
-      <div id="peers"></div>
-    </details>
-    <details class="lineage" id="chronBox">
-      <summary>Biên niên sử <span id="chronCount"></span></summary>
-      <div id="chron"></div>
-    </details>
-    <details class="lineage" id="lineageBox" hidden>
-      <summary>Các kiếp trước</summary>
-      <div id="lineage"></div>
-    </details>
-    <div class="log" id="log" aria-live="polite"></div>
-  </section>
 </main>
-
-<!-- Quyết định -->
-<div class="modal" id="decModal" hidden>
-  <div class="card">
-    <div class="dtitle" id="dTitle"></div>
-    <div class="dbody" id="dBody"></div>
-    <div class="dfact" id="dFact"></div>
-    <div class="dchoices" id="dChoices"></div>
-  </div>
-</div>
+<div class="mapshade" id="mapShade"></div>
 
 <!-- Cái chết -->
 <div class="modal" id="deathModal" hidden>
@@ -169,6 +182,7 @@
 <script src="js/inst.js"></script>
 <script src="js/fate.js"></script>
 <script src="js/race.js"></script>
+<script src="js/tree.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

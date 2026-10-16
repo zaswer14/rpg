@@ -124,7 +124,8 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục']
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], null,
+    ['tree', 'Cây sự kiện']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -136,7 +137,8 @@ code{font-family:var(--font-mono);font-size:12px}
   const FRULES = [['ring', 'Linh hồn trong nhẫn'], ['grave', 'Mộ các kiếp'], ['ruin', 'Bí cảnh'], ['rob', 'Giết người đoạt bảo'], ['forb', 'Cấm thuật'], ['deviate', 'Tẩu hỏa nhập ma'], ['reawaken', 'Thức tỉnh lại'], ['unstick', 'Lối thoát khi kẹt gate']];
   const IRULES = [['academy', 'Học viện danh tiếng, lớp tài năng'], ['tourney', 'Đại hội tỉ thí'], ['auction', 'Đấu giá hội'], ['blood', 'Huyết mạch'], ['match', 'Liên hôn'], ['mine', 'Mỏ ma tinh']];
   const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
-  const CULTRULES = [['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
+  const TRULES = [['traj', 'Quỹ đạo'], ['soc', 'Danh phận'], ['body', 'Thân thể, giống loài, lượt đầu của Bộ Xương'], ['theme', 'Chủ đề'], ['tree', 'Cây: nhánh, khoảng chờ']];
+  const CULTRULES =[['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
   const items = {
     ev_tpl: D.events.filter(e => e.kind === 'tpl').map(e => ({ kind: 'ev', id: e.id, name: evName(e) })),
@@ -157,6 +159,7 @@ code{font-family:var(--font-mono);font-size:12px}
     tdec: D.tdecs.map(d => ({ kind: 'dec', id: d.id, name: d.title })),
     cult: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'tierlv', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...D.cult.res.map(r => ({ kind: 'res', id: r.id, name: r.nameVi })), ...D.cult.jobtree.add.map(j => ({ kind: 'jtadd', id: j.id, name: j.nameVi })), ...D.cult.jobtree.set.map(j => ({ kind: 'jtset', id: j.id, name: j.nameVi })), ...CULTRULES.map(([id, name]) => ({ kind: 'cultrule', id, name })), ...D.cult.stats.map(s => ({ kind: 'stat', id: s.id, name: s.nameVi })),
       ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))],
+    tree: [...TRULES.map(([id, name]) => ({ kind: 'trule', id, name })), ...Object.entries(D.tree.axes).map(([id, a]) => ({ kind: 'traj', id, name: a.nameVi })), ...Object.entries(D.tree.themes).map(([id, t]) => ({ kind: 'theme', id, name: t.nameVi })), ...D.tree.nodes.map(n => ({ kind: n.ev ? 'tnode' : 'dec', id: n.id, name: n.title }))],
     status: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'stier', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...SRULES.map(([id, name]) => ({ kind: 'srule', id, name })), ...D.status.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))]
   };
   const allItems = Object.values(items).flat();
@@ -168,7 +171,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Cây sự kiện', items.tree);
   }
 
   // ---- Tab ----
@@ -350,6 +353,51 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
     return overview('Học viện danh tiếng, gia tộc, đấu giá', 'Bước D của định hướng xã hội tu luyện (docs/07 mục 4.7): các thiết chế kiểu Bàn Long nắm người dạy và tài nguyên. Học viện chọn người theo căn cốt, triều đình mở đại hội tỉ thí, nhà quý tộc giữ huyết mạch và liên hôn với nhau, phòng đấu giá bán dược tề và ma tinh hạch, các nước tranh mỏ ma tinh. Câu chữ trích từ mã nguồn; ‹…› là chỗ game điền vào.')
       + grid(part('Luật', rules) + part('Quyết định', decs));
+  }
+
+  // ---- Cây sự kiện, quỹ đạo, danh phận (vankiep/js/tree.js, docs/12) ----
+  function treeView() {
+    const T = D.tree, M = T.meta, AXV = a => (T.axes[a] || { nameVi: a }).nameVi;
+    const nodeMeta = id => { const n = T.nodes.find(x => x.id === id); return Object.assign({}, M[id] || {}, n ? n.tree || {} : {}); };
+    const allIds = [...new Set([...Object.keys(M), ...T.nodes.map(n => n.id)])];
+    const by = f => allIds.filter(id => f(nodeMeta(id)));
+    const codes = ids => ids.length ? ids.map(id => `<code>${esc(id)}</code>`).join(', ') : '—';
+    const axFrom = a => {
+      const out = [];
+      for (const [f, v] of Object.entries(T.focusAx)) if (v[a]) out.push(`focus ${f}`);
+      for (const [s, v] of Object.entries(T.schoolAx)) if (v[a]) out.push(`trường phái ${(D.schools[s] || { vi: s }).vi}`);
+      for (const [w, v] of Object.entries(T.workAx)) if (v[a]) out.push(workVi(w));
+      if (a === 'nghe') out.push('các sinh kế còn lại (ruộng, rừng, mỏ, thợ, phục vụ quý tộc)');
+      return out;
+    };
+    const RULE = {
+      traj: `<p style="margin:0">Mười hướng tích từ việc nhân vật đã làm, không do người chơi chọn: thời gian focus trong năm (Luyện tập theo trường phái đang theo, Làm ăn theo nghề), kỹ năng tăng theo trường phái (10 điểm ≈ 0,3), chức tước, vợ chồng con cái, đạo, của cải, chuyến đi xa. Mỗi năm giữ ${num(T.cfg.decay)} phần cũ (nửa đời ~6 năm). Sự kiện có nhãn hướng thì trọng số × (0,3 + 2,5 × độ hợp), kẹp 0,3–2,5; nhánh có ngưỡng cứng (ví dụ Ám ≥ 30%). Chí hướng chỉ tác động gián tiếp (đổi focus, nghề). Bộ Xương mang theo một nửa quỹ đạo của hồn, cộng thêm Ám.</p>`,
+      soc: `<p style="margin:0">Xã hội người sống nhận bạn tới đâu: ${T.socVi.map((s, i) => `${i} ${esc(s)}`).join(', ')}. Người lớn có 1; cộng 1 cho mỗi mục danh vọng ≥ ${T.cfg.fame.join(' / ')}, Tier ≥ 2 (ba mục này cộng tối đa 2: danh vọng bão hòa khi về già), Tier ≥ 3, có tước / chức / ngai; trừ 1 khi bị tộc ruồng bỏ, bị truy nã. Bộ Xương chưa lộ mặt có 0; đã lộ thì chỉ nước coi Bộ Xương là công dân mới tính (trừ 1). Giới hắc ám tính riêng 0–3 (${T.darkVi.slice(1).map(esc).join(', ')}).</p>
+        <dl class="kv"><dt>Cần 1</dt><dd>${codes(by(m => m.soc === 1))}</dd><dt>Cần 2</dt><dd>${codes(by(m => m.soc === 2))}</dd><dt>Cần 3</dt><dd>${codes(by(m => m.soc === 3))}</dd><dt>Giới hắc ám</dt><dd>${codes(by(m => m.dark))}</dd></dl>`,
+      body: `<p style="margin:0">Bộ Xương lượt đầu (vừa trỗi dậy) chỉ gặp nút "lượt đầu"; các nút khác có số lượt tối thiểu kể từ khi sinh hay trỗi dậy. Nút có thể đòi thân xác (không Bộ Xương, không Cơ Nhân), người sống, hoặc chặn một giống loài.</p>
+        <dl class="kv"><dt>Lượt đầu</dt><dd>${codes(by(m => m.fresh))}</dd><dt>Số lượt</dt><dd>${allIds.filter(id => nodeMeta(id).minAge).map(id => `<code>${esc(id)}</code> ${nodeMeta(id).minAge}`).join(', ')}</dd>
+        <dt>Thân xác</dt><dd>${codes(by(m => m.body === 'flesh'))}</dd><dt>Người sống</dt><dd>${codes(by(m => m.body === 'living'))}</dd><dt>Bộ Xương</dt><dd>${codes(by(m => m.body === 'undead'))}</dd>
+        <dt>Chặn giống loài</dt><dd>${allIds.filter(id => nodeMeta(id).notRace).map(id => `<code>${esc(id)}</code> (${nodeMeta(id).notRace.map(raceVi).join(', ')})`).join(', ')}</dd><dt>Cần nút trước</dt><dd>${allIds.filter(id => nodeMeta(id).need).map(id => `<code>${esc(id)}</code> sau ${codes(nodeMeta(id).need)}`).join(', ')}</dd></dl>`,
+      theme: '<p style="margin:0">Sự kiện, quyết định cùng chủ đề ở nhiều file dùng chung khoảng lặp: một chủ đề một lần trong số lượt ghi ở thẻ chủ đề. Nút con trong cây được miễn khoảng lặp của chủ đề (lời mời rồi giải đấu là một mạch, không phải trùng).</p>',
+      tree: `<p style="margin:0">Nút con ghi cha (có thể kèm kết quả của cha) và khoảng chờ tính bằng lượt. Con của cùng một cha loại trừ nhau: nhánh nào xảy ra trước thì cha đóng. Con đang mở có trọng số × ${T.cfg.pull}; quá khoảng chờ thì mạch tự tắt. Nối mềm là các cặp có sẵn chạy bằng cờ: không chặn, không loại trừ, chỉ ghi nhánh và miễn khoảng lặp.</p>
+        <dl class="kv"><dt>Nối mềm</dt><dd>${allIds.filter(id => nodeMeta(id).soft).map(id => `${codes(nodeMeta(id).from)} → <code>${esc(id)}</code>`).join(', ')}</dd></dl>`
+    };
+    const rules = TRULES.filter(([id]) => passes('trule', id)).map(([id, name]) => card('trule', id, name, RULE[id]));
+    const axes = Object.entries(T.axes).filter(([id]) => passes('traj', id)).map(([id, a]) => card('traj', id, `${a.nameVi}: ${a.path}`, `<p style="margin:0">${esc(a.d)}</p><dl class="kv"><dt>Từ</dt><dd>${esc(axFrom(id).join(', ') || 'hoàn cảnh')}</dd><dt>Nút hợp hướng</dt><dd>${codes(by(m => (m.dir && m.dir[id]) || (m.dirMin && m.dirMin[id])))}</dd></dl>`));
+    const themes = Object.entries(T.themes).filter(([id]) => passes('theme', id)).map(([id, t]) => card('theme', id, t.nameVi, `<dl class="kv"><dt>Lặp</dt><dd>${t.gap} lượt</dd><dt>Nút</dt><dd>${codes(by(m => m.theme === id))}</dd></dl>`));
+    const arcs = [...new Set(T.nodes.map(n => n.arc))];
+    const nodeCard = n => { const m = n.tree || {}, kind = n.ev ? 'tnode' : 'dec';
+      if (!passes(kind, n.id)) return '';
+      const tags = [m.from ? `con của ${m.from.join(' / ')}` : null, m.wait ? `chờ ${m.wait[0]}–${m.wait[1]} lượt` : null, m.theme ? `chủ đề ${(T.themes[m.theme] || {}).nameVi}` : null,
+        m.soc ? `danh phận ≥ ${m.soc}` : null, m.dark ? `giới hắc ám ≥ ${m.dark}` : null, m.body ? { flesh: 'thân xác', living: 'người sống', undead: 'Bộ Xương' }[m.body] : null,
+        m.fresh ? 'lượt đầu' : null, m.minAge ? `từ lượt ${m.minAge}` : null, m.dir ? 'hợp ' + Object.keys(m.dir).map(AXV).join(', ') : null, m.dirMin ? Object.entries(m.dirMin).map(([a, x]) => `${AXV(a)} ≥ ${Math.round(x * 100)}%`).join(', ') : null].filter(Boolean);
+      return card(kind, n.id, n.title, `<div class="meta">${n.ev ? `sự kiện${n.w != null ? ` · trọng số ${num(n.w)}` : ''}${n.rep ? ` · lặp cách ${n.gap}` : ''}` : `quyết định · ưu tiên ${n.prio}`} · <code>${esc(n.id)}</code></div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(n.when)}</dd>${tags.length ? `<dt>Nhãn</dt><dd class="chips">${tags.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</dd>` : ''}</dl>
+        ${n.texts.length ? `<ul class="lines">${n.texts.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${n.fx.length ? `<dl class="kv"><dt>Tác dụng</dt><dd class="chips">${n.fx.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : ''}`); };
+    const part = (t, a) => a.filter(Boolean).length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Cây sự kiện, quỹ đạo, danh phận', 'Sự kiện, quyết định xảy ra phải hợp chủng tộc, hoàn cảnh và hướng đời của nhân vật (docs/12). Hướng đời là quỹ đạo tích từ việc đã làm, không do người chơi chọn. Danh phận chặn chuyện vô lý như Bộ Xương vừa trỗi dậy đã có đệ tử, vào hội. Sự kiện cùng chủ đề ở nhiều file không còn rơi chồng lên nhau; nhiều mạch có nhánh rẽ theo quỹ đạo. Câu chữ trích từ mã nguồn; ‹…› là chỗ game điền vào.')
+      + grid(part('Luật', rules) + part('Quỹ đạo: mười hướng', axes) + part('Chủ đề', themes) + arcs.map(a => part(`Mạch: ${a}`, T.nodes.filter(n => n.arc === a).map(nodeCard))).join(''));
   }
 
   // ---- Giống loài: tuổi thọ, tập tục, nhận thức (vankiep/js/race.js, docs/11) ----
@@ -547,7 +595,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'tree' ? treeView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

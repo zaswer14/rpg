@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -63,7 +63,7 @@ function parseRun(fn) {
 }
 const events = G.NATION_EVENTS.map(e => {
   const kind = e.id.startsWith('tpl_') ? 'tpl' : e.id.startsWith('qk_') ? 'quirk' : 'misc', ref = e.id.replace(/^(tpl_|qk_)/, '');
-  return { id: e.id, kind, ref, st: e.st, w: typeof e.w === 'number' ? e.w : null, rep: !!e.rep, gap: e.gap || null,
+  return { id: e.id, kind, ref, st: e.st, w: typeof (e.wBase ?? e.w) === 'number' ? (e.wBase ?? e.w) : null, rep: !!e.rep, gap: e.gap || null,
     undead: e.undead === true ? 'only' : e.undead === 'any' ? 'any' : 'none', title: COND[e.id] ? COND[e.id][0] : null, cond: COND[e.id] ? COND[e.id][1] : null, ...parseRun(e.run) };
 });
 // Thiên phú, chí hướng (vankiep/js/talent.js): tên và điều kiện của quyết định ghi tay (build dựng câu theo trạng thái), câu chữ trích từ build + apply.
@@ -113,6 +113,31 @@ const FDEC = {
   cv_forbidden: ['Hắc ma pháp sư', 'Trưởng thành, dưới Tier 4, mỗi năm 0,2% (max level từ 4 năm × 3, giáo phái Hắc Giáo × 2, chí hướng Sức mạnh × 1,5), tối đa hai lần một đời. Học: rèn × 2, có thầy Tử thuật, Bóng tối tới Tier 3, thoát kẹt gate; mỗi năm mất 2 Sinh lực, 7% bị phát hiện (bị bắt, truy nã), 6% tẩu hỏa. Báo quan: 2 × trung vị, danh vọng +3, công trạng 3.'],
   cv_deviate: ['Tẩu hỏa nhập ma', 'Do cấm thuật, thử thách chuyển nghề hỏng (4%), liều đột phá lúc già hỏng (30%). Áp chế: 30% + Hiểu biết / 250 + Tinh thần (20–85%); hỏng thì bệnh Tẩu hỏa nhập ma (nguy cơ chết × 1,6), mất Tâm trạng, Sinh lực, 5% chết. Tán công: hai kỹ năng cao nhất của Tier tụt một bậc, bỏ cấm thuật. Mặc kệ: thành bệnh.'],
   cv_reawaken: ['Thức tỉnh lại', 'Phàm Nhân trưởng thành, cuối năm Sinh lực dưới 15 (thập tử nhất sinh): 20%, một lần một đời. Bước qua cửa: căn cốt +2 bậc (30% +3), Sinh lực +25, 150 điểm rèn.']
+};
+// Cây sự kiện (vankiep/js/tree.js, docs/12): nút mới, theo mạch.
+const TNODE = {
+  sk_wake: ['Hồn mới trỗi dậy', 'Hồn mới trỗi dậy', 'Lượt đầu của Bộ Xương, gần như chắc. Câu chữ theo trường phái của kỹ năng kiếp trước còn trong xương (võ, pháp, ám, nghề); kết quả là nhánh.'],
+  sk_wake_robber: ['Hồn mới trỗi dậy', 'Kẻ trộm mộ', 'Con của sk_wake nhánh võ, ngay lượt đầu hoặc lượt sau.'],
+  sk_wake_whisper: ['Hồn mới trỗi dậy', 'Tên các nấm mồ', 'Con của sk_wake nhánh ám hoặc pháp; nối mềm sang sk_call (tiếng gọi dưới mồ).'],
+  sk_wake_tinker: ['Hồn mới trỗi dậy', 'Chỗ ở trong hầm', 'Con của sk_wake nhánh nghề.'],
+  sk_scavenge: ['Bộ Xương', 'Đồ của người chết', 'Bộ Xương danh phận 0 (chưa ai nhận) từ lượt 1, trang bị dưới 2 + 2 × Tier; lặp cách 3 lượt. Thay cho tiệm rèn mà Bộ Xương không vào được.'],
+  sk_history: ['Bộ Xương', 'Nghe lỏm lữ khách', 'Bộ Xương từ lượt 2, thế giới có sử từ trước khi trỗi dậy; lặp cách 8 lượt. Thay cho "ông bà kể chuyện".'],
+  sk_acolyte: ['Hắc đồ', 'Kẻ học hắc thuật', 'Quyết định. Bộ Xương từ lượt 3, giới hắc ám ≥ 2, tử thuật (Tử linh, Linh hồn, Nguyền rủa) ≥ 30 hoặc theo Hắc Giáo, chưa có hắc đồ. Chủ đề Nhận đệ tử.'],
+  sk_acolyte_loyal: ['Hắc đồ', 'Hắc đồ trung thành', 'Con của sk_acolyte (nhận), 2–6 lượt sau. Trọng số 2 + 4 × hòa đồng, theo Hắc Giáo +2.'],
+  sk_acolyte_betray: ['Hắc đồ', 'Hắc đồ phản bội', 'Con của sk_acolyte (nhận), 2–6 lượt sau. Trọng số 1 + 3 × (1 − hòa đồng), nước Săn Bộ Xương +3, vùng nhiều người theo Quang Minh thêm.'],
+  sk_acolyte_lich: ['Hắc đồ', 'Hắc đồ xin làm bất tử', 'Con của sk_acolyte (nhận), 2–6 lượt sau; cần quỹ đạo Ám ≥ 30% và Tử linh ≥ 45.'],
+  dt_proud: ['Đệ tử người sống', 'Đệ tử thành danh', 'Con của disciple (nhận), 3–9 lượt sau. Trọng số 3 + 2 × hòa đồng.'],
+  dt_rival: ['Đệ tử người sống', 'Đệ tử phản sư', 'Con của disciple (nhận), 3–9 lượt sau. Trọng số 1 + 6 × phần Ám của quỹ đạo + 1,5 × (1 − hòa đồng).'],
+  dt_fallen: ['Đệ tử người sống', 'Đệ tử tử trận', 'Con của disciple (nhận), 3–9 lượt sau; cần quỹ đạo Võ ≥ 20%. Trọng số 1 + 4 × phần Võ.'],
+  cp_save: ['Bạn đồng hành', 'Cứu nhau giữa trận', 'Con của ad_companion, 1–6 lượt sau. Trọng số 1 + 4 × phần Võ.'],
+  cp_betray: ['Bạn đồng hành', 'Ôm túi chung bỏ đi', 'Con của ad_companion, 1–6 lượt sau. Trọng số 0,5 + 4 × Ám + 2 × Thương (+1 nếu ít hòa đồng).'],
+  cp_wed: ['Bạn đồng hành', 'Thành vợ chồng', 'Con của ad_companion, 1–6 lượt sau; thân xác, chưa có bạn đời, bạn đồng hành không phải Cơ Nhân. Trọng số 0,3 + 4 × Gia + 1,5 × hòa đồng.'],
+  cp_part: ['Bạn đồng hành', 'Đường rẽ đôi', 'Con của ad_companion, 1–6 lượt sau. Trọng số 3 × (Trí + Nghề + Quyền + Thương + nửa Gia).'],
+  map_sell: ['Tấm bản đồ', 'Bán bản đồ', 'Con của ad_map, 1–8 lượt sau, bản đồ chưa dùng. Hợp quỹ đạo Thương.'],
+  map_fake: ['Tấm bản đồ', 'Bản đồ giả', 'Con của ad_map, 1–8 lượt sau, bản đồ chưa dùng. Hợp quỹ đạo Trí.'],
+  fa_pilgrim: ['Sau khi theo đạo', 'Hành hương', 'Con của faith_join (không phải "không theo"), 2–8 lượt sau; người sống. Hợp quỹ đạo Đạo.'],
+  fa_doubt: ['Sau khi theo đạo', 'Lung lay', 'Con của faith_join, 2–8 lượt sau; người sống. Trọng số 1 + 2 × (1 − mộ đạo); hợp Trí, Ám.'],
+  fa_mission: ['Sau khi theo đạo', 'Mang thư cho giáo đoàn', 'Con của faith_join, 2–8 lượt sau; người sống, danh phận ≥ 1. Hợp Du, Đạo.']
 };
 const both = (...fs) => ({ toString: () => fs.map(f => f.toString()).join('\n') });
 const pickF = (o, f) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, f(v, k)]));
@@ -182,6 +207,11 @@ const data = {
   econ: { ringVi: G.RING_VI, demandVi: G.DEMAND_VI, cfg: G.ECON,
     decs: Object.entries(EDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) },
+  // Cây sự kiện (vankiep/js/tree.js, docs/12).
+  tree: { cfg: G.TREE, axes: G.TRAJ, socVi: G.SOC_VI, darkVi: G.DARK_VI, themes: G.THEMES, schoolAx: G.SCHOOL_AX, workAx: G.WORK_AX, focusAx: G.FOCUS_AX,
+    meta: G.TREE_META,
+    nodes: Object.entries(TNODE).map(([id, [arc, title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
+      return D ? { id, arc, title, when, ev: false, prio: D.prio, gap: D.gap, tree: D.tree, ...parseRun(both(D.build, D.apply)) } : { id, arc, title, when, ev: true, st: E.st, w: typeof E.wBase === 'number' ? E.wBase : null, rep: !!E.rep, gap: E.gap || null, tree: E.tree, ...parseRun(E.run), ...(id === 'sk_wake' ? { texts: Object.values(G.SK_WAKE) } : {}) }; }) },
   status: { st: G.STATUS, titleTier: G.TITLE_TIER, grace: G.TITLE_GRACE, head: G.HEAD_TIER, office: G.OFFICE_TIER, org: G.ORG_TIER, tw: G.PROMO_TW, ret: G.RET_PAY, elixir: G.ELIXIR, blood: G.BLOOD, strict: G.STRICT, lax: G.LAX,
     decs: Object.entries(SDEC).map(([id, [title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, title, when, ev: false, prio: D.prio, gap: D.gap, ...parseRun(both(D.build, D.apply)) } : { id, title, when, ev: true, gap: E.gap || null, rep: !!E.rep, ...parseRun(E.run) }; }) }

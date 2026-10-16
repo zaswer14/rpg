@@ -247,7 +247,7 @@ window.LifeSim = window.LifeSim || {};
     tournament: {
       prio: 4, gap: 3,
       when: (S, X) => S.flags.tourney && ['adult', 'teen'].includes(X.stage(S)),
-      build: (S, X) => ({ title: 'Đại hội võ thuật', body: `Kinh Đô Aurel mở giải đấu. Ba vòng; người thắng nhận 2 vàng.`,
+      build: (S, X) => ({ title: 'Đại hội võ thuật', body: `${(() => { const n = G.here(S).n, c = n && G.SET[n.capital]; return c ? `Kinh đô ${c.name}` : 'Thành lớn gần nhất'; })()} mở giải đấu. Ba vòng; người thắng nhận 2 vàng.`,
         choices: [{ k: 'go', label: 'Ghi danh', sub: `Sức bạn ${X.power(S).toFixed(1)} Tier` }, { k: 'no', label: 'Đứng xem', sub: '' }] }),
       apply(S, X, k) {
         S.flags.tourney = false; if (k !== 'go') return null;

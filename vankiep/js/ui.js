@@ -6,14 +6,16 @@
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   // v3: thế giới sinh từ seed (quốc gia, khu dân cư của js/realm.js); bản lưu và mộ gắn với seed thế giới.
   // v4: thế giới động (js/dynamic.js): bản lưu giữ S.world.dyn; đời mới nối tiếp thế giới của đời trước.
-  const SAVE = 'vankiep.save.v4', GRAVES = 'vankiep.graves.v3', PREF = 'vankiep.pref.v1', WORLD = 'vankiep.world.v1';
+  // pref v2: điều khiển tay là chính (mặc định không Tự sống, thời gian chỉ trôi khi bấm Sang năm hoặc bật Tự chạy).
+  const SAVE = 'vankiep.save.v4', GRAVES = 'vankiep.graves.v3', PREF = 'vankiep.pref.v2', WORLD = 'vankiep.world.v1';
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bộ nhớ trình duyệt bị chặn: chơi tiếp, không lưu */ } }
   };
   const YEAR_SEC = 8, SPEEDS = [.5, 1, 2, 4, 8];
-  const pref = Object.assign({ speed: 1, auto: true, view: 'region' }, store.get(PREF) || {});
-  let sim = null, paused = false, dirty = true, selRegion = null, selNation = null, lastHeader = null, deathShown = false;
+  const pref = Object.assign({ speed: 1, auto: false, view: 'region', mapZ: 1 }, store.get(PREF) || {});
+  // running: Tự chạy (thời gian trôi theo tốc độ). step: đang sống hết một lượt sau khi bấm Sang năm (quyết định chen giữa thì chờ chọn rồi đi tiếp).
+  let sim = null, running = false, step = null, dirty = true, selRegion = null, selNation = null, lastHeader = null, deathShown = false, tab = 'log';
   let graves = store.get(GRAVES) || [];
   // Thế giới: ?world=… trên URL, hoặc thế giới đang chơi, hoặc một thế giới mới.
   function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); for (const k of Object.keys(bases)) if (k !== 'terrain') delete bases[k]; }
@@ -54,15 +56,15 @@
     const prev = sim && sim.S && sim.S.world && sim.S.worldSeed === G.realm.seed ? sim.S.world : null;
     sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() });
     sim.autoDecide = pref.auto;
-    clearLog();
-    deathShown = false; $('deathModal').hidden = true; $('decModal').hidden = true;
+    clearLog(); step = null;
+    deathShown = false; $('deathModal').hidden = true; $('decBox').hidden = true;
     sim.newLife({ ...(prev ? { world: prev } : {}), ...(origin ? { origin } : {}) });   // origin: xuất thân chọn ở nút Kiếp mới (js/noble.js)
     sim.S.auto = pref.auto;
     selRegion = sim.S.loc;
     dirty = true; save();
   }
   function rise() {
-    clearLog();
+    clearLog(); step = null; $('decBox').hidden = true;
     deathShown = false; $('deathModal').hidden = true;
     sim.rise();
     sim.S.auto = pref.auto;
@@ -109,19 +111,22 @@
   }
 
   // ───────── Quyết định ─────────
+  // Hiện ngay dưới nhật ký (không che bản đồ, nhân vật); phím 1–9 chọn nhanh.
   function showDecision(d) {
     if (sim.autoDecide && !sim.S.dead) { const D = G.DECISIONS[d.id]; sim.choose(D.auto ? D.auto(sim.S, sim, d) : d.choices[0].k); dirty = true; return; }
     $('dTitle').textContent = d.title;
     $('dBody').textContent = d.body || '';
     $('dFact').textContent = d.fact || '';
     $('dChoices').innerHTML = '';
-    for (const c of d.choices) {
+    d.choices.forEach((c, i) => {
       const b = document.createElement('button');
-      b.innerHTML = `${esc(c.label)}${c.sub ? `<small>${esc(c.sub)}</small>` : ''}`;
-      b.onclick = () => { $('decModal').hidden = true; sim.choose(c.k); dirty = true; save(); };
+      b.innerHTML = `${i < 9 ? `<kbd>${i + 1}</kbd>` : ''}${esc(c.label)}${c.sub ? `<small>${esc(c.sub)}</small>` : ''}`;
+      b.onclick = () => { $('decBox').hidden = true; sim.choose(c.k); dirty = true; save(); };
       $('dChoices').appendChild(b);
-    }
-    $('decModal').hidden = false;
+    });
+    $('decBox').hidden = false;
+    showTab('log'); $('log').scrollTop = $('log').scrollHeight; $('decBox').scrollIntoView({ block: 'nearest' });
+    dirty = true;
   }
 
   // ───────── Cái chết + xúc xắc trỗi dậy ─────────
@@ -162,7 +167,7 @@
         else { die.classList.add('rest'); txt.textContent = `${final} > 20. Yên nghỉ.`; }
         if (S.rose) addBtn(btns, `Trỗi dậy thành Bộ Xương`, `Giữ kỹ năng ${G.mv(S.rose.skill)} ${S.rose.value}; mọi thứ khác về số 0.`, rise, true);
         addBtn(btns, 'Sang kiếp mới', 'Một đứa trẻ khác chào đời đâu đó trên đại lục.', () => start());
-        addBtn(btns, 'Xem lại bản đồ', 'Đóng bảng này.', () => { $('deathModal').hidden = true; });
+        addBtn(btns, 'Xem lại cuộc đời', 'Đóng bảng này; nút cuối nhật ký mở lại.', () => { $('deathModal').hidden = true; });
       }
     }, 70);
     $('deathModal').hidden = false;
@@ -209,6 +214,8 @@
       ['Tu luyện', `×${G.cultRate(S).toFixed(2).replace('.', ',')}`],   // căn cốt × thiên phú (js/talent.js)
       ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : (S.undead ? '—' : st === 'adult' ? 'chưa có' : '—')],
       ['Thân phận', G.statusText ? G.statusText(S) : G.tierName(X.ctier(S))],   // địa vị theo Tier (js/status.js, docs/09 mục 6.4)
+      ['Danh phận', G.standingText ? G.standingText(S, X) : ''],   // xã hội nhận bạn tới đâu (js/tree.js, docs/12)
+      ['Quỹ đạo', G.trajText ? G.trajText(S) : ''],   // hướng đời tích từ việc đã làm (js/tree.js)
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
       ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
@@ -217,6 +224,7 @@
     ];
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
     if (G.statusTip) { const i = kv.findIndex(r => r[0] === 'Thân phận'); $('cKv').children[i * 2 + 1].title = G.statusTip(S); }
+    for (const [k, f] of [['Danh phận', () => G.standingTip(S, X)], ['Quỹ đạo', () => G.trajTip(S)]]) { const i = kv.findIndex(r => r[0] === k); if (i >= 0 && G.trajTip) $('cKv').children[i * 2 + 1].title = f(); }
     if (G.workText && S.work) { const i = kv.findIndex(r => r[0] === 'Sinh kế'); $('cKv').children[i * 2 + 1].title = G.workText(S.work); }   // vòng nghề, cầu (js/econ.js)
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
     // Level, kỹ năng đang rèn, chỉ số (js/cult.js, docs/08).
@@ -432,30 +440,61 @@
     $('chronCount').textContent = H.length ? `(${H.length})` : '';
     $('chron').innerHTML = H.slice(-40).reverse().map(h => `<div class="prow"><b>Năm ${h.y}</b> · ${esc(h.t)}</div>`).join('') || '<div class="prow">Chưa có gì đáng ghi.</div>';
     const L = S.lineage || [];
-    $('lineageBox').hidden = !L.length;
+    $('lineageTab').hidden = !L.length;
+    if (!L.length && tab === 'lineage') showTab('log');
     $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} level ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
   }
 
   function renderYear() {
-    const S = sim.S;
+    const S = sim.S, ypt = sim.R(S).ypt;
     $('yBar').style.width = Math.min(100, S.t * 100) + '%';
-    $('yLabel').textContent = `Năm ${S.world.year} · ${sim.years(S)} ${S.undead ? 'năm từ khi trỗi dậy' : 'tuổi'}${S.dead ? ' · đã mất' : paused ? ' · tạm dừng' : ''}`;
+    $('yLabel').textContent = `Năm ${S.world.year} · ${sim.years(S)} ${S.undead ? 'năm từ khi trỗi dậy' : 'tuổi'}${S.dead ? ' · đã mất' : S.pending && !$('decBox').hidden ? ' · chờ bạn quyết định' : running ? ' · đang tự chạy' : ''}`;
+    // Nút chính: sống hết lượt này (người trường thọ một lượt nhiều năm); đã mất thì mở lại bảng tổng kết.
+    const nb = $('btnNext');
+    nb.textContent = S.dead ? 'Tổng kết kiếp này ▸' : ypt > 1 ? `Qua ${ypt} năm ▸` : 'Sang năm ▸';
+    nb.disabled = !S.dead && (!!S.pending || !!step);
   }
+  // Thẻ của cột giữa: Cuộc đời (nhật ký), Biên niên sử, Đồng niên, Các kiếp trước.
+  function showTab(t) {
+    tab = t;
+    for (const b of $('tabs').children) { const on = b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }
+    for (const id of ['log', 'chron', 'peers', 'lineage']) $(id).hidden = id !== t;
+  }
+  for (const b of $('tabs').children) b.onclick = () => showTab(b.dataset.t);
 
   // ───────── Bản đồ ─────────
+  // Khung nhìn: z (1 = cả đại lục), góc trên trái (ox, oy) theo tọa độ bản đồ; follow = bám theo nhân vật (nút ⌖, tắt khi kéo).
+  const view = { z: Math.max(1, Math.min(6, +pref.mapZ || 1)), ox: 0, oy: 0, follow: (+pref.mapZ || 1) > 1 };
+  function clampView() {
+    const W = canvas.width, H = canvas.height;
+    view.z = Math.max(1, Math.min(6, view.z));
+    view.ox = Math.max(0, Math.min(W - W / view.z, view.ox)); view.oy = Math.max(0, Math.min(H - H / view.z, view.oy));
+    $('zIn').disabled = view.z >= 6; $('zOut').disabled = view.z <= 1;
+  }
+  function centerOn(x, y) { view.ox = x - canvas.width / view.z / 2; view.oy = y - canvas.height / view.z / 2; clampView(); }
+  // Phóng to / thu nhỏ quanh điểm (x, y) của bản đồ: điểm đó đứng yên trên màn hình.
+  function zoomAt(f, x, y) {
+    const z0 = view.z, z = Math.max(1, Math.min(6, z0 * f));
+    view.ox = x - (x - view.ox) * z0 / z; view.oy = y - (y - view.oy) * z0 / z; view.z = z; clampView();
+    pref.mapZ = Math.round(z * 100) / 100; store.set(PREF, pref);
+  }
+  const viewMid = () => [view.ox + canvas.width / view.z / 2, view.oy + canvas.height / view.z / 2];
   let hoverCell = null, t0 = performance.now();
   function drawMap(now) {
     const S = sim.S;
     const peers = (S.peers || []).map((p, i) => ({ x: p.bornPos[0], y: p.bornPos[1], dead: !!S.peerSeen[i] })).filter(p => !p.dead);
     const ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
+    if (view.follow && view.z > 1) centerOn(S.pos[0], S.pos[1]);
+    ctx.setTransform(view.z, 0, 0, view.z, -view.ox * view.z, -view.oy * view.z);
     G.drawMap(ctx, G.map, baseFor(pref.view, ct, cap), {
       selected: selRegion, zoneSel: selRegion === S.loc && S.zoneSel ? G.ZONE[S.zoneSel].index : null,
       path: S.path2, me: S.dead ? null : S.pos, undead: S.undead, time: (now - t0) / 1000,
       graves: graves.filter(g => g.world === G.realm.seed), realm: G.realm, roads: roadsFor(), view: pref.view, peers,
       war: pref.view === 'political' && S.world.dyn ? warFor(S.world) : null, hunt: !S.dead && (S.focus === 'hunt' || S.focus === 'adventure') ? S.huntPos : null,
       seaLines: pref.view === 'sea' && !S.dead ? G.seaLinesFrom(S) : null,
-      sites: pref.view === 'danger' ? sitesFor(S) : null
+      sites: pref.view === 'danger' ? sitesFor(S) : null, textScale: 1 / Math.sqrt(view.z)
     });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
   // Hang ổ, di tích, ổ chúa của thế giới đang sống (chế độ Nguy hiểm; js/dynamic.js, js/realm.js).
   function sitesFor(S) {
@@ -482,11 +521,46 @@
     for (const n of G.realm.nests || []) if (near(n.x, n.y, 8)) out.push(`<b>Ổ chúa</b> · ${esc(G.B.byId[n.species].nameVi)} ngủ ở đây; thức giấc khi có người đủ cấp 40 trong vùng`);
     return out.length ? '<br>' + out.join('<br>') : '';
   }
+  // Điểm trên bản đồ (tọa độ của G.map) dưới con trỏ, đã tính khung nhìn.
   function canvasPoint(ev) {
     const r = canvas.getBoundingClientRect();
-    return [(ev.clientX - r.left) / r.width * canvas.width, (ev.clientY - r.top) / r.height * canvas.height];
+    return [view.ox + (ev.clientX - r.left) / r.width * canvas.width / view.z, view.oy + (ev.clientY - r.top) / r.height * canvas.height / view.z];
   }
+  // Kéo để dời khung nhìn (khi đã phóng to); nhấp không kéo thì chọn vùng.
+  let drag = null;
+  canvas.addEventListener('pointerdown', ev => {
+    if (ev.button !== 0) return;
+    drag = { x: ev.clientX, y: ev.clientY, ox: view.ox, oy: view.oy, moved: false };
+    canvas.setPointerCapture(ev.pointerId);
+  });
+  canvas.addEventListener('pointermove', ev => {
+    if (!drag) return;
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+    if (view.z <= 1) return;
+    drag.moved = true; view.follow = false; canvas.classList.add('drag'); $('tip').hidden = true;
+    const r = canvas.getBoundingClientRect();
+    view.ox = drag.ox - dx / r.width * canvas.width / view.z; view.oy = drag.oy - dy / r.height * canvas.height / view.z; clampView();
+  });
+  canvas.addEventListener('pointerup', ev => {
+    const d = drag; drag = null; canvas.classList.remove('drag');
+    if (!d || d.moved) return;
+    const [x, y] = canvasPoint(ev), c = G.map.at(x, y);
+    selRegion = c ? c.region.id : null;
+    const n = c ? G.nationAtCell(c.cell) : null; selNation = n ? n.idx : null;
+    dirty = true;
+  });
+  canvas.addEventListener('pointercancel', () => { drag = null; canvas.classList.remove('drag'); });
+  canvas.addEventListener('wheel', ev => { ev.preventDefault(); const [x, y] = canvasPoint(ev); view.follow = false; zoomAt(ev.deltaY < 0 ? 1.25 : .8, x, y); }, { passive: false });
+  $('zIn').onclick = () => zoomAt(1.5, ...(view.follow ? sim.S.pos : viewMid()));
+  $('zOut').onclick = () => zoomAt(1 / 1.5, ...(view.follow ? sim.S.pos : viewMid()));
+  $('zMe').onclick = () => { if (view.z < 2) zoomAt(2.5 / view.z, ...sim.S.pos); view.follow = true; centerOn(...sim.S.pos); };
+  function setBig(on) { document.body.classList.toggle('mapbig', on); $('zBig').textContent = on ? '✕' : '⛶'; $('zBig').title = on ? 'Thu bản đồ về góc (M, Esc)' : 'Mở rộng bản đồ (M)'; $('tip').hidden = true; }
+  $('zBig').onclick = () => setBig(!document.body.classList.contains('mapbig'));
+  $('mapShade').onclick = () => setBig(false);
+  clampView();
   canvas.addEventListener('mousemove', ev => {
+    if (drag && drag.moved) return;
     const [x, y] = canvasPoint(ev), c = G.map.at(x, y), tip = $('tip');
     const S = sim.S, ct = sim.ctier(S), cap = ct + (S.reckless ? 2 : 1);
     const place = (t) => { const r = canvas.getBoundingClientRect(); t.style.left = Math.min(ev.clientX - r.left + 14, r.width - 270) + 'px'; t.style.top = (ev.clientY - r.top + 14) + 'px'; t.hidden = false; };
@@ -515,18 +589,12 @@
     place(tip);
   });
   canvas.addEventListener('mouseleave', () => { $('tip').hidden = true; });
-  canvas.addEventListener('click', ev => {
-    const [x, y] = canvasPoint(ev), c = G.map.at(x, y);
-    selRegion = c ? c.region.id : null;
-    const n = c ? G.nationAtCell(c.cell) : null; selNation = n ? n.idx : null;
-    dirty = true;
-  });
 
   // ───────── Điều khiển ─────────
   function setAuto(on) {
     pref.auto = on; store.set(PREF, pref);
     $('autoLife').checked = on;
-    if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decModal').hidden = true; showDecision(sim.S.pending); } }
+    if (sim) { sim.autoDecide = on; if (sim.S) sim.S.auto = on; if (on && sim.S && sim.S.pending) { $('decBox').hidden = true; showDecision(sim.S.pending); } }
   }
   const LEGEND = {
     danger: '<span><i style="background:rgb(84,168,96)"></i>an toàn</span><span><i style="background:rgb(214,176,64)"></i>vừa sức</span><span><i style="background:rgb(210,96,62)"></i>nguy hiểm (Liều mạng)</span><span><i style="background:rgb(66,58,64)"></i>khóa</span><span><b style="color:#ff6a50">▲</b> hang ổ (đỏ: sào huyệt)</span><span><b style="color:#c9b2ff">Π</b> di tích</span><span><b style="color:#ff3d6e">◆</b> ổ chúa</span>',
@@ -545,8 +613,31 @@
   $('reckless').onchange = e => { sim.S.reckless = e.target.checked; sim.ensureZone(); dirty = true; };
   $('btnNew').onclick = () => { if (sim.S.dead || confirm('Bỏ kiếp đang sống để bắt đầu kiếp mới?')) start(null, $('origin').value || null); };
   $('btnWorld').onclick = () => { if (confirm('Tạo đại lục mới? Kiếp đang sống sẽ bị bỏ, mộ các kiếp trước ở lại với thế giới cũ.')) { useWorld(G.newSeed()); selNation = null; start(); } };
-  $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; dirty = true; };
-  document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); $('btnPause').click(); } });
+  // Điều khiển tay: Sang năm sống hết một lượt; Tự chạy cho thời gian trôi theo tốc độ (bấm lại để dừng).
+  function setRun(on) {
+    running = on; step = null;
+    $('btnRun').textContent = on ? '⏸ Dừng' : '▶ Tự chạy'; $('btnRun').classList.toggle('on', on);
+    $('speeds').hidden = !on; dirty = true;
+  }
+  function nextYear() {
+    const S = sim.S; if (!S) return;
+    if (S.dead) { $('deathModal').hidden = false; return; }
+    if (S.pending || step) return;
+    if (running) setRun(false);
+    step = { S, y: S.world.year };
+    showTab('log');
+  }
+  $('btnRun').onclick = () => setRun(!running);
+  $('btnNext').onclick = nextYear;
+  $('menu').addEventListener('click', ev => { if (ev.target.closest('button')) $('menu').open = false; });
+  document.addEventListener('keydown', e => {
+    if (e.target !== document.body && !e.target.closest('button')) return;   // đang gõ / chọn trong ô thì thôi
+    if (!$('deathModal').hidden) return;
+    if (!$('decBox').hidden && /^[1-9]$/.test(e.key)) { const b = $('dChoices').children[+e.key - 1]; if (b) { e.preventDefault(); b.click(); } return; }
+    if (e.code === 'Space' || e.code === 'Enter') { if (e.target !== document.body) return; e.preventDefault(); if (running) setRun(false); else nextYear(); }
+    else if (e.key === 'm' || e.key === 'M') setBig(!document.body.classList.contains('mapbig'));
+    else if (e.key === 'Escape') setBig(false);
+  });
   for (const s of SPEEDS) {
     const b = document.createElement('button'); b.textContent = (s === .5 ? '½' : s) + '×';
     b.onclick = () => { pref.speed = s; store.set(PREF, pref); [...$('speeds').children].forEach((c, i) => c.classList.toggle('on', SPEEDS[i] === s)); };
@@ -559,7 +650,14 @@
   function frame(now) {
     const dt = Math.min(.1, (now - last) / 1000); last = now;
     if (sim && sim.S) {
-      if (!paused && !sim.S.dead && !sim.S.pending) sim.tick(dt * pref.speed / YEAR_SEC);
+      const S = sim.S;
+      if (step && (step.S !== S || S.dead || S.world.year !== step.y)) step = null;
+      if (step && !S.pending) {
+        // Sang năm: tua liền tới hết lượt; quyết định chen giữa thì dừng lại chờ chọn.
+        for (let n = 0; n < 400 && sim.S === S && !S.dead && !S.pending && S.world.year === step.y; n++) sim.tick(.01);
+        if (sim.S !== S || S.dead || S.world.year !== step.y) step = null;
+        dirty = true;
+      } else if (running && !S.dead && !S.pending) sim.tick(dt * pref.speed / YEAR_SEC);
       drawMap(now);
       if (now - lastUi > 120) {
         renderYear();

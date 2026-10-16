@@ -88,6 +88,7 @@
 <script src="js/inst.js"></script>
 <script src="js/fate.js"></script>
 <script src="js/race.js"></script>
+<script src="js/tree.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -123,6 +124,8 @@ $('run').onclick = () => {
   // Chạy từng đợt 25 đời rồi nhả luồng: trang không treo, hiện được tiến độ.
   setTimeout(async () => {
     const t0 = performance.now();
+    // Cây sự kiện (js/tree.js, docs/12): đếm nút, nhánh, chủ đề, lần bị cổng chặn; quỹ đạo, danh phận lúc chết.
+    G.TREE.stats = true; const TS = G.treeStatsReset(), TJ = { top: {}, mid: {}, midN: 0, aim: {}, soc: {}, sk: {}, skN: 0, ad: 0 };
     const ORIGK = ['royalMain', 'royalSide', 'royalCrown', 'royalExile', 'claimWin', 'claimFail', 'nobleHeirBorn', 'nobleInherit', 'nobleRoyal', 'promo', 'duel', 'duelWin'];
     const EDUK = ['edu1', 'grad1', 'edu2', 'grad2', 'edu3', 'grad3', 'eduTop', 'eduGrant', 'eduDrop', 'eduFail2', 'eduFail3', 'mentorCraft', 'mentorMartial', 'mentorDone', 'discipleTake', 'discipleDone', 'nobleBorn', 'nobleInherit', 'nobleMerit', 'nobleBuy', 'nobleLost'];
     // Địa vị theo Tier (bước B, js/status.js): đếm đời có cờ.
@@ -165,6 +168,10 @@ $('run').onclick = () => {
         st: { pct: S.pct, q: S.q, office: !!S.flags.office, office2: !!S.flags.office2, head: !!S.flags.headElect, officer: !!S.flags.orgOfficer, lead: !!(S.flags.orgLead || S.flags.advBranch || S.flags.orgFound), noble: S.flags.nobleMax || 0, ret: !!S.flags.retainer, elix: S.flags.elixirY || 0, promo: S.flags.promoMax || 0, gold: S.gold, med: G.median(G.REGION[S.loc]) } };   // địa vị (js/status.js)
       { const F = S.flags; for (const k of [...STK, ...ECK, ...DK, ...EK]) if (F[k]) B.k[k] = (B.k[k] || 0) + 1;
         const o = F.royal ? 'Hoàng tộc' : F.house || F.houseLeft ? 'Nhà quý tộc' : 'Thường dân', b = B.root[o] || (B.root[o] = [0, 0, 0, 0]); b[0]++; b[1] += G.RARITY[G.RANK[F.root0] || 0].rate; if (F.rootBlood) { b[2]++; b[3] += F.rootBlood; } }
+      { const top = (G.trajTop(S)[0] || { a: '—' }).a, ak = S.aim || 'free';   // quỹ đạo, danh phận lúc chết (đời đầu)
+        TJ.top[top] = (TJ.top[top] || 0) + 1; const mid = S.flags.trajMid;
+        if (mid) { TJ.midN++; TJ.mid[mid] = (TJ.mid[mid] || 0) + 1; const am = TJ.aim[ak] || (TJ.aim[ak] = {}); am[mid] = (am[mid] || 0) + 1; }
+        if (rec.adult) { TJ.ad++; const v = G.standing(S, sim).soc; TJ.soc[v] = (TJ.soc[v] || 0) + 1; } }
       A.lives.push(rec);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
       for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
@@ -183,6 +190,7 @@ $('run').onclick = () => {
         A.rose++;
         // Chạy luôn kiếp Bộ Xương để đo đời thứ hai.
         sim.rise(); sim.runToDeath(); S = sim.S; A.chain++;
+        TJ.skN++; for (const [id, r] of Object.entries(S.tree || {})) if (r.t < 3) TJ.sk[id] = (TJ.sk[id] || 0) + 1;   // 3 lượt đầu của Bộ Xương
         (A.byRace.skeleton = A.byRace.skeleton || []).push({ race: 'skeleton', years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, inh: S.inherited });
         A.causes['(xương) ' + S.causeId] = (A.causes['(xương) ' + S.causeId] || 0) + 1;
         for (const [g, n] of Object.entries(S.hunts.byGap)) A.gaps[g] = (A.gaps[g] || 0) + n;
@@ -286,6 +294,20 @@ $('run').onclick = () => {
       out.push(table('Thiên phú, đổi hướng (đời đầu)', [row('Thiên phú thức tỉnh', 'talAwaken'), row('Tẩy tủy thành công (căn cốt lên bậc)', 'talBreak'), row('Nối nghiệp nhà: nghe lời', 'defy_stay'), row('Nối nghiệp nhà: vừa làm vừa tập', 'defy_both'), row('Nối nghiệp nhà: bỏ đi', 'defy_leave'),
         row('Đổi nghề', 'workSwitch'), row('Đổi sang mạo hiểm giả', 'toAdv'), row('Nhận cơ hội theo chí hướng', 'aimChance'), row('Được cao nhân nhận dạy', 'hermit'), row('Góp vốn có lãi', 'tradeWin'), row('Xin được việc ở phủ', 'askWin')],
         ['', 'Đời', '% mọi đời', 'Số lần'], { note: 'docs/06.' })); }
+    // Cây sự kiện (js/tree.js, docs/12).
+    { const lives = N + A.chain, per = n => (n / lives * 1000).toFixed(0), AXV = a => (G.TRAJ[a] || { nameVi: a }).nameVi;
+      const blk = Object.entries(TS.block).map(([why, o]) => [why, Object.values(o).reduce((a, b) => a + b, 0), Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([id, n]) => `${id} ${n}`).join(', ')]).sort((a, b) => b[1] - a[1]);
+      const WHY = { fresh: 'Bộ Xương lượt đầu', body: 'thân thể', race: 'giống loài', age: 'chưa đủ lượt', soc: 'danh phận', need: 'thiếu nút trước', from: 'không có cha đang mở', theme: 'chủ đề đang lặp', dir: 'quỹ đạo không hợp' };
+      out.push(table('Cây sự kiện: lần bị cổng chặn', blk.map(([w, n, top]) => [(WHY[w.split(' ')[0]] || w) + (w.includes('xương') ? ' (Bộ Xương)' : ''), n, top]), ['Lý do', 'Lần lọc', 'Nút bị chặn nhiều nhất'],
+        { note: (TS.absurd ? `<span class="no">✗ ${TS.absurd} lần Bộ Xương chưa được nhận làm dân lại gặp nút cần danh phận.</span>` : '<span class="ok">✓ Bộ Xương chưa được nhận làm dân không gặp nút nào cần danh phận (đệ tử, vào hội, làm quan, cầu hôn…).</span>') + ' "Lần lọc": số lần một nút đủ điều kiện riêng mà bị cổng chung loại khi bốc (một năm có thể đếm nhiều lần).' }));
+      out.push(table('Cây sự kiện: nhánh', Object.entries(TS.edge).sort((a, b) => a[0].localeCompare(b[0])).map(([e, n]) => [e, n, per(n)]), ['Cha → con', 'Lần', '/ 1000 đời'],
+        { note: 'Nối cứng: con của cùng một cha loại trừ nhau (một nhánh), có khoảng chờ. Nối mềm (cặp có sẵn chạy bằng cờ: ad_suitor → marriage…): chỉ ghi nhánh, miễn khoảng lặp chủ đề.' }));
+      out.push(table('Cây sự kiện: chủ đề', Object.entries(TS.theme).sort((a, b) => b[1] - a[1]).map(([k, n]) => [`${G.THEMES[k].nameVi} (lặp ${G.THEMES[k].gap})`, n, per(n)]), ['Chủ đề', 'Lần', '/ 1000 đời'], { bar: true }));
+      out.push(table('Quỹ đạo (đời đầu)', Object.keys(G.TRAJ).map(a => [AXV(a), pct(TJ.mid[a] || 0, TJ.midN), pct(TJ.top[a] || 0, N)]).sort((a, b) => parseFloat(b[1]) - parseFloat(a[1])), ['Hướng mạnh nhất', 'Giữa đời', 'Lúc chết'],
+        { note: `Giữa đời: lúc qua tuổi trưởng thành 12 năm (${TJ.midN} đời sống tới đó); lúc chết: mọi đời (chết trẻ thì chưa có hướng). Chí hướng → hướng mạnh nhất giữa đời: ` +Object.entries(TJ.aim).map(([k, o]) => { const t = Object.entries(o).sort((a, b) => b[1] - a[1]); const s = t.reduce((a, x) => a + x[1], 0); return `${(G.AIMS[k] || { nameVi: k }).nameVi}: ${t.slice(0, 2).map(([a, n]) => `${AXV(a)} ${Math.round(n / s * 100)}%`).join(', ')}`; }).join(' · ') + '. Quỹ đạo tích từ việc làm, không đọc chí hướng.' }));
+      out.push(table('Danh phận lúc chết (đời trưởng thành)', [0, 1, 2, 3, 4].map(v => [`${v} ${G.SOC_VI[v]}`, TJ.soc[v] || 0, pct(TJ.soc[v] || 0, TJ.ad)]), ['Danh phận', 'Đời', '%'], { bar: true }));
+      out.push(table(`Bộ Xương: 3 lượt đầu (${TJ.skN} kiếp)`, Object.entries(TJ.sk).sort((a, b) => b[1] - a[1]).slice(0, 18).map(([id, n]) => [id, n, pct(n, TJ.skN)]), ['Nút', 'Kiếp', '%'],
+        { bar: true, note: 'Lượt đầu chỉ có nút "fresh" (sk_wake và nhánh, sk_flee, quyết định không cần danh phận như lên nghề). Không có đệ tử, vào hội, làm quan.' })); }
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
     $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;

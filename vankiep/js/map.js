@@ -461,6 +461,7 @@ window.LifeSim = window.LifeSim || {};
 
   // Lớp phủ: khu dân cư, tên vùng, mộ các kiếp trước, đường đời, nhân vật, vùng đang chọn.
   G.drawMap = function (ctx, map, base, o = {}) {
+    TS = o.textScale || 1;
     const R = G.REGIONS;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(base, 0, 0);
@@ -573,9 +574,12 @@ window.LifeSim = window.LifeSim || {};
     // Điểm săn gần nhất.
     if (o.hunt) { const [x, y] = o.hunt; ctx.strokeStyle = '#ff6a50'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); }
   };
+  // Cỡ chữ nhân TS (o.textScale của G.drawMap): giao diện phóng to bản đồ thì chữ co lại cho khỏi che.
+  let TS = 1;
   function label(ctx, text, x, y, size, color, bold) {
+    size *= TS;
     ctx.font = `${bold ? 700 : 500} ${size}px "Be Vietnam Pro", system-ui, sans-serif`; ctx.textAlign = 'center';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(10,8,6,.85)'; ctx.strokeText(text, x, y);
+    ctx.lineWidth = 3 * TS; ctx.strokeStyle = 'rgba(10,8,6,.85)'; ctx.strokeText(text, x, y);
     ctx.fillStyle = color; ctx.fillText(text, x, y);
   }
 })(window.LifeSim);
