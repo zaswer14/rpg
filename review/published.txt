@@ -1,5 +1,5 @@
 # trang	dấu dữ liệu (sha256 16 ký tự của JSON pre#out)	ngày đăng	tên	URL — sửa bằng: bash tools/duyet.sh ghi TRANG
 tree	b24a25ba62cab9bc	2026-10-14	Duyệt Cây Nghề	https://claude.ai/artifact/K36G3cQRbzHMALuN7q3SaK
 nation	9896747dc0e1aa59	2026-10-15	Duyệt Mẫu Quốc Gia	https://claude.ai/artifact/1FQFmmAroJsyVzVkgwp8W2
-content	fc6fd3c0757ab4d5	2026-10-16	Duyệt Nội Dung Vạn Kiếp	https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY
+content	3271cf427da32e01	2026-10-16	Duyệt Nội Dung Vạn Kiếp	https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY
 bestiary	c42a328471a550f3	2026-10-15	Duyệt Quái và Địa hình	https://claude.ai/artifact/EAQXqvNeqpS36378wdaaFN

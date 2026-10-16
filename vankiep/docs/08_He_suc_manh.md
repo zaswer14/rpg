@@ -106,8 +106,8 @@ Giá một kỹ năng (5 bậc) theo Tier; mỗi bậc 1/5 giá. **Bỏ hệ s�
 
 | Tier kỹ năng | 0 | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|---|
-| Giá chốt bằng sim (`G.SK_COST`) | 220 | 450 | 900 | 1 500 | 2 200 | 3 000 |
-| Tổng điểm để vào Tier kế (10 kỹ năng) | 2 200 | 6 700 | 15 700 | 30 700 | 52 700 | (max level 60: 82 700) |
+| Giá chốt bằng sim (`G.SK_COST`) | 260 | 450 | 900 | 1 500 | 2 200 | 3 000 |
+| Tổng điểm để vào Tier kế (10 kỹ năng) | 2 600 | 7 100 | 16 100 | 31 100 | 53 100 | (max level 60: 83 100) |
 | Đề xuất ban đầu | 300 | 1 000 | 2 000 | 3 000 | 4 000 | 5 000 |
 
 Đề xuất ban đầu giữ đường cong của bước A, nhưng bước A còn nhân điểm luyện tập theo cấp; bỏ hệ số đó thì lên quá chậm (1000 đời: Tier 0 cuối đời 59%), nên giá hạ khoảng một nửa (mục 12). Học bậc 1 hai kỹ năng không nâng thêm 2 × 1/5 giá.
@@ -128,6 +128,8 @@ Thay `G.teachCap` bằng bảng dữ liệu `G.TEACHERS` (để duyệt được
 | Học viện cao cấp | 3 | mọi | |
 | Học viện cao cấp ngành Võ bị | 4 | Chiến đấu, Tầm xa, Võ thuật, Dã thú, Bóng tối | |
 | Học viện cao cấp ngành Pháp thuật | 4 | Huyền thuật, Tử thuật, Chế tác | |
+| Chức trong hội (quản sự, phó đoàn, hội trưởng) | 3 | theo loại hội: đoàn lính đánh thuê dạy Chiến đấu, Tầm xa, Võ thuật, Dã thú; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối | giữ chức từ quản sự trở lên (thêm 16/10/2026, mục 12.1) |
+| Quan chức nhà nước | 3 | mọi (nhà nước mướn thầy) | làm Quan tỉnh hoặc Đại thần (thêm 16/10/2026, mục 12.1) |
 | Sư phụ cao thủ Tier s | s | trường phái của sư phụ | là đệ tử, cả sau khi xuất sư |
 | Nhà quý tộc (sinh ra hoặc có tước) / nhà từ Bá tước | 3 / 4 | mọi (nhà thuê thầy) | |
 | Hoàng tộc | 5 | mọi | |
@@ -182,13 +184,13 @@ Lý do để lắp khác mặc định có ở bước F, khi kỹ năng có tê
 ### 6.3. Gộp
 
 ```
-sức = 0,95 + sức chỉ số + hiệu quả kỹ năng
+sức = 1,05 + sức chỉ số + hiệu quả kỹ năng
     + 0,05 × đồ (0–10) + thiên phú (G.tfx.pow)
     + buff: đồng đội gánh (S.flags.boost), dược tề (bước B)
     − thương tật, Sinh lực thấp, tuổi già, thiếu niên (như cũ)
 ```
 
-Ước lượng ban đầu (nền 0,35): vừa vào Tier t thì sức ≈ t + 0,1 đến t + 0,6, ở max level ≈ t + 0,9 đến t + 1,6. Sim cho thấy người Tier thấp yếu quá (chết vì quái 16,8%), nên nền chốt 0,95; số đo thật ở mục 12.
+Ước lượng ban đầu (nền 0,35): vừa vào Tier t thì sức ≈ t + 0,1 đến t + 0,6, ở max level ≈ t + 0,9 đến t + 1,6. Sim cho thấy người Tier thấp yếu quá (chết vì quái 16,8%), nên nền chốt 1,05 (mục 12, 12.1); số đo thật ở mục 12.1.
 
 Bộ Xương mang mastery kiếp trước (`S.inherited`): trước cộng sức qua `mastery / 220`, giờ đổi thành rèn kỹ năng gắn mastery đó nhanh hơn (× 1,3).
 
@@ -339,3 +341,20 @@ Chỗ lệch:
 - **Sức ở Tier cao vượt mục tiêu** (vào Tier 5 ≈ 6,7). Không phá luật Tier vì quái vẫn bị chặn ở Tier + 1; nếu muốn sát hơn thì giảm `skillPow` theo Tier.
 - **Mastery dư +10 đến +23** so với yêu cầu nghề kế tiếp lúc max level (mục tiêu ± 5): ngoài kỹ năng, săn quái và sinh kế cũng cho mastery. Không hại gì ngoài làm thử thách chuyển nghề dễ qua hơn.
 - **Chậm hơn ~45%** (150 so với 103 giây): `G.statsOf` và `G.autoEquip` chạy lại mỗi trận. Nếu cần thì cache theo phiên bản `S.sk`.
+
+### 12.1. Cân lại Tier 3 (16/10/2026, lần 2)
+
+Thêm hai nguồn dạy Tier 3 (mục 5): **chức trong hội** từ quản sự trở lên, dạy theo loại hội; **quan chức nhà nước** (Quan tỉnh, Đại thần). Thử cả bậc thăng tiến `G.PROMO` từ bậc 2, rồi từ bậc 3: quá dễ đạt, chiếm 12 / 18 người lên Tier 3 (9 người chỉ nhờ nguồn này), Tier 3 vọt lên 14–16%, nên bỏ. Kèm theo: sức nền 0,95 → 1,05; giá kỹ năng Tier 0 220 → 260 (giữ Tier 0 gần 35%).
+
+1000 đời, thế giới `can-bang`, chế độ tự động:
+
+| Đo | Lần 1 (mục 12) | Lần 2 | Mục tiêu |
+|---|---|---|---|
+| Trận vượt Tier + 1 | 0 | 0 (72 796 trận) | 0 |
+| Trỗi dậy | 20,6% | 19,5% | ~20% |
+| Chết vì quái | 11,8% | 9,2% | ~10% |
+| Kẹt vĩnh viễn | 0% | 0% | ≈ 0 |
+| Tier 0 / 1 / 2 | 31,2 / 35,6 / 20,5% | 36,7 / 28,0 / 17,6% | 35 / 30 / 18% |
+| Tier 3 / 4 / 5 | 6,4 / 4,5 / 1,7% | 11,4 / 4,7 / 1,6% | 10 / 5 / 2% |
+
+Sức lúc vào Tier 1–5: 1,48 / 2,72 / 4,05 / 5,39 / 6,74; ở max level: 1,34 (Tier 0), 2,28, 3,73, 5,31, 6,59, 7,95. Mạo hiểm giả chết vì quái 32% (lần 1: 42%). Người Tier 2 đã max level mà chưa lên: 76% (vẫn chủ yếu vì người dạy; đó là chỗ nghẽn có chủ ý của Tier 3). Mastery dư so với yêu cầu vẫn +10 đến +23. 1000 đời mất 117–166 giây tùy lần (tab chạy nền thì chậm hơn).

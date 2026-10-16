@@ -23,7 +23,7 @@ window.LifeSim = window.LifeSim || {};
   G.MAX_LV = 60;
   G.LOADOUT = [2, 3, 5, 6, 6, 6];   // chỗ lắp theo Tier nghề, như Skeleton Codex (platform/docs/06 luật 9)
   // Điểm rèn để max một kỹ năng (5 bậc) theo Tier; mỗi bậc 1/5 (docs/08 mục 4.3, chốt bằng sim).
-  G.SK_COST = [220, 450, 900, 1500, 2200, 3000];
+  G.SK_COST = [260, 450, 900, 1500, 2200, 3000];
   G.CULT = {
     rate: 1,           // nhân chung điểm rèn (núm cân tháp Tier)
     base: 35,          // điểm rèn mỗi năm ai cũng có (luyện ngoài giờ)
@@ -117,6 +117,7 @@ window.LifeSim = window.LifeSim || {};
 
   // ── Người dạy (docs/08 mục 5) ──
   const WAR = ['combat', 'ranged', 'martial', 'beast', 'shadow'], MAGE = ['arcane', 'death', 'craft'];
+  const OFFICER = { merc: ['combat', 'ranged', 'martial', 'beast'], craft: ['craft'], lore: ['arcane', 'death'], shadow: ['shadow'] };
   G.TEACHERS = [
     { id: 'self', nameVi: 'Tự học', tier: 1, schools: null, cond: 'ai cũng có' },
     { id: 'guild', nameVi: 'Phường hội, đoàn lính đánh thuê, quân ngũ, Hiệp Hội từ hạng Bạc', tier: 2, schools: null, cond: 'là thành viên một hội, từng đi lính' },
@@ -124,6 +125,8 @@ window.LifeSim = window.LifeSim || {};
     { id: 'edu3', nameVi: 'Học viện cao cấp', tier: 3, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
     { id: 'vo', nameVi: 'Học viện cao cấp ngành Võ bị', tier: 4, schools: WAR, cond: 'ngành Võ bị' },
     { id: 'phap', nameVi: 'Học viện cao cấp ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'ngành Pháp thuật' },
+    { id: 'officer', nameVi: 'Chức trong hội (quản sự, phó đoàn, hội trưởng)', tier: 3, schools: 'theo loại hội: đoàn lính đánh thuê dạy trường phái chiến sĩ; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối', cond: 'giữ chức từ quản sự trở lên' },
+    { id: 'office', nameVi: 'Quan chức nhà nước', tier: 3, schools: null, cond: 'làm Quan tỉnh hoặc Đại thần (nhà nước mướn thầy cho người của mình)' },
     { id: 'master', nameVi: 'Sư phụ cao thủ Tier s', tier: 's', schools: 'của sư phụ', cond: 'là đệ tử (cả sau khi xuất sư)' },
     { id: 'noble', nameVi: 'Nhà quý tộc', tier: 3, schools: null, cond: 'sinh ra trong nhà quý tộc hoặc có tước' },
     { id: 'noble3', nameVi: 'Nhà từ Bá tước', tier: 4, schools: null, cond: 'tước hoặc nhà từ Bá tước' },
@@ -141,6 +144,11 @@ window.LifeSim = window.LifeSim || {};
     if (adv >= 2 || F.soldier > 0 || F.served || (r.orgs && Object.keys(r.orgs).length)) push(2, 'guild');
     if (eLv >= 2) push(2, 'edu2');
     if (eLv >= 3) push(3, 'edu3');
+    for (const [id, m] of Object.entries(r.orgs || {})) {   // chức từ quản sự trở lên: hội có người dạy giỏi cho người của mình
+      const o = m.rank >= 1 && G.orgById ? G.orgById(S.world, id) : null;
+      if (o && (OFFICER[o.kind] || []).includes(school)) { push(3, 'officer'); break; }
+    }
+    if (r.office) push(3, 'office');
     if (eLv >= 3 && track === 'vo' && WAR.includes(school)) push(4, 'vo');
     if (eLv >= 3 && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
     if (M && (!M.school || M.school === school)) push(M.tier, 'master', `Sư phụ ${M.name || ''} (Tier ${M.tier})`.replace('  ', ' '));

@@ -174,7 +174,7 @@ window.LifeSim = window.LifeSim || {};
     power(S = this.S) {
       const st = this.stage(S);
       // Thiên phú (js/talent.js) cộng thẳng vào sức; boost: đồng đội gánh bớt trong một chuyến (cơ hội theo chí hướng).
-      let p = .95 + G.statPow(S) + G.skillPow(S) + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
+      let p = 1.05 + G.statPow(S) + G.skillPow(S) + S.gear * .05 - (100 - S.hl) / 220 + G.tfx(S).pow + (S.flags.boost || 0);
       for (const c of S.conds) p += (G.CONDS[c.id].power || 0);
       if (st === 'elder') p -= .25 + (S.age - this.lt(S).leT * .78) * .02;
       if (st === 'teen') p -= .15;
