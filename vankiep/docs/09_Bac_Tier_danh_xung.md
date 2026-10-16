@@ -159,7 +159,7 @@ Không ai dạy được Huyền Thoại Giả: đường lên Tier 5 là tự n
 
 ### 6.2. Sư phụ cao thủ (`js/edu.js` quyết định `mentor`)
 
-Trước bốc đều Tier 3–5 (`X.int(3, 5)`): một phần ba số cao thủ để ý tới người chơi là Huyền Thoại Giả. Giờ (`G.MENTOR_TIER`): Tier 2 75%, Tier 3 20%, Tier 4 5%, không có Tier 5. Cao thủ Tier 2 vẫn có ích cho người chưa vào nghề hay Chức Nghiệp Giả.
+Trước bốc đều Tier 3–5 (`X.int(3, 5)`): một phần ba số cao thủ để ý tới người chơi là Huyền Thoại Giả. Giờ (`G.MENTOR_TIER`): Tier 2 75%, Tier 3 20%, Tier 4 5%, không có Tier 5 (bước F của docs/07, mục 4.14, đổi thành 88 / 9 / 3). Cao thủ Tier 2 vẫn có ích cho người chưa vào nghề hay Chức Nghiệp Giả.
 
 ### 6.3. Thọ nguyên (`07` mục 4.4)
 

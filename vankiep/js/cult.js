@@ -27,7 +27,7 @@ window.LifeSim = window.LifeSim || {};
   // Mastery theo điểm rèn tính trên giá cũ của docs/08 (trước khi giá tăng để tháp hẹp lại, docs/09 mục 9): tay nghề lúc max level vẫn như cũ.
   G.SK_MCOST = [260, 450, 900, 1500, 2200, 3000];
   G.CULT = {
-    rate: 1,           // nhân chung điểm rèn (núm cân tháp Tier)
+    rate: .9,          // nhân chung điểm rèn (núm cân tháp Tier; bước F, docs/07 mục 4.14: 1 → 0,9)
     base: 35,          // điểm rèn mỗi năm ai cũng có (luyện ngoài giờ)
     selfTaught: .4,    // rèn kỹ năng Tier cao hơn người dạy đang có: tự mò
     mPt: .004,         // mastery mỗi điểm rèn dồn vào kỹ năng (theo giá gốc, chưa tính tự mò)
@@ -152,12 +152,12 @@ window.LifeSim = window.LifeSim || {};
     { id: 'self', nameVi: 'Tự học', tier: 1, schools: null, cond: 'ai cũng có' },
     { id: 'guild', nameVi: 'Quân ngũ, người có chức trong hội', tier: 2, schools: null, cond: 'đang tại ngũ, hoặc giữ chức từ quản sự trong một hội (chỉ là thành viên, đã xuất ngũ, hạng Hiệp Hội thì không: Siêu Phàm Giả là tinh anh, docs/09 mục 9)' },
     { id: 'edu2', nameVi: 'Học viện trung cấp', tier: 2, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
-    { id: 'edu3', nameVi: 'Học viện cao cấp', tier: 3, schools: null, cond: 'đang học hoặc đã tốt nghiệp' },
-    { id: 'vo', nameVi: 'Học viện cao cấp ở kinh đô, ngành Võ bị', tier: 4, schools: WAR, cond: 'ngành Võ bị, học ở kinh đô (docs/09 mục 6.1)' },
-    { id: 'phap', nameVi: 'Học viện cao cấp ở kinh đô, ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'ngành Pháp thuật, học ở kinh đô' },
+    { id: 'edu3', nameVi: 'Học viện cao cấp', tier: 3, schools: 'trường phái của ngành (Võ bị: Chiến đấu, Tầm xa; Pháp thuật: Huyền thuật; Cơ khí: Chế tác; Y dược: Chế tác, Võ thuật)', cond: 'đang học hoặc đã tốt nghiệp' },
+    { id: 'vo', nameVi: 'Học viện cao cấp ở kinh đô, ngành Võ bị', tier: 4, schools: WAR, cond: 'thủ khoa ngành Võ bị ở kinh đô khi tốt nghiệp (docs/09 mục 6.1; bước F: chỉ thủ khoa)' },
+    { id: 'phap', nameVi: 'Học viện cao cấp ở kinh đô, ngành Pháp thuật', tier: 4, schools: MAGE, cond: 'thủ khoa ngành Pháp thuật ở kinh đô khi tốt nghiệp' },
     { id: 'officer', nameVi: 'Hội trưởng', tier: 3, schools: 'theo loại hội: đoàn lính đánh thuê dạy trường phái chiến sĩ; Phường Thợ dạy Chế tác; Hội Học Giả dạy Huyền thuật, Tử thuật; Hội Bóng Đêm dạy Bóng tối', cond: 'là hội trưởng, đoàn trưởng (quản sự, phó đoàn chỉ có nguồn Tier 2 ở dòng trên; bước B, docs/07 mục 4.10)' },
     { id: 'master', nameVi: 'Sư phụ cao thủ Tier s', tier: 's', schools: 'của sư phụ', cond: 'là đệ tử (cả sau khi xuất sư)' },
-    { id: 'noble', nameVi: 'Nhà quý tộc', tier: 3, schools: null, cond: 'sinh ra trong nhà quý tộc hoặc có tước' },
+    { id: 'noble', nameVi: 'Nhà quý tộc', tier: '2 (từ Bá tước: 3)', schools: null, cond: 'sinh ra trong nhà quý tộc hoặc có tước' },
     { id: 'noble3', nameVi: 'Nhà từ Hầu tước', tier: 4, schools: null, cond: 'tước hoặc nhà từ Hầu tước (mướn một Thủ Hộ Giả về dạy)' },
     { id: 'royal', nameVi: 'Hoàng tộc', tier: 4, schools: null, cond: 'hoàng tộc, dòng chính hoặc dòng phụ (Thủ Hộ Giả của triều đình)' },
     { id: 'enlight', nameVi: 'Ngộ đạo', tier: 5, schools: null, cond: 'Thủ Hộ Giả max level, tự ngộ ra (không ai dạy được Huyền Thoại Giả)' },
@@ -173,17 +173,20 @@ window.LifeSim = window.LifeSim || {};
     push(1, 'self');
     if (F.soldier > 0 || Object.values(r.orgs || {}).some(m => m.rank >= 1)) push(2, 'guild');
     if (eLv >= 2) push(2, 'edu2');
-    if (eLv >= 3) push(3, 'edu3');
+    // Học viện cao cấp dạy Tier 3 chỉ trường phái của ngành đã học (bước F, docs/07 mục 4.14); trường phái khác, ngành Văn chính: như trung cấp.
+    if (eLv >= 3 && G.trackSchools && G.trackSchools(track).includes(school)) push(3, 'edu3');
     for (const [id, m] of Object.entries(r.orgs || {})) {   // hội trưởng: hội mướn người dạy giỏi (quản sự chỉ có nguồn "guild" Tier 2; docs/07 mục 4.10)
       const o = m.rank >= 2 && G.orgById ? G.orgById(S.world, id) : null;
       if (o && (OFFICER[o.kind] || []).includes(school)) { push(3, 'officer'); break; }
     }
     // Quan chức không còn là nguồn dạy (bước B, docs/07 mục 4.10): Quan tỉnh đã cần Siêu Phàm Giả, nguồn này chỉ đẩy thêm người lên Tier 3.
     const capEdu = E && (E.capital || (E.cur && E.cur.lv >= 3 && G.isCapital(E.cur.school)));
-    if (eLv >= 3 && capEdu && track === 'vo' && WAR.includes(school)) push(4, 'vo');
-    if (eLv >= 3 && capEdu && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
+    // Võ bị, Pháp thuật ở kinh đô dạy Tier 4 chỉ cho thủ khoa đã tốt nghiệp (E.top, js/edu.js; bước F, docs/07 mục 4.14).
+    if (E && E.lv >= 3 && E.top && capEdu && track === 'vo' && WAR.includes(school)) push(4, 'vo');
+    if (E && E.lv >= 3 && E.top && capEdu && track === 'phap' && MAGE.includes(school)) push(4, 'phap');
     if (M && (!M.school || M.school === school)) push(M.tier, 'master', `Sư phụ ${M.name || ''} (Tier ${M.tier})`.replace('  ', ' '));
-    if (nb || hs) push(nb >= 4 || hs >= 4 ? 4 : 3, nb >= 4 || hs >= 4 ? 'noble3' : 'noble');
+    // Nhà Nam, Tử tước chỉ mướn được Siêu Phàm Giả (Tier 2); từ Bá tước Tier 3, từ Hầu tước Tier 4 (bước F, docs/07 mục 4.14).
+    if (nb || hs) { const rk = Math.max(nb, hs); push(rk >= 4 ? 4 : rk >= 3 ? 3 : 2, rk >= 4 ? 'noble3' : 'noble'); }
     if (F.legacy || F.royal) push(4, 'royal');
     if (F.enlight) push(5, 'enlight');
     const fj = job && job.faith ? job : null, priest = S.work === 'priest' || (cur && cur.faith);

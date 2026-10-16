@@ -505,8 +505,15 @@ window.LifeSim = window.LifeSim || {};
       if (last != null && (!e.rep || S.age - last < (e.gap || 1))) return false;
       return !e.c || e.c(S, X);
     });
-    return X.wpick(list, e => (typeof e.w === 'function' ? e.w(S, X) : e.w) * (S.recent[e.id] != null ? .5 : 1));
+    const ws = list.map(e => Math.max(0, (typeof e.w === 'function' ? e.w(S, X) : e.w) || 0) * (S.recent[e.id] != null ? .5 : 1)), tot = ws.reduce((a, b) => a + b, 0);
+    // Năm yên ả (bước F, docs/07 mục 4.14): sự kiện không lặp dùng hết dần nên về già nhóm đủ điều kiện nhỏ lại; không có ngưỡng này thì
+    // sự kiện trọng số nhỏ bị chọn gần như chắc. Tổng dưới G.EVENT_FLOOR thì phần thiếu là không có sự kiện.
+    if (tot < G.EVENT_FLOOR && X.rnd() >= tot / G.EVENT_FLOOR) return null;
+    let r = X.rnd() * tot;
+    for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
+    return list[list.length - 1] || null;
   };
+  G.EVENT_FLOOR = 12;
   G.runEvent = function (X, ev) {
     const S = X.S; S.recent[ev.id] = S.age;
     const r = ev.run(S, X);

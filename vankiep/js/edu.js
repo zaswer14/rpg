@@ -26,6 +26,8 @@ window.LifeSim = window.LifeSim || {};
     van:   { nameVi: 'Văn chính', masteries: [] },
     co:    { nameVi: 'Cơ khí',    schools: ['craft'] }
   };
+  // Trường phái học viện cao cấp dạy tới Tier 3 theo ngành (js/cult.js teachList); ngành chỉ ghi mastery thì lấy trường phái của mastery.
+  G.trackSchools = id => { const T = G.TRACKS[id]; return !T ? [] : T.schools || [...new Set((T.masteries || []).map(m => G.MASTERY[m]))]; };
   // Ngân sách học của gia đình mỗi lượt, theo tầng lớp (× trung vị): nhà giàu cho con học tới cao cấp dễ dàng.
   const FAMILY = [0, .05, .3, 1, 3, 9];
   const edu = S => S.edu || (S.edu = { lv: 0, cur: null, track: null });
@@ -119,6 +121,8 @@ window.LifeSim = window.LifeSim || {};
         if (cur.y >= cur.need) {
           E.lv = cur.lv; E.cur = null; if (cur.track) E.track = cur.track;
           if (cur.lv >= 3) E.capital = !!(G.isCapital && G.isCapital(cur.school));   // học viện kinh đô dạy tới Tier 4 (js/cult.js)
+          // Thủ khoa ngành Võ bị, Pháp thuật ở kinh đô: thầy Thủ Hộ Giả nhận dạy tiếp (Tier 4, js/cult.js); người khác chỉ có học viện cao cấp (Tier 3). Bước F, docs/07 mục 4.14.
+          if (cur.lv >= 3 && E.capital && (cur.track === 'vo' || cur.track === 'phap')) { E.top = X.rnd() < G.topP(S); if (E.top) flag(S, 'eduTop'); }
           flag(S, 'grad' + E.lv);
           S.fame = Math.min(100, S.fame + [0, 0, 1, 3][E.lv]);
           X.log(`Bạn tốt nghiệp ${G.EDU[E.lv].nameVi.toLowerCase()} ở ${sc.name}${cur.track ? ', ngành ' + G.TRACKS[cur.track].nameVi : ''}.`, E.lv >= 2 ? 'big' : 'good');
@@ -159,10 +163,13 @@ window.LifeSim = window.LifeSim || {};
   }
   { const k = G.SYSTEMS.findIndex(s => s.id === 'career'); G.SYSTEMS.splice(k, 0, { id: 'edu', when: S => !S.dead, run: (S, X) => G.eduYear(S, X) }); }
 
+  // Tỉ lệ đứng đầu khóa cao cấp (ngành Võ bị, Pháp thuật ở kinh đô) theo Hiểu biết, căn cốt.
+  G.topP = S => G.clamp(.2 + S.sm / 400 + .05 * (S.tal ? G.RANK[S.tal.root] : 0), .1, .7);
+
   // ═════════ Sư đồ: được nhận làm đệ tử ═════════
   // Mỗi lượt có thể có người để ý: thợ lành nghề (dạy sinh kế của mình) hoặc cao thủ (Tier 2–4, dạy một trường phái, phải thắng một trận thử tay).
-  // Tier cao thủ để ý tới mình: Tier 2 75%, Tier 3 20%, Tier 4 5%; Huyền Thoại Giả không bao giờ tình cờ gặp (docs/09 mục 6.2).
-  G.MENTOR_TIER = [[2, .75], [3, .2], [4, .05]];
+  // Tier cao thủ để ý tới mình: Tier 2 88%, Tier 3 9%, Tier 4 3%; Huyền Thoại Giả không bao giờ tình cờ gặp (docs/09 mục 6.2).
+  G.MENTOR_TIER = [[2, .88], [3, .09], [4, .03]];   // bước F (docs/07 mục 4.14): trước là 75 / 20 / 5
   G.mentorTier = X => { let r = X.rnd(); for (const [t, w] of G.MENTOR_TIER) { if ((r -= w) < 0) return t; } return 2; };
   DEC.mentor = {
     prio: 5, gap: 3,

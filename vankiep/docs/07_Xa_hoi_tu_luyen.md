@@ -429,6 +429,42 @@ Chỗ lệch, để lại:
 - Bộ Xương không về mộ của mình qua `cv_grave` (đã có sự kiện `sk_grave`); linh hồn kiếp trước trong nhẫn chỉ khi kiếp đó từ Tier 3.
 - Không thử 100 thế giới dựng: bước E không đổi `realm.js`, `dynamic.js`.
 
+### 4.14. Kết quả bước F: cân lại tháp Tier, năm yên ả (16/10/2026)
+
+Phần đặt tên kỹ năng của bước F đã làm cùng ngày (`data/skills.js`, docs/08 mục 3.1): đo lại, cả 845 kỹ năng mà các nghề dùng tới đều có tên. Lần này làm phần còn lại: cân tháp Tier theo mục tiêu docs/09 (60 / 27 / 10 / 2,5 / 0,5 / 0,05) và sửa chỗ sự kiện hiếm bị chọn quá dày (mục 4.13).
+
+| Núm | Trước | Sau | Ở đâu |
+|---|---|---|---|
+| Võ bị, Pháp thuật ở kinh đô dạy Tier 4 | mọi người học ngành đó ở kinh đô | chỉ thủ khoa lúc tốt nghiệp: 20% + Hiểu biết / 400 + 5% × bậc căn cốt (10–70%) | `edu.js` `G.topP`, `E.top`; `cult.js` `teachList` |
+| Học viện cao cấp dạy Tier 3 | mọi trường phái | trường phái của ngành (Võ bị: Chiến đấu, Tầm xa; Pháp thuật: Huyền thuật; Cơ khí: Chế tác; Y dược: Chế tác, Võ thuật); Văn chính và trường phái khác như trung cấp | `edu.js` `G.trackSchools`, `cult.js` |
+| Nhà quý tộc dạy | Tier 3 (từ Hầu tước: 4) | Nam, Tử tước: Tier 2; Bá tước: 3; từ Hầu tước: 4 | `cult.js` |
+| Cao thủ để ý nhận đệ tử (Tier 2 / 3 / 4) | 75 / 20 / 5% | 88 / 9 / 3% | `edu.js` `G.MENTOR_TIER` |
+| Điểm rèn chung `G.CULT.rate` | 1 | 0,9 | `cult.js` |
+| Năm yên ả `G.EVENT_FLOOR` | không có | 12: tổng trọng số nhóm sự kiện đủ điều kiện dưới 12 thì phần thiếu là không có sự kiện | `events.js` `G.pickEvent` |
+
+**Năm yên ả.** Đo 150 đời: về già 2/3 số lần bốc sự kiện rơi vào lúc nhóm sự kiện đủ điều kiện có tổng trọng số dưới 6 (người trưởng thành 30%), vì sự kiện không lặp dùng hết dần. Khi đó sự kiện lặp lại bị chọn gấp 2,5–5 lần so với khi nhóm đủ lớn: cướp đường `ad_bandits` (có thể chết) 7 lần một đời, làng bị quái đánh, thuế, đau nhức tuổi già, `cv_unreg`, `cv_bully_ev`. Ngưỡng 12 làm tuổi già ít sự kiện hơn; người chơi thấy những năm không có gì xảy ra.
+
+1000 đời, ba seed gốc (`can-bang`, `kiem-tra`, `thu-ba`; seed thứ ba chưa có năm yên ả):
+
+| Đo | Bước E (hai seed) | Bước F | Mục tiêu |
+|---|---|---|---|
+| Tháp Tier 0–5 | 56,5 / 27,1 / 10,0 / 6,0 / 0,5 / 0; 56,2 / 27,8 / 10,4 / 4,0 / 1,5 / 0 | 60,9 / 26,0 / 9,2 / 3,2 / 0,5 / 0,2; 57,6 / 29,4 / 10,4 / 2,6 / 0 / 0; 59,7 / 25,8 / 11,3 / 2,9 / 0,3 / 0 | 60 / 27 / 10 / 2,5 / 0,5 / 0,05 |
+| Trận vượt Tier + 1 | 0 | 0 | 0 |
+| Trỗi dậy | 20,0% / 23,5% | 21,1% / 19,8% / 20,2% | ~20% |
+| Chết vì quái | 10,5% / 8,0% | 10,7% / 11,9% / 9,8% | ~10% |
+| Bị cướp đường giết | 4,9% (bước D 4,6%) | 3,6% / 2,5% | |
+| Thủ khoa (thầy Tier 4) | | 1,7% đời (300 đời) | |
+
+Đường đi: chỉ thủ khoa, nhà quý tộc theo tước, cao thủ 84 / 13 / 3: Siêu Việt Giả 4,9% / 3,4%, Thủ Hộ Giả 0% / 0,8%, tầng dưới vẫn dày (Phàm Nhân 56%). Thêm điểm rèn × 0,9: tầng dưới đúng mục tiêu, Siêu Việt Giả 4,4% / 3,7%, Thủ Hộ Giả 0,1–0,2%. Học viện cao cấp theo ngành, cao thủ 88 / 9 / 3, thủ khoa dễ hơn: 3,7% / 3,0%, Thủ Hộ Giả 0,2% / 0,5%. Năm yên ả: 3,2% / 2,6%.
+
+Chỗ lệch, để lại:
+
+- Thủ Hộ Giả, Huyền Thoại Giả mỗi seed chỉ 0–4 đời: muốn đo chắc phải chạy 5 000 đời trở lên.
+- Chết vì quái nhích lên (ít chết vì sự kiện hơn nên sống tới lúc đánh quái nhiều hơn); một seed 11,9%.
+- Hội trưởng (nguồn `officer`) giờ là nguồn Tier 3 nhiều nhất; chưa đụng vì là luật bước B.
+- Chưa có hiệu quả riêng của kỹ năng theo họ quái, nguyên tố (docs/08 mục 12): cần thiết kế trận đánh, để ngoài bước F.
+- Không thử thế giới động, 100 thế giới dựng: bước F không đổi `dynamic.js`, `realm.js`.
+
 ## 5. Từ đầu truyện thành sự kiện, quyết định
 
 Mã đề xuất có tiền tố `cv_` để khỏi trùng tên quyết định sẵn có (xem nhắc ở `TIEN_DO.md` mục 3).
@@ -486,7 +522,7 @@ Mỗi bước theo cách làm ở `TIEN_DO.md` mục 5 (sim 1000 đời, thử t
 | C (xong 16/10/2026, mục 4.11) | Nghề bốn vòng: khoảng 16 nghề mới, khóa `ring`, `tier`, `demand`; cầu xa hoa theo nhà quý tộc; `cv_patron`, `cv_art` | `data/world.js`, `state.js`, `events.js` |
 | D (xong 16/10/2026, mục 4.12) | Học viện, gia tộc, giáo hội, đấu giá theo kiểu Bàn Long; mỏ ma tinh trong thế giới động; `cv_academy`, `cv_tourney`, `cv_auction`, `cv_mine`, `cv_bloodline`, `cv_match` | `edu.js`, `noble.js`, `org.js`, `dynamic.js` |
 | E (xong 16/10/2026, mục 4.13) | Kỳ ngộ, mặt trái: `cv_ring`, `cv_grave`, `cv_ruin`, `cv_rob`, `cv_forbidden`, `cv_deviate`, `cv_reawaken`; lối thoát khi kẹt gate | `js/fate.js` mới |
-| F | Đặt tên kỹ năng (bản đầu không tên), cân lại tháp | `cult.js`, `sim.html` |
+| F (xong 16/10/2026, mục 4.14) | Đặt tên kỹ năng (bản đầu không tên), cân lại tháp; năm yên ả cho sự kiện | `data/skills.js`, `cult.js`, `edu.js`, `events.js`, `sim.html` |
 
 ## 8. Người dùng đã chốt (15/10/2026)
 
