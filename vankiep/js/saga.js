@@ -3,7 +3,7 @@
  * đang chạy; có mạch chính, mạch phụ, mạch ngắn; mạch nào nhân vật đi qua cũng để lại ảnh hưởng. Người dùng chốt: ~80% sự kiện
  * thuộc mạch; mạch chính tự nổi lên rồi chốt bằng một quyết định; làm theo đợt (đây là đợt 1).
  * Nạp sau culture.js, dùng G.storyApi của story.js (node / dnode / patch / patchDec / wrapStory). Bốn lớp:
- *   1. Ba tầng mạch (G.ARCS[k].tier, story.js giới hạn số mạch theo tầng): main = 8 mạch cả đời của file này (G.SAGA),
+ *   1. Ba tầng mạch (G.ARCS[k].tier, story.js giới hạn số mạch theo tầng): main = 13 mạch chính của file này (G.SAGA; cùng lúc một),
  *      side = mạch người quen của story.js, short = mạch ngắn mọc từ quyết định thường (cuối file này).
  *   2. Gieo mạch (S.saga.seed): sự kiện thơ ấu, thiếu thời, quyết định (chí hướng, bái sư, bầu trưởng làng…) cộng điểm cho mạch chính
  *      hợp với nó (bảng G.SAGA_SEED). Cuối thiếu thời quyết định sg_road chọn một trong ba mạch điểm cao nhất (hoặc chưa định).
@@ -11,7 +11,10 @@
  *      (tiến độ đổi xác suất thành bại ở các hồi sau), có câu nối với mạch; sự kiện lặp không thuộc mạch nào bị hạ trọng số (loneK).
  *   4. Dấu hệ quả (S.marks, G.MARKS): kết của mọi mạch (G.ARCS[k].marks) và một số lựa chọn để lại dấu: đổi trọng số sự kiện về sau
  *      (kèm câu nhắc lại chuyện cũ), tác dụng theo năm, hiện trên thẻ nhân vật. Sự kiện xảy ra vì một dấu tính là thuộc mạch.
- * Trạng thái: S.saga { seed, why, k, asked, t }, S.marks [{ id, t, src }]; a.d.prog, path, ok, end của mạch chính.
+ *   5. Đổi đường đời (người dùng yêu cầu 17/10/2026): sau khi chọn, sự kiện vẫn gieo cho các mạch khác; chuyện lớn kéo sang mạch khác
+ *      thì mở quyết định Ngã rẽ (sg_turn: đi tiếp hay rẽ, mạch cũ khép với kết 'turned'); mạch chính đã khép mà còn trẻ thì hỏi Đường đời
+ *      mới; kết của mạch này gieo cho mạch sau (CHAIN). Một đời có thể đi qua nhiều mạch chính nối nhau (S.saga.past).
+ * Trạng thái: S.saga { seed, why, k, asked, t, past, turn, turns, base, last }, S.marks [{ id, t, src }]; a.d.prog, path, ok, end của mạch chính.
  */
 window.LifeSim = window.LifeSim || {};
 (function (G) {
@@ -28,7 +31,7 @@ window.LifeSim = window.LifeSim || {};
 
   G.SAGA_CFG = { loneK: .45, daysK: .7, followK: .6, progK: .05, stats: false };
   G.SAGA_STATS = null;
-  G.sagaStatsReset = () => { G.SAGA_STATS = { pick: {}, free: 0, asked: 0, mark: {}, follow: 0, seedEv: 0, markEv: 0 }; return G.SAGA_STATS; };
+  G.sagaStatsReset = () => { G.SAGA_STATS = { pick: {}, free: 0, asked: 0, mark: {}, follow: 0, seedEv: 0, markEv: 0, turn: {} }; return G.SAGA_STATS; };
   const st = (k, id, n = 1) => { const Z = G.SAGA_CFG.stats && G.SAGA_STATS; if (!Z) return; if (id == null) Z[k] += n; else Z[k][id] = (Z[k][id] || 0) + n; };
 
   const NEW = [], NEWD = [];
@@ -81,6 +84,14 @@ window.LifeSim = window.LifeSim || {};
     vuot_doi_thu: { nameVi: 'Đã vượt đối thủ', tone: 'good', fade: 15, d: 'Bạn đã hơn được kẻ luôn hơn mình.', yr: (S, X) => X.add('h', .2) },
     cay_dang:     { nameVi: 'Nỗi cay đắng', tone: 'bad', fade: 10, d: 'Một lần thua còn nhức.', yr: (S, X) => X.add('h', -.3) },
     tinh_than:    { nameVi: 'Tình ruột thịt', tone: 'good', fade: 25, d: 'Họ hàng biết có thể tìm tới bạn.', w: { cm_help: 1.3 } },
+    nguoi_giu_lang: { nameVi: 'Người giữ làng', tone: 'good', fade: null, d: 'Làng nhớ bạn đã đứng ở cổng.', w: { ch_raid: 1.2 },
+      echo: { ch_raid: 'Người làng chạy về phía bạn trước khi chạy về nhà.' } },
+    tinh_mot_doi: { nameVi: 'Một mối tình trọn', tone: 'good', fade: null, d: 'Có một người ở bên bạn tới cuối.', yr: (S, X) => X.add('h', 1) },
+    biet_bi_mat:  { nameVi: 'Người biết bí mật', tone: 'good', fade: null, d: 'Bạn biết một điều cổ xưa mà ít ai biết.', w: { ad_map: 1.3 },
+      echo: { ad_map: 'Ký tự trên tấm bản đồ này bạn đọc được.' } },
+    da_chuoc:     { nameVi: 'Đã chuộc lỗi', tone: 'good', fade: null, d: 'Món nợ cũ với đời bạn đã trả bằng việc làm.', yr: (S, X) => X.add('h', .5) },
+    ba_chu:       { nameVi: 'Kẻ đứng trên đầu người', tone: 'bad', fade: null, d: 'Người ta sợ bạn hơn là nể.', w: { ad_bandits: .6 },
+      echo: { ad_bandits: 'Bọn cướp nhận ra bạn và dạt sang hai bên đường.' } },
     cat_dut:      { nameVi: 'Đã cắt đứt', tone: 'bad', fade: 15, d: 'Có một người cùng máu bạn không còn nhìn mặt.', yr: (S, X) => X.add('h', -.2) }
   };
   const markOf = (S, id) => (S.marks || []).find(m => m.id === id);
@@ -91,6 +102,7 @@ window.LifeSim = window.LifeSim || {};
     if (old) { old.t = S.age; old.src = src || old.src; return; }
     L.push({ id, t: S.age, src: src || null });
     if (M.on) M.on(S, X);
+    for (const [k, v] of Object.entries(MARK_SEED[id] || {})) addSeed(S, k, v, M.d);   // dấu mới cũng gieo đường đời (Chuộc lỗi sau tay dính máu…)
     st('mark', id);
   };
   const markW = (S, id, meta) => {
@@ -120,6 +132,8 @@ window.LifeSim = window.LifeSim || {};
       e0(S, X, a, o);
       const D = G.ARCS[a.k], mk = D && D.marks && D.marks[o];
       if (mk) { const p = G.castGet(S, a.who); G.markAdd(S, X, mk, D.nameVi + (p ? ' · ' + first(p.name) : '')); }
+      const C = SAGA[a.k] && CHAIN[a.k] && CHAIN[a.k][o];   // kết mạch chính gieo cho mạch sau
+      if (C && !S.dead) { const sm = D.sum ? D.sum(o, null, a) : null; for (const [k, v] of Object.entries(C)) addSeed(S, k, v, `Đường ${D.nameVi} đã khép${sm ? ': ' + sm : ''}.`); }
     }; }
 
   // ═════════ 2. Mạch chính ═════════
@@ -132,13 +146,15 @@ window.LifeSim = window.LifeSim || {};
   function saga(k, def) {
     SAGA[k] = def;
     G.ARCS[k] = { nameVi: def.nameVi, tier: 'main', quest: (p, a) => def.quest(a), good: def.good, marks: def.marks,
-      sum: (o, p, rec) => (def.sum[o] ? def.sum[o](rec.d || {}) : null) };
+      sum: (o, p, rec) => (o === 'turned' ? turnedSum(rec.d || {}) : def.sum[o] ? def.sum[o](rec.d || {}) : null) };
     sNode({ id: k + '_open', st: TAE, story: { arc: k, at: 'open', wait: [0, 30], to: 'knot' }, w: 6,
       run(S, X, a) { return { t: def.open(S, X, a), k: 'big' }; } });
     sDec(k + '_knot', { prio: 6, story: { arc: k, at: 'knot', wait: [2, 40], to: 'trial' },
       when: (S, X) => X.stage(S) !== 'child',
-      build: (S, X, a) => ({ title: def.knot.title, body: def.knot.body(S, X, a), choices: def.knot.choices(S, X, a) }),
-      apply(S, X, ch, c, a) { a.d.path = ch; const t = def.knot.apply(S, X, ch, a); cnt(S, 'sg_' + k + '_' + ch); return { t, o: ch, to: 'trial' }; },
+      build: (S, X, a) => ({ title: def.knot.title, body: def.knot.body(S, X, a), choices: [...def.knot.choices(S, X, a), ...knotTurn(S, X)] }),
+      apply(S, X, ch, c, a) {
+        if (String(ch).startsWith('turn:')) return { t: switchMain(S, X, ch.slice(5)), o: 'turned', to: null };   // bỏ đường này ngay từ lúc chọn lối, rẽ sang mạch khác
+        a.d.path = ch; const t = def.knot.apply(S, X, ch, a); cnt(S, 'sg_' + k + '_' + ch); return { t, o: ch, to: 'trial' }; },
       auto: (S, X, d, a) => def.knot.auto(S, X, a) });
     sNode({ id: k + '_trial', st: AD, story: { arc: k, at: 'trial', wait: [3, 40], to: 'climax' }, w: 5,
       run(S, X, a) { const ok = X.chance(G.clamp(def.trial.base(S, X, a) + pb(a), .1, .92)); a.d.ok = ok; return { t: def.trial.run(S, X, a, ok), k: ok ? 'good' : 'bad', o: ok ? 'ok' : 'fail' }; } });
@@ -155,6 +171,8 @@ window.LifeSim = window.LifeSim || {};
       run(S, X, a) { a.d.prog = prog(a) + 1; const L = def.beat[a.at] || def.beat.any; return { t: X.pick(L).replace('{z}', zoneName(S, X, a)), k: 'info', to: null }; } };
     sNode(beat); beat.gap = 3;
   }
+  // Mạch chính bỏ dở vì rẽ sang mạch khác (quyết định Ngã rẽ).
+  const turnedSum = d => `bỏ dở giữa chừng${d.to && SAGA[d.to] ? ', rẽ sang ' + SAGA[d.to].nameVi : ''}`;
   const zoneName = (S, X, a) => { const z = (a && a.d.zone && G.ZONE[a.d.zone]) ? G.ZONE[a.d.zone].zone : X.reg(S).zones[1] || X.reg(S).zones[0]; return z.nameVi; };
   const spName = a => (a.d.sp && G.B.byId[a.d.sp] ? G.B.byId[a.d.sp].nameVi : 'bầy quái');
   const bestSk = S => { let b = null; for (const [m, v] of Object.entries(S.mastery)) if (!b || v > S.mastery[b]) b = m; return b || 'Body'; };
@@ -410,11 +428,186 @@ window.LifeSim = window.LifeSim || {};
       let: () => 'Nhà bạn không có tên to. Nhưng bữa cơm nào cũng đủ người.' }
   });
 
+  // ── Giữ làng ──
+  saga('m_guard', {
+    nameVi: 'Giữ làng', pitch: 'Đứng chắn cho làng trước mọi thứ từ bên ngoài.', axes: { vo: .8, gia: .5, quyen: .3 }, themes: ['raid', 'war', 'robbery'], aim: null,
+    quest: () => 'Giữ làng bình yên', good: ['held', 'wall', 'saved'], marks: { held: 'nguoi_giu_lang', wall: 'nguoi_giu_lang', saved: 'duoc_tin', fell: 'cay_dang' },
+    sum: { held: () => 'đứng ở cổng làng tới khi bầy quái rút', wall: () => 'dựng được tường rào và một đội dân canh cho làng', saved: () => 'đưa cả làng đi lánh nạn, không mất một ai', fell: () => 'không giữ được cổng làng ngày quái tràn vào' },
+    follow: ['Bạn đi một vòng quanh làng trước khi ngủ, như mọi đêm.', 'Bạn đếm lại số giáo trong kho của đội canh.', 'Tiếng chó sủa ngoài bìa rừng làm bạn ngồi dậy.'],
+    beat: { any: ['Bạn dạy mấy đứa trai làng cầm giáo cho đúng.', 'Bạn đi tuần bìa {z}, đánh dấu lối quái hay qua.', 'Bạn vá lại hàng rào phía bắc làng.'] },
+    open: (S, X, a) => `Đêm ấy bạn đứng trên mái nhà nhìn về phía ${zoneName(S, X, a)}. Ngoài đó có thứ gì đó đang đợi. Bạn tự hứa: chừng nào bạn còn đứng được, không gì vào được làng.`,
+    knot: { title: 'Cách giữ làng', body: () => 'Một người không giữ nổi cả làng. Bạn bắt đầu từ đâu?',
+      choices: (S, X) => [{ k: 'watch', label: 'Lập đội dân canh', sub: 'Cần người làng tin bạn.' }, { k: 'train', label: 'Tự luyện thành bức tường', sub: 'Một mình đứng ở cổng.' },
+        { k: 'lord', label: 'Xin lãnh chúa gửi lính', sub: `Tốn chừng ${G.coin(Math.round(med(S, X)))} quà biếu.` }],
+      apply(S, X, ch, a) {
+        if (ch === 'watch') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn lập đội canh', work: 'guard', bond: 30 }); a.d.mate = p.id; X.add('so', 4); G.trajBump(S, { quyen: .3 }); return `${first(p.name)} vác giáo tới nhà bạn ngay tối hôm ấy. Tuần sau đội canh có mười người.`; }
+        if (ch === 'train') { X.gain('Shield', 5); G.trajBump(S, { vo: .5 }); return 'Bạn tập đứng tấn ở cổng làng mỗi sáng, tới khi lũ trẻ quen coi bạn là cái cột cổng.'; }
+        X.money(-Math.round(med(S, X))); a.d.lord = true; return 'Bạn mang quà lên phủ. Lãnh chúa hứa mỗi mùa gửi về năm tay lính.';
+      },
+      auto: (S, X) => S.traits.social > .55 ? 'watch' : S.gold > med(S, X) * 2 && S.traits.bold < .5 ? 'lord' : 'train' },
+    trial: { base: (S, X, a) => .45 + (a.d.path === 'watch' ? .1 : a.d.path === 'lord' ? .05 : 0),
+      run: (S, X, a, ok) => ok ? (X.gain('Shield', 2), S.fame += 2, `Một bầy ${spName(a)} mò tới bìa làng lúc nửa đêm. Trống đánh, đuốc đốt khắp hàng rào, bầy quái rút về ${zoneName(S, X, a)}.`)
+        : (X.add('hl', -10), `Một bầy ${spName(a)} phá chuồng nhà cuối làng trước khi ai kịp tới. Sáng ra người làng nhìn bạn, không ai nói gì.`) },
+    climax: { title: 'Đêm quái tràn xuống', body: (S, X, a) => `Bầy ${spName(a)} lớn nhất trong trí nhớ người già đang kéo xuống từ ${zoneName(S, X, a)}.`,
+      choices: (S, X, a) => [{ k: 'stand', label: 'Đứng ở cổng, đánh tới sáng', sub: `Khả năng giữ được chừng ${Math.round(odds(S, X, (a.d.ok ? .55 : .35) + pb(a)) * 100)}%.` },
+        { k: 'wall', label: 'Rút vào sau rào, giữ từng nhà', sub: a.d.path === 'watch' ? 'Đội canh đã quen việc.' : 'Chưa có đội canh, khó giữ.' }, { k: 'flee', label: 'Dẫn cả làng lên núi lánh nạn', sub: 'Mất nhà, giữ người.' }],
+      apply(S, X, ch, a) {
+        if (ch === 'stand') { if (X.chance(odds(S, X, (a.d.ok ? .55 : .35) + pb(a)))) { S.fame += 6; return { t: 'Bạn đứng ở cổng làng tới khi trời rạng. Xác quái chất thành đống trước rào; sau lưng bạn không một mái nhà nào cháy.', o: 'held' }; }
+          X.add('hl', -20); X.cond('wound'); return { t: 'Cổng làng vỡ lúc gần sáng. Bạn bị kéo ra khỏi đống gỗ, tay vẫn nắm cán giáo gãy.', o: 'fell' }; }
+        if (ch === 'wall') { if (a.d.path === 'watch' || a.d.ok || X.chance(.5)) { S.fame += 3; return { t: 'Mỗi nhà một ngọn đuốc, mỗi ngõ một tay giáo. Bầy quái đi vòng quanh làng tới sáng rồi bỏ đi.', o: 'wall' }; }
+          X.add('hl', -12); return { t: 'Rào đổ ở phía bắc. Bạn chạy từ ngõ này sang ngõ khác, không kịp.', o: 'fell' }; }
+        X.money(-Math.round(med(S, X) * .5)); X.add('h', -3); return { t: 'Cả làng trèo lên núi trong đêm, người già trên lưng người trẻ. Sáng ra nhìn xuống, mái nhà cháy, nhưng đếm đủ người.', o: 'saved' };
+      },
+      auto: (S, X, a) => S.traits.bold > .55 ? 'stand' : a.d.path === 'watch' ? 'wall' : 'flee' },
+    after: { held: () => 'Người làng khắc tên bạn lên cột cổng. Bọn trẻ chơi trò giữ cổng, đứa nào cũng đòi làm bạn.',
+      wall: () => 'Hàng rào vẫn đó, đội canh vẫn thay ca mỗi đêm. Giờ có người khác cầm đuốc thay bạn.',
+      saved: () => 'Làng dựng lại ở chỗ cũ sau một mùa. Buổi lễ tạ ơn không thiếu một ai.',
+      fell: () => 'Làng dựng lại, nhưng có những ngôi nhà không ai về ở nữa. Bạn vẫn đi tuần mỗi đêm.' }
+  });
+
+  // ── Một mối tình ──
+  const lov = a => (a && a.d.name) || 'người ấy';
+  saga('m_love', {
+    nameVi: 'Một mối tình', pitch: 'Giữ lấy một người, dù đời có xô đi đâu.', axes: { gia: 1, du: .2 }, themes: ['romance'], aim: 'family', gate: true,
+    quest: a => `Giữ lấy ${lov(a)}`, good: ['wed', 'wait', 'let'], marks: { wed: 'tinh_mot_doi', wait: 'tinh_mot_doi', lost: 'cay_dang', let: 'buong_bo' },
+    sum: { wed: d => `ở bên ${d.name || 'người ấy'} tới cuối đời`, wait: d => `đi xa rồi trở về, ${d.name || 'người ấy'} vẫn đợi`, lost: d => `đi xa quá lâu, về thì ${d.name || 'người ấy'} đã không còn đợi`, let: d => `buông tay cho ${d.name || 'người ấy'} đi tìm đời mình` },
+    follow: ['Bạn mang theo một món quà nhỏ, định bụng gặp người ấy sẽ đưa.', 'Đêm ấy bạn viết một lá thư dài, rồi chỉ gửi đi nửa trang.', 'Giữa lúc bận nhất bạn vẫn nghĩ tới nụ cười của người ấy.'],
+    beat: { any: ['Hai người đi dọc bờ suối tới khi trời tối.', 'Bạn sửa lại cái cổng nhà người ấy mà không ai nhờ.', 'Hai người cãi nhau một trận vì chuyện không đâu, rồi làm lành trước bữa tối.'] },
+    open: (S, X, a) => `Bạn gặp ${lov(a)} ở chợ phiên. Hai người nói chuyện tới khi người bán dọn hàng. Về nhà bạn biết đời mình từ nay có thêm một người.`,
+    knot: { title: 'Đường tới với nhau', body: (S, X, a) => `Nhà ${lov(a)} không mặn mà với bạn.`,
+      choices: () => [{ k: 'prove', label: 'Làm cho nhà người ấy nể', sub: 'Lâu, nhưng đường hoàng.' }, { k: 'elope', label: 'Rủ người ấy bỏ đi', sub: 'Nhanh, mang tiếng.' }, { k: 'wait', label: 'Kiên nhẫn chờ', sub: 'Thời gian sẽ trả lời.' }],
+      apply(S, X, ch, a) { if (ch === 'prove') { S.fame += 2; X.gain(bestSk(S), 3); return 'Bạn nhận mọi việc khó trong làng, làm cho tới nơi, để nhà người ấy nghe tên bạn.'; }
+        if (ch === 'elope') { X.add('so', -4); G.trajBump(S, { du: .4 }); return `Một đêm không trăng, bạn và ${lov(a)} khoác tay nải đi sang làng bên.`; }
+        X.add('h', 2); return 'Bạn không nói gì thêm. Mỗi chiều bạn vẫn đi ngang cổng nhà người ấy.'; },
+      auto: S => S.traits.bold > .65 ? 'elope' : S.traits.social > .5 ? 'prove' : 'wait' },
+    trial: { base: (S, X, a) => .5 + (a.d.path === 'prove' ? .1 : 0),
+      run: (S, X, a, ok) => ok ? (X.add('h', 6), a.d.path === 'elope' ? `Hai người dựng một căn nhà nhỏ ở làng bên. Người ta thôi xì xào sau một mùa.` : `Nhà ${lov(a)} cuối cùng cũng mở cửa đón bạn. Bà mẹ múc cho bạn bát canh đầy nhất.`)
+        : (X.add('h', -8), `Một trận ốm của ${lov(a)}, rồi một trận cãi lớn. Có lúc bạn tưởng đã mất người ấy.`) },
+    climax: { title: 'Giữa hai con đường', body: (S, X, a) => `Một cơ hội lớn mở ra ở nơi xa. Đi thì phải xa ${lov(a)} nhiều năm.`,
+      choices: (S, X, a) => [{ k: 'stay', label: 'Ở lại', sub: 'Bỏ cơ hội ấy.' }, { k: 'go', label: 'Đi, hẹn ngày về', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% người ấy còn đợi.` },
+        { k: 'free', label: 'Buông tay', sub: 'Để người ấy đi tìm đời mình.' }],
+      apply(S, X, ch, a) {
+        if (ch === 'stay') { X.add('h', 8); return { t: `Bạn đốt lá thư mời. Tối ấy ${lov(a)} nấu một nồi cơm to hơn mọi ngày.`, o: 'wed' }; }
+        if (ch === 'go') { S.fame += 3; X.money(Math.round(med(S, X) * 1.5)); if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) return { t: `Bạn đi. Mỗi mùa một lá thư; ${lov(a)} lá nào cũng trả lời.`, o: 'wait' };
+          X.add('h', -10); return { t: 'Bạn đi. Thư thưa dần, rồi thôi hẳn.', o: 'lost' }; }
+        X.add('h', 2); return { t: `Bạn nói lời từ biệt trước. ${lov(a)} khóc, rồi gật đầu.`, o: 'let' };
+      },
+      auto: S => S.traits.social > .5 ? 'stay' : S.traits.bold > .6 ? 'go' : 'free' },
+    after: { wed: (S, X, a) => `Tóc ${lov(a)} bạc trước tóc bạn. Chiều nào hai người cũng ngồi trước hiên nhà.`,
+      wait: (S, X, a) => `Bạn về vào một sáng mưa. ${lov(a)} đứng ở cổng, như đã đứng ở đó suốt mấy năm.`,
+      lost: (S, X, a) => `Cổng nhà ${lov(a)} đã có người khác mở. Bạn đứng ở đầu ngõ một lúc rồi đi.`,
+      let: (S, X, a) => `Nghe nói ${lov(a)} sống yên ở một làng xa. Bạn thấy nhẹ lòng hơn bạn tưởng.` }
+  });
+
+  // ── Bí mật cổ xưa ──
+  saga('m_lore', {
+    nameVi: 'Bí mật cổ xưa', pitch: 'Tìm cho ra một bí mật mà thế giới đã quên.', axes: { tri: .8, phap: .6, du: .3 }, themes: ['treasure', 'ring', 'grave', 'learn'], aim: 'scholar',
+    quest: () => 'Tìm ra bí mật cổ xưa', good: ['found', 'shared', 'sealed'], marks: { found: 'biet_bi_mat', shared: 'duoc_tin', sealed: 'buong_bo', curse: 'cay_dang' },
+    sum: { found: () => 'mở được cánh cửa cổ, biết điều thế giới đã quên', shared: () => 'chép bí mật cổ xưa lại cho người đời sau', sealed: () => 'tìm ra bí mật rồi tự tay niêm phong nó lại', curse: () => 'chạm vào một bí mật không nên chạm, mang lời nguyền tới cuối đời' },
+    follow: ['Bạn chép thêm một dòng ký tự lạ vào cuốn sổ.', 'Đêm ấy bạn mơ thấy một cánh cửa đá không có tay nắm.', 'Bạn hỏi mọi lữ khách về những phế tích họ từng đi qua.'],
+    beat: { any: ['Bạn đọc tới khi nến tàn, rồi thắp cây khác.', 'Bạn đổi một tháng tiền công lấy một tấm da thuộc cũ có ký tự lạ.', 'Bạn so ký tự trên tấm bia ở {z} với cuốn sổ của mình.'] },
+    open: () => 'Trong một tấm da thuộc cũ bạn thấy một ký tự không ai trong vùng đọc được. Bạn chép nó lên tay áo. Từ hôm ấy bạn biết đời mình sẽ đi tìm nghĩa của nó.',
+    knot: { title: 'Lối đi tìm', body: () => 'Bí mật nằm đâu đó giữa sách cũ, phế tích và lời người chết.',
+      choices: () => [{ k: 'books', label: 'Vùi đầu vào sách cũ', sub: 'Học viện, thư khố.' }, { k: 'ruins', label: 'Đi đào phế tích', sub: 'Nguy hiểm, nhiều manh mối.' }, { k: 'voices', label: 'Hỏi người chết', sub: 'Đường tối, nhanh.' }],
+      apply(S, X, ch) { if (ch === 'books') { X.add('sm', 5); G.trajBump(S, { tri: .5 }); return 'Bạn xin được chép sách thuê cho thư khố, đổi lại được đọc những cuốn không ai mượn.'; }
+        if (ch === 'ruins') { X.gain('Body', 3); G.trajBump(S, { du: .4 }); return 'Bạn mua một cái xẻng, một cuộn dây, rồi đi về phía những phế tích không ai dám tới.'; }
+        X.gain('Soul', 3); G.trajBump(S, { am: .5 }); return 'Bạn thắp nến giữa nghĩa địa cũ và gọi tên những người chết đã lâu.'; },
+      auto: S => S.traits.studious > .55 ? 'books' : S.traits.bold > .55 ? 'ruins' : G.trajShare(S, 'am') > .2 ? 'voices' : 'books' },
+    trial: { base: (S, X, a) => .45 + (a.d.path === 'books' ? .1 : 0),
+      run: (S, X, a, ok) => ok ? (X.add('sm', 3), 'Bạn ghép được ba mảnh ký tự thành một câu: "Cửa mở cho người nhớ tên nó." Cả đêm bạn không ngủ.')
+        : (X.add('hl', -8), a.d.path === 'ruins' ? 'Hầm phế tích sập sau lưng bạn. Bạn bò ra được, cuốn sổ ghi chép nằm lại dưới đất đá.' : 'Mấy năm chép sách, đọc sách, bạn chỉ thêm được một dòng vào cuốn sổ, mà dòng ấy hóa ra đọc sai.') },
+    climax: { title: 'Trước cánh cửa đá', body: () => 'Cánh cửa đá không tay nắm đứng giữa phế tích. Bạn đã biết tên của nó.',
+      choices: (S, X, a) => [{ k: 'open', label: 'Gọi tên, mở cửa', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% không có gì trả giá.` },
+        { k: 'share', label: 'Chép lại, gửi về học viện', sub: 'Để người sau mở.' }, { k: 'seal', label: 'Niêm phong lại', sub: 'Có những cửa nên đóng.' }],
+      apply(S, X, ch, a) {
+        if (ch === 'open') { if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.gain('Arcane', 5); S.fame += 5; return { t: 'Bạn gọi tên cánh cửa. Đá dịch ra không một tiếng động.', o: 'found' }; }
+          X.cond('curse'); X.add('hl', -10); return { t: 'Bạn gọi tên cánh cửa. Một luồng gió lạnh đi qua người bạn, rồi cánh cửa đóng lại.', o: 'curse' }; }
+        if (ch === 'share') { S.fame += 3; X.add('so', 3); return { t: 'Bạn chép lại tất cả, đóng thành sách, gửi về học viện kinh đô.', o: 'shared' }; }
+        X.add('h', 4); return { t: 'Bạn lấp đất lên lối vào, xóa hết dấu chân, rồi đốt trang sổ cuối.', o: 'sealed' };
+      },
+      auto: S => S.traits.bold > .55 ? 'open' : S.traits.social > .5 ? 'share' : 'seal' },
+    after: { found: () => 'Bạn không kể với ai những gì thấy sau cánh cửa. Nhưng từ hôm ấy bạn nhìn sao trời khác đi.',
+      shared: () => 'Ở học viện, học trò chép lại sổ của bạn; tên bạn đứng ở trang đầu.',
+      sealed: () => 'Chỉ mình bạn biết chỗ cánh cửa. Bạn mang cái tên của nó theo xuống mồ.',
+      curse: () => 'Đêm nào bạn cũng nghe tiếng gõ sau lưng. Lời nguyền đi theo bạn tới cuối đời.' }
+  });
+
+  // ── Chuộc lỗi ──
+  saga('m_atone', {
+    nameVi: 'Chuộc lỗi', pitch: 'Trả lại cho đời những gì mình đã lấy.', axes: { dao: .6, gia: .2 }, themes: ['faith'], aim: null, gate: true,
+    quest: () => 'Chuộc lại lỗi xưa', good: ['redeemed', 'confessed', 'punished'], marks: { redeemed: 'da_chuoc', confessed: 'da_chuoc', punished: 'giu_loi', hidden: 'cay_dang' },
+    sum: { redeemed: () => 'trả lại cho đời những gì mình đã lấy', confessed: () => 'đứng trước mọi người nhận lỗi và được tha', punished: () => 'nhận lỗi và chịu phạt tới nơi tới chốn', hidden: () => 'giấu kín lỗi xưa tới cuối đời' },
+    follow: ['Bạn đi qua chỗ cũ, rồi rẽ sang đường khác.', 'Bạn bỏ thêm mấy đồng vào hòm công đức mà không ai thấy.', 'Đêm ấy bạn lại mơ thấy gương mặt ấy.'],
+    beat: { any: ['Bạn giúp một nhà góa sửa lại mái mà không lấy công.', 'Bạn chia nửa bữa cơm cho một người ăn xin ở cổng làng.', 'Bạn thắp hương ở miếu làng, đứng lâu hơn mọi khi.'] },
+    open: (S, X, a) => `${a.d.why ? 'Bạn vẫn nhớ: ' + a.d.why.charAt(0).toLowerCase() + a.d.why.slice(1) + ' ' : ''}Đêm ấy bạn không ngủ được. Có những thứ không thể để yên mãi.`,
+    knot: { title: 'Cách chuộc lỗi', body: () => 'Lỗi cũ không tự mất đi. Bạn trả nó bằng cách nào?',
+      choices: () => [{ k: 'help', label: 'Làm việc thiện', sub: 'Từng việc nhỏ một.' }, { k: 'seek', label: 'Tìm người mình đã làm hại', sub: 'Gặp lại họ, hoặc người nhà họ.' }, { k: 'temple', label: 'Vào đền sám hối', sub: 'Cần một nơi để quỳ.' }],
+      apply(S, X, ch, a) { if (ch === 'help') { X.add('so', 4); X.money(-Math.round(med(S, X) * .3)); return 'Bạn bắt đầu bằng việc nhỏ: gánh nước cho bà cụ cuối xóm, mỗi sáng.'; }
+        if (ch === 'seek') { const p = G.castAdd(S, X, { role: 'on', how: 'người bạn từng làm hại', bond: 5 }); a.d.mate = p.id; return `Bạn hỏi thăm khắp vùng, rồi tìm ra nhà ${first(p.name)}. Bạn đứng ở cổng ba lần mới dám gõ cửa.`; }
+        X.gain('Spirit', 3); G.trajBump(S, { dao: .5 }); return 'Bạn quỳ trong đền từ tối tới sáng. Vị tư tế không hỏi gì, chỉ châm thêm dầu vào đèn.'; },
+      auto: S => S.traits.pious > .6 ? 'temple' : S.traits.social > .5 ? 'seek' : 'help' },
+    trial: { base: (S, X, a) => .5 + (a.d.path === 'seek' ? .05 : 0),
+      run: (S, X, a, ok) => ok ? (X.add('h', 5), a.d.path === 'seek' ? 'Người ấy nghe bạn nói hết, rồi rót cho bạn một chén nước. Không ai nói chữ tha, nhưng bạn thấy nhẹ hơn.' : 'Người trong làng bắt đầu chào bạn trước.')
+        : (X.add('h', -8), 'Có người nhắc lại chuyện cũ của bạn giữa chợ. Ai cũng nghe.') },
+    climax: { title: 'Ngày nói ra', body: () => 'Có một người biết hết chuyện cũ, và người đó sắp nói.',
+      choices: (S, X, a) => [{ k: 'confess', label: 'Tự đứng ra nhận', sub: `Chừng ${Math.round(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% được tha.` },
+        { k: 'give', label: 'Đem của cải trả lại', sub: 'Mất chừng nửa gia sản.' }, { k: 'hide', label: 'Giấu tiếp', sub: 'Bịt miệng người đó.' }],
+      apply(S, X, ch, a) {
+        if (ch === 'confess') { if (X.chance(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.add('h', 8); return { t: 'Bạn đứng giữa sân đình kể hết. Im lặng rất lâu, rồi trưởng làng nói: đủ rồi.', o: 'confessed' }; }
+          X.money(-Math.round(med(S, X))); S.fame -= 2; return { t: 'Bạn đứng giữa sân đình kể hết. Người ta bắt bạn đền, và bạn đền.', o: 'punished' }; }
+        if (ch === 'give') { X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', 6); return { t: 'Bạn chia nửa gia sản thành từng túi nhỏ, gửi tới từng nhà, không kèm tên.', o: 'redeemed' }; }
+        X.money(-Math.round(med(S, X))); X.add('h', -6); return { t: 'Bạn gửi một túi tiền. Người kia im lặng, và bạn biết mình sẽ phải gửi thêm.', o: 'hidden' };
+      },
+      auto: (S, X) => S.traits.pious > .55 ? 'confess' : S.gold > med(S, X) * 2 ? 'give' : S.traits.bold > .6 ? 'hide' : 'confess' },
+    after: { redeemed: () => 'Bạn sống những năm cuối trong căn nhà nhỏ hơn. Ngủ ngon hơn.',
+      confessed: () => 'Người ta vẫn nhớ chuyện cũ, nhưng giờ họ kể kèm chuyện bạn đã đứng ra nhận.',
+      punished: () => 'Bạn đền đủ tới đồng cuối. Hôm trả xong, có người mời bạn một chén rượu.',
+      hidden: () => 'Bí mật chết cùng người biết nó. Bạn thì vẫn còn sống với nó.' }
+  });
+
+  // ── Tham vọng ──
+  saga('m_shadow', {
+    nameVi: 'Tham vọng', pitch: 'Leo lên trên đầu mọi người, bằng mọi giá.', axes: { am: 1, quyen: .6 }, themes: ['dark'], aim: 'power', gate: true,
+    quest: () => 'Leo lên trên đầu mọi người', good: ['throne', 'back'], marks: { throne: 'ba_chu', fall: 'tay_trang', back: 'buong_bo' },
+    sum: { throne: () => 'đứng trên đầu cả vùng, người ta sợ hơn là nể', fall: () => 'leo cao rồi ngã, mất hết những gì giành được', back: () => 'dừng lại trước bước cuối, quay về làm người thường' },
+    follow: ['Bạn ghi tên một người vào cuốn sổ nhỏ, cạnh mấy cái tên đã gạch.', 'Bạn mỉm cười với một kẻ bạn định hạ.', 'Đêm ấy bạn đếm lại những người còn đứng trên mình.'],
+    beat: { any: ['Bạn mua chuộc thêm một tay chân trong phủ.', 'Bạn để lộ một tin giả, rồi ngồi xem ai cắn câu.', 'Có người biến mất khỏi làng. Bạn không hỏi.'] },
+    open: () => 'Bạn nhìn kẻ đứng đầu vùng đi ngang qua, ngựa cao, áo đẹp. Bạn nghĩ: chỗ ấy không phải trời cho ai. Ai giành được thì ngồi.',
+    knot: { title: 'Bậc thang đầu tiên', body: () => 'Muốn lên cao phải có thứ người khác cần, hoặc sợ.',
+      choices: () => [{ k: 'gold', label: 'Gom tiền, mua người', sub: 'Cần vốn.' }, { k: 'fear', label: 'Gieo sợ hãi', sub: 'Tay chân, dao găm.' }, { k: 'patron', label: 'Bám vào một kẻ quyền thế', sub: 'Rồi thay chỗ hắn.' }],
+      apply(S, X, ch) { if (ch === 'gold') { X.money(-Math.round(med(S, X) * .5)); G.trajBump(S, { thuong: .3, quyen: .3 }); return 'Bạn cho vay lãi nặng, rồi đòi nợ bằng chức, bằng lời hứa.'; }
+        if (ch === 'fear') { X.gain('Stealth', 4); G.trajBump(S, { am: .5 }); return 'Bạn nuôi mấy tay chân không hỏi nhiều. Người trong vùng bắt đầu nói nhỏ khi bạn đi qua.'; }
+        X.add('so', 4); G.trajBump(S, { quyen: .5 }); return 'Bạn vào làm việc cho một kẻ quyền thế, việc gì cũng nhận, chuyện gì cũng nhớ.'; },
+      auto: (S, X) => S.traits.social > .55 ? 'patron' : S.gold > med(S, X) * 2 ? 'gold' : 'fear' },
+    trial: { base: (S, X, a) => .45 + Math.min(.2, S.fame / 200) + (a.d.path === 'patron' ? .05 : 0),
+      run: (S, X, a, ok) => ok ? (X.money(Math.round(med(S, X) * .8)), 'Kẻ đứng trên bạn ngã ngựa vì một lá thư không ai biết ai viết. Bạn ngồi vào chỗ của hắn.')
+        : (X.add('hl', -8), 'Một tay chân của bạn khai ra hết. Bạn phải đốt nhà kho trong đêm để xóa dấu.') },
+    climax: { title: 'Bước cuối', body: () => 'Chỉ còn một người đứng trên bạn trong vùng.',
+      choices: (S, X, a) => [{ k: 'seize', label: 'Lật đổ hắn', sub: `Chừng ${Math.round(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% thành.` },
+        { k: 'deal', label: 'Ép hắn nhường ghế', sub: 'Chậm hơn, ít máu hơn.' }, { k: 'back', label: 'Dừng lại', sub: 'Giữ những gì đã có.' }],
+      apply(S, X, ch, a) {
+        if (ch === 'seize') { if (X.chance(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { S.fame += 5; X.money(Math.round(med(S, X) * 3)); return { t: 'Một đêm, phủ đổi chủ. Sáng ra người ta thấy bạn ngồi ở chiếc ghế cao nhất.', o: 'throne' }; }
+          X.money(-Math.round(Math.max(0, S.gold) * .6)); X.add('hl', -15); return { t: 'Hắn biết trước. Bạn chạy thoát trong đêm, bỏ lại tất cả.', o: 'fall' }; }
+        if (ch === 'deal') { if (X.chance(G.clamp(.6 + pb(a), .1, .9))) { S.fame += 3; return { t: 'Bạn đặt lên bàn những lá thư hắn từng viết. Hắn đọc, rồi đứng dậy nhường ghế.', o: 'throne' }; }
+          X.money(-Math.round(Math.max(0, S.gold) * .4)); return { t: 'Hắn cười, đốt mấy lá thư ngay trước mặt bạn, rồi gọi lính.', o: 'fall' }; }
+        X.add('h', 3); return { t: 'Bạn đứng trước cửa phủ rất lâu, rồi quay về.', o: 'back' };
+      },
+      auto: S => S.traits.bold > .6 ? 'seize' : S.traits.social > .55 ? 'deal' : 'back' },
+    after: { throne: () => 'Người ta cúi đầu khi bạn đi qua. Không ai dám nhìn bạn quá lâu, kể cả con cháu bạn.',
+      fall: () => 'Bạn mất hết trong một mùa. Những kẻ từng cúi đầu giờ quay mặt đi.',
+      back: () => 'Bạn đốt cuốn sổ ghi tên. Đêm ấy bạn ngủ một giấc dài như hồi còn nhỏ.' }
+  });
+
   // ═════════ 3. Gieo mạch, chọn đường đời ═════════
   const sg = S => S.saga || (S.saga = { seed: {}, why: {}, k: null, asked: 0, t: null, init: false });
+  // Ngã rẽ: sau khi chọn đường đời, một lần gieo ≥ turnHit cho mạch khác, hoặc mạch đó đã lớn thêm ≥ turnGrow kể từ lúc chọn, thì mở sg_turn.
+  G.SAGA_TURN = { hit: 2.5, grow: 6, gap: 6, max: 3, keep: 1, hitK: 3, newMin: 1.5 };
   const addSeed = (S, k, v, why) => {
     if (!SAGA[k] || !v) return; const g = sg(S); g.seed[k] = (g.seed[k] || 0) + v;
-    if (why) { const w = String(why).split(/(?<=[.!?])\s/)[0].slice(0, 110); (g.why[k] = g.why[k] || []).push(w); if (g.why[k].length > 3) g.why[k].shift(); }
+    let w = null;
+    if (why) { w = String(why).split(/(?<=[.!?])\s/)[0].slice(0, 110); (g.why[k] = g.why[k] || []).push(w); if (g.why[k].length > 3) g.why[k].shift(); }
+    const TT = G.SAGA_TURN;
+    if (g.k && k !== g.k && !g.turn && v > 0 && (g.turns || 0) < TT.max && (v >= TT.hit || g.seed[k] - ((g.base || {})[k] || 0) >= TT.grow)) g.turn = { k, why: w, t: S.age, v };
   };
   // Bảng gieo / đi theo: id sự kiện → điểm cho từng mạch chính. Trước khi chọn đường đời: cộng điểm gieo; sau khi chọn: sự kiện
   // có điểm ≥ 0,5 cho mạch đã chọn là "đi theo mạch".
@@ -432,6 +625,27 @@ window.LifeSim = window.LifeSim || {};
     dwf_cheat: { m_rise: .5 }, dwf_shame: { m_house: .8 }, orc_trial: { m_power: .8 }, orc_hunt: { m_power: .5, m_lead: .3 }, orc_chief_old: { m_lead: 1.5 }, orc_raid_call: { m_lead: .5, m_power: .5 },
     orc_rival: { m_power: .8 }, orc_blood: { m_house: .5, m_avenge: .5 }, bst_alpha_old: { m_lead: 1.5 }, bst_pack_hunt: { m_power: .4, m_lead: .3 }, elf_sea: { m_road: 1.5 },
     elf_loggers: { m_avenge: .5, m_lead: .5 }, fae_court_call: { m_lead: .5, m_faith: .5 }, mer_dry: { m_road: .6 }, drg_debt: { m_house: .8 }, drg_greed: { m_rise: .8 }, cst_plate: { m_craft: .6 }
+  };
+  // Mạch chính mới (Giữ làng, Một mối tình, Bí mật cổ xưa): cộng vào bảng gieo của các sự kiện có sẵn.
+  for (const [id, o] of Object.entries({ ch_raid: { m_guard: 1 }, ad_war: { m_guard: .8 }, ad_bandits: { m_guard: .6 }, ad_tide: { m_guard: .6 }, dwf_hold_call: { m_guard: .6 }, elf_loggers: { m_guard: .5 },
+    tn_love: { m_love: 1.5 }, ad_suitor: { m_love: 1 }, ad_map: { m_lore: .8 }, ad_map_found: { m_lore: 1 }, ad_trinket: { m_lore: .5 }, ch_letters: { m_lore: .5 }, el_memoir: { m_lore: .3 } }))
+    SEED[id] = Object.assign(SEED[id] || {}, o);
+  // Dấu mới gieo cho mạch chính: lỗi cũ gọi Chuộc lỗi, quyền giành bằng tay bẩn gọi Tham vọng, nợ máu gọi báo thù / giữ làng.
+  const MARK_SEED = { tay_mau: { m_atone: 2.5, m_shadow: 1 }, cua_phi_nghia: { m_atone: 2.5, m_shadow: .5 }, ke_tiem_quyen: { m_atone: 1, m_shadow: 2.5 }, tieng_xau: { m_atone: 1 },
+    thu_chua_tra: { m_avenge: 1.5 }, no_mau: { m_avenge: 1, m_guard: 1 }, cay_dang: { m_atone: .5, m_road: .5 } };
+  // Kết của một mạch chính gieo cho mạch sau (đường đời mới, hoặc ngã rẽ).
+  const CHAIN = G.SAGA_CHAIN = {
+    m_avenge: { spare: { m_guard: 2, m_faith: 1 }, fail: { m_guard: 1, m_shadow: 1 }, win: { m_guard: 1.5 }, burn: { m_guard: 1.5 } },
+    m_rise: { crooked: { m_atone: 3, m_shadow: 1.5 }, ruined: { m_road: 1 }, rich: { m_house: 1, m_lead: 1 }, steady: { m_love: 1 } },
+    m_power: { broken: { m_atone: 1, m_lore: 1.5 }, top: { m_lead: 1, m_guard: 1 }, honor: { m_guard: 1 } },
+    m_craft: { fail: { m_lore: 1 }, work: { m_rise: 1 } },
+    m_lead: { rule: { m_shadow: 3, m_atone: 1 }, chosen: { m_guard: 1.5 }, step: { m_love: 1, m_lore: 1 } },
+    m_faith: { left: { m_lore: 1.5, m_road: 1 }, saint: { m_guard: 1 }, teacher: { m_guard: .5 } },
+    m_road: { settle: { m_love: 1.5, m_house: 1 }, lost: { m_lore: 1 }, beyond: { m_lore: 1 }, home: { m_love: 1 } },
+    m_house: { let: { m_love: 1.5 }, founded: { m_lead: 1 }, claimed: { m_lead: 1 } },
+    m_guard: { fell: { m_avenge: 1.5 }, held: { m_lead: 1 } }, m_love: { lost: { m_road: 1.5 }, let: { m_faith: 1 } },
+    m_lore: { curse: { m_shadow: 1.5, m_atone: 1 }, found: { m_road: 1 } }, m_atone: { redeemed: { m_faith: 1, m_guard: 1 }, hidden: { m_shadow: 1 } },
+    m_shadow: { throne: { m_atone: 1 }, fall: { m_atone: 2, m_rise: 1 }, back: { m_atone: 2.5 } }
   };
   // Sự kiện đời thường hay gặp: đi theo bất kỳ mạch chính nào (góp tiến độ, câu nối của mạch đó).
   const UNIVERSAL = G.SAGA_UNIVERSAL = new Set(['ad_harvest', 'ch_festival', 'ad_tax', 'ad_bandits', 'el_aches', 'ad_kid', 'ad_old_friend', 'ch_raid', 'ad_tourney', 'ad_dice',
@@ -459,7 +673,7 @@ window.LifeSim = window.LifeSim || {};
     const g = sg(S), out = {};
     for (const [k, D] of Object.entries(SAGA)) {
       if (D.need && !D.need(S)) continue;
-      if ((k === 'm_avenge' || k === 'm_house') && !(g.seed[k] > 0)) continue;
+      if ((D.gate || k === 'm_avenge' || k === 'm_house') && !(g.seed[k] > 0)) continue;
       let v = g.seed[k] || 0;
       for (const [ax, x] of Object.entries(D.axes)) v += 3 * x * G.trajShare(S, ax);
       if (D.aim && S.aim === D.aim) v += 2;
@@ -469,7 +683,8 @@ window.LifeSim = window.LifeSim || {};
     return out;
   };
   // Tính cách cũng kéo đường đời (để các mạch không lệch về một phía).
-  const TRAIT = { m_lead: S => 2 * S.traits.social, m_power: S => 1.1 * S.traits.bold, m_road: S => 1.4 * S.traits.bold, m_faith: S => 1.5 * S.traits.pious, m_craft: S => .6 * S.traits.studious, m_rise: S => (S.q <= 2 ? 1 : 0), m_house: S => S.traits.social * .5 };
+  const TRAIT = { m_lead: S => 2 * S.traits.social, m_power: S => 1.1 * S.traits.bold, m_road: S => 1.4 * S.traits.bold, m_faith: S => 1.5 * S.traits.pious, m_craft: S => .6 * S.traits.studious, m_rise: S => (S.q <= 2 ? 1 : 0), m_house: S => S.traits.social * .5,
+    m_guard: S => 1.2 * S.traits.bold * (.5 + S.traits.social), m_love: S => 1.2 * S.traits.social, m_lore: S => 1.4 * S.traits.studious, m_atone: S => .8 * S.traits.pious, m_shadow: S => 1.2 * S.traits.bold * (1 - S.traits.pious) };
   const top3 = (S, X) => Object.entries(G.sagaScore(S, X)).sort((a, b) => b[1] - a[1]).slice(0, 3);
   // Mở mạch chính đã chọn; Món nợ máu mang theo người thân, loài quái của mạch Báo thù (mạch phụ đó khép lại, nhập vào mạch chính).
   function openSaga(S, X, k) {
@@ -479,8 +694,10 @@ window.LifeSim = window.LifeSim || {};
       if (v) { Object.assign(d, { kin: v.d.kin, sp: v.d.sp, zone: v.d.zone }); G.arcEnd(S, X, v, 'merged'); }
       else { const z = X.reg(S).zones[1] || X.reg(S).zones[0], sp = X.monsterIn(z); Object.assign(d, { kin: 'những người làng đã mất', sp: sp && sp.id, zone: z.id }); }
     }
+    if (k === 'm_guard') { const z = X.reg(S).zones[1] || X.reg(S).zones[0], sp = X.monsterIn(z); Object.assign(d, { sp: sp && sp.id, zone: z.id }); }
+    if (k === 'm_love') { const p = (S.cast || []).find(c => c.role === 'tinh' && c.alive !== false) || G.castAdd(S, X, { role: 'tinh', how: 'người bạn thương', bond: 50 }); Object.assign(d, { love: p.id, name: first(p.name) }); }
     const a = G.arcOpen(S, X, k, null, d); if (!a) return false;
-    g.k = k; g.t = S.age; st('pick', k);
+    g.k = k; g.t = S.age; g.base = Object.assign({}, g.seed); st('pick', k);
     return true;
   }
   G.SAGA_PICK = 'sg_road';
@@ -507,12 +724,86 @@ window.LifeSim = window.LifeSim || {};
     auto(S, X, d) { const L = top3(S, X); return L.length && L[0][1] >= 1 ? L[0][0] : 'free'; }
   };
   NEWD.push('sg_road');
+  // ── Ngã rẽ, đường đời mới (sg_turn) ──
+  // Mạch đang đi còn mở: chuyện lớn kéo sang mạch khác (g.turn) → đi tiếp hay rẽ; rẽ thì mạch cũ khép với kết 'turned'.
+  // Mạch đã khép (hay phai) mà còn ở tuổi trưởng thành → đường đời mới trong các mạch chưa đi, hoặc sống nốt đời theo ngày.
+  const curMain = (S, g) => g.k && (S.arcs || []).find(x => x.k === g.k);
+  const lastDone = (S, k) => (S.arcDone || []).filter(d => d.k === k).pop();
+  const walked = g => new Set([g.k, ...(g.past || []).map(x => x.k)]);
+  // Mạch thay thế: điểm hiện tại, trừ nửa điểm gieo đã có từ lúc chọn đường trước (chuyện gần đây nặng hơn chuyện thơ ấu).
+  const alts = (S, X, g, n) => { const W = walked(g), b = g.base || {}; return Object.entries(G.sagaScore(S, X)).map(([k, v]) => [k, +(v - .5 * (b[k] || 0)).toFixed(2)])
+    .filter(([k, v]) => !W.has(k) && v >= G.SAGA_TURN.newMin).sort((a, b) => b[1] - a[1]).slice(0, n); };
+  // Tự sống trước một chuyện lớn: rẽ theo tính cách (gan thì báo thù, mộ đạo thì chuộc lỗi…).
+  const AFF = { m_avenge: S => S.traits.bold > .5, m_atone: S => S.traits.pious > .45 || S.traits.social > .6, m_shadow: S => S.traits.bold > .55 && S.traits.pious < .45,
+    m_love: S => S.traits.social > .45, m_guard: S => S.traits.bold > .45, m_lore: S => S.traits.studious > .5, m_faith: S => S.traits.pious > .55, m_road: S => S.traits.bold > .6 };
+  const whyOf = (g, k) => (g.why[k] && g.why[k].length ? 'Vì: ' + g.why[k][g.why[k].length - 1] + ' ' : '');
+  const keepScore = (S, X, g, a) => (G.sagaScore(S, X)[g.k] || 0) + G.SAGA_TURN.keep + Math.min(3, prog(a) * .3) + ['open', 'knot', 'trial', 'climax', 'after'].indexOf(a.at) * .5;
+  // Rẽ sang mạch chính k: mạch đang mở khép với kết 'turned' (ghi mạch rẽ sang), mạch đã khép ghi vào S.saga.past; mở mạch mới.
+  function switchMain(S, X, k) {
+    const g = sg(S), a = curMain(S, g), old = SAGA[g.k], past = g.past || (g.past = []);
+    g.last = S.age; g.turn = null;
+    if (a) { a.d.to = k; G.arcEnd(S, X, a, 'turned'); past.push({ k: g.k, o: 'turned', t: S.age }); }
+    else { const d = lastDone(S, g.k); past.push({ k: g.k, o: d ? d.o : 'done', t: S.age }); }
+    g.turns = (g.turns || 0) + 1; g.k = null; cnt(S, 'sg_turn'); st('turn', k);
+    openSaga(S, X, k);
+    const p = SAGA[k].pitch.charAt(0).toLowerCase() + SAGA[k].pitch.slice(1);
+    return a ? `Bạn bỏ dở đường ${old.nameVi}. Từ nay đời bạn rẽ sang hướng khác: ${p}` : `Đời bạn có thêm một hướng: ${p}`;
+  }
+  // Hồi chọn lối của mọi mạch chính có thêm lựa chọn rẽ sang mạch khác đang gọi mạnh (điểm ≥ 3).
+  const knotTurn = (S, X) => { const g = sg(S); if (!g.k || (g.turns || 0) >= G.SAGA_TURN.max) return [];
+    const [x] = alts(S, X, g, 1); return x && x[1] >= 3 ? [{ k: 'turn:' + x[0], label: `Thôi, rẽ sang: ${SAGA[x[0]].nameVi}`, sub: whyOf(g, x[0]) + SAGA[x[0]].pitch }] : []; };
+  DEC.sg_turn = {
+    prio: 6, gap: 1, tree: { body: 'living' },
+    when(S, X) {
+      if (S.dead || S.undead) return false; const g = sg(S); if (!g.k || g.settled || (g.turns || 0) >= G.SAGA_TURN.max) return false;
+      if (S.age - (g.last ?? -99) < G.SAGA_TURN.gap) return false;
+      const a = curMain(S, g);
+      if (a) return a.at !== 'after' && !!(g.turn && SAGA[g.turn.k] && !walked(g).has(g.turn.k) && S.age - g.turn.t <= 6 && X.stage(S) !== 'child');
+      const d = lastDone(S, g.k);
+      return X.stage(S) === 'adult' && (!d || S.age - d.t >= 2) && alts(S, X, g, 1).length > 0;
+    },
+    build(S, X) {
+      const g = sg(S), a = curMain(S, g), cur = SAGA[g.k];
+      if (a) {
+        const t = g.turn.k, more = alts(S, X, g, 2).map(x => x[0]).filter(k => k !== t).slice(0, 1);
+        return { title: 'Ngã rẽ', body: `${g.turn.why ? g.turn.why + ' ' : ''}Bạn đang đi đường ${cur.nameVi} (${STEP_VI[a.at] || a.at}, tiến độ ${Math.round(prog(a))}). Đi tiếp, hay rẽ sang đường khác?`,
+          choices: [{ k: 'keep', label: `Đi tiếp: ${cur.nameVi}`, sub: `Bỏ ngang thì những gì đã làm cho đường này dừng ở đó.` },
+            ...[t, ...more].map(k => ({ k, label: `Rẽ sang: ${SAGA[k].nameVi}`, sub: whyOf(g, k) + SAGA[k].pitch }))] };
+      }
+      const d = lastDone(S, g.k), sum = d ? G.ARCS[d.k].sum(d.o, null, d) : null;
+      return { title: 'Đường đời mới', body: `Đường ${cur.nameVi} đã khép${sum ? ': ' + sum : ''}. Đời bạn còn dài. Có con đường nào khác đang gọi bạn không?`,
+        choices: [...alts(S, X, g, 3).map(([k]) => ({ k, label: SAGA[k].nameVi, sub: whyOf(g, k) + SAGA[k].pitch })), { k: 'free', label: 'Sống nốt đời theo ngày', sub: 'Không hỏi lại nữa.' }] };
+    },
+    apply(S, X, k) {
+      const g = sg(S), a = curMain(S, g), old = SAGA[g.k]; g.last = S.age; g.turn = null;
+      if (k === 'keep') { if (a) a.d.prog = prog(a) + 1; g.base = Object.assign({}, g.seed); cnt(S, 'sg_keep'); return `Bạn gạt chuyện ấy sang một bên. ${old.nameVi} vẫn là đường của bạn.`; }
+      if (k === 'free' || !SAGA[k]) { g.settled = true; return 'Bạn không tìm thêm con đường nào nữa. Những năm còn lại là những ngày bình thường.'; }
+      return switchMain(S, X, k);
+    },
+    auto(S, X, d) {
+      const g = sg(S), a = curMain(S, g), sc = a ? G.sagaScore(S, X) : Object.fromEntries(alts(S, X, g, 13)), ks = d.choices.map(c => c.k).filter(k => SAGA[k]);
+      const best = ks.sort((x, y) => (sc[y] || 0) - (sc[x] || 0))[0];
+      if (a) { const t = g.turn || {};
+        if (t.v >= G.SAGA_TURN.hit && SAGA[t.k]) return (AFF[t.k] ? AFF[t.k](S) : (sc[t.k] || 0) > (sc[g.k] || 0)) ? t.k : 'keep';   // chuyện lớn: theo tính cách
+        return best && (sc[best] || 0) > keepScore(S, X, g, a) ? best : 'keep'; }
+      return best && (sc[best] || 0) >= 2 ? best : 'free';
+    }
+  };
+  NEWD.push('sg_turn');
   // Quyết định gieo mạch: chí hướng, bái sư, bầu trưởng làng, vào hội, chọn nghề, đi học.
   const linkDec = (S, X) => { X._lk = true; };
   patchDec('aim_pick', (S, X, k) => { if (AIM_ARC[k] && !sg(S).k) { addSeed(S, AIM_ARC[k], 2, `Bạn quyết chí ${(G.AIMS[k] || {}).nameVi || ''}.`.replace(' .', '.')); linkDec(S, X); } });
   patchDec('mentor', (S, X, k) => { if (k !== 'no' && !sg(S).k) { addSeed(S, 'm_power', 1.5, 'Bạn được một người thầy nhận dạy.'); linkDec(S, X); } });
   patchDec('head_elect', (S, X, k) => { if (k === 'yes') { addSeed(S, 'm_lead', 1.5, 'Bạn ra tranh ghế trưởng.'); linkDec(S, X); } });
   patchDec('school', (S, X, k) => { if (k !== 'no' && !sg(S).k) { addSeed(S, 'm_craft', .8, 'Bạn được đi học.'); linkDec(S, X); } });
+  // Lựa chọn tối / lạ cũng gieo đường đời (cả sau khi đã chọn: thành lý do cho Ngã rẽ).
+  const DEC_SEED = { dark_offer: { join: [{ m_shadow: 3 }, 'Bạn nhận lời Hắc Giáo.'], fight: [{ m_guard: .8 }, 'Bạn đuổi kẻ truyền đạo bóng tối khỏi làng.'] },
+    cv_forbidden: { learn: [{ m_shadow: 2, m_lore: 1.5 }, 'Bạn học một môn cấm thuật.'], report: [{ m_guard: .5 }, 'Bạn báo quan về kẻ dạy cấm thuật.'] },
+    cv_rob: { rob: [{ m_shadow: 2, m_atone: 2 }, 'Bạn đã ra tay cướp của người khác.'], guard: [{ m_guard: .6 }, 'Bạn đi cùng người lạ một quãng cho người ta yên tâm.'] },
+    cv_ruin: { go: [{ m_lore: 1.2 }, 'Bạn đã bước vào một bí cảnh.'] }, cv_ring: { wear: [{ m_lore: 1.5 }, 'Bạn đeo chiếc nhẫn cổ có linh hồn.'] },
+    cv_grave: { dig: [{ m_lore: 1.2 }, 'Bạn đào lên ngôi mộ của kiếp trước.'], pray: [{ m_faith: .5 }, 'Bạn thắp hương trước ngôi mộ kiếp trước.'] },
+    marriage: { yes: [{ m_love: 2 }, 'Bạn nhận lời một người.'] } };
+  for (const [id, M] of Object.entries(DEC_SEED)) if (DEC[id]) patchDec(id, (S, X, k) => { const r = M[k]; if (!r || S.undead) return; for (const [m, v] of Object.entries(r[0])) addSeed(S, m, v, r[1]); linkDec(S, X); });
   patchDec('work', (S, X, k) => {
     const w = S.work; if (!w || sg(S).k) return;
     const m = ['smith', 'runesmith', 'jeweler', 'sculptor', 'tailor', 'cook', 'painter', 'alchemist'].includes(w) ? 'm_craft' : ['merchant', 'steward', 'appraiser'].includes(w) ? 'm_rise' : ['priest', 'healer'].includes(w) ? 'm_faith' : ['adventurer', 'guard', 'bodyguard', 'hunter'].includes(w) ? 'm_power' : ['sailor', 'porter'].includes(w) ? 'm_road' : null;
@@ -651,7 +942,10 @@ window.LifeSim = window.LifeSim || {};
     // Mạch chính đã khép vẫn còn dư âm: sự kiện hợp mạch vẫn là chuyện của con đường ấy.
     const g = sg(S), a = g.k && (S.arcs || []).find(x => x.k === g.k);
     if (g.k) {
-      const f = followOf(S, e, meta, g.k); if (!f) return false;
+      // Đã có đường đời: sự kiện vẫn gieo cho các mạch khác (lý do cho Ngã rẽ, đường đời mới), kể cả khi nó đi theo mạch đang đi.
+      const sd = seedOf(S, X, e, r); let seeded = false;
+      if (sd) for (const [k, v] of Object.entries(sd)) if (k !== g.k) { addSeed(S, k, v, r.t); seeded = true; }
+      const f = followOf(S, e, meta, g.k); if (!f) { if (seeded) st('seedEv', null); return seeded; }
       if (a) a.d.prog = prog(a) + .5 * f; X._tag = SAGA[g.k].nameVi + (a ? ' · đường đời' : ' · dư âm');
       if (a && X.chance(.45)) r.t += ' ' + X.pick(SAGA[g.k].follow);
       st('follow', null); return true;
@@ -667,12 +961,15 @@ window.LifeSim = window.LifeSim || {};
   G.sagaText = S => {
     if (S.undead) return '—';
     const g = S.saga, a = g && g.k && (S.arcs || []).find(x => x.k === g.k);
-    if (a) return `${SAGA[g.k].nameVi} · ${STEP_VI[a.at] || a.at} · tiến độ ${Math.round(prog(a))}`;
+    const was = g && g.past && g.past.length ? ` (trước: ${g.past.map(x => SAGA[x.k].nameVi).join(', ')})` : '';
+    if (a) return `${SAGA[g.k].nameVi} · ${STEP_VI[a.at] || a.at} · tiến độ ${Math.round(prog(a))}${was}`;
+    if (g && g.k && SAGA[g.k]) return `${SAGA[g.k].nameVi} · đã khép${was}`;
     const done = (S.arcDone || []).find(d => SAGA[d.k]);
     if (done) return `${SAGA[done.k].nameVi} · đã khép`;
     if (g && Object.keys(g.seed).length) { const [k] = Object.entries(g.seed).sort((x, y) => y[1] - x[1])[0]; return `Chưa định · đang nghiêng về ${SAGA[k].nameVi}`; }
     return 'Chưa định';
   };
-  G.SAGA_TITLE = { sg_road: ['Đường đời', 'cuối thiếu thời (75% tuổi trưởng thành) hoặc đầu tuổi trưởng thành; chưa định thì hỏi lại một lần sau 8 lượt'] };
+  G.SAGA_TITLE = { sg_road: ['Đường đời', 'cuối thiếu thời (75% tuổi trưởng thành) hoặc đầu tuổi trưởng thành; chưa định thì hỏi lại một lần sau 8 lượt'],
+    sg_turn: ['Ngã rẽ / Đường đời mới', 'đang đi một mạch chính mà một chuyện lớn kéo sang mạch khác (một lần gieo ≥ 2, hoặc mạch đó lớn thêm ≥ 3,5 từ lúc chọn): đi tiếp hay rẽ; mạch đã khép mà còn ở tuổi trưởng thành: chọn đường mới; tối đa 3 lần một đời, cách nhau ≥ 6 lượt'] };
   G.SAGA_STEP_VI = STEP_VI;
 })(window.LifeSim);

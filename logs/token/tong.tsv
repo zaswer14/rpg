@@ -1,4 +1,6 @@
 phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
+15f58cef-8791-5012-84aa-e2e65d9d3527		8	1792248696	bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh…	4	10	13015	1963046	1656	230625
+15f58cef-8791-5012-84aa-e2e65d9d3527		7	1792246807	sửa: 1 nhân vật có thể ko chỉ có 1 mạch truyện chính, có thể đổi mạch truyện chính tùy th…	58	116	433484	23826179	87631	3687857
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	11	1792234861	ok, thêm vào rồi commit push	1	2	41	219009	450	24235
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	10	1792234608	ok, làm cả 3	12	24	24411	2467960	16598	378632
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	9	1792234512	hiện tại bên vạn kiếp đã có file map chưa? là có những file nào, những hàm gì tác dụng gì…	4	8	14341	719203	3746	119340
@@ -10,6 +12,12 @@ phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	3	1792232296	ok, làm cả 2 rồi commit	7	14	10756	901303	7315	148231
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	2	1792232070	phần context chưa làm gì đã mất 100-200k, dẫn đến giới hạn 1triệu trong đoạn chat có vẻ h…	8	16	13539	909529	10432	170207
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	1	1792231695	mình muốn làm 1 cái tracking xem việc sử dụng claude trong 1 đoạn chat là công việc nào h…	31	62	64046	2741380	24900	526792
+15f58cef-8791-5012-84aa-e2e65d9d3527		6	1792226481	ok	3	6	8243	961108	1122	118213
+15f58cef-8791-5012-84aa-e2e65d9d3527		5	1792225770	thêm phần lịch sử tổng nữa, tức là xem mà ki chia mạch gì(như là lúc chơi bình thường)	6	12	16565	1845936	7124	253356
+15f58cef-8791-5012-84aa-e2e65d9d3527		4	1792224899	ok	3	6	1914	889981	1434	100002
+15f58cef-8791-5012-84aa-e2e65d9d3527		3	1792224334	thêm 1 tính năng là xem toàn bộ các kết cục của nhân vật đó	14	28	32462	3940682	27407	596055
+15f58cef-8791-5012-84aa-e2e65d9d3527		2	1792224057	ok làm cả 2	9	18	68046	2147873	4740	374597
+15f58cef-8791-5012-84aa-e2e65d9d3527		1	1792221704	vạn kiếp: ở web cây mạch truyện nhân vật, thêm tính năng trùng sinh (chơi lại) nhân vật, …	36	74	147260	5206503	56759	1099039
 4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	3	1792216007	commit và push	3	6	2302	1563863	1128	166636
 4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	2	1792215426	mình muốn làm 1 web giống cây cốt truyện vạn kiếp nhưng ko giới hạn 1 nhân vật mà có nút …	25	50	62778	12413022	44202	1587918
 4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	1	1792213126	vạn kiếp: thêm hệ thống danh vọng, thành tựu, sẽ thống kê toàn bộ lúc chết, lúc lựa chọn …	152	304	407531	44665499	148189	6022861

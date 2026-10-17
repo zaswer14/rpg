@@ -98,6 +98,7 @@ const data = {
   cfg: G.SAGA_CFG, story: { arcMax: G.STORY.arcMax, shortMax: G.STORY.shortMax, pull: G.STORY.pull, mainK: G.STORY.mainK, late: G.STORY.late },
   stepVi: G.SAGA_STEP_VI, arcs, marks, seeds: G.SAGA_SEED, universal: [...G.SAGA_UNIVERSAL], evText,
   road: { ...parseRun(both(G.DECISIONS.sg_road.build, G.DECISIONS.sg_road.apply)), when: G.SAGA_TITLE.sg_road[1] },
+  turn: { cfg: G.SAGA_TURN, when: G.SAGA_TITLE.sg_turn[1], chain: Object.entries(G.SAGA_CHAIN).flatMap(([k, O]) => Object.entries(O).map(([o, to]) => [G.SAGA[k].nameVi, o, Object.entries(to).map(([k2, v]) => [G.SAGA[k2].nameVi, v])])) },
   aims: Object.fromEntries(Object.entries(G.AIMS).map(([k, a]) => [k, a.nameVi]))
 };
 document.getElementById('out').textContent = JSON.stringify(data);

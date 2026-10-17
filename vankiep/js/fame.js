@@ -149,6 +149,8 @@ window.LifeSim = window.LifeSim || {};
     // Đường đời
     { id: 'road', cat: 'saga', rank: 1, nameVi: 'Chọn đường', d: 'Chọn một đường đời.', ok: S => !!(S.saga && S.saga.k) },
     { id: "road_done", cat: "saga", rank: 2, nameVi: 'Trọn một đường đời', d: 'Khép mạch chính với một kết được coi là làm được.', ok: S => sagaGood(S) },
+    { id: 'road_turn', cat: 'saga', rank: 1, nameVi: 'Ngã rẽ', d: 'Bỏ dở một đường đời để rẽ sang đường khác.', ok: S => (S.arcDone || []).some(d => G.SAGA && G.SAGA[d.k] && d.o === 'turned') },
+    { id: 'road_two', cat: 'saga', rank: 3, nameVi: 'Hai đời trong một đời', d: 'Khép hai mạch chính với kết làm được.', ok: S => (S.arcDone || []).filter(d => G.SAGA && G.SAGA[d.k] && G.ARCS[d.k].good.includes(d.o)).length >= 2 },
     { id: "tales", cat: "saga", rank: 1, nameVi: 'Đời nhiều chuyện', d: 'Khép sáu mạch truyện.', ok: S => arcsN(S) >= 6 },
     { id: 'avenged', cat: 'saga', rank: 2, nameVi: 'Báo được thù', d: 'Khép mạch Báo thù hay Mối thù bằng chiến thắng.', ok: S => (S.arcDone || []).some(d => (d.k === 'vengeance' || d.k === 'feud') && d.o === 'win') },
     { id: 'whole', cat: 'saga', rank: 3, nameVi: 'Không phụ đời mình', d: 'Lúc chết, mọi chương đời (ít nhất ba) đều làm được.', ok: (S, X, w) => w === 'death' && (S.chapDone || []).length >= 3 && S.chapDone.every(c => c.ok) },
@@ -401,11 +403,12 @@ window.LifeSim = window.LifeSim || {};
     sec('choices', `Lựa chọn (${CH.length})`, [['Đã quyết', CH.length ? `${CH.length} lần · ${CH.filter(c => c.arc).length} lần thuộc mạch truyện` : 'chưa lần nào']],
       CH.map(c => `${c.y} ${yu(S)} · ${c.title}: ${c.label}. ${G.fxText(c.fx, c.k).replace('→ ', '')}`));
     // Đường đời, mạch truyện.
-    const D = (S.arcDone || []).filter(d => d.o !== 'faded'), main = D.find(d => G.SAGA && G.SAGA[d.k]);
+    const D = (S.arcDone || []).filter(d => d.o !== 'faded'), mainsD = D.filter(d => G.SAGA && G.SAGA[d.k]), main = mainsD[mainsD.length - 1];
     const sumOf = d => { const A = G.ARCS[d.k]; return A && A.sum ? A.sum(d.o, G.castGet(S, d.who) || { name: d.name || '?' }, d) : null; };
     const ch = S.chapDone || [];
     sec('saga', 'Đường đời, mạch truyện', [
       ['Đường đời', G.sagaText ? G.sagaText(S) : '—'], ['Kết mạch chính', main ? (sumOf(main) || main.o) : '—'],
+      ...(mainsD.length > 1 ? [['Các đường đã đi', mainsD.map(d => `${G.ARCS[d.k].nameVi} (${sumOf(d) || d.o})`).join(' → ')]] : []),
       ['Mạch đã khép', `${D.filter(d => d.o !== 'gone').length}` + ((S.arcs || []).length ? ` · còn dở ${(S.arcs || []).length}` : '')],
       ['Chương đời', ch.length ? `${ch.filter(c => c.ok).length}/${ch.length} làm được` : '—'],
       ['Dấu còn mang', (S.marks || []).map(m => G.MARKS[m.id] ? G.MARKS[m.id].nameVi : m.id).join(', ') || '—']
