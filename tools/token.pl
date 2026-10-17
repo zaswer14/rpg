@@ -349,6 +349,11 @@ sub run {
   return unless @gtools;
   printf "\nContext: mở đầu %s, cao nhất %s. Phình nhiều nhất vì:\n", fmt($main[0]{ctx}), fmt($cmax);
   printf "  %-28s %4d lần  +%s\n", $_, $growN{$_}, fmt($grow{$_}) for @gtools[0 .. ($#gtools < 5 ? $#gtools : 5)];
+  print "Bước làm phình nhiều nhất:\n";
+  printf "  %s  +%-8s %s\n", hhmm($_->{t}), fmt($_->{grow}), short(join('; ', @{ $_->{did} }) || '(trả lời)', 100) for @gtop[0 .. ($#gtop < 5 ? $#gtop : 5)];
+  my $now = $main[-1]{ctx} + ($main[-1]{tok}{out} // 0);
+  printf "\nContext hiện tại ~%s / 1.000.000 (%.0f%%)%s\n", fmt($now), $now / 10000,
+    $now >= 400_000 ? ' → đã quá ngưỡng 400k, nên mở chat mới' : '';
 }
 
 sub write_file {

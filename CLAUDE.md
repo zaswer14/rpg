@@ -27,7 +27,7 @@ Khi người dùng bảo commit (hoặc trước khi hỏi họ có commit khôn
 
 ## Đọc tiết kiệm, giữ context nhỏ
 
-Mọi thứ đã đọc, đã viết, đã chạy đều nằm lại trong đoạn chat và bị đọc lại ở mỗi lượt sau. Đo 17/10/2026: phiên mở đầu ~64k, phình tới 500–850k, nguồn phình số 1 là Bash in file (`logs/token/`, `perl tools/token.pl`).
+Mọi thứ đã đọc, đã viết, đã chạy đều nằm lại trong đoạn chat và bị đọc lại ở mỗi lượt sau. Đo 17/10/2026: phiên mở đầu ~64k, phình tới 500–850k, nguồn phình số 1 là Bash in file (`logs/token/`, `perl tools/token.pl`). Người dùng hỏi context / token dùng thế nào: skill `xem-context`.
 
 - File lớn (`bash tools/muc_luc.sh` liệt kê) thì không đọc cả: `bash tools/muc_luc.sh FILE [mẫu]` ra số dòng từng mục / hàm, rồi Read đúng đoạn bằng `offset` / `limit`.
 - **Tìm hiểu qua nhiều file mà chỉ cần kết luận** (lần đầu đọc một hệ thống, tìm chỗ dùng một hàm, đối chiếu tài liệu với mã, nghiên cứu): giao subagent `Explore` (hoặc `general-purpose` khi phải chạy lệnh), dặn trả lời gọn kèm số dòng; đừng tự `cat` / `sed` cả loạt vào đoạn chat chính. Tự đọc khi sắp sửa đúng đoạn đó.

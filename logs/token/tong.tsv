@@ -1,5 +1,7 @@
 phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
-6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	3	1792232296	ok, làm cả 2 rồi commit	6	12	8720	768125	6321	125870
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	5	1792232725	commit và push	1	2	31	144401	349	16249
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	4	1792232462	tạo thêm 1 skill để tracking cho việc sử dụng context thế nào cho mình	5	10	7071	696422	6213	114859
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	3	1792232296	ok, làm cả 2 rồi commit	7	14	10756	901303	7315	148231
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	2	1792232070	phần context chưa làm gì đã mất 100-200k, dẫn đến giới hạn 1triệu trong đoạn chat có vẻ h…	8	16	13539	909529	10432	170207
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	1	1792231695	mình muốn làm 1 cái tracking xem việc sử dụng claude trong 1 đoạn chat là công việc nào h…	31	62	64046	2741380	24900	526792
 4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	3	1792216007	commit và push	3	6	2302	1563863	1128	166636
