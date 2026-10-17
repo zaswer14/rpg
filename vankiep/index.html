@@ -97,11 +97,13 @@
       <button data-t="log" class="on">Cuộc đời</button>
       <button data-t="chron">Biên niên sử <span id="chronCount"></span></button>
       <button data-t="peers">Đồng niên <span id="peerCount"></span></button>
+      <button data-t="ach">Thành tựu <span id="achCount"></span></button>
       <button data-t="lineage" id="lineageTab" hidden>Các kiếp trước</button>
     </nav>
     <div class="log pane" id="log" aria-live="polite"></div>
     <div class="pane list" id="chron" hidden></div>
     <div class="pane list" id="peers" hidden></div>
+    <div class="pane list" id="ach" hidden></div>
     <div class="pane list" id="lineage" hidden></div>
     <!-- Quyết định: hiện ngay dưới nhật ký, thời gian dừng tới khi chọn -->
     <div class="decision" id="decBox" hidden>
@@ -158,6 +160,7 @@
     <canvas id="lifeChart" width="760" height="190"></canvas>
     <div class="legend" id="chartLegend"></div>
     <div class="dsum" id="dSum"></div>
+    <div class="dstats" id="dStats"></div>
     <div class="roll" id="roll">
       <div class="die" id="die">?</div>
       <div class="rolltxt" id="rollTxt"></div>
@@ -220,6 +223,7 @@
 <script src="js/racev.js"></script>
 <script src="js/culture.js"></script>
 <script src="js/saga.js"></script>
+<script src="js/fame.js"></script>
 <script src="js/ui.js"></script>
 </body>
 </html>

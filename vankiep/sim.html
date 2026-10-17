@@ -93,6 +93,7 @@
 <script src="js/racev.js"></script>
 <script src="js/culture.js"></script>
 <script src="js/saga.js"></script>
+<script src="js/fame.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -136,6 +137,8 @@ $('run').onclick = () => {
       'court_summer', 'court_winter', 'titheSave', 'titheLet', 'deal_memory', 'deal_gold', 'deal_free', 'cloak_stay', 'cloak_sing', 'cloak_leave', 'siren_sing', 'siren_warn', 'siren_away', 'hoard_keep', 'hoard_give', 'clan_pay', 'clan_hunt', 'clan_disown', 'core_new', 'core_slow', 'core_keep'];
     // Mạch truyện (js/story.js, docs/13): sự kiện thuộc mạch theo đời, dàn nhân vật, mạch mở / khép, chương đời.
     G.SAGA_CFG.stats = true; const SG = G.sagaStatsReset();   // Đường đời (js/saga.js, docs/16)
+    const FM = { first: [], bone: [] };   // danh vọng, thành tựu, lựa chọn (js/fame.js, docs/17)
+    const fmRec = (S, sim) => ({ adult: sim.years(S) >= (S.undead ? 0 : G.RACES[S.race].adult), peak: S.fameS ? S.fameS.peak : S.fame, end: S.fame, rep: S.rep || 0, ach: (S.ach || []).map(a => a.id), ch: (S.choices || []).length, none: (S.choices || []).filter(c => !c.fx.length).length, keep: (S.choices || []).filter(c => !c.fx.length && /^(no|stay|keep|skip|silent|free|0)$/.test(c.k)).length, src: S.fameS ? S.fameS.src : {}, dis: !!S.flags.discipleTake, title: G.fameTitle(S) });
     G.STORY.stats = true; const SZ = G.storyStatsReset(), SL = { ad: 0, adEv: 0, adLink: 0, dist: [0, 0, 0, 0, 0], noArc: 0, cast: 0, meet2: 0, ends: 0, sk: 0, skEv: 0, skLink: 0, skEnds: 0, epi: 0 };
     const storyLife = (S, sk) => { const F = S.flags, ends = (S.arcDone || []).filter(d => d.o !== 'faded' && d.o !== 'gone').length;
       if (sk) { SL.sk++; SL.skEv += F.stEv || 0; SL.skLink += F.stLink || 0; SL.skEnds += ends; return; }
@@ -188,7 +191,7 @@ $('run').onclick = () => {
         TJ.top[top] = (TJ.top[top] || 0) + 1; const mid = S.flags.trajMid;
         if (mid) { TJ.midN++; TJ.mid[mid] = (TJ.mid[mid] || 0) + 1; const am = TJ.aim[ak] || (TJ.aim[ak] = {}); am[mid] = (am[mid] || 0) + 1; }
         if (rec.adult) { TJ.ad++; const v = G.standing(S, sim).soc; TJ.soc[v] = (TJ.soc[v] || 0) + 1; } }
-      A.lives.push(rec);
+      A.lives.push(rec); FM.first.push(fmRec(S, sim));
       { const F = S.flags; for (const k of RVK) if (F[k]) RV.k[k] = (RV.k[k] || 0) + 1; }
       sim0 = sim; storyLife(S, false);
       A.causes[S.causeId] = (A.causes[S.causeId] || 0) + 1;
@@ -207,7 +210,7 @@ $('run').onclick = () => {
       if (S.rose) {
         A.rose++;
         // Chạy luôn kiếp Bộ Xương để đo đời thứ hai.
-        sim.rise(); sim.runToDeath(); S = sim.S; A.chain++; storyLife(S, true);
+        sim.rise(); sim.runToDeath(); S = sim.S; A.chain++; storyLife(S, true); FM.bone.push(fmRec(S, sim));
         TJ.skN++; for (const [id, r] of Object.entries(S.tree || {})) if (r.t < 3) TJ.sk[id] = (TJ.sk[id] || 0) + 1;   // 3 lượt đầu của Bộ Xương
         (A.byRace.skeleton = A.byRace.skeleton || []).push({ race: 'skeleton', years: sim.years(S), turns: S.age, cause: S.causeId, level: S.level, tier: sim.ctier(S), job: sim.job(S).tier, inh: S.inherited });
         A.causes['(xương) ' + S.causeId] = (A.causes['(xương) ' + S.causeId] || 0) + 1;
@@ -353,6 +356,23 @@ $('run').onclick = () => {
       out.push(table('Sự kiện giống loài', rows, ['Giống loài', 'Đời', 'Sự kiện', 'Của riêng tộc', 'Đổi giọng', 'Hay gặp nhất'], { note: 'Đời đầu, người sống. "Của riêng tộc": nút của js/racev.js, js/culture.js (cả sự kiện của đạo đang theo) và tn_rite, con_oil, con_dream; "Đổi giọng": sự kiện chung kể bằng giọng của tộc (lễ hội, được mùa, tuổi già…). Mẫu số gồm cả sự kiện của mạch truyện, người quen.' }));
       const rk = k => [k, RV.k[k] || 0, pct(RV.k[k] || 0, N)];
       out.push(table('Sự kiện giống loài: lựa chọn', RVK.map(rk).filter(r => r[1]), ['Cờ', 'Đời', '% mọi đời'], { note: 'Tiền tố: elfAxe tiều phu (Tiên Tộc), grudge Sổ Thù, slayer Kẻ Diệt, dwfArt/dwfMad cơn nhập thần (Người Lùn), price giá máu, rival kẻ thù cũ (Orc), alpha con đầu đàn (Người Thú), court/tithe/deal đình và giao kèo (Yêu Tinh), cloak/siren (Hải Tộc), hoard/clan (Long Nhân), core thay lõi (Cơ Nhân).' })); }
+    // Danh vọng, thành tựu, lịch sử lựa chọn (js/fame.js, docs/17).
+    { const ad = FM.first.filter(r => r.adult), M = Math.max(1, ad.length), sh = (l, f) => pct(l.filter(f).length, Math.max(1, l.length));
+      const q = (l, f, p) => { const b = l.map(f).sort((x, y) => x - y); return b.length ? Math.round(b[Math.floor(p * (b.length - 1))]) : '—'; };
+      out.push(table('Danh vọng (đời đầu, trưởng thành)', [
+        ...G.FAME_SCOPE.map((s, i) => [`Cao nhất: ${s.nameVi} (${s.min}+)`, sh(ad, r => G.fameScope({ fame: r.peak }) === i), sh(ad, r => G.fameScope({ fame: r.end }) === i)]),
+        ['Phân vị 25 / 50 / 75 / 90', [.25, .5, .75, .9].map(p => q(ad, r => r.peak, p)).join(' / '), [.25, .5, .75, .9].map(p => q(ad, r => r.end, p)).join(' / ')],
+        ...G.REP_VI.map(([t, nm], i) => [`Thanh danh: ${nm}`, sh(ad, r => G.repText({ rep: r.rep }) === nm), '']),
+        ['Thanh danh phân vị 5 / 50 / 95', [.05, .5, .95].map(p => q(ad, r => r.rep, p)).join(' / '), ''],
+        ['Có danh hiệu', sh(ad, r => !!r.title), ''], ['Nhận đệ tử (so docs/12: 10,7%)', sh(FM.first, r => r.dis), ''],
+        ...Object.keys(G.SRC_VI).map(k => [`Nguồn TB mỗi đời: ${G.SRC_VI[k]}`, (ad.reduce((a, r) => a + (r.src[k] || 0), 0) / M).toFixed(1), ''])
+      ], ['', 'Đỉnh', 'Lúc chết'], { note: `${ad.length} đời trưởng thành. Mục tiêu tầm cao nhất: vô danh ~15%, trong làng ~35%, cả tỉnh ~25%, cả nước ~20%, đại lục ~6%. Phai ${G.FAME.fade * 100}%/năm phần trên danh vọng bền; nén phần tăng trên ${G.FAME.soft}.` }));
+      const all = [...FM.first, ...FM.bone], C = {}; for (const r of FM.first) for (const id of r.ach) C[id] = (C[id] || 0) + 1; const CB = {}; for (const r of FM.bone) for (const id of r.ach) CB[id] = (CB[id] || 0) + 1;
+      out.push(table('Thành tựu', G.ACH.map(A => [`${G.ACH_CAT[A.cat]} · ${A.nameVi}`, G.ACH_RANK[A.rank].nameVi, C[A.id] || 0, pct(C[A.id] || 0, N), CB[A.id] ? pct(CB[A.id], Math.max(1, FM.bone.length)) : '']),
+        ['Thành tựu', 'Bậc', 'Đời đầu', '% đời đầu', '% kiếp Bộ Xương'], { note: `Trung bình ${(FM.first.reduce((a, r) => a + r.ach.length, 0) / N).toFixed(1)} thành tựu mỗi đời đầu. Bậc Huyền thoại nên dưới 1%, Vàng vài %, Đồng phần lớn đời trưởng thành.` }));
+      const ch = all.reduce((a, r) => a + r.ch, 0), no = all.reduce((a, r) => a + r.none, 0), kp = all.reduce((a, r) => a + r.keep, 0);
+      out.push(table('Lịch sử lựa chọn', [['Quyết định mỗi đời (đời đầu)', (FM.first.reduce((a, r) => a + r.ch, 0) / N).toFixed(1)], ['Có tác động thấy ngay', pct(ch - no, Math.max(1, ch))], ['Không đổi gì: chọn giữ nguyên (không nhận, ở lại…)', pct(kp, Math.max(1, ch))], ['Không đổi gì ngay, lựa chọn khác', pct(no - kp, Math.max(1, ch))]],
+        ['', ''], { note: 'Mỗi lựa chọn ghi vào S.choices và một dòng "→ Tác động" trong nhật ký. Dòng cuối là quyết định có hệ quả đến sau (cờ, hàng chờ) nên chụp trạng thái không thấy.' })); }
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));
     $('out').innerHTML = out.join('');
     $('status').textContent = `${N} đời + ${A.chain} kiếp Bộ Xương trong ${ms} ms.`;

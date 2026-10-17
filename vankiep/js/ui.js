@@ -17,6 +17,9 @@
   // running: Tự chạy (thời gian trôi theo tốc độ). step: đang sống hết một lượt sau khi bấm Sang năm (quyết định chen giữa thì chờ chọn rồi đi tiếp).
   let sim = null, running = false, step = null, dirty = true, selRegion = null, selNation = null, lastHeader = null, deathShown = false, tab = 'log';
   let graves = store.get(GRAVES) || [];
+  // Bộ sưu tập thành tựu qua mọi kiếp (js/fame.js, docs/17): id → { n: số kiếp đạt, name, kiep, wy: lần đầu }.
+  const ACHK = 'vankiep.ach.v1';
+  let achBook = store.get(ACHK) || {};
   let dieIv = null;   // xúc xắc trỗi dậy đang lăn
   // Thế giới: ?world=… trên URL, hoặc thế giới đang chơi, hoặc một thế giới mới.
   function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); for (const k of Object.keys(bases)) if (k !== 'terrain') delete bases[k]; }
@@ -139,6 +142,9 @@
     if (deathShown) return; deathShown = true;
     const g = { x: S.pos[0], y: S.pos[1], name: S.name, years: sim.years(S), cause: S.cause, rose: !!S.rose, race: S.race, world: G.realm.seed };
     if (!graves.some(o => o.name === g.name && o.years === g.years)) { graves.push(g); graves = graves.slice(-60); store.set(GRAVES, graves); }
+    // Thành tựu của kiếp này vào bộ sưu tập (mỗi kiếp tính một lần, nhận theo tên và năm mất).
+    { const key = S.name + '@' + S.world.year;
+      if (achBook._last !== key) { achBook._last = key; for (const a of S.ach || []) { const b = achBook[a.id] || (achBook[a.id] = { n: 0, name: S.name, kiep: S.kiep, wy: a.wy }); b.n++; } store.set(ACHK, achBook); } }
     save(); dirty = true;
     setTimeout(() => renderDeath(S), sim.headless ? 0 : 900);
   }
@@ -151,13 +157,18 @@
     const items = [
       ['Nghề', G.jobLine(sim, S)], ['Level', `${S.level} / ${G.maxLvOf(S)} · ${G.tierName(sim.ctier(S))}`],
       ['Kỹ năng chủ đạo', dom ? `${G.mv(dom.skill)} ${dom.value}` : '—'], ['Sinh kế', S.work ? G.WORKS[S.work].nameVi : '—'],
-      ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', Math.round(S.fame)],
+      ['Quái đã hạ', kills + (topKill ? ` · nhiều nhất ${G.B.byId[topKill[0]].nameVi}` : '')], ['Danh vọng', G.fameLine ? G.fameLine(S) : Math.round(S.fame)],
+      ['Thành tựu', (S.ach || []).length || '—'], ['Lựa chọn', (S.choices || []).length || '—'],
       ['Tiền để lại', G.coin(S.gold)], ['Con cháu', S.family.kids.length || '—'],
       ['Căn cốt', G.rootText(S) || '—'], ['Thiên phú', S.tal && S.tal.list.length ? S.tal.list.map(id => G.TALENTS[id].nameVi).join(', ') : '—'],
       ['Chí hướng', (G.AIMS[S.aim] || G.AIMS.free).nameVi],
       ['Trận săn', `${S.hunts.won} thắng · ${S.hunts.lost} thua`], ['Kiếp', S.kiep]
     ];
     $('dSum').innerHTML = items.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('');
+    // Biên bản cuộc đời (js/fame.js G.lifeStats): mỗi mục một khối mở ra được; danh vọng, thành tựu mở sẵn.
+    $('dStats').innerHTML = (G.lifeStats ? G.lifeStats(S, sim) : []).map((s, i) => `<details${i < 2 ? ' open' : ''}><summary>${esc(s.title)}</summary>` +
+      (s.rows.length ? `<div class="kv">${s.rows.map(([k, v]) => `<span>${esc(k)}</span><span>${esc(v)}</span>`).join('')}</div>` : '') +
+      (s.list && s.list.length ? `<ul>${s.list.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '') + '</details>').join('');
     // Xúc xắc d100 hiển thị khớp với kết quả đã tung lúc chết (≤ 20 = trỗi dậy).
     const h = G.hash(S.name + S.world.year + S.cause);
     const final = S.rose ? 1 + h % 20 : 21 + h % 80;
@@ -226,7 +237,7 @@
       ['Đường đời', G.sagaText ? G.sagaText(S) : '—'],   // mạch chính cả đời (js/saga.js, docs/16)
       ['Chương', (G.chapText && G.chapText(S)) || '—'],   // câu hỏi của quãng đời này (js/story.js, docs/13)
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
-      ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
+      ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', G.fameLine ? G.fameLine(S) : Math.round(S.fame)],   // tầm, thanh danh, danh hiệu (js/fame.js)
       ['Giáo phái', S.faith ? `${J.faiths[S.faith].symbol || ''} ${J.faiths[S.faith].nameVi} · ${Math.round(S.devotion)}` : 'không'],
       // Nước đang sống: thuế thật phải nộp và thái độ của nước với chủng tộc mình (js/state.js).
       ['Nước', nat ? `${nat.name} · thuế ${Math.round(G.taxRate(S) * 100)}%${{ fav: ' · được ưu ái', wary: ' · bị dè chừng' }[G.attitude(S)] || ''}` : 'đất vô chủ']
@@ -234,6 +245,7 @@
     $('cKv').innerHTML = kv.map(([k, v]) => `<span class="k">${k}</span><span class="v">${esc(v)}</span>`).join('');
     if (G.statusTip) { const i = kv.findIndex(r => r[0] === 'Thân phận'); $('cKv').children[i * 2 + 1].title = G.statusTip(S); }
     for (const [k, f] of [['Danh phận', () => G.standingTip(S, X)], ['Quỹ đạo', () => G.trajTip(S)]]) { const i = kv.findIndex(r => r[0] === k); if (i >= 0 && G.trajTip) $('cKv').children[i * 2 + 1].title = f(); }
+    if (G.fameTip) { const i = kv.findIndex(r => r[0] === 'Danh vọng'); $('cKv').children[i * 2 + 1].title = G.fameTip(S, X); }
     if (G.workText && S.work) { const i = kv.findIndex(r => r[0] === 'Sinh kế'); $('cKv').children[i * 2 + 1].title = G.workText(S.work); }   // vòng nghề, cầu (js/econ.js)
     if (nat) $('cKv').lastElementChild.title = 'Luật: ' + (nat.laws.map(l => G.LAWS[l].nameVi).join(', ') || 'không có gì đặc biệt');
     // Level, kỹ năng đang rèn, chỉ số (js/cult.js, docs/08).
@@ -454,10 +466,19 @@
     const H = (S.world.dyn && S.world.dyn.hist) || [];
     $('chronCount').textContent = H.length ? `(${H.length})` : '';
     $('chron').innerHTML = H.slice(-40).reverse().map(h => `<div class="prow"><b>Năm ${h.y}</b> · ${esc(h.t)}</div>`).join('') || '<div class="prow">Chưa có gì đáng ghi.</div>';
+    // Thành tựu (js/fame.js): kiếp này theo bậc, rồi bộ sưu tập qua mọi kiếp (chưa đạt thì mờ).
+    { const mine = new Set((S.ach || []).map(a => a.id)), got = G.achList ? G.achList(S) : [], book = Object.keys(achBook).filter(k => G.ACH_BY && G.ACH_BY[k]).length;
+      $('achCount').textContent = G.ACH ? `(${got.length} · ${book}/${G.ACH.length})` : '';
+      const row = (A, sub, off) => { const R = G.ACH_RANK[A.rank]; return `<div class="achrow${off ? ' off' : ''}"><span class="rk" style="color:${R.col}">${R.nameVi}</span><span><b>${esc(A.nameVi)}</b> · ${esc(A.d)}${sub ? ` <small>${esc(sub)}</small>` : ''}</span></div>`; };
+      const yu = S.undead ? 'năm sau khi trỗi dậy' : 'tuổi';
+      $('ach').innerHTML = !G.ACH ? '' : `<div class="achhead">Kiếp này · ${got.length}</div>` + (got.sort((a, b) => b.A.rank - a.A.rank || a.y - b.y).map(a => row(a.A, `${a.y} ${yu}`)).join('') || '<div class="prow">Chưa có.</div>') +
+        `<div class="achhead">Mọi kiếp · ${book}/${G.ACH.length}</div>` + Object.entries(G.ACH_CAT).map(([c, nm]) => {
+          const L = G.ACH.filter(A => A.cat === c); return `<div class="achhead">${esc(nm)}</div>` + L.map(A => { const b = achBook[A.id]; return row(A, b ? `${b.n} kiếp · lần đầu: ${b.name}` : mine.has(A.id) ? 'kiếp này' : '', !b && !mine.has(A.id)); }).join('');
+        }).join(''); }
     const L = S.lineage || [];
     $('lineageTab').hidden = !L.length;
     if (!L.length && tab === 'lineage') showTab('log');
-    $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} level ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}</div>`).join('');
+    $('lineage').innerHTML = L.map(l => `<div class="prow"><b>Kiếp ${l.kiep}: ${esc(l.name)}</b> · ${esc(l.raceVi)}<br>${l.years} tuổi, ${esc(l.cause)} · ${esc(l.job)} level ${l.level}${l.dominant ? ` · chủ đạo ${esc(G.mv(l.dominant.skill))} ${l.dominant.value}` : ''}${l.fame != null ? ` · danh vọng ${l.fame}${l.title ? ` "${esc(l.title)}"` : ''} · ${l.ach} thành tựu` : ''}</div>`).join('');
   }
 
   function renderYear() {
@@ -473,7 +494,7 @@
   function showTab(t) {
     tab = t;
     for (const b of $('tabs').children) { const on = b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }
-    for (const id of ['log', 'chron', 'peers', 'lineage']) $(id).hidden = id !== t;
+    for (const id of ['log', 'chron', 'peers', 'ach', 'lineage']) $(id).hidden = id !== t;
   }
   for (const b of $('tabs').children) b.onclick = () => showTab(b.dataset.t);
 

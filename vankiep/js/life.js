@@ -231,7 +231,10 @@ window.LifeSim = window.LifeSim || {};
       // rồi bốc sinh trong khu (đô thị) hay ở vùng quê quanh khu theo tỉ lệ dân.
       const living = s => 1 - (s.races.skeleton || 0) / 100;
       const raceW = s => opt.race ? (s.races[opt.race] || 0) / 100 : 1;
-      const cands = G.realm.settlements.filter(s => s.tier !== 'ruin' && (!opt.region || s.region === opt.region) && (!opt.settlement || s.id === opt.settlement));
+      const okS = (s, reg) => s.tier !== "ruin" && (!reg || s.region === reg) && (!opt.settlement || s.id === opt.settlement);
+      // Xuất thân đã chọn chỗ (nhà quý tộc, kinh đô) ở vùng khác vùng được ép: xuất thân thắng, bỏ ràng buộc vùng.
+      let cands = G.realm.settlements.filter(s => okS(s, opt.region));
+      if (!cands.length) cands = G.realm.settlements.filter(s => okS(s, null));
       const st = T.wpick(cands, s => G.popOf(s) * living(s) * raceW(s)) || cands[0];
       const reg = G.REGION[st.region];
       const urban = st.tier !== 'hamlet' && T.chance(st.urban / Math.max(1, G.popOf(st)));
@@ -420,7 +423,7 @@ window.LifeSim = window.LifeSim || {};
       const choice = P.choices.find(c => c.k === k) || P.choices[0];
       this._ev = 'dec:' + P.id;
       const out = D.apply(S, this, choice.k, choice);
-      if (out) this.log(`${P.title}: ${choice.label}. ${out}`, 'choice');
+      this.log(`${P.title}: ${choice.label}.${out ? " " + out : ""}`, "choice");   // luôn ghi lựa chọn (js/fame.js nối thêm dòng tác động)
       this._ev = null;
     }
 

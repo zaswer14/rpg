@@ -125,7 +125,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
     ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], ['racev', 'Sự kiện giống loài'], ['faith', 'Tín ngưỡng gốc của tộc'], null,
-    ['tree', 'Cây sự kiện'], ['story', 'Mạch truyện']
+    ['tree', 'Cây sự kiện'], ['story', 'Mạch truyện'], ['fame', 'Danh vọng, thành tựu']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t && t[0] === h)) state.tab = h; } catch (e) {}
@@ -140,6 +140,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const STRULES = [['cast', 'Dàn nhân vật'], ['arc', 'Mạch: bước, khoảng chờ, phai'], ['open', 'Mở mạch, người quen xuất hiện'], ['chap', 'Chương đời'], ['tag', 'Nhãn nhật ký, đoạn tưởng nhớ']];
   const VRULES = [['env', 'Môi trường sống: quê tộc, xa tộc'], ['voice', 'Giọng theo giống loài'], ['cond', 'Tình trạng mới: Sầu héo, Khô vảy, Máu lạnh'], ['theme', 'Chủ đề mới: xa tộc, nợ thù của tộc']];
   const VOICEK = [['FEST', 'Lễ hội (ch_festival)'], ['HARVEST', 'Được mùa, mất mùa ở quê tộc (ad_harvest)'], ['FIRST', 'Từ đầu đời (inf_word)'], ['LETTERS', 'Học chữ (ch_letters)'], ['HUNGER', 'Năm đói (ch_hunger)'], ['ACHES', 'Tuổi già (el_aches)'], ['OLDFRIEND_LONG', 'Bạn thơ ấu của loài sống lâu (ad_old_friend)'], ['KID', 'Con cái (ad_kid)'], ['BRAWL', 'Ẩu đả (tn_brawl)'], ['SUITOR', 'Người để ý (ad_suitor)'], ['INHERIT', 'Thừa kế (ad_inherit)'], ['COIN', 'Nhặt được tiền (ch_coin)'], ['DICE', 'Cờ bạc (ad_dice)'], ['TAX', 'Thuế khi sống giữa tộc (ad_tax)'], ['TEST_AT', 'Lễ thử thiên phú ở làng không có đền, trường (cv_test)']];
+  const MRULES = [['src', 'Nguồn danh vọng'], ['soft', 'Càng nổi tiếng càng khó nổi thêm'], ['fade', 'Danh vọng phai, danh vọng bền'], ['rep', 'Thanh danh'], ['title', 'Danh hiệu'], ['choice', 'Ghi lựa chọn và tác động'], ['stats', 'Biên bản lúc chết'], ['book', 'Thẻ Thành tựu, bộ sưu tập']];
   const TRULES = [['traj', 'Quỹ đạo'], ['soc', 'Danh phận'], ['body', 'Thân thể, giống loài, lượt đầu của Bộ Xương'], ['theme', 'Chủ đề'], ['tree', 'Cây: nhánh, khoảng chờ']];
   const CULTRULES =[['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
@@ -172,7 +173,10 @@ code{font-family:var(--font-mono);font-size:12px}
     // Mạch truyện (docs/13): luật, mạch, nút (sự kiện snode, quyết định dec), chỗ móc vào sự kiện có sẵn, chương đời.
     story: [...STRULES.map(([id, name]) => ({ kind: 'stru', id, name })), ...D.story.arcs.map(a => ({ kind: 'sarc', id: a.id, name: a.nameVi })),
       ...D.story.nodes.map(n => ({ kind: n.ev ? 'snode' : 'dec', id: n.id, name: n.title })), ...D.story.hooks.map(h => ({ kind: 'shook', id: h.id, name: h.title })),
-      ...D.story.chapters.map(c => ({ kind: 'chap', id: c.id, name: c.q }))]
+      ...D.story.chapters.map(c => ({ kind: 'chap', id: c.id, name: c.q }))],
+    // Danh vọng, thành tựu (docs/17): luật (mrule), tầm danh vọng (scope), mức thanh danh (rep), thành tựu (ach).
+    fame: [...MRULES.map(([id, name]) => ({ kind: 'mrule', id, name })), ...D.fame.scope.map((s, i) => ({ kind: 'scope', id: String(i), name: s.nameVi })),
+      ...D.fame.rep.map(([, nm], i) => ({ kind: 'rep', id: String(i), name: 'Thanh danh: ' + nm })), ...D.fame.ach.map(a => ({ kind: 'ach', id: a.id, name: a.nameVi }))]
   };
   const allItems = Object.values(items).flat();
   const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
@@ -183,7 +187,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Sự kiện giống loài', items.racev) + part('Tín ngưỡng', items.faith) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Sự kiện giống loài', items.racev) + part('Tín ngưỡng', items.faith) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story) + part('Danh vọng', items.fame);
   }
 
   // ---- Tab ----
@@ -443,6 +447,33 @@ code{font-family:var(--font-mono);font-size:12px}
         + part('Móc vào sự kiện có sẵn', hooks) + part('Chương đời', chaps));
   }
 
+  // ---- Danh vọng, thành tựu, lịch sử lựa chọn (vankiep/js/fame.js, docs/17) ----
+  function fameView() {
+    const F = D.fame, C = F.cfg, p = v => String(+(v * 100).toFixed(1)).replace('.', ',') + '%', n2 = v => String(+(+v).toFixed(2)).replace('.', ',');
+    const R = F.rate || {}, rate = id => (R.ach && R.ach[id] != null ? ` · đo: ${String(R.ach[id]).replace('.', ',')}% đời đầu` : '');
+    const evs = Object.entries(F.repW).map(([id, k]) => `<span class="chip ${k > 0 ? 'good' : 'bad'}">${esc(id)} ${k > 0 ? '+' : '−'}${n2(Math.abs(k))} × thanh danh / 100</span>`).join(' ');
+    const deeds = Object.entries(F.deeds).filter(([, v]) => v).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="chip ${v > 0 ? 'good' : 'bad'}">${esc(k)} ${v > 0 ? '+' : '−'}${Math.abs(v)}</span>`).join(' ');
+    const RULE = {
+      src: `<p style="margin:0">Danh vọng vẫn là một số từ 0 tới 100 như trước (hơn trăm chỗ trong mã cộng trừ nó), giờ biết nó từ đâu tới. Mỗi lần đổi được quy cho việc đang chạy: ${Object.values(F.src).map(esc).join(', ')}. Việc làm tăng danh vọng từ 2 trở lên được ghi tên vào danh sách "làm nên tên tuổi" (12 việc lớn nhất), hiện khi di chuột vào ô Danh vọng và trong biên bản lúc chết.</p>`,
+      soft: `<p style="margin:0">Phần tăng khi danh vọng đã trên ${C.soft} bị nén theo hệ số 1 − (mức − ${C.soft}) / ${C.softK}, thấp nhất ${n2(C.softMin)}: ở 45 còn ${p(1 - 25 / C.softK)}, ở 70 còn ${p(Math.max(C.softMin, 1 - 50 / C.softK))}. Trước thay đổi này khoảng một phần tư đời trưởng thành chạm 100 nên "nổi tiếng" không còn phân biệt được ai.${R.scope ? ` Đo 1000 đời: tầm cao nhất ${R.scope}.` : ''}</p>`,
+      fade: `<p style="margin:0">Danh vọng bền = điểm từ thành tựu + ${p(C.baseK)} mức cao nhất từng có. Phần trên mức bền phai ${p(C.fade)} mỗi năm; tuổi già × ${n2(C.fadeOld)} (người ta quên người đã lui về), Bộ Xương × ${n2(C.fadeBone)}. Tước, chức vẫn giữ sàn danh vọng như cũ (js/noble.js). Đây là chỗ docs/12 mục 6 để lại: danh vọng chỉ tăng.</p>`,
+      rep: `<p style="margin:0">Thanh danh từ −100 tới 100: tiếng tốt hay xấu, khác với danh vọng (người ta biết bạn tới đâu). Lên xuống theo việc làm (cờ đếm có sẵn, mỗi lần tăng thì cộng), dấu hệ quả (dấu tốt +6, dấu xấu −8 lúc mới nhận), mất danh vọng vì việc mình làm (× 1,5 thành tiếng xấu). Danh phận bóng tối từ 2 kéo xuống dưới −15 mỗi bậc. Phai ${p(C.repFade)} mỗi năm về 0. Mỗi năm cộng Quan hệ = thanh danh × ${n2(C.repSo)}.</p>
+        <dl class="kv"><dt>Việc làm</dt><dd class="chips">${deeds}</dd><dt>Đổi trọng số</dt><dd class="chips">${evs}</dd></dl>`,
+      title: `<p style="margin:0">Danh hiệu là thành tựu bậc cao nhất có danh hiệu (Kẻ Hạ ‹chúa vùng›, Nhà Vô Địch, Người Mở Đất, Bác Học…) hoặc hiệu người đời đặt cho người cai trị lúc băng hà. Hiện cạnh danh vọng trên thẻ nhân vật, trong biên bản lúc chết và ở thẻ Các kiếp trước. Lúc mở có dòng nhật ký "Người ta bắt đầu gọi bạn là …".</p>`,
+      choice: `<p style="margin:0">Mỗi quyết định giờ luôn có dòng nhật ký "Tiêu đề: lựa chọn. Kết quả." (trước đây quyết định không trả câu nào thì không ghi gì), rồi một dòng "→ Tác động: …" liệt kê những gì đổi ngay sau lựa chọn: chỉ số, tiền, danh vọng, thanh danh, level, Tier, nghề, sinh kế, tầng lớp, vùng, nước, đạo, chí hướng, đường đời, ba kỹ năng đổi nhiều nhất, bạn đời, con, dấu hệ quả, mạch mở và khép, vai trò, tình trạng, truy nã, thiên phú, dược tề, học, thầy, đệ tử, đồng đội, thú nuôi, thành tựu. Dòng phụ ghi các lựa chọn đã bỏ qua. Chọn không nhận, ở lại thì ghi "Giữ nguyên như cũ"; lựa chọn khác mà chưa đổi gì thì ghi hệ quả đến sau. Lưu 400 lựa chọn gần nhất ở S.choices cho biên bản và cây cốt truyện.${R.choice ? ` Đo 1000 đời: ${R.choice}.` : ''}</p>`,
+      stats: `<p style="margin:0">Bảng lúc chết thêm biên bản cuộc đời, chia khối mở ra được: Danh vọng (lúc chết, cao nhất, thanh danh, danh hiệu, nguồn, việc làm nên tên tuổi), Thành tựu, Lựa chọn (cả danh sách, kèm tác động), Đường đời và mạch truyện (chương đời, mạch đã khép, dấu còn mang), Chiến đấu, Tu luyện, Của cải và địa vị, Gia đình và người quen, Hành trình.</p>`,
+      book: `<p style="margin:0">Thẻ Thành tựu ở cột giữa, cạnh Đồng niên: thành tựu của kiếp này theo bậc, rồi bộ sưu tập qua mọi kiếp theo ${Object.keys(F.cat).length} nhóm (số kiếp đã đạt, ai đạt đầu tiên; chưa đạt thì mờ). Mỗi thành tựu cộng danh vọng bền theo bậc: ${F.rank.slice(1).map(r => `${r.nameVi} ${r.fame}`).join(', ')}.</p>`
+    };
+    const rules = MRULES.filter(([id]) => passes('mrule', id)).map(([id, nm]) => card('mrule', id, nm, RULE[id]));
+    const scopes = F.scope.map((s, i) => [s, i]).filter(([, i]) => passes('scope', String(i))).map(([s, i]) => card('scope', String(i), s.nameVi, `<div class="meta">danh vọng từ ${s.min}${F.scope[i + 1] ? ` tới dưới ${F.scope[i + 1].min}` : ''}${R.scopeBy ? ` · đo: ${R.scopeBy[i]}% đời trưởng thành (mức cao nhất)` : ''}</div>`));
+    const reps = F.rep.map((r, i) => [r, i]).filter(([, i]) => passes('rep', String(i))).map(([[t, nm], i]) => card('rep', String(i), 'Thanh danh: ' + nm, `<div class="meta">${i ? `từ ${t} tới dưới ${F.rep[i - 1][0]}` : `từ ${t}`}${R.repBy ? ` · đo: ${R.repBy[i]}% đời trưởng thành` : ''}</div>`));
+    const cats = Object.keys(F.cat).map(c => [c, F.ach.filter(a => a.cat === c && passes('ach', a.id))]).filter(([, L]) => L.length);
+    const achCard = a => card('ach', a.id, a.nameVi, `<div class="meta"><span style="color:${F.rank[a.rank].col}">${F.rank[a.rank].nameVi}</span> · danh vọng +${F.rank[a.rank].fame}${rate(a.id)}</div><p style="margin:0">${esc(a.d)}</p>${a.title ? `<dl class="kv"><dt>Danh hiệu</dt><dd>${esc(a.title)}</dd></dl>` : ''}`, F.rank[a.rank].col);
+    const part = (t, a) => a.length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Danh vọng, thành tựu', `Người dùng yêu cầu 17/10/2026 (docs/17): hệ thống danh vọng, thành tựu, thống kê toàn bộ lúc chết, và lựa chọn nào cũng ghi vào lịch sử kèm tác động. ${F.ach.length} thành tựu chia ${Object.keys(F.cat).length} nhóm, 4 bậc. Bấm ✓ / ✎ / ✕ trên từng thẻ.`)
+      + grid(part('Luật', rules) + part('Tầm danh vọng', scopes) + part('Thanh danh', reps) + cats.map(([c, L]) => part('Thành tựu: ' + F.cat[c], L.map(achCard))).join(''));
+  }
+
   // ---- Giống loài: tuổi thọ, tập tục, nhận thức (vankiep/js/race.js, docs/11) ----
   function raceView() {
     const R = D.race, M = R.mind, n2 = v => String(+(+v).toFixed(2)).replace('.', ',');
@@ -686,7 +717,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'racev' ? racevView() : t === 'faith' ? faithView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'racev' ? racevView() : t === 'faith' ? faithView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : t === 'fame' ? fameView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

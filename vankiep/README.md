@@ -16,6 +16,7 @@ Rồi mở `http://localhost:8765/` (trang chủ của kho) hoặc thẳng `http
 
 - `index.html` — game. `?seed=abc` để chơi lại đúng một đời, `?world=abc` để mở đúng một thế giới.
 - `sim.html` — chạy N đời headless (mặc định 1000) và in phân phối: chênh Tier khi gặp quái, tỉ lệ trỗi dậy, nguyên nhân chết, tuổi thọ theo chủng tộc/sinh kế, Tier cuối đời. Dùng trước khi chỉnh số. Ô "Thế giới" chọn thế giới cho các đời; nút **Thử nhiều thế giới** dựng N thế giới (mặc định 100) và in phân bố mẫu quốc gia, số nước, khu dân cư, tỉ lệ đô thị, đất vô chủ, lỗi. `sim.html?noauto` chỉ nạp dữ liệu, không tự chạy (để thử từng phần trong console).
+- `caytruyen.html` — cây cốt truyện: nút **Nhân vật khác** sinh một đời mới (chọn giống loài, vùng, xuất thân, cách chọn quyết định, seed, thế giới) rồi vẽ đời đó thành cây: chương đời, danh vọng, mạch, quyết định kèm tác động, thành tựu, biên bản lúc chết (docs/17 mục 5).
 
 Giao diện: cột trái là nhân vật, cột giữa là **nhật ký cuộc đời** (phần chính; thẻ Biên niên sử, Đồng niên, Các kiếp trước), cột phải là bản đồ nhỏ, khu săn và vùng đang chọn. Điều khiển tay là chính: chọn focus, chí hướng rồi bấm **Sang năm** (Space; người trường thọ một lượt nhiều năm thì nút ghi "Qua N năm"); quyết định hiện ngay dưới nhật ký, phím 1–9 chọn nhanh, chọn xong năm đi tiếp. **Tự chạy** cho thời gian tự trôi (tốc độ ½×–8×), **Tự sống** để nhân vật tự chọn focus và tự quyết theo tính cách, chí hướng. Bản đồ: nút + − (hoặc lăn chuột) phóng to, thu nhỏ, kéo để dời, ⌖ về chỗ nhân vật và bám theo, ⛶ (phím M) mở rộng ra giữa màn hình. Menu ☰ có Kiếp mới, xuất thân, Thế giới mới. Bấm một vùng trên bản đồ để xem khu, loài quái, tình trạng (dịch, chiến tranh, thú triều) và lên đường nếu vùng đó giáp chỗ đang ở. Tiến trình tự lưu vào bộ nhớ trình duyệt; mộ các kiếp trước hiện trên bản đồ.
 
@@ -123,6 +124,7 @@ Thứ **không** bắt chước: ~50 hàm `xxxYear()` gọi cứng. Ở đây m�
 vankiep/
   index.html, style.css     giao diện
   sim.html                  cân bằng headless
+  caytruyen.html            cây cốt truyện của một đời sinh ngay trong trang (nút Nhân vật khác)
   data/world.js             chủng tộc (tuổi thọ, ypt), tầng lớp, sinh kế, 16 vùng × 4 khu (tầng), 7 vùng biển × 4 tầng, tàu, tầng nguy hiểm, di tích, nguyên nhân chết, validateWorld; gán G.TERRAIN, G.FEATURES, G.NAMES từ phần chung
   data/nations.js           50 mẫu quốc gia, chính thể, luật, đặc trưng riêng, phong cách khu dân cư theo chủng tộc, công trình
   js/core.js                RNG có seed, odds, Φ/Φ⁻¹, noise
@@ -150,6 +152,7 @@ vankiep/
   js/racev.js               sự kiện giống loài: nút riêng của tám tộc (G.RACE_EV), đời thường (G.RACE_LIFE), giọng theo tộc (G.RACE_VOICE), môi trường sống (G.raceHome, G.amongKin, G.hostRace), Sầu héo, Khô vảy, Máu lạnh; nạp sau story.js
   js/culture.js             văn hóa tộc, tín ngưỡng gốc: nút văn hóa của từng tộc (Người Lùn: lò, mỏ, rune, cổng, thành cổ; Orc: sói, thử thách, tù trưởng, đi cướp), sự kiện của mười đạo (G.FAITH_EV), giọng theo tộc cho thêm mười sự kiện chung; nạp sau racev.js
   js/saga.js                đường đời: 8 mạch chính cả đời (gieo, quyết định Đường đời, 5 hồi, nhịp), mạch ngắn mọc từ quyết định thường, dấu hệ quả (S.marks, G.MARKS), sự kiện đi theo mạch; nạp sau culture.js
+  js/fame.js                danh vọng (nguồn, nén, phai, tầm, thanh danh, danh hiệu), 66 thành tựu, lịch sử lựa chọn kèm tác động (S.choices), biên bản lúc chết (G.lifeStats), cây cốt truyện (G.storyTree); nạp sau saga.js
   js/ui.js                  giao diện (chỉ nghe hook)
   docs/                     01 ý tưởng 1in8b · 02 phương án bản đồ · 03 thiết kế bản đồ V2 · 04 mẫu quốc gia · 05 thành phố, làng mạc · 06 thiên phú, chí hướng · 07 xã hội tu luyện · 08 hệ sức mạnh · 09 Tier, danh xưng · 10 cây nghề riêng · 11 tuổi thọ giống loài · 12 cây sự kiện · 13 mạch truyện · 14 sự kiện giống loài · 15 tín ngưỡng gốc, văn hóa tộc · 16 đường đời
 ```
