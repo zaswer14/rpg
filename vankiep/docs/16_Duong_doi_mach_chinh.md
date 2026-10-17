@@ -36,7 +36,7 @@ Mã:
 
 | Tầng | Là gì | Cùng lúc tối đa | Mã |
 |---|---|---|---|
-| Mạch chính | một mạch cả đời: 5 hồi và một nhịp lặp | 1 | `G.SAGA` (`saga.js`) |
+| Mạch chính | 5 hồi và một nhịp lặp; một đời đi qua một hay nhiều mạch nối nhau (mục 9) | 1 | `G.SAGA` (`saga.js`) |
 | Mạch phụ | mạch người quen: Đối thủ, Ơn cứu mạng, Mối thù, Báo thù, Tình xưa, Thầy trò, Mộng ước, Ruột thịt, Bạn thân, Kẻ săn, Đứa bé tặng hoa | `arcMax` 3 | `story.js` |
 | Mạch ngắn | một hai hồi, mọc từ quyết định thường; cùng tầng với các mạch cũ ngắn: Người mang ơn, Nợ cờ bạc, Bí mật, Người mất tích, Lời bà đồng | `shortMax` 3 | `G.SAGA_SHORT` (`saga.js`) |
 
@@ -44,7 +44,7 @@ Mã:
 
 ## 3. Mạch chính
 
-### 3.1 Tám mạch
+### 3.1 Tám mạch đầu (năm mạch thêm ở mục 9.2)
 
 | Mạch | Lời gọi | Hướng quỹ đạo · chủ đề · chí hướng | Chọn đường (hồi 2) | Cao trào (hồi 4) | Kết → dấu |
 |---|---|---|---|---|---|
@@ -258,6 +258,46 @@ Sau lần đo này đã chỉnh hai chỗ mà chưa đo lại 1000 đời: chế
 - Quyết định thuộc mạch mới 39%: còn chừng 40 quyết định chưa có mạch ngắn (bí cảnh, nhẫn cổ, cấm thuật, đấu giá, dược tề, lên nghề, triều chính, lập nước…).
 - Câu nối của mạch chính mỗi mạch có 3 câu, dễ lặp; câu nhắc của dấu mới có cho vài sự kiện.
 - Bộ Xương chưa có mạch chính (trỗi dậy là một `S` mới, `S.saga` bắt đầu lại; các nút mạch chính chỉ cho người sống).
+- Đổi mạch (mục 9): Thoát nghèo hay làm mạch thứ hai vì điểm gieo cộng dồn; Tham vọng hiếm ở Tự sống; câu nối, nhịp của năm mạch mới mới có 3 câu mỗi loại; chưa có câu chuyển ý riêng cho từng cặp mạch (rẽ từ Báo thù sang Giữ làng…).
 - Mạch chính chưa đổi thứ khác ngoài chỉ số, tiền, tầng lớp, danh vọng, dấu: Người đứng đầu chưa thành trưởng khu thật, Chân trời chưa thật sự đổi vùng.
 - Mạch chính, mạch ngắn chưa đổi giọng theo giống loài.
 - Chưa nối xuyên kiếp (`docs/13` mục 5).
+
+## 9. Đổi mạch chính, năm mạch mới (người dùng yêu cầu 17/10/2026)
+
+Người dùng: một nhân vật không chỉ có một mạch chính; mạch chính đổi theo sự kiện, lựa chọn (ví dụ không chọn báo thù mà chọn hướng khác); thêm mạch truyện.
+
+### 9.1 Đổi mạch chính
+
+- **Vẫn gieo sau khi chọn**: sự kiện (kể cả sự kiện đang đi theo mạch), quyết định, dấu mới vẫn cộng điểm cho các mạch *khác* (`G.storyLinkHook`, `MARK_SEED`, `DEC_SEED`). Dấu gieo: Tay dính máu, Của phi nghĩa → Chuộc lỗi; Kẻ tiếm quyền → Tham vọng; Mối thù chưa trả, Nợ máu đồng đội → Món nợ máu… Lựa chọn gieo: nhận lời Hắc Giáo, học cấm thuật, cướp đường → Tham vọng / Chuộc lỗi; vào bí cảnh, đeo nhẫn cổ, đào mộ kiếp trước → Bí mật cổ xưa; nhận lời cầu hôn → Một mối tình.
+- **Ba lối đổi**:
+  1. Hồi **chọn lối** của mọi mạch chính có thêm lựa chọn "Thôi, rẽ sang …" khi một mạch khác đang gọi mạnh (điểm ≥ 3). Ví dụ Đỉnh cao võ đạo: "Thôi, rẽ sang: Món nợ máu".
+  2. Quyết định **Ngã rẽ** (`sg_turn`): đang đi một mạch (chưa tới hồi kết) mà một lần gieo ≥ 2,5 cho mạch khác, hoặc mạch đó lớn thêm ≥ 6 kể từ lúc chọn (`G.SAGA_TURN`). Lựa chọn: đi tiếp (tiến độ +1) / rẽ sang mạch vừa gọi / rẽ sang mạch điểm cao kế tiếp. Tự sống gặp chuyện lớn thì rẽ theo tính cách (`AFF`: gan thì báo thù, mộ đạo hay hòa đồng thì chuộc lỗi, gan mà ít đạo thì Tham vọng…), chuyện nhỏ cộng dồn thì so điểm với "giữ đường" (2 + tiến độ + hồi đã qua).
+  3. **Đường đời mới** (cùng `sg_turn`): mạch chính đã khép (hay phai) mà còn ở tuổi trưởng thành: ba mạch chưa đi điểm cao nhất (điểm trừ nửa điểm gieo có từ lần chọn trước, để chuyện gần đây nặng hơn chuyện thơ ấu) hoặc "Sống nốt đời theo ngày".
+- Mạch bỏ dở khép với kết `turned` ("bỏ dở giữa chừng, rẽ sang …"), không để dấu. Tối đa 3 lần đổi một đời, cách nhau ≥ 6 lượt. `S.saga.past` ghi các mạch đã đi; `G.sagaText` thêm "(trước: …)".
+- **Kết gieo mạch sau** (`G.SAGA_CHAIN`): tha lứa quái con → Giữ làng +2, Đức tin +1; giàu bằng của phi nghĩa → Chuộc lỗi +3; tiếm quyền → Tham vọng +3; bỏ đạo → Bí mật cổ xưa; dừng ở đất mới → Một mối tình… (bảng đủ trên trang Duyệt Mạch Truyện, thẻ luật Ngã rẽ).
+- Thành tựu mới: **Ngã rẽ** (đồng: bỏ dở một đường để rẽ sang đường khác), **Hai đời trong một đời** (vàng: khép hai mạch chính với kết làm được). Biên bản lúc chết thêm dòng "Các đường đã đi".
+
+### 9.2 Năm mạch mới
+
+| Mạch | Lời gọi | Hướng · chủ đề · chí hướng | Chọn lối (hồi 2) | Cao trào (hồi 4) | Kết → dấu |
+|---|---|---|---|---|---|
+| Giữ làng | đứng chắn cho làng | Võ, Gia, Quyền · raid, war, robbery | lập đội dân canh (thêm người quen) / tự luyện thành bức tường / xin lãnh chúa gửi lính | đứng ở cổng đánh tới sáng / rút vào sau rào / dẫn làng lên núi | held, wall → Người giữ làng; saved → Được tin cậy; fell → Nỗi cay đắng |
+| Một mối tình | giữ lấy một người (cần có chuyện gieo) | Gia, Du · romance · Gia đình | làm nhà người ấy nể / rủ bỏ đi / kiên nhẫn chờ | ở lại / đi, hẹn ngày về / buông tay | wed, wait → Một mối tình trọn; let → Đã buông; lost → Nỗi cay đắng |
+| Bí mật cổ xưa | tìm bí mật thế giới đã quên | Trí, Pháp, Du · treasure, ring, grave, learn · Học vấn | sách cũ / đào phế tích / hỏi người chết (đường tối) | gọi tên, mở cửa / chép gửi học viện / niêm phong | found → Người biết bí mật; shared → Được tin cậy; sealed → Đã buông; curse → Nỗi cay đắng + lời nguyền |
+| Chuộc lỗi | trả lại cho đời những gì đã lấy (cần có chuyện gieo) | Đạo, Gia · faith | làm việc thiện / tìm người mình đã làm hại / vào đền sám hối | tự đứng ra nhận / đem của cải trả lại / giấu tiếp | redeemed, confessed → Đã chuộc lỗi; punished → Người giữ lời; hidden → Nỗi cay đắng |
+| Tham vọng | leo lên trên đầu mọi người (cần có chuyện gieo) | Ám, Quyền · dark · Quyền thế | gom tiền mua người / gieo sợ hãi / bám kẻ quyền thế | lật đổ / ép nhường ghế / dừng lại | throne → Kẻ đứng trên đầu người; back → Đã buông; fall → Trắng tay làm lại |
+
+Dấu mới: Người giữ làng, Một mối tình trọn, Người biết bí mật, Đã chuộc lỗi, Kẻ đứng trên đầu người. Gieo từ sự kiện có sẵn: quái vào làng, chiến tranh, cướp đường → Giữ làng; tình đầu, người dạm hỏi → Một mối tình; bản đồ, món đồ lạ, học chữ → Bí mật cổ xưa.
+
+### 9.3 Đo (17/10/2026, 500 đời Tự sống, thế giới `can-bang`, khung trình duyệt ẩn)
+
+| | |
+|---|---|
+| Số mạch chính một đời: 0 / 1 / 2 / 3 / 4 | 9,2 / 29,8 / 56,2 / 4,4 / 0,4% |
+| Đời bỏ dở một mạch để rẽ giữa chừng (Tự sống) | ~6% |
+| Đời có quyết định Ngã rẽ (đi tiếp hay rẽ) | ~9% |
+| Đường đời mới sau khi mạch khép | ~55% đời |
+| Mạch được chọn đầu tiên | Võ đạo 93, Tác phẩm 78, Thoát nghèo 72, Chân trời 65, Tên nhà 52, Đức tin 50, Đứng đầu 20, Bí mật 13, Giữ làng 7 |
+
+200 đời chọn ngẫu nhiên: 67 lần chọn "rẽ sang" ở hồi chọn lối, 117 quyết định Ngã rẽ / Đường đời mới, 78 mạch bỏ dở; đủ 13 mạch đều chạy, không lỗi. Mạch thứ hai hay rơi vào Thoát nghèo (điểm gieo từ thuế, được mùa cộng dồn cả đời) và Một mối tình; Tham vọng hiếm khi Tự sống chọn (cần lựa chọn tối), chủ yếu do người chơi chọn.

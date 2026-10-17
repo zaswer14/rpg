@@ -37,7 +37,7 @@ Thẻ nhân vật: ô Danh vọng ghi "47 · lừng danh cả nước · đượ
 
 ## 3. Thành tựu
 
-`G.ACH`: 66 thành tựu, 13 nhóm (sinh tồn, chiến đấu, tu luyện, học vấn, địa vị, của cải, gia đình, đường đời, hành trình, kỳ ngộ, bóng tối, danh vọng, Bộ Xương), 4 bậc (Đồng, Bạc, Vàng, Huyền thoại; cộng danh vọng bền 0, 1, 2, 4). Điều kiện đọc trạng thái có sẵn (cờ đếm, Tier, mạch đã khép, chương đời); thêm ba cờ đếm từ trận săn: `upWin` (thắng quái cao hơn một Tier), `alphaWin`, `lordWin`.
+`G.ACH`: 68 thành tựu (thêm Ngã rẽ, Hai đời trong một đời ở docs/16 mục 9), 13 nhóm (sinh tồn, chiến đấu, tu luyện, học vấn, địa vị, của cải, gia đình, đường đời, hành trình, kỳ ngộ, bóng tối, danh vọng, Bộ Xương), 4 bậc (Đồng, Bạc, Vàng, Huyền thoại; cộng danh vọng bền 0, 1, 2, 4). Điều kiện đọc trạng thái có sẵn (cờ đếm, Tier, mạch đã khép, chương đời); thêm ba cờ đếm từ trận săn: `upWin` (thắng quái cao hơn một Tier), `alphaWin`, `lordWin`.
 
 Kiểm ba lúc: trước và sau mỗi quyết định (thành tựu đã đủ điều kiện từ trước được mở trước khi chụp trạng thái, để không tính nhầm cho lựa chọn), cuối năm, lúc chết ("Không phụ đời mình" chỉ xét lúc chết). Mở thì có dòng nhật ký ★.
 

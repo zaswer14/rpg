@@ -504,9 +504,9 @@ code{font-family:var(--font-mono);font-size:12px}
   // Mỗi ngả rẽ chạy từ ảnh chụp đầu năm gần mốc nhất (một lần sống lại có chụp ảnh), không sống lại từ lúc sinh; gom theo đường đời + kết mạch chính.
   const endsCache = new Map(); let exp = null;
   function endOf(sim) {
-    const S = sim.S, X = G.storyTree(S, sim), m = X.arcs.find(a => a.tier === 'main');
+    const S = sim.S, X = G.storyTree(S, sim), ms = X.arcs.filter(a => a.tier === 'main').sort((a, b) => a.y0 - b.y0), m = ms[ms.length - 1];
     let job = ''; try { job = S.job ? sim.jobName(S) : ''; } catch (e) {}
-    const saga = X.saga && X.saga.nameVi ? X.saga.nameVi : S.kiep > 1 ? 'Bộ Xương chưa có đường đời' : 'Chưa định đường đời';
+    const saga = ms.length ? ms.map(a => a.nameVi).join(' → ') : S.kiep > 1 ? 'Bộ Xương chưa có đường đời' : 'Chưa định đường đời';
     const fin = m ? (m.done ? (m.o === 'gone' ? 'người trong mạch mất' : m.o === 'faded' ? 'mạch phai' : m.sum || m.o) : 'còn dở lúc chết') : '';
     return { key: saga + '|' + fin, saga, fin, good: !!(m && m.done && m.good), years: X.years, unit: X.unit, cause: X.cause, title: X.title || '', rank: G.TIER_NAME[sim.ctier(S)] || '',
       job, fame: X.fame.peak, scope: X.fame.scope, ach: X.ach.length, rose: !!(S.dead && S.rose && S.kiep === 1) };
@@ -587,18 +587,20 @@ code{font-family:var(--font-mono);font-size:12px}
   }
 
   // ═════════ Gom dữ liệu của một đời: nhánh, sự kiện theo nhánh, quyết định ═════════
-  let arcs, mainArc, events, castEv, markEv, trunkEv, choices, chapLines, chapters, ach, laneGroups, all, yu, nm;
+  let arcs, mainArc, mains, events, castEv, markEv, trunkEv, choices, chapLines, chapters, ach, laneGroups, all, yu, nm;
   const base = t => t.replace(/ · (đường đời|dư âm)$/, '');
   const tailOf = a => (a.done ? (a.o === 'gone' ? 'người trong mạch mất' : a.o === 'faded' ? 'mạch phai' : (a.sum || a.o)) : 'còn dở lúc chết') + (a.mark ? ' → ' + a.mark : '');
   const short = (s, n) => (s && s.length > n ? s.slice(0, n - 1) + '…' : s || '');
   function build() {
     yu = T.unit; nm = T.name + (T.title ? ` "${T.title}"` : '');
     arcs = T.arcs.map((a, i) => ({ ...a, i, key: 'arc:' + i, ev: [], dec: 0 }));
-    mainArc = arcs.find(a => a.tier === 'main');
+    // Một đời có thể đi qua nhiều mạch chính nối nhau (ngã rẽ, đường đời mới; js/saga.js): mạch cuối là mạch chính hiện tại.
+    mains = arcs.filter(a => a.tier === 'main').sort((x, y) => x.y0 - y.y0); mainArc = mains[mains.length - 1];
     // Dòng nhật ký thuộc nhánh nào: nhãn trùng nhãn mạch và năm nằm trong khoảng; nhãn đường đời / dư âm vào mạch chính.
     const arcOfTag = (tag, y) => {
       if (!tag) return null;
-      if (mainArc && base(tag) === mainArc.nameVi) return mainArc;
+      const mm = mains.filter(a => base(tag) === a.nameVi);
+      if (mm.length) return mm.find(a => y >= a.y0 - 1 && y <= a.y1 + 1) || mm[mm.length - 1];
       const c = arcs.filter(a => a.tag === tag);
       return c.find(a => y >= a.y0 - 1 && y <= a.y1 + 1) || c[0] || null;
     };
@@ -621,7 +623,7 @@ code{font-family:var(--font-mono);font-size:12px}
     // Xếp nhánh vào làn: mạch chính một làn; mạch phụ, mạch ngắn xếp tham lam theo khoảng năm (chừa chỗ cho nhãn) không chồng nhau.
     const pack = list => { const lanes = []; for (const a of list.sort((x, y) => x.y0 - y.y0)) { let L = lanes.find(l => l.end < a.y0 - 1); if (!L) { L = { end: -99, arcs: [] }; lanes.push(L); } L.arcs.push(a); L.end = Math.max(a.y1 + Math.ceil(Math.min(46, tailOf(a).length) * 6.3 / 24) + 1, a.y0 + Math.ceil(Math.min(40, a.tag.length + 12) * 6.3 / 24)); } return lanes; };
     laneGroups = [
-      { tier: 'main', lanes: mainArc ? [{ arcs: [mainArc] }] : [] },
+      { tier: 'main', lanes: pack(mains.slice()) },
       { tier: 'side', lanes: pack(arcs.filter(a => a.tier === 'side')) },
       { tier: 'short', lanes: pack(arcs.filter(a => a.tier === 'short')) }
     ];
@@ -640,7 +642,7 @@ code{font-family:var(--font-mono);font-size:12px}
     $('who').innerHTML = `<span class="nm">${esc(nm)}</span><span class="sub">${esc(T.race)} · ${T.years} ${esc(yu)} · ${esc(T.cause)} · năm ${T.born}–${T.died} lịch Varen · kiếp ${T.kiep}</span><span class="sub">seed <code>${esc(T.seed)}</code>, thế giới <code>${esc(T.world)}</code></span>`;
     const good = arcs.filter(a => a.done && a.good).length, closed = arcs.filter(a => a.done && a.o !== 'gone' && a.o !== 'faded').length;
     const facts = [
-      ['Đường đời', T.saga && T.saga.nameVi ? `${T.saga.nameVi}${mainArc && mainArc.sum ? ': ' + mainArc.sum : ''}` : (T.kiep > 1 ? 'Bộ Xương chưa có mạch chính' : 'chưa định')],
+      ['Đường đời', mains.length > 1 ? mains.map(a => a.nameVi + (a.o === 'turned' ? ' (bỏ dở)' : '')).join(' → ') + (mainArc.sum ? ': ' + mainArc.sum : '') : T.saga && T.saga.nameVi ? `${T.saga.nameVi}${mainArc && mainArc.sum ? ': ' + mainArc.sum : ''}` : (T.kiep > 1 ? 'Bộ Xương chưa có mạch chính' : 'chưa định')],
       ['Danh vọng', `${T.fame.end} lúc chết · cao nhất ${T.fame.peak} (${T.fame.scope.toLowerCase()})`],
       ['Thanh danh', `${T.fame.rep} · ${T.fame.repVi}`],
       ['Mạch truyện', `${arcs.length} mạch · khép ${closed} · làm được ${good}`],
