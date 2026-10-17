@@ -7,6 +7,7 @@
       "Bash(bash tools/muc_luc.sh:*)",
       "Bash(bash tools/duyet.sh)",
       "Bash(bash tools/duyet.sh nhanh)",
+      "Bash(bash tools/tim.sh:*)",
       "Bash(perl tools/token.pl)",
       "Bash(perl tools/token.pl:*)"
     ]
