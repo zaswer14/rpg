@@ -73,6 +73,8 @@ Trang chạy thật bộ mô phỏng (`vankiep/caytruyen.html`, người dùng y
 
 - Nhanh: một lần sống lại có chụp trạng thái đầu mỗi năm (JSON của `S` + `rs`, như bản lưu của game); mỗi ngả rẽ chạy từ ảnh chụp gần mốc nhất. Mẫu `mau:17`: 150 ngả rẽ, 9 kết cục, ~9 giây; kết cục tính từ ảnh chụp khớp đời trùng sinh chạy từ lúc sinh (đã thử). Có nút Dừng / Thử tiếp; kết quả giữ trong trang theo mã mẫu.
 
+**Lịch sử tổng** (người dùng yêu cầu thêm 17/10/2026): cuối trang, cả đời theo thứ tự năm, không chia mạch, như nhật ký lúc chơi (tiêu đề năm kiểu `ui.js` appendLog, gồm dòng tác động, dòng "không chọn", thành tựu, chương đời; kiếp Bộ Xương nối sau kiếp người nếu đã xem). Ô tìm chữ (tô đậm chỗ khớp), bật / tắt nhãn mạch và dòng tác động.
+
 ## 6. Kết quả đo
 
 1000 đời, thế giới `can-bang`, 17/10/2026, 137 giây (cùng máy, 150 đời: bản trước 25,9 giây, bản này 24,2 giây):
