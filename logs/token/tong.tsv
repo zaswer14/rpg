@@ -1,7 +1,9 @@
 phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
+61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	2	1792249890	làm tiếp	132	264	394954	43816992	224248	6293111
+61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	1	1792249566	bash tools/sync.sh pull	11	22	36799	796252	3596	171225
 15f58cef-8791-5012-84aa-e2e65d9d3527		8	1792248696	bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh…	4	10	13015	1963046	1656	230625
 15f58cef-8791-5012-84aa-e2e65d9d3527		7	1792246807	sửa: 1 nhân vật có thể ko chỉ có 1 mạch truyện chính, có thể đổi mạch truyện chính tùy th…	58	116	433484	23826179	87631	3687857
-6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	11	1792234861	ok, thêm vào rồi commit push	1	2	41	219009	450	24235
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	11	1792234861	ok, thêm vào rồi commit push	2	4	807	438059	635	48599
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	10	1792234608	ok, làm cả 3	12	24	24411	2467960	16598	378632
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	9	1792234512	hiện tại bên vạn kiếp đã có file map chưa? là có những file nào, những hàm gì tác dụng gì…	4	8	14341	719203	3746	119340
 6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	8	1792234248	ok cách 2	7	14	11372	1185877	8538	184036
