@@ -6,7 +6,7 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày | Phiên | Việc | Ra | Quy đổi |
 |---|---:|---:|---:|---:|
-| 2026-10-17 | 5 | 18 | 787.566 | 31.188.029 |
+| 2026-10-17 | 5 | 21 | 808.375 | 31.724.520 |
 | 2026-10-16 | 4 | 6 | 405.949 | 15.122.787 |
 | 2026-10-14 | 7 | 16 | 274.401 | 6.047.613 |
 
@@ -14,7 +14,10 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày giờ | Phiên | Việc | Lượt | Ra | Quy đổi |
 |---|---|---|---:|---:|---:|
-| 2026-10-17 17:25 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | commit và push | 1 | 349 | 16.249 |
+| 2026-10-17 17:50 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok cách 2 | 6 | 7.775 | 160.560 |
+| 2026-10-17 17:48 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | khi 1 đoạn chat cạn context, mình thường phải mở lại đoạn chat mới trong chính phiên làm … | 1 | 2.927 | 30.962 |
+| 2026-10-17 17:44 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | bổ sung thêm nếu cần đọc lại file thì con subagent đọc file được huy động sẽ được tái sử … | 16 | 9.473 | 310.534 |
+| 2026-10-17 17:25 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | commit và push | 3 | 983 | 50.684 |
 | 2026-10-17 17:21 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | tạo thêm 1 skill để tracking cho việc sử dụng context thế nào cho mình | 5 | 6.213 | 114.859 |
 | 2026-10-17 17:18 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok, làm cả 2 rồi commit | 7 | 7.315 | 148.231 |
 | 2026-10-17 17:14 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | phần context chưa làm gì đã mất 100-200k, dẫn đến giới hạn 1triệu trong đoạn chat có vẻ h… | 8 | 10.432 | 170.207 |

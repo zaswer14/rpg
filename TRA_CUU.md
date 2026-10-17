@@ -11,7 +11,8 @@
 | Trước khi commit | `bash tools/duyet.sh` | trang duyệt nhanh có khớp dữ liệu không, nội dung mới nào chưa có trang (CLAUDE.md mục Trang duyệt nhanh) |
 | Cuối phiên | `bash tools/sync.sh push` | chỉ sau khi người dùng đồng ý commit / push |
 | Sau mỗi lượt trả lời | tự động (hook `Stop` chạy `perl tools/token.pl --hook`) | ghi token từng việc (mỗi lời nhắn là một việc) và tiến trình từng bước vào `logs/token/`: `TONG.md` mọi phiên, `<ngày>_<phiên>.md` chi tiết; xem nhanh phiên hiện tại: `perl tools/token.pl` |
-| Mỗi lời nhắn | tự động (hook `UserPromptSubmit` chạy `perl tools/token.pl --ctx`) | context vượt 400k (rồi mỗi 150k) thì nhắc Claude đề nghị mở chat mới, kèm khối tóm tắt để dán (CLAUDE.md mục Đọc tiết kiệm) |
+| Mỗi lời nhắn | tự động (hook `UserPromptSubmit` chạy `perl tools/token.pl --ctx`) | context vượt 400k (rồi mỗi 150k) thì nhắc Claude đề nghị chuyển chat và ghi bàn giao (CLAUDE.md mục Đọc tiết kiệm) |
+| Chuyển chat giữa chừng | skill `ban-giao` | ghi `ban_giao/<việc>.md` để chat mới khỏi đọc lại file; `sync.sh` đầu phiên in "Bàn giao đang mở"; xong việc thì xóa |
 
 Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ khi cần chi tiết. Không đọc diff của commit mới kéo về; chỉ mở file liên quan tới việc đang làm. `origin` là máy chủ công ty: chỉ push khi được bảo.
 

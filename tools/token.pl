@@ -58,8 +58,8 @@ if ($arg eq '--ctx') {
     return if $last >= $level;
     if (open my $fh, '>', $mark) { print $fh $level; close $fh }
     printf "[tools/token.pl] Context đoạn chat này đang ~%dk token (ngưỡng %dk): mỗi lượt từ giờ đều phải đọc lại chừng ấy. "
-         . "Trước khi trả lời, nói ngắn với người dùng và đề nghị mở chat mới; đưa một khối tóm tắt để dán sang chat mới: "
-         . "việc đang làm và đã tới đâu, file đã sửa, đã commit chưa, việc còn lại, quyết định đã chốt. "
+         . "Trước khi trả lời, nói ngắn với người dùng và đề nghị chuyển sang chat mới: đồng ý thì ghi file bàn giao theo skill ban-giao "
+         . "(ban_giao/<việc>.md, viết từ những gì đã có, không đọc lại file) rồi bảo họ mở chat mới và nói \"làm tiếp\". "
          . "Người dùng muốn làm tiếp ở đây thì cứ làm.\n", $ctx / 1000, $base / 1000;
   };
   exit 0;
@@ -215,7 +215,8 @@ sub parse {
   });
   (my $sdir = $file) =~ s/\.jsonl$//;
   for my $af (sort glob("$sdir/subagents/*.jsonl")) {
-    read_jsonl($af, sub { my $j = shift; $on_asst->($j, 1) if ($j->{type} // '') eq 'assistant' });
+    my $aid = basename($af, '.jsonl');      # mỗi subagent một file; gọi tiếp bằng SendMessage thì ghi tiếp vào file đó
+    read_jsonl($af, sub { my $j = shift; $on_asst->($j, $aid) if ($j->{type} // '') eq 'assistant' });
   }
   for my $k (@tasks) {
     @{ $k->{steps} } = sort { $a->{t} <=> $b->{t} } @{ $k->{steps} };
@@ -351,6 +352,22 @@ sub run {
   printf "  %-28s %4d lần  +%s\n", $_, $growN{$_}, fmt($grow{$_}) for @gtools[0 .. ($#gtools < 5 ? $#gtools : 5)];
   print "Bước làm phình nhiều nhất:\n";
   printf "  %s  +%-8s %s\n", hhmm($_->{t}), fmt($_->{grow}), short(join('; ', @{ $_->{did} }) || '(trả lời)', 100) for @gtop[0 .. ($#gtop < 5 ? $#gtop : 5)];
+  # Subagent: context riêng, chỉ kết luận về luồng chính. Lượt gọi cách nhau > 1 giờ là cache đã hết, phải ghi lại cả context.
+  my %ag;
+  for my $s (grep { $_->{agent} && $_->{tok} } map { @{ $_->{steps} } } @T) {
+    my $a = $ag{ $s->{agent} } ||= { n => 0, q => 0, max => 0, cold => 0, last => 0 };
+    my $c = $s->{tok}{in} + $s->{tok}{cr} + $s->{tok}{cw5} + $s->{tok}{cw1h};
+    $a->{cold}++ if $a->{last} && $s->{t} - $a->{last} > 3600;
+    $a->{n}++; $a->{q} += quydoi($s->{tok}); $a->{max} = $c if $c > $a->{max}; $a->{last} = $s->{t};
+  }
+  if (%ag) {
+    my ($n, $q, $cold) = (0, 0, 0);
+    for (values %ag) { $n += $_->{n}; $q += $_->{q}; $cold += $_->{cold} }
+    printf "\nSubagent: %d con, %d lượt, %s quy đổi (%.0f%% phiên)%s\n", scalar keys %ag, $n, fmt($q), 100 * $q / $tot,
+      $cold ? ", $cold lần gọi lại sau > 1 giờ (cache đã hết)" : '';
+    printf "  %-24s %3d lượt  context tới %s  %s quy đổi\n", substr($_, 0, 24), $ag{$_}{n}, kfmt($ag{$_}{max}), fmt($ag{$_}{q})
+      for sort { $ag{$b}{q} <=> $ag{$a}{q} } keys %ag;
+  }
   my $now = $main[-1]{ctx} + ($main[-1]{tok}{out} // 0);
   printf "\nContext hiện tại ~%s / 1.000.000 (%.0f%%)%s\n", fmt($now), $now / 10000,
     $now >= 400_000 ? ' → đã quá ngưỡng 400k, nên mở chat mới' : '';

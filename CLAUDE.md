@@ -30,10 +30,16 @@ Khi người dùng bảo commit (hoặc trước khi hỏi họ có commit khôn
 Mọi thứ đã đọc, đã viết, đã chạy đều nằm lại trong đoạn chat và bị đọc lại ở mỗi lượt sau. Đo 17/10/2026: phiên mở đầu ~64k, phình tới 500–850k, nguồn phình số 1 là Bash in file (`logs/token/`, `perl tools/token.pl`). Người dùng hỏi context / token dùng thế nào: skill `xem-context`.
 
 - File lớn (`bash tools/muc_luc.sh` liệt kê) thì không đọc cả: `bash tools/muc_luc.sh FILE [mẫu]` ra số dòng từng mục / hàm, rồi Read đúng đoạn bằng `offset` / `limit`.
-- **Tìm hiểu qua nhiều file mà chỉ cần kết luận** (lần đầu đọc một hệ thống, tìm chỗ dùng một hàm, đối chiếu tài liệu với mã, nghiên cứu): giao subagent `Explore` (hoặc `general-purpose` khi phải chạy lệnh), dặn trả lời gọn kèm số dòng; đừng tự `cat` / `sed` cả loạt vào đoạn chat chính. Tự đọc khi sắp sửa đúng đoạn đó.
+- **Tìm hiểu qua nhiều file mà chỉ cần kết luận** (lần đầu đọc một hệ thống, tìm chỗ dùng một hàm, đối chiếu tài liệu với mã, nghiên cứu): giao subagent `Explore` (hoặc `general-purpose` khi phải chạy lệnh), dặn trả lời gọn kèm số dòng; đừng tự `cat` / `sed` cả loạt vào đoạn chat chính. Tự đọc khi sắp sửa đúng đoạn đó (Edit cần Read ở luồng chính; đọc đúng khoảng dòng subagent chỉ).
+- **Khi nào đáng gọi subagent** (đo 17/10/2026): một subagent mới tốn cố định ~37k context của riêng nó (~70k quy đổi lượt đầu), nên đọc 1 file nhỏ hay vài đoạn có số dòng thì tự đọc (`muc_luc.sh` + `offset` / `limit`) rẻ hơn. Đáng gọi khi phải đọc nhiều (≳ 30 KB mã / tài liệu) mà phiên còn dài: phần đó không nằm lại trong luồng chính.
+- **Hỏi lại cùng file / cùng chủ đề thì gọi lại đúng subagent cũ** bằng `SendMessage` (tên hoặc id trong kết quả `Agent`), dặn "trả lời từ những gì đã đọc, chỉ đọc thêm khi thiếu": nó còn nguyên context, một lượt hỏi lại chỉ ~5k quy đổi, rẻ hơn ~15 lần so với gọi con mới và không đọc lại file. Gọi con mới khi: chủ đề khác hẳn, quá 1 giờ chưa dùng (cache hết, gọi lại tốn như con mới), hoặc context của nó đã lớn (> ~150k; `perl tools/token.pl` có dòng Subagent).
 - Kết quả lệnh và chạy thử: cắt bớt (`head`, `grep -c`), cho `javascript_tool` trả tóm tắt / số đếm thay vì cả mảng, không in lại file vừa viết.
-- Hook `UserPromptSubmit` (`perl tools/token.pl --ctx`) báo khi context vượt 400k, rồi mỗi 150k: nói ngắn với người dùng, đề nghị mở chat mới và đưa khối tóm tắt để dán sang (việc đang làm, tới đâu, file đã sửa, commit chưa, việc còn lại, quyết định đã chốt). Việc nhỏ sau một việc lớn (commit, push) cũng nên ở chat mới.
+- Hook `UserPromptSubmit` (`perl tools/token.pl --ctx`) báo khi context vượt 400k, rồi mỗi 150k: nói ngắn với người dùng, đề nghị chuyển chat; đồng ý thì ghi bàn giao (mục dưới). Việc nhỏ sau một việc lớn (commit, push) cũng nên ở chat mới.
+
+## Bàn giao giữa các chat
+
+Chuyển chat giữa chừng một việc (context lớn, người dùng nói "bàn giao" / "chuyển chat"): skill `ban-giao` ghi `ban_giao/<việc>.md` (vị trí trong mã, hiểu biết về mã, quyết định đã chốt, bước tiếp), viết từ những gì đã có, không đọc lại file. Chat mới: `sync.sh` in "Bàn giao đang mở"; người dùng nói "làm tiếp" thì đọc file đó trước mọi thứ khác và chỉ đọc đúng đoạn sắp sửa. Xong việc thì xóa file bàn giao trong commit hoàn tất.
 
 ## Khi người dùng nói "làm tiếp Vạn Kiếp"
 
-Đọc `vankiep/TIEN_DO.md` (mục 3 việc tiếp theo, mục 2 bản đồ mã nguồn, mục 5 cách làm việc; mục khác khi cần). Thiết kế ở `vankiep/docs/03_Thiet_ke_ban_do_Varen_V2.md`, đọc theo mục. Xong một bước thì cập nhật `TIEN_DO.md` (đoạn mở đầu là dòng trạng thái mà `sync.sh` in ra, giữ nó ngắn và đúng).
+Có bàn giao đang mở cho việc đó thì làm theo nó (mục trên), chỉ đọc `TIEN_DO.md` khi cần. Không có thì đọc `vankiep/TIEN_DO.md` (mục 3 việc tiếp theo, mục 2 bản đồ mã nguồn, mục 5 cách làm việc; mục khác khi cần). Thiết kế ở `vankiep/docs/03_Thiet_ke_ban_do_Varen_V2.md`, đọc theo mục. Xong một bước thì cập nhật `TIEN_DO.md` (đoạn mở đầu là dòng trạng thái mà `sync.sh` in ra, giữ nó ngắn và đúng).

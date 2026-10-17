@@ -45,6 +45,12 @@ done
 src=HEAD; [ "$behind" -gt 0 ] && src=$RB
 git show "$src:vankiep/TIEN_DO.md" 2>/dev/null | tr -d '\r' | awk 'NR>1 && /^## /{exit} NR>1 && NF' | sed 's/^/» /'
 
+# Bàn giao đang mở (skill ban-giao): chat trước ghi lại để chat này khỏi đọc lại file.
+{ ls ban_giao/*.md 2>/dev/null; git ls-tree --name-only "$src" ban_giao/ 2>/dev/null; } | grep '\.md$' | sort -u | while read -r f; do
+  t=$( { cat "$f" 2>/dev/null || git show "$src:$f" 2>/dev/null; } | tr -d '\r' | sed -n 's/^# *//p' | head -1)
+  echo "» Bàn giao đang mở: $f ($t) → đọc nó trước khi làm tiếp (skill ban-giao)"
+done
+
 # Trang duyệt nhanh: nội dung đổi từ lần đăng (chỉ theo git, không mở trình duyệt).
 bash tools/duyet.sh nhanh 2>/dev/null | sed 's/^/» /'
 

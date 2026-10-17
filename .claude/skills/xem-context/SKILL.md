@@ -16,7 +16,7 @@ Dữ liệu lấy từ transcript của phiên qua `tools/token.pl` (perl, chỉ
 
 ## Làm
 
-1. Chạy `perl tools/token.pl` (phiên mới nhất là phiên này; người dùng nêu phiên khác thì thêm đầu ID). Kết quả có: từng việc với lượt gọi, quy đổi, context đầu → cuối; công cụ làm phình nhiều nhất; các bước làm phình nhiều nhất; context hiện tại.
+1. Chạy `perl tools/token.pl` (phiên mới nhất là phiên này; người dùng nêu phiên khác thì thêm đầu ID). Kết quả có: từng việc với lượt gọi, quy đổi, context đầu → cuối; công cụ làm phình nhiều nhất; các bước làm phình nhiều nhất; context hiện tại; có subagent thì thêm dòng Subagent (mỗi con: lượt, context lớn nhất, quy đổi, lần gọi lại sau khi cache hết).
 2. Cần so với phiên trước: `sed -n '1,14p' logs/token/TONG.md` (bảng theo ngày). Muốn biết context cao nhất của các phiên khác thì `grep -o 'cao nhất [0-9.]*' logs/token/2*.md` (tên file là `<ngày>_<id8>`).
 3. Cần chi tiết một việc: file `logs/token/<ngày>_<id8>.md` rất dài, đừng đọc cả; `grep -n '^## ' FILE` để lấy số dòng rồi Read đúng đoạn.
 
@@ -31,6 +31,7 @@ Không chạy `--all`, không in cả file log: chính việc xem context cũng 
 5. **Nên làm**, chọn cái đúng với số liệu, đừng liệt kê đủ cả:
    - ≥ 400k, hoặc việc tiếp theo không cần những gì đã đọc: đề nghị mở chat mới, đưa khối tóm tắt để dán (việc đang làm, tới đâu, file đã sửa, commit chưa, việc còn lại, quyết định đã chốt).
    - Bash / Read chiếm phần lớn vì đọc nhiều file để tìm hiểu: lần sau giao subagent `Explore`, chỉ nhận kết luận (CLAUDE.md mục Đọc tiết kiệm).
+   - Có dòng **Subagent**: con nào gọi một lần rồi bỏ mà sau đó luồng chính lại tự đọc cùng file (lẽ ra hỏi lại con đó bằng `SendMessage`); con gọi cho việc đọc nhỏ (tốn ~70k quy đổi khởi động, đắt hơn tự đọc); con có "gọi lại sau > 1 giờ" (cache hết, nên gọi con mới gọn hơn).
    - `javascript_tool` / chạy thử in nhiều: cho trả tóm tắt, số đếm.
    - Write lớn: file viết ra cũng nằm lại; tách việc viết file lớn sang chat riêng nếu sau đó còn nhiều việc khác.
 
