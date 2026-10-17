@@ -32,7 +32,7 @@ Mã:
 - "Mạch chính" chỉ là mạch người quen mở đầu tiên.
 - Kết của mạch chỉ ghi vào nhật ký và đoạn tưởng nhớ lúc chết, không đổi gì về sau.
 
-## 2. Ba tầng mạch
+## 2. Ba tầng mạch (đã thay bằng mục 10: một khuôn cho mọi mạch, "phụ" là vai trò)
 
 | Tầng | Là gì | Cùng lúc tối đa | Mã |
 |---|---|---|---|
@@ -301,3 +301,56 @@ Dấu mới: Người giữ làng, Một mối tình trọn, Người biết bí
 | Mạch được chọn đầu tiên | Võ đạo 93, Tác phẩm 78, Thoát nghèo 72, Chân trời 65, Tên nhà 52, Đức tin 50, Đứng đầu 20, Bí mật 13, Giữ làng 7 |
 
 200 đời chọn ngẫu nhiên: 67 lần chọn "rẽ sang" ở hồi chọn lối, 117 quyết định Ngã rẽ / Đường đời mới, 78 mạch bỏ dở; đủ 13 mạch đều chạy, không lỗi. Mạch thứ hai hay rơi vào Thoát nghèo (điểm gieo từ thuế, được mùa cộng dồn cả đời) và Một mối tình; Tham vọng hiếm khi Tự sống chọn (cần lựa chọn tối), chủ yếu do người chơi chọn.
+
+## 10. Mạch nào cũng đầy đủ, "phụ" chỉ là vai trò, nhiều kết (người dùng yêu cầu 17/10/2026)
+
+Lời người dùng: "bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là khi nó giao với 1 phần cuộc đời của nhân vật và nhân vật ko theo mạch đó, còn lại mỗi mạch đều có hoàn chỉnh. Và 1 mạch truyện có thể có nhiều kết". Người dùng chốt thêm: **nâng hết** (cả 11 mạch ngắn cũ), **kết theo cả đường đi**, Cây Cốt Truyện **một làn chung theo năm**. Mục này thay mục 2 (ba tầng mạch) và mục 5 (mạch ngắn một hai hồi).
+
+### 10.1 Một khuôn cho mọi mạch
+
+`full(k, def)` (`js/saga.js` mục 2) dựng mọi mạch: 13 mạch chính (`saga()` gọi `full` với `tier: 'main'`) và 27 mạch ở `js/arcs.js` (16 mạch người quen, 11 mạch đời thường). Mạch nào cũng có:
+
+| Hồi | Nút | Ghi chú |
+|---|---|---|
+| Mở đầu | sự kiện `k_open` | sau sự kiện mở mạch (story.js mục 3, 4; patchDec của mạch đời thường) |
+| Chọn lối | quyết định `k_knot` | ghi `a.d.path`; lối `away` = đứng ngoài (mục 10.2) |
+| Thử thách | sự kiện `k_trial` | thành / bại → `a.d.ok`; xác suất cộng tiến độ |
+| Cao trào | quyết định `k_climax` | kết của cao trào → `a.d.end`; mạch chạy nền thì là sự kiện `k_drift` (không hỏi) |
+| Kết | sự kiện `k_after` | `def.end(S, X, a, p, o)` chọn kết cuối theo cả đường đi |
+| Nhịp | sự kiện `k_beat` | chỉ khi nhân vật theo mạch; góp tiến độ |
+
+`def.acts[hồi] = { st, wait, w, c, when, prio, dead }` chỉnh tuổi, khoảng chờ, trọng số từng hồi. Mạch không phải mạch chính đi chừng 10–25 lượt (khoảng chờ `W` trong `arcs.js`), nút trọng số gốc 4.
+
+### 10.2 Phụ là vai trò
+
+Không còn tầng mạch. Ở hồi chọn lối, phần lớn mạch có lối **đứng ngoài** (`away`: thôi đua, từ chối, để chuyện cũ ngủ yên, quên chuyện đó đi…). Chọn nó thì mạch không biến mất mà **chạy nền** (`a.d.bg` = lượt đứng ngoài): nút thưa hơn (× 0,5), không có nhịp, cao trào là chuyện của người trong mạch hay của thế giới (`def.climax.bg`, không hỏi), và có kết riêng (đối thủ thành danh hay sa cơ, người thương lấy người khác hay ở vậy, thầy truyền nghề cho người khác…). Mạch chính (đường đời) giữ cách đổi mạch của mục 9.
+
+Chỗ mạch: một mạch chính + tối đa `G.STORY.arcMax` = 5 mạch khác đang mở (bỏ `shortMax`). Lời bà đồng vẫn không chiếm chỗ.
+
+### 10.3 Nhiều kết, theo cả đường đi
+
+Mỗi mạch người quen, mạch đời thường có 5–9 kết; kết cuối do `def.end` ghép lối đã chọn, thử thách thành / bại, lựa chọn ở cao trào (ví dụ Đối thủ: thắng mà thử thách thành → vượt hẳn; thắng sau khi thua cả thời trẻ → lội ngược; thắng bằng mánh → thắng mà mang tiếng; làm lành sau khi đã kết giao từ trước → anh em kết nghĩa; đứng ngoài → nhìn đối thủ thành danh hoặc đỡ người ấy dậy lúc sa cơ). Kết nào cũng có câu tóm tắt (đoạn tưởng nhớ lúc chết) và dấu hệ quả. Bốn dấu mới: Điều còn tiếc, Anh em kết nghĩa, Có người che chở, Biết nghề thuốc.
+
+13 mạch chính thêm 14 kết chỉ mở ra khi đi đúng lối (bảng `PATH_END`, `saga.js`): Món nợ máu cùng toán thợ săn → lập phường săn giữ làng; Thoát nghèo bằng nghề → mở xưởng; Võ đạo tự luyện → tự mình lên đỉnh; Tác phẩm theo lối mới → lối làm mang tên mình; Người đứng đầu dựa vào sức → được bầu vì sợ, lo việc nhỏ cho làng → không ngồi ghế mà làng vẫn tìm tới; Đức tin tự tìm lời giải → bỏ đạo cũ mà thấy đủ; Chân trời theo đoàn buôn → người nối hai miền; Tên nhà nhờ liên hôn; Giữ làng bằng đội dân canh → thành lệ làng; Một mối tình bỏ trốn cùng nhau; Bí mật cổ xưa qua sách → học giả; Chuộc lỗi tìm người bị hại → được chính người ấy tha; Tham vọng bám kẻ quyền thế → làm con rối.
+
+Người trong mạch chết: trước cao trào thì mạch dở dang (`gone`, dòng nhật ký riêng của mạch); đã qua cao trào thì mạch khép bằng kết đã định (`G.ARCS[k].endOf`). Người đang ở giữa một mạch chết ngẫu nhiên ít hơn (× 0,6, `G.castYear`).
+
+### 10.4 Giao diện
+
+- Cây Cốt Truyện: mọi mạch chung một làn xếp theo năm; màu riêng cho đường đời; **nét đậm** là đoạn nhân vật theo mạch, **nét mảnh** từ lúc đứng ngoài (mạch chạy nền); khung chi tiết ghi "từ … tuổi đứng ngoài, mạch chạy nền (vai phụ)". `G.storyTree` thêm `bg`, `path`.
+- Duyệt Mạch Truyện: hai tab Đường đời (13) và Mạch truyện (27); thẻ mạch ghi có lối đứng ngoài không, luật chọn kết theo đường đi, nút `k_drift`.
+
+### 10.5 Đo (17/10/2026, 400 đời Tự sống, thế giới `can-bang`, khung trình duyệt ẩn)
+
+| | Mục 7.1 | Bản này |
+|---|---|---|
+| Sự kiện thuộc mạch | 79,3% | 88,3% |
+| … kiếp Bộ Xương | 44,9% | 50,3% |
+| Quyết định thuộc mạch | 41,4% | 54,6% |
+| Quyết định mỗi đời | | 53,6 |
+| Mạch khép mỗi đời (trừ dở dang, phai) | 11,7 | 8,9 (mạch dài 5 hồi) |
+| Mạch không phải mạch chính: chạy nền / dở dang / phai | | 19 / 14 / 3% |
+| Trỗi dậy | 22,4% | 19,0% |
+| Tử trận trước quái | 10,5% | 12,5% (hơi cao: thêm trận săn ở Báo thù, hộ tống ở Ơn cứu mạng) |
+
+200 đời (nửa Tự sống, nửa chọn ngẫu nhiên): không lỗi, không đời nào kẹt; đủ 27 mạch chạy; 9 trong 14 kết mới của mạch chính xuất hiện (Thoát nghèo bằng nghề, Võ đạo tự luyện, Tác phẩm lối mới, Người đứng đầu không ngồi ghế, Bí mật cổ xưa, Chuộc lỗi được tha, Tên nhà liên hôn, Bỏ trốn cùng nhau, Đội dân canh).

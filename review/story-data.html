@@ -13,7 +13,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script><script src="../vankiep/js/saga.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script><script src="../vankiep/js/saga.js"></script><script src="../vankiep/js/arcs.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -61,21 +61,26 @@ const opensOf = k => {
   return [...new Set(out)];
 };
 const nodeOf = (id, kind, s, extra) => ({ id, kind, at: [].concat(s.at || 'open'), wait: s.wait || null, ...extra });
+// Khuôn đầy đủ (js/saga.js full()): mọi mạch 5 hồi; khoảng chờ mặc định là của mạch chính, mạch khác ghi trong def.acts.
+const WAIT0 = { open: [0, 30], knot: [2, 40], trial: [3, 40], climax: [3, 60], after: [4, 80] };
+const waitOf = (d, at) => (d.acts && d.acts[at] && d.acts[at].wait) || WAIT0[at];
+const rule = f => (f ? f.toString().replace(/\s+/g, ' ').slice(0, 500) : null);
 const arcs = [];
 for (const [k, A] of Object.entries(G.ARCS)) {
-  const tier = A.tier || 'side', main = G.SAGA[k], sh = G.SAGA_SHORT[k];
-  const outs = [...new Set([...(A.good || []), ...Object.keys(A.marks || {}), ...(main ? Object.keys(main.sum) : sumKeys(k))])];
+  const tier = A.tier || 'arc', main = G.SAGA[k], F = G.ARC_FULL[k], sh = F && F.from ? F : null;
+  const outs = [...new Set([...(A.good || []), ...Object.keys(A.marks || {}), ...(F ? Object.keys(F.after) : sumKeys(k))])];
   const outcomes = outs.map(o => ({ o, good: (A.good || []).includes(o), sum: sumText(k, o), mark: (A.marks || {})[o] || null }));
   let nodes;
-  if (main) {
-    const d = main;
+  if (F) {
+    const d = F;
     nodes = [
-      nodeOf(k + '_open', 'ev', { at: 'open', wait: [0, 30] }, parseRun(d.open)),
-      nodeOf(k + '_knot', 'dec', { at: 'knot', wait: [2, 40] }, { title: d.knot.title, choices: labels(d.knot.choices), ...parseRun(both(d.knot.body, d.knot.choices, d.knot.apply)) }),
-      nodeOf(k + '_trial', 'ev', { at: 'trial', wait: [3, 40] }, parseRun(d.trial.run)),
-      nodeOf(k + '_climax', 'dec', { at: 'climax', wait: [3, 60] }, { title: d.climax.title, choices: labels(d.climax.choices), ...parseRun(both(d.climax.body, d.climax.choices, d.climax.apply)) }),
-      nodeOf(k + '_after', 'ev', { at: 'after', wait: [4, 80] }, parseRun(both(...Object.values(d.after)))),
-      nodeOf(k + '_beat', 'ev', { at: ['open', 'knot', 'trial', 'climax'], wait: [1, 99] }, { beat: true, texts: Object.values(d.beat).flat(), fx: [] })
+      nodeOf(k + '_open', 'ev', { at: 'open', wait: waitOf(d, 'open') }, parseRun(d.open)),
+      nodeOf(k + '_knot', 'dec', { at: 'knot', wait: waitOf(d, 'knot') }, { title: d.knot.title, choices: labels(d.knot.choices), ...parseRun(both(d.knot.body, d.knot.choices, d.knot.apply)) }),
+      nodeOf(k + '_trial', 'ev', { at: 'trial', wait: waitOf(d, 'trial') }, parseRun(d.trial.run)),
+      nodeOf(k + '_climax', 'dec', { at: 'climax', wait: waitOf(d, 'climax') }, { title: d.climax.title, choices: labels(d.climax.choices), ...parseRun(both(d.climax.body, d.climax.choices, d.climax.apply)) }),
+      ...(d.climax.bg ? [nodeOf(k + '_drift', 'ev', { at: 'climax', wait: waitOf(d, 'climax') }, { bg: true, ...parseRun(d.climax.bg) })] : []),
+      nodeOf(k + '_after', 'ev', { at: 'after', wait: waitOf(d, 'after') }, parseRun(both(...Object.values(d.after)))),
+      ...(d.beat ? [nodeOf(k + '_beat', 'ev', { at: ['open', 'knot', 'trial', 'climax'], wait: main ? [1, 99] : [1, 12] }, { beat: true, texts: Object.values(d.beat).flat(), fx: [] })] : [])
     ];
   } else {
     nodes = [];
@@ -85,7 +90,7 @@ for (const [k, A] of Object.entries(G.ARCS)) {
   arcs.push({ id: k, tier, nameVi: A.nameVi, passive: !!A.passive, pitch: main ? main.pitch : null, quest: A.quest ? (() => { try { return A.quest(P, REC); } catch (e) { return null; } })() : null,
     axes: main ? main.axes : null, themes: main ? main.themes : null, aim: main ? main.aim : null, follow: main ? main.follow : null,
     opens: main ? Object.entries(G.SAGA_SEED).filter(([, v]) => (v[k] || 0) > 0).sort((a, b) => b[1][k] - a[1][k]).map(([id, v]) => [id, v[k]]) : sh ? [`quyết định ${sh.from} (${Math.round(sh.p * 100)}%)`] : opensOf(k),
-    outcomes, nodes });
+    away: !!(F && /ch\('away'/.test(F.knot.choices.toString())), endRule: F ? rule(F.end) : null, outcomes, nodes });
 }
 const markSrc = {};
 for (const a of arcs) for (const o of a.outcomes) if (o.mark) (markSrc[o.mark] = markSrc[o.mark] || []).push(`${a.nameVi}: ${o.sum || o.o}`);
@@ -95,7 +100,7 @@ const evIds = new Set([...Object.keys(G.SAGA_SEED), ...G.SAGA_UNIVERSAL, ...Obje
 const evText = {};
 for (const id of evIds) { const e = evById(id); if (!e) continue; const t = parseRun(e.run).texts[0]; evText[id] = t ? (t.length > 90 ? t.slice(0, 88) + '…' : t) : ''; }
 const data = {
-  cfg: G.SAGA_CFG, story: { arcMax: G.STORY.arcMax, shortMax: G.STORY.shortMax, pull: G.STORY.pull, mainK: G.STORY.mainK, late: G.STORY.late },
+  cfg: G.SAGA_CFG, story: { arcMax: G.STORY.arcMax, pull: G.STORY.pull, mainK: G.STORY.mainK, late: G.STORY.late },
   stepVi: G.SAGA_STEP_VI, arcs, marks, seeds: G.SAGA_SEED, universal: [...G.SAGA_UNIVERSAL], evText,
   road: { ...parseRun(both(G.DECISIONS.sg_road.build, G.DECISIONS.sg_road.apply)), when: G.SAGA_TITLE.sg_road[1] },
   turn: { cfg: G.SAGA_TURN, when: G.SAGA_TITLE.sg_turn[1], chain: Object.entries(G.SAGA_CHAIN).flatMap(([k, O]) => Object.entries(O).map(([o, to]) => [G.SAGA[k].nameVi, o, Object.entries(to).map(([k2, v]) => [G.SAGA[k2].nameVi, v])])) },

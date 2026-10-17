@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script><script src="../vankiep/js/saga.js"></script><script src="../vankiep/js/fame.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script><script src="../vankiep/js/saga.js"></script><script src="../vankiep/js/arcs.js"></script><script src="../vankiep/js/fame.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -140,7 +140,22 @@ const TNODE = {
   fa_doubt: ['Sau khi theo đạo', 'Lung lay', 'Con của faith_join, 2–8 lượt sau; người sống. Trọng số 1 + 2 × (1 − mộ đạo); hợp Trí, Ám.'],
   fa_mission: ['Sau khi theo đạo', 'Mang thư cho giáo đoàn', 'Con của faith_join, 2–8 lượt sau; người sống, danh phận ≥ 1. Hợp Du, Đạo.']
 };
-// Mạch truyện (vankiep/js/story.js, docs/13): nút của mạch, sự kiện mở mạch, người quen; [nhóm, tên, khi nào].
+// Nút của mạch người quen, mạch đời thường (vankiep/js/arcs.js, khuôn full() của saga.js, docs/16 mục 10): tự sinh từ G.ARC_FULL.
+// Mạch chính (đường đời) có trang Duyệt Mạch Truyện riêng nên không lặp lại ở đây.
+const FULLNODE = () => {
+  const STEP = { open: 'Mở đầu', knot: 'Chọn lối (quyết định)', trial: 'Thử thách', climax: 'Cao trào (quyết định)', drift: 'Cao trào khi chạy nền', after: 'Kết', beat: 'Nhịp' }, out = {};
+  for (const [k, d] of Object.entries(G.ARC_FULL)) {
+    if (d.tier === 'main') continue;
+    const w = at => { const x = d.acts && d.acts[at === 'drift' ? 'climax' : at]; return x && x.wait ? `chờ ${x.wait[0]}–${x.wait[1]} lượt` : ''; };
+    for (const at of ['open', 'knot', 'trial', 'climax', 'drift', 'after', 'beat']) {
+      const id = k + '_' + at; if (!G.DECISIONS[id] && !G.EVENTS.some(e => e.id === id)) continue;
+      const title = at === 'knot' ? d.knot.title : at === 'climax' ? d.climax.title : STEP[at];
+      out[id] = [d.nameVi, title, [STEP[at], w(at), at === 'drift' ? 'chỉ khi nhân vật đã đứng ngoài' : at === 'beat' ? 'chỉ khi nhân vật theo mạch' : at === 'after' ? `kết: ${Object.keys(d.after).join(', ')}` : ''].filter(Boolean).join('; ') + '.'];
+    }
+  }
+  return out;
+};
+// Mạch truyện (vankiep/js/story.js, docs/13): sự kiện mở mạch, người quen; [nhóm, tên, khi nào].
 const SNODE = {
   st_friend: ['Mở mạch', 'Bạn thân thuở nhỏ', 'Thơ ấu, người sống, chưa có bạn trong dàn. Mở mạch Bạn thân.'],
   st_rival: ['Mở mạch', 'Kẻ luôn hơn bạn một bậc', 'Thiếu niên, chưa có đối thủ trong dàn, còn chỗ cho mạch mới. Mở mạch Đối thủ.'],
@@ -148,43 +163,6 @@ const SNODE = {
   st_witness: ['Mở mạch', 'Thấy điều không nên thấy', 'Trưởng thành, danh phận ≥ 1, lặp cách 15 lượt. Ba kiểu: người thu thuế ăn bớt, tu sĩ dính Hắc Giáo, đội trưởng lính tuần mở cổng đêm. Mở mạch Bí mật.'],
   st_kin: ['Mở mạch', 'Thư nhà', 'Trưởng thành, còn anh chị chưa gặp nạn (mỗi người một lần), lặp cách 8 lượt. Ba kiểu: nợ thuế, ốm nặng, con bị bắt lính. Mở mạch Ruột thịt.'],
   st_parent_lost: ['Mở mạch', 'Cha không về', 'Thơ ấu, thiếu niên, thân xác, cha còn sống; trọng số theo độ nguy hiểm của vùng. Cha chết; mở mạch Báo thù.'],
-  rv_school: ['Đối thủ', 'Cùng dự một kỳ tuyển', 'Mở, 1–6 lượt sau. So Hiểu biết + sức với chí tiến thủ, Tier của đối thủ: hơn hay thua.'],
-  rv_love: ['Đối thủ', 'Cùng để ý một người', 'Mở, 1–6 lượt sau; thân xác, chưa có bạn đời. Được chọn theo hòa đồng.'],
-  rv_rise: ['Đối thủ', 'Đối thủ lên Tier trước', 'Mở, 2–8 lượt sau; đối thủ có Tier cao hơn bạn.'],
-  rv_duel: ['Đối thủ', 'Trận phân định', 'Quyết định, sau một nút ở bước Mở, 2–10 lượt; trưởng thành. Đấu (thắng theo sức so Tier + chí tiến thủ đối thủ), mời rượu (theo hòa đồng, độ thân), bỏ đi.'],
-  rv_end: ['Đối thủ', 'Sau trận phân định', '2–12 lượt sau trận. Câu chữ theo kết: thắng, làm lành, thua, bỏ đi.'],
-  gr_ask: ['Ơn cứu mạng', 'Món nợ cũ', 'Quyết định, 3–14 lượt sau khi được cứu; trưởng thành. Người cứu cần tiền, cần người bảo lãnh con, hoặc nhờ đi cùng qua khu có quái.'],
-  gr_end: ['Ơn cứu mạng', 'Sòng phẳng hay không', '2–12 lượt sau. Đã giúp: người cứu mất để lại kỷ vật, hoặc con cháu gọi bạn là ân nhân; từ chối: nhà người đó bỏ làng.'],
-  fv_return: ['Người mang ơn', 'Trả ơn', '3–12 lượt sau khi cứu. Trả đúng cái bạn đang cần: xóa án / truy nã, cho qua đèo (kẻ giắt dao), làm mối (người sang, bạn chưa có bạn đời), giới thiệu mối làm ăn (nghèo), tặng kiếm.'],
-  fd_news: ['Mối thù', 'Tin kẻ thù', '1–8 lượt sau khi bị hại. Kẻ thù làm ăn khấm khá hay sa sút theo chí tiến thủ.'],
-  fd_face: ['Mối thù', 'Chạm mặt', 'Quyết định, 1–10 lượt sau tin. Đòi bằng tay (sức so Tier kẻ thù), báo quan (danh phận ≥ 1), bỏ qua.'],
-  fd_end: ['Mối thù', 'Sau lần chạm mặt', '1–10 lượt sau. Thắng, đưa ra pháp luật, bị quan xử ngược, tha (55% kẻ thù gửi trả một phần tiền).'],
-  vg_oath: ['Báo thù', 'Lời thề', 'Mở, 1–8 lượt sau; thiếu niên, trưởng thành. Trọng số theo gan dạ, phần Võ. Quỹ đạo Võ +0,4.'],
-  vg_letgo: ['Báo thù', 'Buông', 'Mở hoặc đã thề, 4–14 lượt sau. Trọng số theo hòa đồng, mộ đạo, phần Gia. Khép mạch.'],
-  vg_hunt: ['Báo thù', 'Món nợ máu', 'Quyết định sau lời thề, 1–14 lượt; trưởng thành, loài quái ≤ Tier + 1 và sức ≥ đe dọa của con quái tinh anh − 0,3. Săn (một trận thật, thua có thể chết; thua thì thử lại một lần) hoặc để yên.'],
-  vg_end: ['Báo thù', 'Ra mộ', '0–4 lượt sau trận. Thắng: mang nanh ra mộ; thua hai lần: treo dao.'],
-  lv_again: ['Tình xưa', 'Gặp lại người xưa', 'Mở, 3–15 lượt sau; thân xác. Cả hai còn một mình thì sang lựa chọn; không thì một dòng tùy ai đã có gia đình, khép mạch.'],
-  lv_choice: ['Tình xưa', 'Chuyện cũ', 'Quyết định ngay sau khi gặp lại (0–3 lượt), cả hai chưa có bạn đời. Nối lại (thành vợ chồng) hoặc để ngủ yên.'],
-  ms_trial: ['Thầy trò', 'Bài thử của thầy', 'Mở, 1–3 lượt sau khi bái sư. Qua theo chăm học, gan dạ: 80 điểm rèn.'],
-  ms_crisis: ['Thầy trò', 'Thầy gặp nạn', 'Quyết định, 1–5 lượt sau bài thử. Thầy võ: kẻ thù cũ thách đấu (thay thầy ra đấu / để thầy tự đấu); thầy nghề hoặc 40% thầy võ: lâm bệnh (ở lại chăm / đi tiếp).'],
-  ms_end: ['Thầy trò', 'Thầy mất', '1–12 lượt sau. Đứng ra hay ở lại: bút ký, kỹ năng chính của thầy +6, 100 điểm rèn; bỏ đi: nghe tin từ xa.'],
-  gb_collect: ['Nợ cờ bạc', 'Chủ nợ', 'Quyết định, 1–3 lượt sau khi vay (thua xúc xắc, tiền dưới trung vị: 50%). Trả gấp rưỡi (nếu đủ), làm một việc mờ ám (20% bị ghi sổ), trốn (mở quyết định di cư).'],
-  gb_end: ['Nợ cờ bạc', 'Sau món nợ', '1–8 lượt sau. Trả: thề bỏ cờ bạc; làm việc: dính vào chủ nợ; trốn: đi xa thì yên, còn ở lại thì bị đánh.'],
-  sc_choice: ['Bí mật', 'Điều đã thấy', 'Quyết định, 0–2 lượt sau. Tố giác (30% + 15% × danh phận + danh vọng / 200), đòi tiền (1,2 × trung vị, quỹ đạo Ám), im lặng.'],
-  sc_end: ['Bí mật', 'Hậu quả', '1–10 lượt sau. Tố giác thành: người đó mất chức; không ai tin: mất tiền trà nước; im lặng: được che chở; tống tiền: bị thích khách tìm tới (sức so Tier người đó).'],
-  id_meet: ['Mộng ước', 'Gặp lại người trong mộng ước', '4–20 lượt sau; trưởng thành. Bạn có Tier ≥ người đó: ngang hàng; người đó sa sút (chí tiến thủ thấp, già): ngồi góc quán; còn lại: chỉ cho một thế.'],
-  kn_help: ['Ruột thịt', 'Thư nhà', 'Quyết định ngay sau thư (0–2 lượt). Gửi tiền về tận nơi (0,8 × trung vị) hay chỉ gửi lời thăm.'],
-  kn_end: ['Ruột thịt', 'Tình anh em', '2–10 lượt sau. Đã giúp: được trả lại; không giúp: hai nhà thôi qua lại.'],
-  fr_part: ['Bạn thân', 'Chia tay', 'Mở, 3–12 lượt sau khi kết bạn. Người bạn đi vùng khác.'],
-  fr_reunion: ['Bạn thân', 'Gặp lại', '4–20 lượt sau khi chia tay. Kể nghề, Tier, gia đình của người bạn lúc đó.'],
-  ls_return: ['Người mất tích', 'Người tưởng đã chết', 'Bạn đồng hành không về (ad_companion_lost), 3–14 lượt sau, trọng số thấp. Không về thì mạch phai, người đó chết hẳn.'],
-  fl_grown: ['Đứa bé tặng hoa', 'Đứa bé lớn lên', 'Bộ Xương; đứa bé tặng hoa (sk_child) đã trưởng thành, 3–10 lượt sau.'],
-  fl_end: ['Đứa bé tặng hoa', 'Người che chở', '2–10 lượt sau. Bạn chưa được nhận làm dân: người đó đứng chắn đám đuốc, gỡ Bị truy lùng; đã được nhận: dắt con lên đồi.'],
-  hn_return: ['Kẻ săn', 'Thánh Kỵ Sĩ quay lại', 'Bộ Xương, 2–6 lượt sau khi tha Thánh Kỵ Sĩ trẻ (sk_paladin thắng). Người đó lên Tier theo bạn.'],
-  hn_end: ['Kẻ săn', 'Thánh Kỵ Sĩ', 'Quyết định, 2–8 lượt sau. Đấu tới cùng (thua 20% bị thanh tẩy), nói chuyện (Hiểu biết ≥ 25), bỏ đi.'],
-  hn_after: ['Kẻ săn', 'Sau trận', '1–8 lượt sau. Hạ kiếm, bị treo giải, trốn, bị đồn đã thanh tẩy.'],
-  pr_year: ['Lời bà đồng', 'Năm bà đồng nói', 'Mạch không chiếm chỗ. Đúng năm tuổi bà đồng mù đã nói.'],
-  pr_after: ['Lời bà đồng', 'Sống qua năm ấy', '1–3 lượt sau.'],
   cm_news: ['Người quen', 'Tin người quen', 'Người trong dàn (độ thân ≥ 10 hoặc trong mạch) có tin chưa nghe: lên Tier, lập gia đình, chuyển đi, đã mất.'],
   cm_visit: ['Người quen', 'Bạn ghé chơi', 'Người quen độ thân ≥ 25 cùng vùng, 2 lượt chưa gặp.'],
   cm_glare: ['Người quen', 'Chạm mặt kẻ thù', 'Người quen độ thân ≤ −30 cùng vùng. Kẻ có Tier: 50% tung tin xấu, mất khách.'],
@@ -285,7 +263,7 @@ const data = {
   story: { cfg: G.STORY, roles: G.ROLE_VI, phases: G.PHASE_VI,
     arcs: Object.entries(G.ARCS).map(([id, a]) => ({ id, nameVi: a.nameVi, good: a.good, passive: !!a.passive, ...parseRun(both(...[a.quest, a.sum, a.gone].filter(Boolean))) })),
     chapters: G.CHAPTERS.map(c => ({ id: c.id, ph: c.ph.map(p => G.PHASE_VI[p]), q: c.id === 'arc' ? 'Câu hỏi của mạch chính (ví dụ "Vượt qua Gorn", "Báo thù cho cha")' : c.id === 'tier' ? 'Bước lên Tier kế tiếp' : c.q(), dir: c.dir ? Object.keys(c.dir).map(a => G.TRAJ[a].nameVi) : [], ok: c.ok.toString().replace(/\s+/g, ' ') })),
-    nodes: Object.entries(SNODE).map(([id, [arc, title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
+    nodes: Object.entries(Object.assign({}, SNODE, FULLNODE())).map(([id, [arc, title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, arc, title, when, ev: false, prio: D.prio, tree: D.tree, ...parseRun(both(D.build, D.apply)) } : { id, arc, title, when, ev: true, st: E.st, w: typeof (E.wSt ?? E.wBase) === 'number' ? (E.wSt ?? E.wBase) : null, tree: E.tree, ...parseRun(E.run) }; }),
     hooks: G.STORY_HOOKS.map(h => ({ id: h.id, dec: h.dec, title: HOOKT[h.id] || h.id, ...parseRun(h.fn) })),
     sys: parseRun(both(G.castYear, G.storyYear)) },

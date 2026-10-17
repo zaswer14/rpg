@@ -4,9 +4,9 @@
  *   1. Dàn nhân vật S.cast (tối đa G.STORY.castMax người): tên, loài, vai (G.ROLE_VI), độ thân −100…100, nghề, Tier, nơi ở.
  *      Mỗi lượt họ sống một đời giản lược (hệ con "cast": lớn lên, lên Tier, lập gia đình, chuyển đi, chết) và tích tin tức
  *      (p.news) để lần gặp sau có chuyện mà kể. Sự kiện cần "một người" thì lấy người trong dàn trước.
- *   2. Mạch S.arcs (G.ARCS): chuỗi hồi open → knot → climax → after → kết, có một người trong dàn làm nhân vật chính.
+ *   2. Mạch S.arcs (G.ARCS; định nghĩa ở js/saga.js, js/arcs.js theo khuôn full()): open → knot → trial → climax → after → kết, có một người trong dàn làm nhân vật chính.
  *      Nút của mạch ghi `story: { arc, at, wait, to }`; nút đang mở được kéo trọng số × G.STORY.pull, quá wait[1] thì × 2,
- *      quá wait[1] + late mà không nút nào xảy ra thì mạch phai. Cùng lúc tối đa G.STORY.arcMax mạch (một mạch chính);
+ *      quá wait[1] + late mà không nút nào xảy ra thì mạch phai. Cùng lúc một mạch chính (đường đời) + tối đa G.STORY.arcMax mạch khác;
  *      mạch `passive` (lời bà đồng) không chiếm chỗ. Kết của mạch ghi ở S.arcDone.
  *   3. Mở mạch: sự kiện ngẫu nhiên có sẵn được móc thêm (patch): bị bắt nạt → Đối thủ, được cứu khỏi sông → Ơn cứu mạng,
  *      thua cướp → Mối thù, anh chị chết vì quái → Báo thù… Sự kiện vẫn bốc ngẫu nhiên như cũ; một phần gieo mạch.
@@ -21,7 +21,7 @@ window.LifeSim = window.LifeSim || {};
   const J = window.JobLibrary, DEC = G.DECISIONS;
   const cnt = (S, k, v = 1) => { S.flags[k] = (S.flags[k] || 0) + v; };
 
-  G.STORY = { castMax: 12, arcMax: 3, shortMax: 3, pull: 4, mainK: 1.5, late: 2, chapBoost: .5, stats: false };
+  G.STORY = { castMax: 12, arcMax: 5, pull: 4, mainK: 1.5, late: 2, chapBoost: .5, stats: false };
   G.STORY_STATS = null;
   G.storyStatsReset = () => { G.STORY_STATS = { node: {}, open: {}, end: {}, fade: {}, gone: {}, chap: {}, ev: 0, link: 0, dec: 0, dlink: 0 }; return G.STORY_STATS; };
   const stat = (k, id, n = 1) => { const Z = G.STORY.stats && G.STORY_STATS; if (Z) Z[k][id] = (Z[k][id] || 0) + n; };
@@ -90,6 +90,8 @@ window.LifeSim = window.LifeSim || {};
     for (const a of A) {
       const D = G.ARCS[a.k], t = D.gone ? D.gone(S, p, a) : null;
       if (t) { X._tag = tagOf(a, p); X.log(t, 'bad'); X._tag = null; X._lk = true; }
+      // Đã qua cao trào: mạch khép bằng kết đã định (D.endOf, js/saga.js), không thành dở dang.
+      if (a.at === 'after' && D.endOf && a.d.end) { G.arcEnd(S, X, a, D.endOf(S, X, a, p)); continue; }
       stat('gone', a.k); G.arcEnd(S, X, a, 'gone');
     }
     if (!A.length && Math.abs(p.bond) >= 30 && !p.missing) {
@@ -113,71 +115,32 @@ window.LifeSim = window.LifeSim || {};
       if (!p.wed && y >= R.adult && !R.construct && p.role !== 'phoi' && X.rnd() < per(.07 * k)) { p.wed = true; p.news.push('đã lập gia đình'); }
       if (p.role !== 'phoi' && p.role !== 'ho' && X.rnd() < per(.015 * k)) { const r = X.pick(G.REGIONS); if (r.id !== p.loc) { p.loc = r.id; p.news.push(`đã chuyển tới ${r.nameVi}`); } }
       if (p.role === 'phoi' || p.met === S.age) continue;   // bạn đời sống chết theo hệ con family; người mới gặp năm nay chưa chết vội
-      const x = y / R.le, fight = FIGHTER[p.work] ? .005 : 0;
-      if (X.rnd() < per((.002 + fight + (x > .55 ? 2.4 * (x - .55) ** 2 : 0)) * k)) castDie(S, X, p, fight && X.chance(.5) ? X.pick(['một trận săn quái', 'một vụ phục kích trên đường', 'vết thương cũ']) : null);
+      // Người đang ở giữa một mạch (chưa tới hồi kết) chết ngẫu nhiên ít hơn: mạch nào cũng nên đi được tới kết (docs/16 mục 10).
+      const x = y / R.le, fight = FIGHTER[p.work] ? .005 : 0, mid = (S.arcs || []).some(a => a.who === p.id && a.at !== 'after') ? .6 : 1;
+      if (X.rnd() < per((.002 + fight + (x > .55 ? 2.4 * (x - .55) ** 2 : 0)) * k * mid)) castDie(S, X, p, fight && X.chance(.5) ? X.pick(['một trận săn quái', 'một vụ phục kích trên đường', 'vết thương cũ']) : null);
     }
   };
 
   // ═════════ 2. Mạch ═════════
-  // quest: câu hỏi của chương khi mạch là mạch chính; good: kết coi như "làm được"; sum: một vế trong đoạn tưởng nhớ lúc chết;
-  // gone: dòng nhật ký khi người trong mạch chết trước khi mạch khép; fade: khi mạch phai.
-  G.ARCS = {
-    rival: { nameVi: 'Đối thủ', quest: (p) => `Vượt qua ${first(p)}`, good: ['win', 'peace'],
-      sum: (o, p) => ({ win: `thắng ${first(p)} trong trận phân định`, lose: `chưa một lần thắng nổi ${first(p)}`, peace: `làm lành với ${first(p)}, đối thủ từ thuở bé`, no: `không nhận lời thách của ${first(p)}` }[o]),
-      gone: (S, p) => `Tin ${refE(S, p)} chết đến tai bạn. Không còn ai để bạn phải hơn nữa.` },
-    grace: { nameVi: 'Ơn cứu mạng', quest: (p) => `Trả ơn ${first(p)}`, good: ['paid'],
-      sum: (o, p) => ({ paid: `trả được ơn cứu mạng của ${first(p)}`, unpaid: `từ chối ${first(p)}, người từng cứu mạng mình` }[o]),
-      gone: (S, p) => `Tin ${refE(S, p)} mất. Món nợ cứu mạng, bạn chưa kịp trả.` },
-    favor: { nameVi: 'Người mang ơn', good: ['repaid'], sum: (o, p) => (o === 'repaid' ? `được ${first(p)} trả ơn` : null) },
-    feud: { nameVi: 'Mối thù', quest: (p) => `Đòi lại công bằng với ${first(p)}`, good: ['win', 'law', 'forgive'],
-      sum: (o, p) => ({ win: `đòi lại được món nợ với ${first(p)}`, law: `đưa ${first(p)} ra trước pháp luật`, forgive: `tha cho ${first(p)}`, lose: `thua ${first(p)} cả khi đã tìm ra hắn` }[o]),
-      gone: (S, p) => `Tin ${refE(S, p)} chết ở đâu đó. Món nợ giữa hai người không còn ai đòi.` },
-    vengeance: { nameVi: 'Báo thù', quest: (p, a) => `Báo thù cho ${a.d.kin}`, good: ['win', 'letgo'],
-      sum: (o, p, a) => ({ win: `báo được thù cho ${a.d.kin}`, letgo: `buông được mối thù cho ${a.d.kin}`, lose: `không báo được thù cho ${a.d.kin}` }[o]) },
-    love: { nameVi: 'Tình xưa', quest: (p) => `Chuyện chưa xong với ${first(p)}`, good: ['wed', 'let', 'past'],
-      sum: (o, p) => ({ wed: `nối lại với ${first(p)} sau ngần ấy năm`, let: `để chuyện với ${first(p)} ngủ yên`, past: null }[o]),
-      gone: (S, p) => (p.bond >= 15 ? `Tin ${refE(S, p)} mất. Bạn ngồi lâu bên cửa sổ, nhớ một mùa hè.` : null) },
-    master: { nameVi: 'Thầy trò', quest: (p) => `Theo ${first(p)} tới cùng`, good: ['heir'],
-      sum: (o, p) => ({ heir: `nhận chân truyền của thầy ${first(p)}`, apart: `xa thầy ${first(p)} lúc thầy mất` }[o]),
-      gone: (S, p) => `Thầy ${first(p)} mất khi bạn chưa học hết.` },
-    debt: { nameVi: 'Nợ cờ bạc', quest: (p) => `Thoát khỏi món nợ với ${first(p)}`, good: ['paid', 'fled'],
-      sum: (o, p) => ({ paid: 'trả sạch một món nợ cờ bạc', tied: `dính vào ${first(p)} vì một món nợ cờ bạc`, beaten: 'bị đánh vì một món nợ cờ bạc' }[o]),
-      gone: (S, p) => `Tin ${first(p)}, chủ nợ của bạn, chết trong một vụ ẩu đả. Sổ nợ cháy theo.` },
-    secret: { nameVi: 'Bí mật', quest: () => 'Giữ hay nói điều đã thấy', good: ['exposed', 'favor', 'win'],
-      sum: (o, p) => ({ exposed: `vạch mặt ${first(p)}`, favor: `giữ kín chuyện của ${first(p)} và được đền đáp`, win: `sống sót sau khi tống tiền ${first(p)}`, lose: `trả giá vì tống tiền ${first(p)}`, backfire: `tố giác ${first(p)} mà không ai tin` }[o]) },
-    idol: { nameVi: 'Mộng ước', quest: (p) => `Đi tới chỗ ${first(p)} từng đứng`, good: ['surpass', 'taught'],
-      sum: (o, p) => ({ surpass: `đứng ngang hàng ${first(p)}, người mình theo suốt ba ngày hồi nhỏ`, taught: `được ${first(p)} chỉ cho một thế`, fallen: null }[o]),
-      gone: (S, p) => `Lữ khách kể ${refE(S, p)} đã ngã xuống ở một chiến trường xa. Bạn nhớ ba ngày lẽo đẽo theo sau năm ấy.` },
-    kin: { nameVi: 'Ruột thịt', quest: (p) => `Giữ tình ruột thịt với ${first(p)}`, good: ['close'],
-      sum: (o, p) => ({ close: `cưu mang ${first(p)} lúc hoạn nạn`, rift: `cắt đứt với ${first(p)}` }[o]),
-      gone: (S, p) => null },
-    friend: { nameVi: 'Bạn thân', quest: (p) => `Gặp lại ${first(p)}`, good: ['reunion'], sum: (o, p) => (o === 'reunion' ? `gặp lại ${first(p)} sau bao năm xa cách` : null),
-      gone: (S, p) => `Tin ${refE(S, p)} mất. Bạn tìm lại mấy lá thư cũ, đọc tới sáng.` },
-    lost: { nameVi: 'Người mất tích', good: ['back'], sum: (o, p) => (o === 'back' ? `đón ${first(p)} trở về sau bao năm mất tích` : null),
-      fade: (S, X, p) => { if (p) { p.alive = false; p.died = S.world.year; } } },
-    hunter: { nameVi: 'Kẻ săn', quest: (p) => `Thoát khỏi ${first(p)}`, good: ['truce', 'slain', 'fled'],
-      sum: (o, p) => ({ truce: `khiến ${first(p)}, Thánh Kỵ Sĩ săn mình, hạ kiếm`, slain: `hạ ${first(p)}, Thánh Kỵ Sĩ săn mình`, beaten: `bị ${first(p)} thanh tẩy dở dang`, fled: `trốn khỏi ${first(p)}` }[o]),
-      gone: (S, p) => `Nghe lỏm lữ khách kể ${first(p)}, Thánh Kỵ Sĩ từng săn bạn, đã chết. Bạn đứng ở cửa hầm cả đêm.` },
-    flower: { nameVi: 'Đứa bé tặng hoa', quest: (p) => `Đợi ${first(p)} lớn`, good: ['guard', 'kin'],
-      sum: (o, p) => ({ guard: `được ${first(p)}, đứa bé tặng hoa năm nào, đứng ra che chở`, kin: `làm bạn với ${first(p)} từ khi nó còn bé tới khi nó có con` }[o]),
-      gone: (S, p) => `Lâu lắm không thấy ${first(p)} lên đồi. Lữ khách kể người đó đã mất. Bạn để một bông hoa dại trước cửa hầm.` },
-    prophecy: { nameVi: 'Lời bà đồng', passive: true, good: ['survived'], sum: (o, p, a) => (o === 'survived' ? `sống qua năm bà đồng nói sẽ chết` : null) }
-  };
-  // Tầng mạch (docs/16): main = mạch chính cả đời (js/saga.js, tối đa 1), side = mạch phụ (mạch người quen, tối đa arcMax),
-  // short = mạch ngắn mọc từ quyết định thường (tối đa shortMax). Mạch passive (lời bà đồng) không chiếm chỗ.
-  const tierOf = a => G.ARCS[a.k].tier || 'side';
-  const isActive = a => !G.ARCS[a.k].passive && tierOf(a) === 'side';
+  // G.ARCS[k]: nameVi, quest(p, a) (câu hỏi của chương khi mạch là mạch chính), good (kết coi như "làm được"), sum(o, p, rec)
+  // (một vế trong đoạn tưởng nhớ lúc chết), marks (dấu theo kết), gone (dòng nhật ký khi người trong mạch chết trước khi mạch khép),
+  // fade, passive (không chiếm chỗ). Mọi mạch đều đầy đủ 5 hồi, định nghĩa bằng khuôn full() (js/saga.js): mạch chính cả đời ở
+  // js/saga.js (tier 'main'), mạch người quen và mạch đời thường ở js/arcs.js.
+  G.ARCS = {};
+  // Chỗ mạch (docs/16 mục 10): một mạch chính (tier 'main') + tối đa G.STORY.arcMax mạch khác đang mở; mạch passive không chiếm chỗ.
+  const tierOf = a => G.ARCS[a.k].tier || 'arc';
+  const isActive = a => !G.ARCS[a.k].passive && tierOf(a) !== 'main';
   const isOpen = a => !G.ARCS[a.k].passive;
-  const TIER_MAX = { main: () => 1, side: () => G.STORY.arcMax, short: () => G.STORY.shortMax };
+  const TIER_MAX = { main: () => 1, arc: () => G.STORY.arcMax };
   G.arcOpen = function (S, X, k, p, d, at) {
     const A = S.arcs || (S.arcs = []), D = G.ARCS[k], who = p ? p.id : null;
     if (A.some(a => a.k === k && a.who === who)) return null;
-    const tier = D.tier || 'side';
+    const tier = D.tier || 'arc';
     if (!D.passive && A.filter(x => isOpen(x) && tierOf(x) === tier).length >= TIER_MAX[tier]()) return null;
     const a = { k, who, at: at || 'open', t: S.age, t0: S.age, main: false, d: d || {} };
-    // Mạch chính của chương: mạch chính cả đời nếu có, không thì mạch phụ mở đầu tiên.
+    // Mạch chính của chương: mạch chính cả đời nếu có, không thì mạch mở đầu tiên.
     if (tier === 'main') { for (const x of A) x.main = false; a.main = true; }
-    else if (tier === 'side' && !D.passive && !A.some(x => x.main)) a.main = true;
+    else if (!D.passive && !A.some(x => x.main)) a.main = true;
     A.push(a); stat('open', k); X._lk = true; X._tag = tagOf(a, p);
     return a;
   };
@@ -432,379 +395,7 @@ window.LifeSim = window.LifeSim || {};
       return { t: `Cha bạn vào ${z.nameVi} săn thú và không về. Người ta chỉ tìm thấy cây giáo gãy và dấu chân ${sp.nameVi}.`, k: 'bad', f: X.factOf(sp) };
     } });
 
-  // ═════════ 5. Nút của các mạch ═════════
-  // ── Đối thủ ──
-  node({ id: 'rv_kid', st: ['child'], tree: { body: 'living' }, story: { arc: 'rival', at: 'open', wait: [1, 8], to: 'open' }, w: 2,   // ở lại bước Mở, tính lại khoảng chờ (thiếu niên mới sang bước kế)
-    c: (S, X, a) => !a.d.kid,
-    run(S, X, a, p) {
-      const what = X.pick(['cuộc thi chạy của lũ trẻ trong làng', 'buổi đọc chữ ở đền', 'trò đánh trận giả bên bờ sông']); a.d.kid = true;
-      if (X.rnd() < .3 + .4 * S.traits.bold) { X.add('h', 5); return { t: `Ở ${what}, lần đầu tiên bạn hơn ${first(p)}. ${first(p)} đá tung đống cát rồi bỏ về.`, k: 'good', o: 'ahead', bond: -5 }; }
-      X.add('h', -4); return { t: `Ở ${what}, ${first(p)} lại hơn bạn, và cả đám trẻ cười theo.`, k: 'bad', o: 'behind', bond: -5 };
-    } });
-  node({ id: 'rv_school', st: ['teen', 'adult'], tree: { body: 'living' }, story: { arc: 'rival', at: 'open', wait: [1, 6], to: 'knot' }, w: 3,
-    run(S, X, a, p) {
-      const mine = S.sm / 100 + X.power(S) + X.rnd() * .6, his = .3 + npcPow(p, p.drive * .6) + X.rnd() * .6, ahead = mine > his;
-      const what = X.stage(S) === 'teen' ? 'kỳ tuyển học trò của trường trong vùng' : X.pick(['kỳ tuyển lính tuần của phủ', 'kỳ sát hạch của Hiệp Hội Mạo Hiểm', 'cuộc thi tay nghề ở chợ phiên']);
-      if (ahead) { X.add('h', 5); return { t: `${ref(S, p)} cũng dự ${what}. Lần này tên bạn đứng trên. ${first(p)} xé tờ bảng ngay trước mặt mọi người.`, k: 'good', o: 'ahead', bond: -10 }; }
-      X.add('h', -5); G.trajBump(S, { vo: .15 });
-      return { t: `${ref(S, p)} cũng dự ${what} và đứng đầu bảng, trên tên bạn ba bậc. Đêm đó bạn không ngủ.`, k: 'bad', o: 'behind', bond: -5 };
-    } });
-  node({ id: 'rv_love', st: ['teen', 'adult'], tree: { body: 'flesh' }, story: { arc: 'rival', at: 'open', wait: [1, 6], to: 'knot' }, w: 1.5,
-    c: S => single(S),
-    run(S, X, a, p) {
-      if (X.rnd() < .35 + .4 * S.traits.social) { X.add('h', 6); return { t: `Bạn và ${ref(S, p)} cùng để ý một người. Người đó chọn bạn; ${first(p)} không nói với bạn câu nào suốt mùa hè.`, k: 'good', o: 'ahead', bond: -10 }; }
-      X.add('h', -6); return { t: `Người bạn để ý suốt mùa xuân lại nhận lời đi hội với ${first(p)}.`, k: 'bad', o: 'behind', bond: -8 };
-    } });
-  node({ id: 'rv_rise', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'rival', at: 'open', wait: [2, 8], to: 'knot' }, w: 2,
-    c: (S, X, a, p) => p.tier > X.ctier(S),
-    run(S, X, a, p) { X.add('h', -5); G.trajBump(S, { vo: .2 }); return { t: `${ref(S, p)} giờ đã là ${G.tierName(p.tier)}, đi ngang qua bạn ở chợ còn cố ý nói to cho cả dãy hàng nghe.`, k: 'bad', o: 'behind' }; } });
-  dnode('rv_duel', { tree: { body: 'living' }, story: { arc: 'rival', at: 'knot', wait: [2, 10], to: 'after' },
-    when: (S, X) => ['adult', 'elder'].includes(X.stage(S)),
-    build(S, X, a, p) {
-      const where = X.pick([`giữa chợ ${homeName(S)}`, 'trước sân đấu của hội võ', 'ở cổng làng, trước mặt bao nhiêu người']);
-      return { title: 'Đối thủ cũ', body: `${ref(S, p)} chặn đường bạn ${where}: "Từ bé tới giờ, ta với ngươi chưa lần nào phân định cho ra lẽ."`,
-        choices: [{ k: 'fight', label: 'Nhận lời đấu', sub: 'Đấu tay đôi, không tới chết. Thắng thua thì cả làng đều biết.' },
-          { k: 'peace', label: 'Mời rượu, bỏ qua chuyện cũ', sub: 'Phải ăn nói khéo; người kia có thể không nhận.' }, { k: 'no', label: 'Bỏ đi', sub: 'Không mất gì ngoài thể diện.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'fight') {
-        const pw = G.clamp(logit(X.power(S) - npcPow(p, .4 * p.drive)), .1, .9);
-        if (X.rnd() < pw) { S.fame = Math.min(100, S.fame + 3); X.add('h', 10); X.add('so', 3); p.bond += 10; cnt(S, 'rvWin'); return { t: `Bạn quật ${first(p)} ngã ở hiệp thứ ba. ${first(p)} đứng dậy, phủi đất, gật đầu một cái rồi đi.`, o: 'win' }; }
-        X.add('hl', -10); X.add('h', -8); if (X.chance(.25)) X.cond('wound');
-        return { t: `${first(p)} thắng. Bạn nằm trên đất nghe tiếng người ta hò reo cho kẻ khác.`, o: 'lose' };
-      }
-      if (k === 'peace') {
-        if (X.rnd() < .35 + .5 * S.traits.social + (p.bond + 100) / 400) { p.bond = 20; p.role = 'ban'; X.add('h', 6); return { t: `${first(p)} nhìn chén rượu lâu lắm rồi mới uống cạn.`, o: 'peace' }; }
-        X.add('so', -3); return { t: `${first(p)} hất chén rượu xuống đất.`, o: 'no' };
-      }
-      X.add('so', -4); X.add('h', -3); return { t: 'Sau lưng bạn có tiếng cười.', o: 'no' };
-    },
-    auto(S, X, d, a, p) { const T = S.traits; if (p && X.power(S) >= npcPow(p, .4 * p.drive)) return 'fight'; return T.bold > .6 ? 'fight' : T.social > .55 ? 'peace' : 'no'; } });
-  node({ id: 'rv_end', st: ['teen', 'adult', 'elder'], tree: { body: 'living' }, story: { arc: 'rival', at: 'after', wait: [2, 12] }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'win') { p.loc = X.pick(G.REGIONS).id; return { t: `Sau trận ấy ${first(p)} rời ${homeName(S)}. Nhiều năm sau bạn nghe ${first(p)} sống ở ${regName(p.loc)}, hay kể chuyện thua bạn như kể chuyện vui.`, k: 'good', o: 'win', bond: 15 }; }
-      if (a.o === 'peace') {
-        X.add('h', 8); X.add('so', 5);
-        return p.wed ? { t: `${first(p)} dắt đứa con trai tới nhờ bạn chỉ cho nó vài đường. "Nó giống ta hồi bé," ${first(p)} nói, "cần có người trị."`, k: 'good', o: 'peace', bond: 20 }
-          : { t: `Mùa gặt nào ${first(p)} cũng ghé nhà bạn. Hai người cãi nhau về chuyện hồi bé như hai ông già.`, k: 'good', o: 'peace', bond: 20 };
-      }
-      if (a.o === 'lose') { G.trajBump(S, { vo: .3 }); X.addXp(60); return { t: `${first(p)} kể khắp nơi chuyện thắng bạn. Mấy năm liền bạn dậy sớm hơn cả làng, tập tới khi mặt trời lên.`, k: 'info', o: 'lose' }; }
-      X.add('so', -2); return { t: `Người ta vẫn nhắc lần bạn bỏ đi trước mặt ${first(p)}. Bạn để họ nhắc.`, k: 'info', o: 'no' };
-    } });
-
-  // ── Ơn cứu mạng (bạn mang ơn người khác) ──
-  dnode('gr_ask', { tree: { body: 'living' }, story: { arc: 'grace', at: 'open', wait: [3, 14], to: 'after' },
-    when: (S, X) => ['adult', 'elder'].includes(X.stage(S)),
-    build(S, X, a, p) {
-      const amt = Math.round(med(S, X) * .6), z = X.reg(S).zones[0]; a.d.amt = amt;
-      const body = { money: `${ref(S, p)} tìm tới. Năm nay mất trắng, ${first(p)} cần ${G.coin(amt)} để giữ mảnh đất cuối cùng.`,
-        son: `${ref(S, p)} tìm tới: con trai ${first(p)} bị bắt đi phu, cần một người có tiếng nói đứng ra bảo lãnh.`,
-        escort: `${ref(S, p)} tìm tới, nhờ bạn đi cùng qua ${z.nameVi}, nơi dạo này quái hay ra chặn đường.` }[a.d.need];
-      return { title: 'Món nợ cũ', body, choices: [{ k: 'help', label: 'Giúp', sub: a.d.need === 'money' ? `Mất ${G.coin(amt)}.` : a.d.need === 'son' ? 'Phải đi lên phủ, nói chuyện với người có quyền.' : 'Một chuyến đi có đánh nhau.' },
-        { k: 'no', label: 'Từ chối', sub: 'Giữ được của, mất mặt với người trong vùng.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'no') { X.add('so', -6); X.add('h', -4); p.bond -= 40; cnt(S, 'grNo'); return { t: `${first(p)} gật đầu, không nói gì, rồi đi.`, o: 'no' }; }
-      X.add('h', 6); X.add('so', 4); p.bond += 30; cnt(S, 'grHelp');
-      if (a.d.need === 'money') { X.money(-a.d.amt); return { t: 'Bạn đưa tiền, không lấy giấy nợ.', o: 'help' }; }
-      if (a.d.need === 'son') return { t: G.standing(S, X).soc >= 1 || S.fame >= 10 ? 'Phủ nể mặt bạn. Con trai người đó về nhà trước mùa đông.' : 'Bạn lên phủ ba lần mới được gặp quan. Người con được tha, muộn mất một năm.', o: 'help' };
-      const z = X.reg(S).zones[0], enc = X.rollEncounter(z, { grade: 'normal' }), rec = enc ? X.fight(enc, false) : { win: true };
-      if (S.dead) return null;
-      return { t: rec.win ? 'Bạn đi trước, mở đường. Cả đoàn qua được không mất một ai.' : 'Bạn bị thương, nhưng cả đoàn qua được.', o: 'help' };
-    },
-    auto: (S) => (S.traits.social > .3 || S.traits.pious > .5 ? 'help' : 'no') });
-  node({ id: 'gr_end', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'grace', at: 'after', wait: [2, 12], dead: true }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'help') {
-        X.add('h', 6);
-        return G.castYrs(S, p) > G.RACES[p.race].le * .6 || !p.alive
-          ? { t: `${first(p)} mất vào một mùa đông. Người nhà mang tới cho bạn cây gậy chăn dê ${first(p)} dặn phải đưa tận tay.`, k: 'info', o: 'paid' }
-          : { t: `Con cháu ${first(p)} gọi bạn là ân nhân của nhà họ, dù người cứu mạng trước là ${first(p)}. Hai bên coi như sòng phẳng.`, k: 'good', o: 'paid' };
-      }
-      X.add('so', -4);
-      return { t: `Bạn nghe tin nhà ${first(p)} phải bỏ làng đi nơi khác. Người trong vùng chào bạn nhạt đi.`, k: 'bad', o: 'unpaid' };
-    } });
-
-  // ── Người mang ơn bạn: đền đáp theo đúng cái bạn đang cần ──
-  node({ id: 'fv_return', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'favor', at: 'open', wait: [3, 12] }, w: 3,
-    run(S, X, a, p) {
-      const F = S.flags, wanted = F.wanted && S.nation != null && F.wanted[S.nation];
-      if (wanted || F.crimes) {
-        if (wanted) delete F.wanted[S.nation]; else F.crimes = Math.max(0, F.crimes - 1);
-        return { t: `${ref(S, p)} giờ có chỗ đứng trong phủ. Một tờ giấy của ${first(p)}, và hồ sơ của bạn ở nha môn biến mất.`, k: 'big', o: 'repaid', bond: 10 };
-      }
-      if (a.d.type === 'outlaw') { X.add('h', 6); return { t: `Toán cướp chặn bạn ở đèo. Tên cầm đầu nhìn mặt bạn rồi phẩy tay: "${first(p)} dặn rồi. Đi đi."`, k: 'good', o: 'repaid' }; }
-      if (a.d.type === 'noble' && single(S) && flesh(S) && !F.suitor) {
-        const race = S.race; F.suitor = { name: X.name(race, X.chance(.5) ? 'm' : 'f'), race, work: 'người nhà ' + first(p), age: X.years(S) + X.int(-4, 3) };
-        return { t: `${ref(S, p)} mời bạn dự tiệc, xếp bạn ngồi cạnh ${F.suitor.name}, người trong họ. Cả bữa, ${first(p)} cứ cười một mình.`, k: 'good', o: 'repaid', bond: 10 };
-      }
-      if (S.gold < med(S, X) * 2) { const g = Math.round(med(S, X) * .8); X.money(g); return { t: `${ref(S, p)} giới thiệu bạn với một chủ hàng lớn. Năm đó bạn kiếm thêm ${G.coin(g)}.`, k: 'good', o: 'repaid', bond: 10 }; }
-      S.gear = Math.min(10, S.gear + 1);
-      return { t: `${ref(S, p)} gửi tới một thanh kiếm rèn ở ${capName(S)}, kèm mảnh giấy: "Một mạng đổi một thanh kiếm, vẫn còn rẻ." Trang bị ${S.gear}/10.`, k: 'good', o: 'repaid', bond: 10 };
-    } });
-
-  // ── Mối thù ──
-  node({ id: 'fd_news', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'feud', at: 'open', wait: [1, 8], to: 'knot' }, w: 3,
-    run(S, X, a, p) {
-      X.add('h', -3);
-      return p.drive > .55 ? { t: `Có người kể ${ref(S, p)} giờ mở quán trọ ở ${regName(p.loc)}. Vốn ở đâu ra thì ai cũng đoán được.`, k: 'bad', o: 'rich' }
-        : { t: `Nghe nói ${ref(S, p)} vẫn lảng vảng ở ${regName(p.loc)}, làm ăn chẳng ra gì.`, k: 'info', o: 'poor' };
-    } });
-  dnode('fd_face', { tree: { body: 'living' }, story: { arc: 'feud', at: 'knot', wait: [1, 10], to: 'after' },
-    build(S, X, a, p) {
-      const law = G.standing(S, X).soc >= 1;
-      return { title: 'Chạm mặt', body: `Bạn tìm ra ${ref(S, p)} ở ${regName(p.loc)}. ${first(p)} nhận ra bạn ngay, tay đặt lên chuôi dao.`,
-        choices: [{ k: 'fight', label: 'Đòi lại bằng tay', sub: 'Đánh nhau; thắng thì lấy lại phần của mình.' },
-          ...(law ? [{ k: 'law', label: 'Báo quan', sub: 'Cần người làm chứng; quan có thể chẳng làm gì.' }] : []),
-          { k: 'forgive', label: 'Bỏ qua', sub: 'Không lấy lại được gì; lòng nhẹ hơn.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'fight') {
-        const pw = G.clamp(logit(X.power(S) - npcPow(p, .3 * p.drive)), .1, .9);
-        if (X.rnd() < pw) { X.money(a.d.gold || 0); S.fame = Math.min(100, S.fame + 1); X.add('h', 8); return { t: `${first(p)} nằm dưới đất, trả lại cho bạn ${G.coin(a.d.gold || 0)} và một lời xin tha.`, o: 'win' }; }
-        X.add('hl', -12); X.add('h', -6); if (X.chance(.3)) X.cond('wound');
-        return { t: `${first(p)} nhanh tay hơn. Bạn ôm vết dao trên tay đi về.`, o: 'lose' };
-      }
-      if (k === 'law') {
-        if (X.rnd() < .4 + .1 * G.standing(S, X).soc) { X.add('h', 5); return { t: 'Quan cho bắt người.', o: 'law' }; }
-        const f = Math.round(med(S, X) * .2); X.money(-f); X.add('h', -4); return { t: `Quan nhận lễ của ${first(p)}, rồi phạt bạn ${G.coin(f)} tội vu cáo.`, o: 'lawfail' };
-      }
-      X.add('h', 4); p.bond += 20; return { t: `Bạn quay lưng đi trước. ${first(p)} đứng nhìn theo rất lâu.`, o: 'forgive' };
-    },
-    auto(S, X, d, a, p) { const T = S.traits; if (T.social > .65 || T.pious > .7) return 'forgive'; if (d.choices.some(c => c.k === 'law') && T.bold < .4) return 'law'; return X.power(S) >= npcPow(p, 0) || T.bold > .5 ? 'fight' : 'forgive'; } });
-  node({ id: 'fd_end', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'feud', at: 'after', wait: [1, 10], dead: true }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'win') { p.loc = X.pick(G.REGIONS).id; X.add('h', 4); return { t: `Từ hôm đó bạn ngủ ngon. ${first(p)} rời vùng, không ai nghe tin nữa.`, k: 'good', o: 'win' }; }
-      if (a.o === 'law') return { t: `${first(p)} bị xử khổ sai ở mỏ đá. Bạn đứng xem người ta xích chân ${first(p)}, không thấy vui như mình tưởng.`, k: 'info', o: 'law' };
-      if (a.o === 'forgive') {
-        if (X.chance(.55)) { const g = Math.round((a.d.gold || 20) * .6); X.money(g); X.add('h', 6); return { t: `Một sáng có túi tiền đặt trước cửa nhà bạn, ${G.coin(g)}, kèm mảnh giấy chỉ có một chữ: tên ${first(p)}.`, k: 'good', o: 'forgive', bond: 20 }; }
-        return { t: `Bạn không nghe tin ${first(p)} nữa. Lạ là bạn cũng thôi nghĩ tới.`, k: 'info', o: 'forgive' };
-      }
-      return { t: `${first(p)} vẫn sống phây phây. Mỗi lần đi ngang ${regName(p.loc)}, bạn lại sờ vết sẹo cũ.`, k: 'bad', o: 'lose' };
-    } });
-
-  // ── Báo thù cho người thân (không có người trong dàn; a.d: sp, kin, zone) ──
-  const spOf = a => G.B.byId[a.d.sp];
-  const zoneOf = (S, X, a) => (G.ZONE[a.d.zone] ? G.ZONE[a.d.zone].zone : X.reg(S).zones[0]);
-  const vgEnc = (S, X, a) => ({ s: spOf(a), grade: 'elite', affixes: [], count: 1, zone: zoneOf(S, X, a), cell: null, feat: null });
-  node({ id: 'vg_oath', st: ['teen', 'adult'], tree: { body: 'living' }, story: { arc: 'vengeance', at: 'open', wait: [1, 8], to: 'knot' },
-    w: S => .5 + 3 * S.traits.bold + 4 * sh(S, 'vo'),
-    run(S, X, a) { G.trajBump(S, { vo: .4 }); X.addXp(40); return { t: `Bạn khắc tên ${a.d.kin === 'cha' ? 'cha' : a.d.kin} lên chuôi con dao đi rừng. Từ đó sáng nào bạn cũng tập trước khi gà gáy.`, k: 'info', o: 'oath' }; } });
-  node({ id: 'vg_letgo', st: ['teen', 'adult', 'elder'], tree: { body: 'living' }, story: { arc: 'vengeance', at: ['open', 'knot'], wait: [4, 14], to: 'end' },
-    w: S => .4 + 1.5 * S.traits.social + 1.5 * S.traits.pious + 3 * sh(S, 'gia'),
-    run(S, X, a) { X.add('h', 6); return { t: `Mộ ${a.d.kin === 'cha' ? 'cha' : a.d.kin} cỏ đã xanh. Bạn thôi nhìn về phía ${zoneOf(S, X, a).nameVi} mỗi chiều.`, k: 'info', o: 'letgo' }; } });
-  dnode('vg_hunt', { tree: { body: 'living' }, story: { arc: 'vengeance', at: 'knot', wait: [1, 14], to: 'after' },
-    when(S, X, a) { const sp = spOf(a); return !!sp && ['adult', 'elder'].includes(X.stage(S)) && sp.tier <= X.ctier(S) + 1 && X.power(S) >= X.threat(vgEnc(S, X, a)) - .3; },
-    build(S, X, a) {
-      const sp = spOf(a), z = zoneOf(S, X, a);
-      return { title: 'Món nợ máu', body: `Thợ săn báo: một con ${sp.nameVi} đầu đàn vừa về ${z.nameVi}, đúng chỗ năm ấy.`,
-        choices: [{ k: 'hunt', label: 'Đi săn nó', sub: `Một trận với ${sp.nameVi} tinh anh. Thua có thể chết.` }, { k: 'no', label: 'Để nó yên', sub: `Báo thù không làm ${a.d.kin} sống lại.` }] };
-    },
-    apply(S, X, k, c, a) {
-      if (k === 'no') { X.add('h', 3); return { t: 'Bạn treo con dao lên vách.', o: 'letgo', to: 'end' }; }
-      const rec = X.fight(vgEnc(S, X, a), false); if (S.dead) return null;
-      cnt(S, 'vgHunt');
-      if (rec.win) { S.fame = Math.min(100, S.fame + 2); X.add('h', 12); cnt(S, 'vgWin'); return { t: `Con ${spOf(a).nameVi} gục dưới chân bạn.`, o: 'win' }; }
-      a.d.tries = (a.d.tries || 0) + 1;
-      return { t: 'Nó lại thoát. Bạn lết về với một vết thương mới.', o: 'lose', to: a.d.tries < 2 ? 'knot' : 'after' };
-    },
-    auto: (S) => (S.traits.bold > .35 || sh(S, 'vo') > .3 ? 'hunt' : 'no') });
-  node({ id: 'vg_end', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'vengeance', at: 'after', wait: [0, 4] }, w: 4,
-    run(S, X, a) {
-      const kin = a.d.kin === 'cha' ? 'cha' : a.d.kin;
-      if (a.o === 'win') return { t: `Bạn mang chiếc nanh của con ${spOf(a).nameVi} ra mộ ${kin}. Đó là lần đầu bạn khóc kể từ năm ấy.`, k: 'big', o: 'win' };
-      return { t: `Vết thương lành, nhưng bạn biết mình không đủ sức đi thêm lần nữa. Con dao khắc tên ${kin} nằm trên vách tới cuối đời.`, k: 'bad', o: 'lose' };
-    } });
-
-  // ── Tình xưa ──
-  node({ id: 'lv_again', st: ['adult', 'elder'], tree: { body: 'flesh' }, story: { arc: 'love', at: 'open', wait: [3, 15] }, w: 3,
-    run(S, X, a, p) {
-      const me = single(S), them = !p.wed;
-      if (me && them) return { t: `Bạn gặp lại ${ref(S, p)} ở đám cưới một người quen. ${first(p)} vẫn cười như hồi ấy.`, k: 'good', o: 'free', to: 'climax' };
-      if (!me && !them) { X.add('h', 2); return { t: `${ref(S, p)} vẫn ở vậy. Hôm gặp lại ở chợ phiên, ${first(p)} hỏi thăm ${first(S.family.spouse)} trước khi hỏi thăm bạn.`, k: 'info', o: 'past', to: 'end' }; }
-      if (me) { X.add('h', -3); return { t: `${ref(S, p)} giờ đã có gia đình. Đứa con út có đôi mắt giống hệt ${first(p)} năm ấy.`, k: 'info', o: 'past', to: 'end' }; }
-      return { t: `Bạn gặp lại ${ref(S, p)} ở chợ phiên, mỗi người dắt theo một đứa con. Hai người chào nhau như người quen thường.`, k: 'info', o: 'past', to: 'end' };
-    } });
-  dnode('lv_choice', { prio: 8, tree: { body: 'flesh' }, story: { arc: 'love', at: 'climax', wait: [0, 3], to: 'end' },
-    when: (S, X, a, p) => single(S) && !p.wed,
-    build(S, X, a, p) {
-      return { title: 'Chuyện cũ', body: `${first(p)} hỏi bạn có còn nhớ ${a.d.refused ? 'lần bạn từ chối năm ấy' : 'mùa hè năm ấy'} không.`,
-        choices: [{ k: 'wed', label: 'Nối lại', sub: 'Thành vợ chồng.' }, { k: 'let', label: 'Để chuyện cũ ngủ yên', sub: '' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k !== 'wed') { X.add('h', -2); return { t: 'Hai người chia tay ở đầu ngõ, lần này không ai hẹn gì.', o: 'let' }; }
-      S.family.spouse = { name: p.name, race: p.race, age: G.castYrs(S, p), alive: true }; p.role = 'phoi'; p.how = 'bạn đời của bạn'; p.wed = true;
-      S.flags.suitor = null; X.add('h', 12); X.add('so', 6); cnt(S, 'lvWed');
-      return { t: 'Đám cưới nhỏ, chỉ mời những người biết chuyện cũ.', o: 'wed' };
-    },
-    auto: (S) => (S.traits.social > .35 || sh(S, 'gia') > .12 ? 'wed' : 'let') });
-
-  // ── Thầy trò (bạn là trò) ──
-  const msTask = a => (a.d.kind === 'craft' ? 'làm lại một món hàng cho tới khi không còn chỗ nào để chê' : 'đứng tấn dưới thác suốt mười ngày');
-  node({ id: 'ms_trial', st: ['teen', 'adult'], tree: { body: 'living' }, story: { arc: 'master', at: 'open', wait: [1, 3], to: 'knot' }, w: 3,
-    run(S, X, a, p) {
-      if (X.rnd() < .4 + .4 * S.traits.studious + .2 * S.traits.bold) { X.addXp(80); return { t: `${first(p)} bắt bạn ${msTask(a)}. Tới ngày thứ chín bạn làm được; thầy không khen, chỉ gật đầu.`, k: 'good', o: 'pass', bond: 10 }; }
-      X.add('h', -3); return { t: `${first(p)} bắt bạn ${msTask(a)}. Bạn bỏ cuộc giữa chừng; thầy không mắng, chỉ bắt làm lại từ đầu.`, k: 'info', o: 'fail' };
-    } });
-  dnode('ms_crisis', { tree: { body: 'living' }, story: { arc: 'master', at: 'knot', wait: [1, 5], to: 'after' },
-    build(S, X, a, p) {
-      if (a.d.kind !== 'craft' && X.chance(.6)) return { title: 'Thầy bị thách đấu', body: `Một kẻ thù cũ của ${first(p)} tới thách đấu. Thầy đã già, tay cầm kiếm run.`,
-        choices: [{ k: 'stand', label: 'Thay thầy ra đấu', sub: 'Đối thủ ngang tầm thầy thời trẻ.' }, { k: 'watch', label: 'Để thầy tự đấu', sub: 'Đó là chuyện của thầy.' }] };
-      return { title: 'Thầy lâm bệnh', body: `${first(p)} lâm bệnh nặng giữa mùa đông.`,
-        choices: [{ k: 'stay', label: 'Ở lại chăm thầy', sub: 'Mất một năm làm ăn.' }, { k: 'left', label: 'Đi tiếp đường mình', sub: 'Thầy có người nhà.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'stand') {
-        if (X.rnd() < G.clamp(logit(X.power(S) - npcPow(p, -.2)), .15, .85)) { S.fame = Math.min(100, S.fame + 2); p.bond += 30; return { t: 'Bạn thắng. Kẻ kia bỏ đi, không quay lại.', o: 'stood' }; }
-        X.add('hl', -10); p.bond += 25; return { t: 'Bạn thua, nhưng kẻ kia cũng không còn sức thách thầy nữa.', o: 'fell' };
-      }
-      if (k === 'stay') { X.money(-Math.round(med(S, X) * .3)); p.bond += 30; X.add('h', 2); return { t: 'Bạn sắc thuốc, đọc sách cho thầy nghe suốt mùa đông.', o: 'stayed' }; }
-      p.bond -= 20; return { t: `Bạn đi. ${k === 'watch' ? 'Thầy thắng, nhưng không nhìn bạn khi bước ra.' : 'Thầy không giữ.'}`, o: 'apart' };
-    },
-    auto: (S) => (S.traits.social > .45 || S.traits.bold > .55 ? (S.traits.bold > .55 ? 'stand' : 'stay') : 'left') });
-  // 'stand' không có ở ca bệnh: auto chọn 'stand' thì choose() rơi về lựa chọn đầu ('stay'), vẫn hợp.
-  node({ id: 'ms_end', st: ['teen', 'adult', 'elder'], tree: { body: 'living' }, story: { arc: 'master', at: 'after', wait: [1, 12], dead: true }, w: 3,
-    run(S, X, a, p) {
-      if (p.alive) { p.alive = false; p.died = S.world.year; }
-      if (a.o === 'apart') { X.add('h', -6); return { t: `Bạn nghe tin thầy ${first(p)} mất khi đang ở xa. Bộ bút ký của thầy về tay người khác.`, k: 'bad', o: 'apart' }; }
-      const sk = a.d.school ? J.schools[a.d.school].masteries[0] : (G.WORKS[a.d.work] && Object.keys(G.WORKS[a.d.work].trains || {})[0]) || 'Body';
-      X.gain(sk, 6); X.addXp(100);
-      return { t: `Thầy ${first(p)} mất, để lại cho bạn bộ bút ký ghi chú tới trang cuối.${a.d.kind !== 'craft' ? ' Trang đầu chỉ có một dòng: "Cho đứa dám đứng ra thay ta."' : ''}`, k: 'big', o: 'heir' };
-    } });
-
-  // ── Nợ cờ bạc ──
-  dnode('gb_collect', { prio: 8, tree: { body: 'living' }, story: { arc: 'debt', at: 'open', wait: [1, 3], to: 'after' },
-    build(S, X, a, p) {
-      const due = Math.round(a.d.amt * 1.5); a.d.due = due;
-      return { title: 'Chủ nợ', body: `Người của ${first(p)} tới đòi ${G.coin(due)}, cả gốc lẫn lãi.`,
-        choices: [...(S.gold >= due ? [{ k: 'pay', label: 'Trả', sub: `Mất ${G.coin(due)}.` }] : []),
-          { k: 'job', label: `Làm một việc cho ${first(p)}`, sub: 'Chở một kiện hàng, không được hỏi bên trong là gì.' }, { k: 'flee', label: 'Trốn', sub: 'Bỏ đi nơi khác.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'pay') { X.money(-a.d.due); X.add('h', -4); return { t: 'Bạn trả đủ, không thiếu một đồng.', o: 'paid' }; }
-      if (k === 'job') {
-        G.trajBump(S, { am: .4 });
-        if (X.chance(.2)) { cnt(S, 'crimes'); X.add('so', -6); return { t: 'Lính tuần mở kiện hàng ngay cổng thành. Bạn khai không biết gì; họ ghi tên bạn vào sổ.', o: 'job' }; }
-        return { t: 'Bạn chở kiện hàng qua cổng thành. Không ai mở ra xem.', o: 'job' };
-      }
-      S.flags.migrateQ = 'Chủ nợ đang tìm bạn.'; a.d.loc = S.loc; return { t: 'Bạn gói ghém đồ đạc trong đêm.', o: 'fled' };
-    },
-    auto(S, X, d) { if (d.choices.some(c => c.k === 'pay')) return 'pay'; return S.traits.bold > .6 ? 'flee' : 'job'; } });
-  node({ id: 'gb_end', st: ['teen', 'adult', 'elder'], tree: { body: 'living' }, story: { arc: 'debt', at: 'after', wait: [1, 8], dead: true }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'paid') return { t: 'Bạn thề không đụng tới xúc xắc nữa. Lời thề giữ được gần hết đời.', k: 'info', o: 'paid' };
-      if (a.o === 'job') { G.trajBump(S, { am: .2 }); X.money(Math.round(med(S, X) * .3)); return { t: `${first(p)} lại ghé, lần này với một "việc nhỏ" khác. Bạn hiểu mình sẽ chẳng bao giờ trả xong.`, k: 'bad', o: 'tied' }; }
-      if (S.loc !== a.d.loc) return { t: `Ở ${regName(S.loc)}, bạn vẫn giật mình mỗi lần có người lạ hỏi tên.`, k: 'info', o: 'fled' };
-      X.add('hl', -15); X.cond('wound'); X.money(-Math.min(Math.max(0, S.gold), a.d.due || 0));
-      return { t: `Người của ${first(p)} tìm được bạn trong một con hẻm.`, k: 'bad', o: 'beaten' };
-    } });
-
-  // ── Bí mật ──
-  dnode('sc_choice', { prio: 8, tree: { body: 'living' }, story: { arc: 'secret', at: 'open', wait: [0, 2], to: 'after' },
-    build(S, X, a, p) {
-      return { title: 'Điều đã thấy', body: `Chuyện đêm ấy vẫn nằm trong bụng bạn. ${first(p)} hình như cũng biết bạn đã thấy.`,
-        choices: [{ k: 'expose', label: 'Tố giác', sub: 'Người ta có thể tin, cũng có thể không.' }, { k: 'black', label: 'Đòi tiền để im lặng', sub: 'Có tiền ngay; kẻ bị tống tiền không bao giờ quên.' }, { k: 'silent', label: 'Im lặng', sub: '' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'expose') {
-        if (X.rnd() < .3 + .15 * G.standing(S, X).soc + S.fame / 200) { S.fame = Math.min(100, S.fame + 4); X.add('so', 5); return { t: 'Phủ cho người xuống tra. Lời bạn khớp với sổ sách.', o: 'exposed' }; }
-        X.add('so', -5); X.add('h', -5); return { t: 'Không ai tin bạn.', o: 'backfire' };
-      }
-      if (k === 'black') { const g = Math.round(med(S, X) * 1.2); X.money(g); G.trajBump(S, { am: .3 }); return { t: `${first(p)} trả ${G.coin(g)}, không nhìn vào mắt bạn.`, o: 'black' }; }
-      return { t: 'Bạn không nói với ai.', o: 'silent' };
-    },
-    auto(S) { const T = S.traits; if (T.pious > .6 || T.bold > .7) return 'expose'; if (sh(S, 'am') + sh(S, 'thuong') > .2) return 'black'; return 'silent'; } });
-  node({ id: 'sc_end', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'secret', at: 'after', wait: [1, 10] }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'exposed') { p.tier = 0; return { t: `${first(p)} bị cách chức. Dân làng mời bạn rượu, nhưng từ đó cũng có người đi đường vòng để khỏi phải chào bạn.`, k: 'good', o: 'exposed' }; }
-      if (a.o === 'backfire') { const f = Math.round(med(S, X) * .3); X.money(-f); return { t: `${first(p)} vẫn ngồi ghế cũ. Bạn bị gọi lên phủ hỏi chuyện ba lần, lần nào cũng mất tiền trà nước, cộng lại ${G.coin(f)}.`, k: 'bad', o: 'backfire' }; }
-      if (a.o === 'silent') { X.add('h', 4); X.money(Math.round(med(S, X) * .3)); return { t: `${first(p)} lên chức, gặp bạn ở đâu cũng gật đầu chào. Năm có lệnh bắt phu, tên bạn không có trong danh sách.`, k: 'good', o: 'favor', bond: 15 }; }
-      const pw = G.clamp(logit(X.power(S) - npcPow(p, .2)), .2, .9);
-      if (X.rnd() < pw) { X.money(Math.round(med(S, X) * .5)); return { t: `${first(p)} gửi người tới. Bạn tỉnh giấc với lưỡi dao kề cổ, vặn được tay hắn. Sáng ra ${first(p)} gửi thêm một bao tiền, không kèm lời nào.`, k: 'good', o: 'win', bond: -10 }; }
-      X.add('hl', -18); X.cond('wound'); X.money(-Math.round(Math.max(0, S.gold) * .5));
-      return { t: `${first(p)} gửi người tới. Bạn tỉnh giấc với lưỡi dao kề cổ; họ lấy lại số tiền cũ, cả lãi, và để lại một vết sẹo.`, k: 'bad', o: 'lose', bond: -10 };
-    } });
-
-  // ── Mộng ước ──
-  node({ id: 'id_meet', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'idol', at: 'open', wait: [4, 20], dead: false }, w: 3,
-    run(S, X, a, p) {
-      const T = X.ctier(S);
-      if (T >= 1 && T >= p.tier) { S.fame = Math.min(100, S.fame + 3); X.add('h', 10); return { t: `Bạn gặp lại ${ref(S, p)} ở ${capName(S)}. Giờ bạn đã là ${G.tierName(T)}, ngang hàng với người từng là giấc mơ của mình. ${first(p)} nhận ra đứa nhóc năm xưa và bật cười.`, k: 'big', o: 'surpass', bond: 20 }; }
-      if (p.drive < .7 || G.castYrs(S, p) > G.RACES[p.race].le * .7) { X.add('h', -4); return { t: `Bạn gặp lại ${refE(S, p)}, giờ ngồi một góc quán, một bên là chân gỗ. ${first(p)} không nhớ bạn. Bạn trả tiền rượu cho cả bàn.`, k: 'info', o: 'fallen' }; }
-      const sk = a.d.school ? J.schools[a.d.school].masteries[0] : 'Body'; X.gain(sk, 4); X.addXp(120);
-      return { t: `Bạn gặp lại ${refE(S, p)}. Nghe chuyện ba ngày lẽo đẽo năm xưa, ${first(p)} cười to rồi chỉ cho bạn một thế ${G.mv(sk).toLowerCase()}.`, k: 'good', o: 'taught', bond: 20 };
-    } });
-
-  // ── Ruột thịt ──
-  dnode('kn_help', { prio: 8, tree: { body: 'living' }, story: { arc: 'kin', at: 'open', wait: [0, 2], to: 'after' },
-    build(S, X, a, p) {
-      const cost = Math.round(med(S, X) * .8); a.d.cost = cost;
-      return { title: 'Thư nhà', body: `${first(p)} cần người giúp. Chuyện này cần chừng ${G.coin(cost)}.`,
-        choices: [{ k: 'help', label: 'Gửi tiền, về tận nơi', sub: `Mất ${G.coin(cost)} và một chuyến đi.` }, { k: 'no', label: 'Chỉ gửi lời thăm', sub: 'Nhà mình cũng chẳng dư.' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'help') { X.money(-a.d.cost); X.add('h', 4); p.bond += 30; return { t: `Bạn về tới nơi, ${first(p)} ôm bạn khóc như hồi hai đứa còn bé.`, o: 'help' }; }
-      p.bond -= 40; return { t: 'Thư trả lời của nhà ngắn hơn mọi lần.', o: 'no' };
-    },
-    auto: (S, X, d) => (S.traits.social > .3 || sh(S, 'gia') > .12 ? 'help' : 'no') });
-  node({ id: 'kn_end', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'kin', at: 'after', wait: [2, 10] }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'help') { const g = Math.round((a.d.cost || 20) * .8); X.money(g); X.add('h', 5); return { t: a.d.type === 'debt' ? `${first(p)} trả lại bạn số tiền năm ấy, gói trong chiếc khăn tay của mẹ.` : `Mùa gặt nào ${first(p)} cũng gửi lên một xe lúa, không đợi bạn hỏi. Năm nay nó đáng ${G.coin(g)}.`, k: 'good', o: 'close', bond: 10 }; }
-      X.add('so', -4); return { t: `Đám giỗ trong nhà, ${first(p)} không ngồi cùng mâm với bạn. Từ đó hai nhà thôi qua lại.`, k: 'bad', o: 'rift' };
-    } });
-
-  // ── Bạn thân ──
-  node({ id: 'fr_part', st: ['teen', 'adult'], tree: { body: 'living' }, story: { arc: 'friend', at: 'open', wait: [3, 12], to: 'after' }, w: 2,
-    run(S, X, a, p) {
-      const r = X.pick(G.REGIONS.filter(r => r.id !== S.loc)); p.loc = r.id;
-      return { t: `${ref(S, p)} theo một đoàn buôn đi ${r.nameVi}. Hôm tiễn, hai người hứa sẽ viết thư.`, k: 'info', o: 'part' };
-    } });
-  node({ id: 'fr_reunion', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'friend', at: 'after', wait: [4, 20] }, w: 2.5,
-    run(S, X, a, p) {
-      const nw = newsOf(p), w = workVi(p);
-      X.add('so', 6); X.add('h', 6);
-      return { t: `Bạn gặp lại ${refE(S, p)}${w ? `, giờ làm ${w}` : ''}${p.tier ? `, đã là ${G.tierName(p.tier)}` : ''}${p.wed ? ', đã có vợ có chồng' : ''}. Hai người uống tới sáng, kể lại những trận đòn hồi bé như kể chiến công.`, k: 'good', o: 'reunion', bond: 20 };
-    } });
-
-  // ── Người mất tích (bạn đồng hành không về) ──
-  node({ id: 'ls_return', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'lost', at: 'open', wait: [3, 14] }, w: .5,
-    run(S, X, a, p) { p.missing = false; X.add('h', 10); return { t: `${first(p)}, người bạn đồng hành ai cũng tưởng đã chết, gõ cửa nhà bạn. Một bên mắt đã mất; câu chuyện thì dài lắm.`, k: 'big', o: 'back', bond: 20 }; } });
-
-  // ── Kẻ săn (Bộ Xương) ──
-  node({ id: 'hn_return', st: ['adult', 'elder'], undead: true, tree: { body: 'undead' }, story: { arc: 'hunter', at: 'open', wait: [2, 6], to: 'knot' }, w: 3,
-    run(S, X, a, p) {
-      p.tier = Math.max(p.tier, X.ctier(S));
-      if (X.rnd() < G.clamp(logit(X.power(S) - npcPow(p, 0)), .2, .85)) { S.fame = Math.min(100, S.fame + 2); return { t: `${ref(S, p)} quay lại, lần này mang theo ba người và một lọ nước thánh. Bạn đánh lui cả bốn; ${first(p)} là người rút cuối cùng.`, k: 'good', o: 'held' }; }
-      X.cond('crack'); X.add('hl', -10);
-      return { t: `${ref(S, p)} quay lại, lần này mang theo ba người và một lọ nước thánh. Bạn mất một cánh tay xương, phải lội qua đầm mới thoát.`, k: 'bad', o: 'hurt' };
-    } });
-  dnode('hn_end', { tree: { body: 'undead' }, story: { arc: 'hunter', at: 'knot', wait: [2, 8], to: 'after' },
-    build(S, X, a, p) {
-      p.tier = Math.max(p.tier, X.ctier(S));
-      return { title: 'Thánh Kỵ Sĩ', body: `${first(p)} giờ là ${G.tierName(p.tier)}, đứng một mình trước cửa hầm: "Lần này không ai cản."`,
-        choices: [{ k: 'fight', label: 'Đấu tới cùng', sub: 'Thua thì có thể bị thanh tẩy.' }, ...(S.sm >= 25 ? [{ k: 'talk', label: 'Nói chuyện', sub: 'Kể cho người đó nghe bạn từng là ai.' }] : []), { k: 'flee', label: 'Bỏ đi nơi khác', sub: '' }] };
-    },
-    apply(S, X, k, c, a, p) {
-      if (k === 'fight') {
-        if (X.rnd() < G.clamp(logit(X.power(S) - npcPow(p, -.1)), .15, .85)) { p.alive = false; p.died = S.world.year; S.fame = Math.min(100, S.fame + 5); return { t: `Bạn đặt thanh kiếm gãy của ${first(p)} lên ngực người đó rồi lấp đất.`, o: 'slain' }; }
-        if (X.chance(.2)) { X.die({ id: 'purge', text: `bị Thánh Kỵ Sĩ ${first(p)} thanh tẩy` }); return null; }
-        X.cond('crack'); return { t: 'Bạn vỡ nửa xương sườn, lăn xuống vực mới thoát.', o: 'beaten' };
-      }
-      if (k === 'talk') {
-        if (X.rnd() < .3 + S.sm / 150 + .3 * S.traits.social) { p.bond = 20; p.role = 'ban'; return { t: `${first(p)} nghe hết, rồi tra kiếm vào vỏ.`, o: 'truce' }; }
-        X.cond('crack'); return { t: `${first(p)} không nghe. Bạn chỉ kịp chạy.`, o: 'beaten' };
-      }
-      S.flags.migrateQ = 'Thánh Kỵ Sĩ biết chỗ của bạn.'; return { t: 'Bạn rời hầm trong đêm.', o: 'fled' };
-    },
-    auto(S, X, d, a, p) { if (d.choices.some(c => c.k === 'talk') && S.traits.social > .25) return 'talk'; return p && X.power(S) >= npcPow(p, -.3) ? 'fight' : 'flee'; } });
-  node({ id: 'hn_after', st: ['adult', 'elder'], undead: true, tree: { body: 'undead' }, story: { arc: 'hunter', at: 'after', wait: [1, 8], dead: true }, w: 3,
-    run(S, X, a, p) {
-      if (a.o === 'truce') { X.add('h', 8); return { t: `${first(p)} để ở cửa hầm một bình dầu thánh đã cạn phép, và không bao giờ quay lại với kiếm.`, k: 'good', o: 'truce' }; }
-      if (a.o === 'slain') { X.cond('hunted'); return { t: `Giáo hội Quang Minh treo giải cho cái đầu lâu đã giết ${first(p)}.`, k: 'bad', o: 'slain' }; }
-      if (a.o === 'fled') return { t: 'Bạn ở một nghĩa địa khác. Đêm nào cũng nghe ngóng tiếng vó ngựa.', k: 'info', o: 'fled' };
-      return { t: `${first(p)} kể khắp vùng đã thanh tẩy được bạn. Người ta tin, nên mấy năm liền không ai tới đào nữa.`, k: 'info', o: 'beaten' };
-    } });
-
+  // ═════════ 5. Nút của các mạch: ở js/arcs.js (khuôn full() của js/saga.js). Ở đây chỉ còn móc cho Bộ Xương ═════════
   // ── Bộ Xương: đứa bé tặng hoa lớn lên (sk_child, events.js) ──
   patch('sk_child', (S, X, r) => {
     if ((S.arcs || []).some(a => a.k === 'flower')) return;
@@ -812,17 +403,6 @@ window.LifeSim = window.LifeSim || {};
     r.t = r.t.replace('Một đứa bé không sợ bạn.', `Một đứa bé không sợ bạn. Người ta gọi nó là ${first(p)}.`);
     G.arcOpen(S, X, 'flower', p, {});
   });
-  node({ id: 'fl_grown', st: ['adult', 'elder'], undead: true, tree: { body: 'undead' }, story: { arc: 'flower', at: 'open', wait: [3, 10], to: 'after' }, w: 3,
-    c: (S, X, a, p) => G.castYrs(S, p) >= G.RACES[p.race].adult,
-    run(S, X, a, p) { X.add('h', 10); X.add('hl', 4); return { t: `${first(p)}, đứa bé năm nào, giờ đã lớn, lên đồi tìm bạn. Nó mang theo dầu thắp, vải, và cả một bó hoa dại như hồi bé.`, k: 'good', o: 'grown', bond: 20 }; } });
-  node({ id: 'fl_end', st: ['adult', 'elder'], undead: true, tree: { body: 'undead' }, story: { arc: 'flower', at: 'after', wait: [2, 10] }, w: 3,
-    run(S, X, a, p) {
-      if (G.standing(S, X).soc < 1 && (S.flags.revealed || X.chance(.5))) {
-        const c = S.conds.find(c => c.id === 'hunted'); if (c) S.conds.splice(S.conds.indexOf(c), 1);
-        return { t: `Khi dân làng kéo đuốc lên đồi, ${first(p)} đứng chắn trước cửa hầm: "Muốn vào thì bước qua tôi." Đám đuốc tản dần.`, k: 'big', o: 'guard', bond: 20 };
-      }
-      X.add('h', 8); return { t: `${first(p)} dắt con lên đồi, chỉ vào bạn: "Ông ấy là bạn của mẹ." Đứa nhỏ không sợ, y như mẹ nó ngày trước.`, k: 'good', o: 'kin', bond: 10 };
-    } });
   // ── Bộ Xương: đoàn lữ khách hay bỏ chạy (sk_flee) dần quen mặt bạn; lần thứ ba thì thành mối buôn ──
   patch('sk_flee', (S, X, r) => {
     let p = (S.cast || []).find(x => x.caravan);
@@ -833,13 +413,6 @@ window.LifeSim = window.LifeSim || {};
     r.t = `${first(p)} dừng xe ở chân đồi, đặt xuống một thùng dầu và hai tấm vải, rồi chờ. Bạn để lại mấy món đồ cổ nhặt trong mộ. Từ đó mỗi mùa đoàn ${first(p)} đều ghé.`;
     r.k = 'good'; X.add('h', 10); X.money(X.int(5, 15)); if (p.caravan > 3) r.t = `Đoàn của ${first(p)} ghé như mọi mùa. Hai bên đổi hàng, ${first(p)} kể chuyện dưới xuôi.`;
   });
-
-  // ── Lời bà đồng ──
-  node({ id: 'pr_year', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'prophecy', at: 'open', wait: [0, 999], to: 'after' }, w: 10,
-    c: (S, X, a) => X.years(S) >= a.d.y && X.years(S) < a.d.y + X.R(S).ypt * 2,
-    run(S, X, a) { X.add('h', -3); return { t: `Năm nay bạn ${X.years(S)} tuổi, đúng năm bà đồng mù nói. Bạn đi đâu cũng nhìn trước ngó sau.`, k: 'info', o: 'year' }; } });
-  node({ id: 'pr_after', st: ['adult', 'elder'], tree: { body: 'living' }, story: { arc: 'prophecy', at: 'after', wait: [1, 3] }, w: 6,
-    run(S, X) { X.add('h', 8); return { t: 'Bạn sống qua năm bà đồng nói. Bạn mua một vò rượu ngon, uống một mình, cười một mình.', k: 'good', o: 'survived' }; } });
 
   // ═════════ 6. Gặp lại người quen (sự kiện ngẫu nhiên đọc dàn nhân vật) ═════════
   const knows = (S, p) => Math.abs(p.bond) >= 10 || (S.arcs || []).some(a => a.who === p.id);

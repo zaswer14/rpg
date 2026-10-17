@@ -3,8 +3,8 @@
  * đang chạy; có mạch chính, mạch phụ, mạch ngắn; mạch nào nhân vật đi qua cũng để lại ảnh hưởng. Người dùng chốt: ~80% sự kiện
  * thuộc mạch; mạch chính tự nổi lên rồi chốt bằng một quyết định; làm theo đợt (đây là đợt 1).
  * Nạp sau culture.js, dùng G.storyApi của story.js (node / dnode / patch / patchDec / wrapStory). Bốn lớp:
- *   1. Ba tầng mạch (G.ARCS[k].tier, story.js giới hạn số mạch theo tầng): main = 13 mạch chính của file này (G.SAGA; cùng lúc một),
- *      side = mạch người quen của story.js, short = mạch ngắn mọc từ quyết định thường (cuối file này).
+ *   1. Một khuôn full() cho mọi mạch (docs/16 mục 10): 5 hồi, kết theo cả đường đi, lối đứng ngoài = mạch chạy nền ("phụ" là vai trò).
+ *      13 mạch chính của file này (G.SAGA, tier main, cùng lúc một); mạch người quen, mạch đời thường ở js/arcs.js (dùng G.sagaApi).
  *   2. Gieo mạch (S.saga.seed): sự kiện thơ ấu, thiếu thời, quyết định (chí hướng, bái sư, bầu trưởng làng…) cộng điểm cho mạch chính
  *      hợp với nó (bảng G.SAGA_SEED). Cuối thiếu thời quyết định sg_road chọn một trong ba mạch điểm cao nhất (hoặc chưa định).
  *   3. Đi theo mạch: sau khi chọn, sự kiện hợp mạch (bảng gieo, chủ đề, hướng quỹ đạo) được kéo trọng số, góp tiến độ a.d.prog
@@ -117,16 +117,7 @@ window.LifeSim = window.LifeSim || {};
   };
   G.markChips = S => (S.marks || []).map(mk => { const M = G.MARKS[mk.id]; return { text: M.nameVi, tone: M.tone, title: M.d + (mk.src ? ` (từ: ${mk.src})` : '') + (M.fade != null ? ` Còn chừng ${Math.max(0, M.fade - (S.age - mk.t))} lượt.` : '') }; });
 
-  // Kết của mạch có sẵn (story.js) cũng để lại dấu.
-  const ARC_MARKS = {
-    rival: { win: 'vuot_doi_thu', peace: 'ban_cu', lose: 'cay_dang' }, grace: { paid: 'giu_loi', unpaid: 'tieng_xau' }, favor: { repaid: 'duoc_tin' },
-    feud: { win: 'tay_mau', law: 'giu_loi', forgive: 'buong_bo', lose: 'ke_thu' }, vengeance: { win: 'da_bao_thu', letgo: 'buong_bo', lose: 'thu_chua_tra' },
-    love: { let: 'buong_bo' }, master: { heir: 'chan_truyen' }, debt: { paid: 'giu_loi', tied: 'cua_phi_nghia', beaten: 'ke_thu', fled: 'tieng_xau' },
-    secret: { exposed: 'ke_thu', favor: 'no_on', win: 'cua_phi_nghia', lose: 'ke_thu', backfire: 'tieng_xau' }, idol: { surpass: 'cao_thu', taught: 'chan_truyen' },
-    kin: { close: 'tinh_than', rift: 'cat_dut' }, friend: { reunion: 'ban_cu' }, hunter: { truce: 'buong_bo', slain: 'tay_mau' }, flower: { guard: 'duoc_tin', kin: 'ban_cu' }
-  };
-  for (const [k, m] of Object.entries(ARC_MARKS)) if (G.ARCS[k]) G.ARCS[k].marks = Object.assign({}, G.ARCS[k].marks || {}, m);
-  for (const k of ['favor', 'debt', 'secret', 'lost', 'prophecy']) if (G.ARCS[k]) G.ARCS[k].tier = 'short';
+  // Kết của mọi mạch để lại dấu (G.ARCS[k].marks; mạch người quen, mạch đời thường ở js/arcs.js).
   { const e0 = G.arcEnd;
     G.arcEnd = function (S, X, a, o) {
       e0(S, X, a, o);
@@ -143,34 +134,60 @@ window.LifeSim = window.LifeSim || {};
   const mainA = S => (S.arcs || []).find(a => G.ARCS[a.k].tier === 'main');
   const prog = a => (a && a.d.prog) || 0;
   const pb = (a, k = G.SAGA_CFG.progK) => Math.min(.3, prog(a) * k);
-  function saga(k, def) {
-    SAGA[k] = def;
-    G.ARCS[k] = { nameVi: def.nameVi, tier: 'main', quest: (p, a) => def.quest(a), good: def.good, marks: def.marks,
-      sum: (o, p, rec) => (o === 'turned' ? turnedSum(rec.d || {}) : def.sum[o] ? def.sum[o](rec.d || {}) : null) };
-    sNode({ id: k + '_open', st: TAE, story: { arc: k, at: 'open', wait: [0, 30], to: 'knot' }, w: 6,
-      run(S, X, a) { return { t: def.open(S, X, a), k: 'big' }; } });
-    sDec(k + '_knot', { prio: 6, story: { arc: k, at: 'knot', wait: [2, 40], to: 'trial' },
-      when: (S, X) => X.stage(S) !== 'child',
-      build: (S, X, a) => ({ title: def.knot.title, body: def.knot.body(S, X, a), choices: [...def.knot.choices(S, X, a), ...knotTurn(S, X)] }),
-      apply(S, X, ch, c, a) {
-        if (String(ch).startsWith('turn:')) return { t: switchMain(S, X, ch.slice(5)), o: 'turned', to: null };   // bỏ đường này ngay từ lúc chọn lối, rẽ sang mạch khác
-        a.d.path = ch; const t = def.knot.apply(S, X, ch, a); cnt(S, 'sg_' + k + '_' + ch); return { t, o: ch, to: 'trial' }; },
-      auto: (S, X, d, a) => def.knot.auto(S, X, a) });
-    sNode({ id: k + '_trial', st: AD, story: { arc: k, at: 'trial', wait: [3, 40], to: 'climax' }, w: 5,
-      run(S, X, a) { const ok = X.chance(G.clamp(def.trial.base(S, X, a) + pb(a), .1, .92)); a.d.ok = ok; return { t: def.trial.run(S, X, a, ok), k: ok ? 'good' : 'bad', o: ok ? 'ok' : 'fail' }; } });
-    sDec(k + '_climax', { prio: 7, story: { arc: k, at: 'climax', wait: [3, 60], to: 'after' },
-      when: (S, X) => late(S, X),
-      build: (S, X, a) => ({ title: def.climax.title, body: def.climax.body(S, X, a), choices: def.climax.choices(S, X, a) }),
-      apply(S, X, ch, c, a) { const r = def.climax.apply(S, X, ch, a); a.d.end = r.o; cnt(S, 'sg_' + k + '_' + r.o); return { t: r.t, o: r.o, to: 'after' }; },
-      auto: (S, X, d, a) => def.climax.auto(S, X, a) });
-    // Kết: tới tuổi già, hoặc chừng 12 lượt sau cao trào (mạch chính đi gần hết đời).
-    sNode({ id: k + '_after', st: AD, story: { arc: k, at: 'after', wait: [4, 80], to: 'end' }, w: 6, c: (S, X, a) => X.stage(S) === 'elder' || S.age - a.t >= 12,
-      run(S, X, a) { const o = a.d.end || def.good[0]; return { t: def.after[o](S, X, a), k: def.good.includes(o) ? 'big' : 'info', o, to: 'end' }; } });
-    // Nhịp: trọng số gốc 0,45 (× kéo của mạch chính ≈ 2,7), cách nhau ít nhất 3 lượt.
-    const beat = { id: k + '_beat', st: TAE, story: { arc: k, at: ['open', 'knot', 'trial', 'climax'], wait: [1, 99] }, w: .45,
-      run(S, X, a) { a.d.prog = prog(a) + 1; const L = def.beat[a.at] || def.beat.any; return { t: X.pick(L).replace('{z}', zoneName(S, X, a)), k: 'info', to: null }; } };
-    sNode(beat); beat.gap = 3;
+  // Khuôn mạch đầy đủ (docs/16 mục 10, người dùng chốt 17/10/2026): mọi mạch, chính hay không, có đủ 5 hồi và nhiều kết.
+  //   Kết theo cả đường đi: def.end(S, X, a, p, o) đổi kết o của cao trào theo lối đã chọn (a.d.path), thử thách (a.d.ok), tiến độ (a.d.prog).
+  //   "Phụ" là vai trò, không phải loại mạch: chọn lối 'away' (đứng ngoài) thì mạch chạy nền (a.d.bg = tuổi lúc đứng ngoài): nút thưa
+  //   hơn (× BG_K), không có nhịp, cao trào là chuyện của người trong mạch / thế giới (def.climax.bg, không hỏi), kết riêng.
+  //   def.acts[hồi] = { st, wait, w, c, when, prio, dead } chỉnh từng hồi; hàm nào cũng nhận thêm p (người trong mạch) sau a.
+  const FULL = G.ARC_FULL = {}, BG_K = .5;
+  const asR = r => (r == null ? r : typeof r === 'string' ? { t: r } : r);
+  function full(k, def) {
+    const main = def.tier === 'main', A = def.acts || {}, tree = { body: def.body || 'living' }, ud = def.undead;
+    const Ao = A.open || {}, Ak = A.knot || {}, At = A.trial || {}, Ac = A.climax || {}, Aa = A.after || {};
+    FULL[k] = def; if (main) SAGA[k] = def;
+    const D0 = G.ARCS[k] || {};
+    G.ARCS[k] = Object.assign(D0, { nameVi: def.nameVi, tier: main ? 'main' : undefined, full: true, good: def.good, marks: def.marks || {}, passive: !!def.passive,
+      quest: def.quest ? (p, a) => def.quest(a, p) : null, gone: def.gone || null, fade: def.fade || null,
+      sum: (o, p, rec) => (o === 'turned' ? turnedSum((rec && rec.d) || {}) : def.sum[o] ? def.sum[o]((rec && rec.d) || {}, p) : null),
+      endOf: (S, X, a, p) => (def.end ? def.end(S, X, a, p, a.d.end) : a.d.end) });
+    const wOf = (o, d) => { const w = o.w ?? d; return (S, X, a, p) => (typeof w === 'function' ? w(S, X, a, p) : w) * (a.d.bg ? BG_K : 1); };
+    sNode({ id: k + '_open', st: Ao.st || TAE, undead: ud, tree, story: { arc: k, at: 'open', wait: Ao.wait || [0, 30], to: 'knot' }, w: wOf(Ao, main ? 6 : 4), c: Ao.c,
+      run(S, X, a, p) { return Object.assign({ k: main ? 'big' : 'info' }, asR(def.open(S, X, a, p))); } });
+    sDec(k + '_knot', { prio: Ak.prio ?? 6, tree, story: { arc: k, at: 'knot', wait: Ak.wait || [2, 40], to: 'trial' },
+      when: (S, X, a, p) => (Ak.when ? Ak.when(S, X, a, p) : X.stage(S) !== 'child'),
+      build: (S, X, a, p) => ({ title: def.knot.title, body: def.knot.body(S, X, a, p), choices: [...def.knot.choices(S, X, a, p), ...(main ? knotTurn(S, X) : [])] }),
+      apply(S, X, ch, c, a, p) {
+        if (main && String(ch).startsWith('turn:')) return { t: switchMain(S, X, ch.slice(5)), o: 'turned', to: null };   // bỏ đường này ngay từ lúc chọn lối, rẽ sang mạch khác
+        a.d.path = ch; if (ch === 'away') a.d.bg = S.age;
+        const t = def.knot.apply(S, X, ch, a, p); if (S.dead) return null; cnt(S, 'sg_' + k + '_' + ch); return { t, o: ch, to: 'trial' }; },
+      auto: (S, X, d, a, p) => def.knot.auto(S, X, a, p) });
+    sNode({ id: k + '_trial', st: At.st || AD, undead: ud, tree, story: { arc: k, at: 'trial', wait: At.wait || [3, 40], to: 'climax' }, w: wOf(At, main ? 5 : 4), c: At.c,
+      run(S, X, a, p) { const ok = X.chance(G.clamp(def.trial.base(S, X, a, p) + pb(a), .1, .92)); a.d.ok = ok;
+        return Object.assign({ k: ok ? 'good' : 'bad', o: ok ? 'ok' : 'fail' }, asR(def.trial.run(S, X, a, ok, p))); } });
+    sDec(k + '_climax', { prio: Ac.prio ?? 7, tree, story: { arc: k, at: 'climax', wait: Ac.wait || [3, 60], to: 'after' },
+      when: (S, X, a, p) => !a.d.bg && (Ac.when ? Ac.when(S, X, a, p) : main ? late(S, X) : X.stage(S) !== 'child'),
+      build: (S, X, a, p) => ({ title: def.climax.title, body: def.climax.body(S, X, a, p), choices: def.climax.choices(S, X, a, p) }),
+      apply(S, X, ch, c, a, p) { const r = def.climax.apply(S, X, ch, a, p); if (!r || S.dead) return null; a.d.end = r.o; cnt(S, 'sg_' + k + '_' + r.o); return { t: r.t, o: r.o, to: r.to === undefined ? 'after' : r.to }; },
+      auto: (S, X, d, a, p) => def.climax.auto(S, X, a, p) });
+    // Mạch chạy nền: cao trào xảy ra mà không hỏi (chuyện của người trong mạch, của làng, của thế giới).
+    if (def.climax.bg) sNode({ id: k + '_drift', st: Ac.st || AD, undead: ud, tree, story: { arc: k, at: 'climax', wait: Ac.wait || [3, 60], to: 'after' }, w: wOf({}, 4),
+      c: (S, X, a) => !!a.d.bg,
+      run(S, X, a, p) { const r = def.climax.bg(S, X, a, p); if (!r || S.dead) return r; a.d.end = r.o; return Object.assign({ k: 'info' }, r); } });
+    // Kết: mạch chính tới tuổi già, hoặc chừng 12 lượt sau cao trào (đi gần hết đời); mạch khác theo def.acts.after.
+    sNode({ id: k + '_after', st: Aa.st || AD, undead: ud, tree, story: { arc: k, at: 'after', wait: Aa.wait || [4, 80], to: 'end', dead: Aa.dead }, w: wOf(Aa, main ? 6 : 4),
+      c: Aa.c || (main ? (S, X, a) => X.stage(S) === 'elder' || S.age - a.t >= 12 : null),
+      run(S, X, a, p) { const o0 = a.d.end || def.good[0], o = def.end ? def.end(S, X, a, p, o0) : o0; a.d.end = o;
+        return Object.assign({ k: def.good.includes(o) ? 'big' : 'info' }, asR(def.after[o](S, X, a, p)), { o, to: 'end' }); } });
+    // Nhịp (chỉ khi nhân vật theo mạch): mạch chính trọng số gốc 0,45 (× kéo ≈ 2,7), cách 3 lượt; mạch khác 0,25, cách 4 lượt,
+    // khoảng chờ ngắn để mạch kẹt vẫn phai được.
+    if (def.beat) {
+      const beat = { id: k + '_beat', st: TAE, undead: ud, tree, story: { arc: k, at: ['open', 'knot', 'trial', 'climax'], wait: main ? [1, 99] : [1, 12] }, w: main ? .45 : .25,
+        c: (S, X, a) => !a.d.bg,
+        run(S, X, a, p) { a.d.prog = prog(a) + 1; const L = def.beat[a.at] || def.beat.any; return { t: X.pick(L).replace('{z}', zoneName(S, X, a)).replace(/{p}/g, p ? first(p.name) : 'người ấy').replace(/{kin}/g, a.d.kin === 'cha' ? 'cha' : a.d.kin || 'người thân'), k: 'info', to: null }; } };
+      sNode(beat); beat.gap = main ? 3 : 4;
+    }
   }
+  const saga = (k, def) => full(k, Object.assign(def, { tier: 'main' }));
   // Mạch chính bỏ dở vì rẽ sang mạch khác (quyết định Ngã rẽ).
   const turnedSum = d => `bỏ dở giữa chừng${d.to && SAGA[d.to] ? ', rẽ sang ' + SAGA[d.to].nameVi : ''}`;
   const zoneName = (S, X, a) => { const z = (a && a.d.zone && G.ZONE[a.d.zone]) ? G.ZONE[a.d.zone].zone : X.reg(S).zones[1] || X.reg(S).zones[0]; return z.nameVi; };
@@ -598,6 +615,45 @@ window.LifeSim = window.LifeSim || {};
       back: () => 'Bạn đốt cuốn sổ ghi tên. Đêm ấy bạn ngủ một giấc dài như hồi còn nhỏ.' }
   });
 
+  // ── Kết theo cả đường đi (người dùng chốt 17/10/2026): ngoài kết của cao trào, mỗi mạch chính có kết chỉ mở ra khi đi đúng
+  // lối (a.d.path), thử thách thành (a.d.ok) rồi chọn một kết ở cao trào (o). when(a, o) → kết mới; good: có tính là làm được không.
+  const PATH_END = {
+    m_avenge: [{ o: 'band_win', when: (a, o) => o === 'win' && a.d.path === 'band', good: true, mark: 'nguoi_giu_lang',
+      sum: d => `cùng một toán thợ săn trả nợ máu cho ${d.kin || 'làng'}, rồi giữ toán ấy lại làm phường săn giữ làng`,
+      after: (S, X, a) => `Toán người năm ấy không giải tán. Họ thành phường săn của làng, mỗi năm mài giáo một lần ở mộ ${a.d.kin || 'những người đã mất'}.` }],
+    m_rise: [{ o: 'workshop', when: (a, o) => (o === 'rich' || o === 'steady') && a.d.path === 'skill' && a.d.ok, good: true, mark: 'danh_tho',
+      sum: () => 'thoát nghèo nhờ một cái nghề, mở xưởng riêng', after: () => 'Cái xưởng nhỏ của bạn nhận ba đứa học việc. Đứa nào cũng con nhà nghèo, như bạn năm xưa.' }],
+    m_power: [{ o: 'self_made', when: (a, o) => o === 'top' && a.d.path === 'alone' && a.d.ok, good: true, mark: 'vuot_doi_thu',
+      sum: () => 'tự luyện một mình, không thầy, mà vươn tới đỉnh', after: () => 'Người ta hỏi thầy bạn là ai. Bạn chỉ ra bãi đất trống sau nhà.' }],
+    m_craft: [{ o: 'new_style', when: (a, o) => o === 'work' && a.d.path === 'new' && a.d.ok, good: true, mark: 'dong_moi',
+      sum: () => 'mở ra một lối làm mới mà thợ đời sau gọi theo tên mình', after: () => 'Thợ trẻ khắp vùng làm theo lối của bạn, gọi nó bằng tên bạn. Có người làm hay hơn bạn; bạn mừng.' }],
+    m_lead: [{ o: 'feared', when: (a, o) => o === 'chosen' && a.d.path === 'fear', good: false, mark: 'ba_chu',
+      sum: () => 'được bầu làm người đứng đầu vì người ta sợ', after: () => 'Hũ đậu đầy, nhưng không ai nhìn vào mắt bạn lúc bỏ hạt. Bạn ngồi ghế trên, ăn cơm một mình.' },
+      { o: 'elder', when: (a, o) => o === 'step' && a.d.path === 'serve' && a.d.ok, good: true, mark: 'nguoi_dung_dau',
+      sum: () => 'không ngồi ghế trưởng mà làng vẫn tìm tới mình', after: () => 'Người khác ngồi ghế trưởng làng, nhưng có chuyện khó người ta vẫn gõ cửa nhà bạn trước.' }],
+    m_faith: [{ o: 'own_way', when: (a, o) => o === 'left' && a.d.path === 'seek', good: true, mark: 'buong_bo',
+      sum: () => 'bỏ đạo cũ, tự tìm ra lời giải của riêng mình', after: () => 'Bạn không vào đền nữa. Sáng nào bạn cũng ngồi trước hiên, nhìn mặt trời lên, và thấy đủ.' }],
+    m_road: [{ o: 'trader', when: (a, o) => o === 'settle' && a.d.path === 'caravan' && a.d.ok, good: true, mark: 'duoc_tin',
+      sum: () => 'theo đoàn buôn đi xa rồi dừng ở một thành buôn, thành người nối hai miền', after: () => 'Bạn mở một quán trọ ở ngã ba đường buôn. Đoàn nào đi qua cũng ghé, mang tin từ cả hai đầu đất nước.' }],
+    m_house: [{ o: 'allied', when: (a, o) => o === 'claimed' && a.d.path === 'match', good: true, mark: 'che_cho',
+      sum: () => 'được nhận lại tên nhà nhờ một cuộc liên hôn', after: () => 'Hai họ ngồi chung một mâm. Tên bạn ghi trong gia phả cả hai nhà.' }],
+    m_guard: [{ o: 'militia', when: (a, o) => (o === 'held' || o === 'wall') && a.d.path === 'watch' && a.d.ok, good: true, mark: 'nguoi_dung_dau',
+      sum: () => 'lập đội dân canh thành lệ của làng', after: () => 'Đội dân canh của bạn thành lệ làng: trai mười sáu tuổi nào cũng phải canh một mùa. Lệ ấy giữ tới đời cháu.' }],
+    m_love: [{ o: 'eloped', when: (a, o) => o === 'wed' && a.d.path === 'elope', good: true, mark: 'que_moi',
+      sum: () => 'bỏ đi cùng người thương, dựng nhà ở nơi không ai biết', after: (S, X, a) => `Ở chốn mới không ai hỏi hai người từ đâu tới. ${lov(a)} trồng một giàn hoa trước cửa, giống hệt nhà cũ.` }],
+    m_lore: [{ o: 'scholar', when: (a, o) => o === 'shared' && a.d.path === 'books' && a.d.ok, good: true, mark: 'biet_bi_mat',
+      sum: () => 'thành học giả, sách mang tên mình nằm trong thư viện kinh đô', after: () => 'Học viện kinh đô mời bạn lên giảng một mùa. Bạn đi, mang theo cuốn sổ ghi chép đầu tiên, rách mép.' }],
+    m_atone: [{ o: 'forgiven', when: (a, o) => o === 'redeemed' && a.d.path === 'seek' && a.d.ok, good: true, mark: 'buong_bo',
+      sum: () => 'tìm được người mình từng làm hại và được chính người ấy tha', after: () => 'Người ấy nắm tay bạn, nói một câu bạn đợi nửa đời. Từ đó bạn không còn mơ thấy chuyện cũ.' }],
+    m_shadow: [{ o: 'puppet', when: (a, o) => o === 'throne' && a.d.path === 'patron', good: false, mark: 'ke_tiem_quyen',
+      sum: () => 'leo lên ghế nhờ kẻ quyền thế rồi làm con rối cho hắn', after: () => 'Bạn ngồi ghế trên, nhưng mọi tờ lệnh đều phải qua tay kẻ đã đưa bạn lên. Bạn hiểu mình chỉ đổi một chủ này lấy một chủ khác.' }]
+  };
+  for (const [k, L] of Object.entries(PATH_END)) {
+    const d = SAGA[k], e0 = d.end;
+    for (const x of L) { d.after[x.o] = x.after; d.sum[x.o] = x.sum; d.marks[x.o] = x.mark; if (x.good) d.good.push(x.o); }
+    d.end = (S, X, a, p, o) => { const x = L.find(x => x.when(a, o)); return x ? x.o : e0 ? e0(S, X, a, p, o) : o; };
+  }
+
   // ═════════ 3. Gieo mạch, chọn đường đời ═════════
   const sg = S => S.saga || (S.saga = { seed: {}, why: {}, k: null, asked: 0, t: null, init: false });
   // Ngã rẽ: sau khi chọn đường đời, một lần gieo ≥ turnHit cho mạch khác, hoặc mạch đó đã lớn thêm ≥ turnGrow kể từ lúc chọn, thì mở sg_turn.
@@ -810,95 +866,7 @@ window.LifeSim = window.LifeSim || {};
     if (m) { addSeed(S, m, 1, `Bạn làm ${G.WORKS[w].nameVi.toLowerCase()}.`); linkDec(S, X); }
   });
 
-  // ═════════ 4. Mạch ngắn (mọc từ quyết định thường) ═════════
-  // Mở bằng patchDec trên lựa chọn; một hoặc hai hồi; kết để lại dấu (G.ARCS[k].marks).
-  const SHORT = G.SAGA_SHORT = {};
-  function short(k, def) {
-    SHORT[k] = def;
-    G.ARCS[k] = { nameVi: def.nameVi, tier: 'short', good: def.good, marks: def.marks, sum: (o, p, rec) => (def.sum && def.sum[o] ? def.sum[o](p, rec) : null) };
-    patchDec(def.from, (S, X, ch, c) => { if (S.undead || !def.when(S, X, ch, c) || !X.chance(def.p)) return; const p = def.who ? G.castAdd(S, X, def.who(S, X)) : null; if (G.arcOpen(S, X, k, p, def.d ? def.d(S, X, ch) : {})) X._lk = true; });
-    for (const n of def.nodes) (n.dec ? sDec(n.id, n) : sNode(n));
-  }
-  const pName = p => (p ? first(p.name) : 'người ấy');
-  short('s_patron', { nameVi: 'Người thuê quay lại', from: 'quest', p: .45, when: (S, X, k) => k !== 'no', good: ['more', 'praise'], marks: { more: 'duoc_tin', praise: 'duoc_tin', stiff: 'ke_thu' },
-    who: () => ({ role: 'on', how: 'người từng thuê bạn làm việc', work: 'merchant', bond: 10 }),
-    sum: { more: p => `được ${pName(p)} giao việc lớn hơn sau lần thuê đầu`, stiff: p => `bị ${pName(p)} quỵt tiền công` },
-    nodes: [{ id: 's_patron_back', st: AD, story: { arc: 's_patron', at: 'open', wait: [2, 8], to: 'end' }, w: 3,
-      run(S, X, a, p) { const r = X.rnd() + S.so / 400;
-        if (r > .6) { X.money(Math.round(med(S, X) * .8)); return { t: `${pName(p)}, người thuê bạn năm trước, quay lại với một việc lớn hơn, trả trước một nửa.`, k: 'good', o: 'more', bond: 15 }; }
-        if (r > .3) { S.fame += 3; return { t: `${pName(p)} kể khắp chợ về việc bạn làm năm trước. Mấy người lạ tìm tới hỏi thuê bạn.`, k: 'good', o: 'praise', bond: 10 }; }
-        X.money(-Math.round(med(S, X) * .3)); return { t: `${pName(p)} thuê bạn lần nữa, rồi biến mất trước ngày trả công. Bạn ghi nhớ cái tên ấy.`, k: 'bad', o: 'stiff', bond: -40 }; } }] });
-  short('s_guild', { nameVi: 'Phe trong hội', from: 'org_join', p: .5, when: (S, X, k) => k !== 'no', good: ['old', 'young_win'], marks: { old: 'duoc_tin', young_win: 'duoc_tin', young_lose: 'ke_thu' },
-    sum: { old: () => 'đứng về phía hội trưởng lúc hội chia phe', young_win: () => 'cùng phe trẻ đổi mới cả hội', young_lose: () => 'thua trong một vụ chia phe ở hội' },
-    nodes: [{ id: 's_guild_split', dec: true, prio: 5, story: { arc: 's_guild', at: 'open', wait: [2, 8], to: 'end' },
-      build: () => ({ title: 'Hội chia phe', body: 'Hội trưởng đã già, phe trẻ muốn đổi luật chia phần. Ai cũng đang xem bạn đứng bên nào.',
-        choices: [{ k: 'old', label: 'Đứng về hội trưởng', sub: 'Giữ nếp cũ.' }, { k: 'young', label: 'Theo phe trẻ', sub: 'Thắng thì lên, thua thì có thù.' }, { k: 'out', label: 'Đứng ngoài', sub: '' }] }),
-      apply(S, X, ch) { if (ch === 'old') { X.add('so', 4); return { t: 'Bạn ngồi cạnh hội trưởng ở buổi họp. Phe trẻ rút lui.', o: 'old' }; }
-        if (ch === 'young') { if (X.chance(.5 + (S.so - 50) / 200)) { S.fame += 3; return { t: 'Phe trẻ thắng. Luật chia phần mới mang tên bạn trong danh sách người đề xướng.', o: 'young_win' }; } X.add('so', -5); return { t: 'Phe trẻ thua. Hội trưởng nhớ tên từng người đứng lên hôm ấy.', o: 'young_lose' }; }
-        return { t: 'Bạn không tới buổi họp. Cả hai phe đều hiểu.', o: 'out' }; },
-      auto: S => S.traits.bold > .55 ? 'young' : S.traits.social > .5 ? 'old' : 'out' }] });
-  short('s_cubs', { nameVi: 'Lứa thú con', from: 'bounty', p: .35, when: (S, X, k) => k === 'go', good: ['raise'], marks: { kill: 'tay_mau', raise: 'ban_cua_thu', sell: 'cua_phi_nghia' },
-    sum: { raise: () => 'nuôi lứa thú con của con quái mình đã hạ', sell: () => 'bán lứa thú con cho kẻ săn da' },
-    nodes: [{ id: 's_cubs_den', dec: true, prio: 5, story: { arc: 's_cubs', at: 'open', wait: [1, 6], to: 'end' },
-      build: () => ({ title: 'Lứa thú con', body: 'Trong hang của con quái bạn hạ năm ngoái, có một lứa con non đang đói.',
-        choices: [{ k: 'kill', label: 'Giết hết cho xong', sub: 'Lớn lên chúng sẽ xuống làng.' }, { k: 'raise', label: 'Mang một con về nuôi', sub: 'Có thể thành bạn, có thể thành họa.' }, { k: 'sell', label: 'Bán cho kẻ săn da', sub: 'Được giá.' }] }),
-      apply(S, X, ch) { if (ch === 'kill') { X.add('h', -4); return { t: 'Bạn làm việc cần làm rồi lấp cửa hang. Đêm ấy bạn không ăn được.', o: 'kill' }; }
-        if (ch === 'raise') { S.flags.pet = 'thú con của con quái năm nào'; X.gain('Taming', 6); X.add('h', 4); return { t: 'Bạn bọc con nhỏ nhất trong áo mang về. Nó cắn bạn ba lần trước khi chịu ăn.', o: 'raise' }; }
-        X.money(Math.round(med(S, X) * .6)); return { t: 'Kẻ săn da trả tiền mặt, không hỏi gì.', o: 'sell' }; },
-      auto: S => S.traits.social > .6 ? 'raise' : S.traits.pious < .3 ? 'sell' : 'kill' }] });
-  short('s_comrade', { nameVi: 'Đồng đội trong đoàn', from: 'merc', p: .5, when: (S, X, k) => k !== 'no', good: ['rank'], marks: { saved: 'no_mau', rank: 'duoc_tin', thief: 'ke_thu' },
-    who: () => ({ role: 'ban', how: 'đồng đội trong đoàn lính đánh thuê', work: 'guard', bond: 30 }),
-    sum: { saved: p => `được ${pName(p)} đỡ đòn thay`, rank: () => 'được giao chỉ huy một toán trong đoàn', thief: p => `bị ${pName(p)} cuỗm phần chia của cả toán` },
-    nodes: [{ id: 's_comrade_fate', st: AD, story: { arc: 's_comrade', at: 'open', wait: [1, 6], to: 'end' }, w: 3,
-      run(S, X, a, p) { const r = X.rnd();
-        if (r < .35) { if (p) { p.alive = false; p.died = S.world.year; } X.add('h', -10); return { t: `Trong một trận phục kích, ${pName(p)} lao ra đỡ nhát rìu nhắm vào bạn. Bạn chôn ${pName(p)} bên đường, cắm thanh kiếm làm bia.`, k: 'bad', o: 'saved' }; }
-        if (r < .7) { S.fame += 3; X.add('so', 4); return { t: `Đoàn trưởng giao cho bạn chỉ huy toán của ${pName(p)} và hai toán khác.`, k: 'good', o: 'rank', bond: 10 }; }
-        X.money(-Math.round(Math.max(0, S.gold) * .2)); if (p) { p.role = 'thu'; p.bond = -50; } return { t: `Sáng ra ${pName(p)} biến mất cùng phần chia của cả toán.`, k: 'bad', o: 'thief' }; } }] });
-  short('s_promise', { nameVi: 'Lời hứa lúc tranh cử', from: 'head_elect', p: .6, when: (S, X, k) => k === 'yes', good: ['keep'], marks: { keep: 'giu_loi', break: 'tieng_xau' },
-    sum: { keep: () => 'giữ lời hứa đào giếng lúc tranh ghế trưởng', break: () => 'quên lời hứa lúc tranh ghế trưởng' },
-    nodes: [{ id: 's_promise_well', dec: true, prio: 5, story: { arc: 's_promise', at: 'open', wait: [2, 8], to: 'end' },
-      build: (S, X) => ({ title: 'Lời hứa', body: `Lúc tranh ghế, bạn hứa đào một cái giếng mới cho xóm cuối. Giờ cần chừng ${G.coin(Math.round(med(S, X) * .8))}.`,
-        choices: [{ k: 'keep', label: 'Giữ lời', sub: 'Tốn tiền nhà mình.' }, { k: 'break', label: 'Để sau', sub: 'Người ta sẽ nhớ.' }] }),
-      apply(S, X, ch) { if (ch === 'keep') { X.money(-Math.round(med(S, X) * .8)); X.add('so', 8); return { t: 'Giếng đào xong trước mùa khô. Người xóm cuối gọi nó theo tên bạn.', o: 'keep' }; } X.add('so', -6); return { t: 'Mùa khô tới, xóm cuối vẫn gánh nước từ sông.', o: 'break' }; },
-      auto: (S, X) => S.gold > med(S, X) || S.traits.social > .5 ? 'keep' : 'break' }] });
-  short('s_newland', { nameVi: 'Đất mới', from: 'migrate', p: .5, when: (S, X, k) => k !== 'stay', good: ['home'], marks: { home: 'que_moi', cold: 'nguoi_la' },
-    sum: { home: p => `được ${pName(p)} đón ở vùng đất mới` },
-    nodes: [{ id: 's_newland_first', st: TAE, story: { arc: 's_newland', at: 'open', wait: [0, 4], to: 'end' }, w: 4,
-      run(S, X) { if (X.chance(.4 + S.traits.social * .4)) { const p = G.castAdd(S, X, { role: 'ban', how: 'người hàng xóm đầu tiên ở đất mới', bond: 40 }); X.add('so', 5); return { t: `${first(p.name)}, nhà bên cạnh, mang sang một nồi canh vào tối đầu tiên bạn tới. Bạn thấy đất này cũng có thể là quê.`, k: 'good', o: 'home' }; }
-        X.add('so', -4); return { t: 'Ở đất mới chưa ai chào bạn. Người ta nhìn bạn đi chợ như nhìn khách qua đường.', k: 'bad', o: 'cold' }; } }] });
-  short('s_loot', { nameVi: 'Lai lịch món đồ', from: 'gear', p: .25, when: (S, X, k) => k === 'buy', good: ['return'], marks: { return: 'giu_loi', keep: 'tieng_xau' },
-    sum: { return: () => 'trả lại món đồ ăn cắp cho chủ cũ' },
-    nodes: [{ id: 's_loot_owner', dec: true, prio: 5, story: { arc: 's_loot', at: 'open', wait: [1, 6], to: 'end' },
-      build: () => ({ title: 'Chủ cũ của món đồ', body: 'Một người lạ chặn bạn ở chợ: món đồ bạn mua năm ngoái là của nhà ông ta, bị trộm.',
-        choices: [{ k: 'return', label: 'Trả lại', sub: 'Mất món đồ.' }, { k: 'pay', label: 'Trả thêm tiền để giữ', sub: '' }, { k: 'keep', label: 'Bảo ông ta đi chỗ khác', sub: 'Đồ bạn mua bằng tiền.' }] }),
-      apply(S, X, ch) { if (ch === 'return') { S.gear = Math.max(0, S.gear - 1); X.add('so', 6); return { t: 'Bạn tháo món đồ đưa lại. Ông ta khóc, cúi đầu ba lần.', o: 'return' }; }
-        if (ch === 'pay') { X.money(-Math.round(med(S, X) * .5)); return { t: 'Bạn trả thêm cho ông ta một khoản. Hai bên bắt tay.', o: 'pay' }; }
-        X.add('so', -4); return { t: 'Bạn gạt ông ta ra. Cả chợ nhìn theo.', o: 'keep' }; },
-      auto: (S, X) => S.traits.pious > .55 ? 'return' : S.gold > med(S, X) ? 'pay' : 'keep' }] });
-  short('s_founder', { nameVi: 'Những người đầu tiên', from: 'found_settle', p: 1, when: (S, X, k) => k !== 'no', good: ['root'], marks: { root: 'nguoi_lap_lang' },
-    sum: { root: () => 'dựng một ngôi làng từ đất trống' },
-    nodes: [{ id: 's_founder_first', st: AD, story: { arc: 's_founder', at: 'open', wait: [0, 4], to: 'end' }, w: 5,
-      run(S, X) { const p = G.castAdd(S, X, { role: 'ban', how: 'người đầu tiên tới ở làng bạn lập', bond: 45, work: 'farmer' });
-        return { t: `Nhà ${first(p.name)} là nhà đầu tiên tới ở làng bạn lập. Hai nhà cùng dựng cái giếng chung, khắc tên cả hai lên thành giếng.`, k: 'good', o: 'root' }; } }] });
-  short('s_healer', { nameVi: 'Ơn thầy thuốc', from: 'healer', p: .5, when: (S, X, k) => k === 'pay' || k === 'pray', good: ['repaid'], marks: { repaid: 'duoc_tin', refused: 'tieng_xau' },
-    who: () => ({ role: 'an', how: 'thầy thuốc chữa cho bạn năm ấy', work: 'healer', bond: 30 }),
-    sum: { repaid: p => `trả ơn ${pName(p)}, thầy thuốc từng chữa cho mình` },
-    nodes: [{ id: 's_healer_ask', dec: true, prio: 5, story: { arc: 's_healer', at: 'open', wait: [2, 8], to: 'end' },
-      build: (S, X, a, p) => ({ title: 'Thầy thuốc nhờ việc', body: `${pName(p)}, thầy thuốc chữa cho bạn năm ấy, cần người vào khu săn hái một loại rễ thuốc cho đứa trẻ đang sốt.`,
-        choices: [{ k: 'go', label: 'Đi hái thuốc', sub: 'Khu săn có quái.' }, { k: 'no', label: 'Từ chối', sub: '' }] }),
-      apply(S, X, ch, c, a, p) { if (ch === 'go') { if (X.chance(odds(S, X, .6))) { X.add('so', 5); return { t: 'Bạn mang rễ thuốc về trước khi trời tối. Đứa trẻ hạ sốt vào sáng hôm sau.', o: 'repaid' }; } X.add('hl', -10); X.cond('wound'); return { t: 'Bạn mang được rễ thuốc về, kèm một vết cắn ở bắp chân. Đứa trẻ khỏi; bạn nằm một tháng.', o: 'repaid' }; }
-        return { t: `${pName(p)} gật đầu, không nói gì, rồi đi tìm người khác.`, o: 'refused' }; },
-      auto: S => S.traits.bold > .35 || S.traits.social > .5 ? 'go' : 'no' }] });
-  short('s_classmate', { nameVi: 'Bạn cùng lớp', from: 'school', p: .6, when: (S, X, k) => k !== 'no', good: ['friend', 'rival'],
-    sum: {},
-    nodes: [{ id: 's_classmate_meet', st: ['child', 'teen'], story: { arc: 's_classmate', at: 'open', wait: [0, 4], to: 'end' }, w: 4,
-      run(S, X) { if (X.chance(.6)) { const p = G.castAdd(S, X, { role: 'ban', how: 'bạn cùng lớp của bạn', bond: 40 }); G.arcOpen(S, X, 'friend', p, {}); return { t: `Ở trường, bạn ngồi cạnh ${first(p.name)}. Hai đứa chép bài của nhau, bị phạt cùng nhau.`, k: 'good', o: 'friend' }; }
-        const p = G.castAdd(S, X, { role: 'doi', how: 'kẻ đứng đầu lớp năm ấy', bond: -15, drive: .7 }); G.arcOpen(S, X, 'rival', p, {}); return { t: `Ở trường, ${first(p.name)} luôn đứng đầu lớp, và luôn nhìn bạn như nhìn người thứ hai.`, k: 'info', o: 'rival' }; } }] });
-  short('s_license', { nameVi: 'Kẻ trốn giấy phép', from: 'cv_license', p: .6, when: (S, X, k) => k === 'hide', good: ['slip'], marks: { caught: 'tieng_xau' },
-    sum: { caught: () => 'bị bắt quả tang luyện phép không giấy' },
-    nodes: [{ id: 's_license_check', st: AD, story: { arc: 's_license', at: 'open', wait: [1, 6], to: 'end' }, w: 3,
-      run(S, X) { if (X.chance(.5)) { X.money(-Math.round(med(S, X) * .6)); cnt(S, 'crimes'); return { t: 'Lính tuần tra gõ cửa đúng lúc bạn đang luyện phép. Bạn nộp phạt, tên bạn vào sổ.', k: 'bad', o: 'caught' }; }
-        return { t: 'Lính tuần tra hỏi han cả xóm về người luyện phép không giấy. Không ai chỉ nhà bạn.', k: 'info', o: 'slip' }; } }] });
+  // ═════════ 4. Mạch đời thường (mọc từ quyết định thường): ở js/arcs.js, cùng khuôn full() ═════════
 
   // ═════════ 5. Bọc chung: trọng số, đi theo mạch, dấu hệ quả ═════════
   const hooked = new Set((G.STORY_HOOKS || []).map(h => h.id));
@@ -916,23 +884,29 @@ window.LifeSim = window.LifeSim || {};
     return 0;
   };
   const LONE = new Set();
-  for (const e of G.EVENTS) {
-    if (!e._story) API.wrapStory(e);   // sự kiện của racev.js, culture.js thêm sau story.js: đếm cùng thang
+  // Bọc sự kiện, nút mới (gọi lại được: js/arcs.js nạp sau thêm nút rồi gọi G.sagaApi.wrap()).
+  function wrapAll() {
+    for (const e of G.EVENTS) {
+      if (!e._story) API.wrapStory(e);   // sự kiện của racev.js, culture.js thêm sau story.js: đếm cùng thang
+    }
+    for (const e of NEW.splice(0)) { G.treeWrap.event(e); API.wrapStory(e); }
+    for (const id of NEWD.splice(0)) G.treeWrap.decision(id, DEC[id]);
+    for (const e of G.EVENTS) {
+      if (e._saga) continue; e._saga = true;
+      if (isLone(e)) LONE.add(e.id);
+      const w0 = e.w;
+      e.w = keep((S, X) => {
+        const w = typeof w0 === 'function' ? w0(S, X) : w0; if (!w || S.undead) return w;
+        const meta = G.treeMeta(e.id), mk = markW(S, e.id, meta);
+        let m = mk.m; const k = S.saga && S.saga.k;
+        if (k) { const f = followOf(S, e, meta, k); if (f) m *= 1 + G.SAGA_CFG.followK * f; else if (LONE.has(e.id)) m *= G.SAGA_CFG.loneK; else if (/_days$/.test(e.id)) m *= G.SAGA_CFG.daysK; }
+        return w * m;
+      }, typeof w0 === 'function' ? w0 : null);
+    }
   }
-  for (const e of NEW) { G.treeWrap.event(e); API.wrapStory(e); }
-  for (const id of NEWD) G.treeWrap.decision(id, DEC[id]);
-  for (const e of G.EVENTS) {
-    if (e._saga) continue; e._saga = true;
-    if (isLone(e)) LONE.add(e.id);
-    const w0 = e.w;
-    e.w = keep((S, X) => {
-      const w = typeof w0 === 'function' ? w0(S, X) : w0; if (!w || S.undead) return w;
-      const meta = G.treeMeta(e.id), mk = markW(S, e.id, meta);
-      let m = mk.m; const k = S.saga && S.saga.k;
-      if (k) { const f = followOf(S, e, meta, k); if (f) m *= 1 + G.SAGA_CFG.followK * f; else if (LONE.has(e.id)) m *= G.SAGA_CFG.loneK; else if (/_days$/.test(e.id)) m *= G.SAGA_CFG.daysK; }
-      return w * m;
-    }, typeof w0 === 'function' ? w0 : null);
-  }
+  wrapAll();
+  // Cho js/arcs.js: khuôn mạch đầy đủ và tiện ích chung.
+  G.sagaApi = { full, sNode, sDec, wrap: wrapAll, odds, med, late, prog, pb, cnt, AD, TA, TAE };
   // Sau khi sự kiện chạy (story.js gọi): dấu hệ quả → đi theo mạch chính → gieo mạch.
   G.storyLinkHook = function (S, X, e, r) {
     if (S.undead) return false;

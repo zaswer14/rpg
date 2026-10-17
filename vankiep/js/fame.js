@@ -152,7 +152,7 @@ window.LifeSim = window.LifeSim || {};
     { id: 'road_turn', cat: 'saga', rank: 1, nameVi: 'Ngã rẽ', d: 'Bỏ dở một đường đời để rẽ sang đường khác.', ok: S => (S.arcDone || []).some(d => G.SAGA && G.SAGA[d.k] && d.o === 'turned') },
     { id: 'road_two', cat: 'saga', rank: 3, nameVi: 'Hai đời trong một đời', d: 'Khép hai mạch chính với kết làm được.', ok: S => (S.arcDone || []).filter(d => G.SAGA && G.SAGA[d.k] && G.ARCS[d.k].good.includes(d.o)).length >= 2 },
     { id: "tales", cat: "saga", rank: 1, nameVi: 'Đời nhiều chuyện', d: 'Khép sáu mạch truyện.', ok: S => arcsN(S) >= 6 },
-    { id: 'avenged', cat: 'saga', rank: 2, nameVi: 'Báo được thù', d: 'Khép mạch Báo thù hay Mối thù bằng chiến thắng.', ok: S => (S.arcDone || []).some(d => (d.k === 'vengeance' || d.k === 'feud') && d.o === 'win') },
+    { id: 'avenged', cat: 'saga', rank: 2, nameVi: 'Báo được thù', d: 'Khép mạch Báo thù hay Mối thù bằng chiến thắng.', ok: S => (S.arcDone || []).some(d => (d.k === 'vengeance' || d.k === 'feud') && ['win', 'win_blood', 'trap'].includes(d.o)) },
     { id: 'whole', cat: 'saga', rank: 3, nameVi: 'Không phụ đời mình', d: 'Lúc chết, mọi chương đời (ít nhất ba) đều làm được.', ok: (S, X, w) => w === 'death' && (S.chapDone || []).length >= 3 && S.chapDone.every(c => c.ok) },
     // Hành trình
     { id: 'roam5', cat: 'road', rank: 2, nameVi: 'Đi khắp chốn', d: 'Sống ở năm vùng khác nhau.', ok: S => regions(S) >= 5 },
@@ -465,8 +465,8 @@ window.LifeSim = window.LifeSim || {};
       saga: S.saga ? { k: S.saga.k || null, nameVi: S.saga.k && G.SAGA[S.saga.k] ? G.SAGA[S.saga.k].nameVi : null, text: G.sagaText ? G.sagaText(S) : '' } : null,
       chapters: (S.chapDone || []).map(c => ({ ph: c.ph, phVi: G.PHASE_VI[c.ph], q: c.q, ok: c.ok, y0: c.y0, y1: c.y1 })),
       arcs: arcs.map(d => { const A = G.ARCS[d.k] || {}, q = p(d.who), mk = A.marks && d.o ? A.marks[d.o] : null;
-        return { k: d.k, nameVi: A.nameVi || d.k, tier: A.tier || 'side', who: d.name || (q ? q.name : null), role: q ? (G.ROLE_VI[q.role] || q.role) : null, o: d.o, good: !!(A.good && A.good.includes(d.o)),
-          sum: sumOf(d), y0: yr(d.t0), y1: yr(d.t), done: d.done, at: d.at || null, mark: mk && G.MARKS[mk] ? G.MARKS[mk].nameVi : null, tag: (A.nameVi || d.k) + (d.name ? ' · ' + first(d.name) : d.d && d.d.kin ? ' · ' + d.d.kin : '') }; }),
+        return { k: d.k, nameVi: A.nameVi || d.k, tier: A.tier || 'arc', who: d.name || (q ? q.name : null), role: q ? (G.ROLE_VI[q.role] || q.role) : null, o: d.o, good: !!(A.good && A.good.includes(d.o)),
+          sum: sumOf(d), y0: yr(d.t0), y1: yr(d.t), done: d.done, at: d.at || null, mark: mk && G.MARKS[mk] ? G.MARKS[mk].nameVi : null, bg: d.d && d.d.bg != null ? yr(d.d.bg) : null, path: (d.d && d.d.path) || null, tag: (A.nameVi || d.k) + (d.name ? ' · ' + first(d.name) : d.d && d.d.kin ? ' · ' + d.d.kin : '') }; }),
       log: (S.log || []).filter(e => e.kiep === S.kiep && e.kind !== 'fx').map(e => ({ y: e.yrs, wy: e.wy, k: e.kind, arc: e.arc || null, ev: e.ev || null, t: e.text })),
       choices: (S.choices || []).map(c => ({ y: c.y, id: c.id, title: c.title, label: c.label, sub: c.sub, alts: c.alts, arc: c.arc, out: c.out, fx: c.fx, ph: c.ph, n: c.n })),   // n: số mốc lựa chọn do trang Cây Cốt Truyện gắn (trùng sinh)
       ach: G.achList(S).map(a => ({ id: a.id, y: a.y, nameVi: a.A.nameVi, rank: a.A.rank, rankVi: G.ACH_RANK[a.A.rank].nameVi, cat: G.ACH_CAT[a.A.cat], d: a.A.d })),

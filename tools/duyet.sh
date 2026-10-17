@@ -17,7 +17,7 @@ cover() { case $1 in
   nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
   content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js vankiep/js/status.js vankiep/js/econ.js vankiep/js/inst.js vankiep/js/fate.js vankiep/js/race.js vankiep/js/tree.js vankiep/js/story.js vankiep/js/racev.js vankiep/js/culture.js vankiep/js/fame.js shared/faiths.js vankiep/js/state.js shared/skills.js vankiep/data/world.js vankiep/data/nations.js vankiep/data/skills.js vankiep/data/jobtree.js shared/compose.js review/content-" ;;
   bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
-  story)    echo "vankiep/js/saga.js vankiep/js/story.js review/story-" ;;
+  story)    echo "vankiep/js/saga.js vankiep/js/arcs.js vankiep/js/story.js review/story-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).
 # Cả vankiep/js/: file hệ thống mới tự bị báo cho tới khi có tab trên trang Duyệt Nội Dung (CLAUDE.md: mỗi hệ thống mới thêm vào trang đó).

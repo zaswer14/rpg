@@ -116,25 +116,25 @@ code{font-family:var(--font-mono);font-size:12px}
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
-  const TIER = { main: 'mạch chính', side: 'mạch phụ', short: 'mạch ngắn' };
+  const TIER = { main: 'mạch chính (đường đời)', arc: 'mạch truyện' };
   const AX = { vo: 'Võ', phap: 'Pháp', am: 'Ám', tri: 'Trí', nghe: 'Nghề', thuong: 'Thương', dao: 'Đạo', quyen: 'Quyền', gia: 'Gia', du: 'Du' };
   const num = v => String(v).replace('.', ',');
   const stepVi = s => (D.stepVi && D.stepVi[s]) || ({ open: 'mở đầu', knot: 'thắt nút', climax: 'cao trào', after: 'sau đó' }[s] || s);
   const reviews = {}, drafts = {};
   let db = null, dbState = 'connecting';
-  const TABS = [['rules', 'Luật'], ['main', 'Mạch chính'], ['side', 'Mạch phụ'], ['short', 'Mạch ngắn'], ['marks', 'Dấu hệ quả'], ['seeds', 'Gieo mạch, đi theo']];
+  const TABS = [['rules', 'Luật'], ['main', 'Đường đời'], ['arc', 'Mạch truyện'], ['marks', 'Dấu hệ quả'], ['seeds', 'Gieo mạch, đi theo']];
   const state = { tab: 'main', filter: 'all' };
   try { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) state.tab = h; } catch (e) {}
   try { const f = localStorage.getItem('storyReview.filter'); if (f) state.filter = f; } catch (e) {}
   const key = (kind, id) => kind + '__' + id;
   const rv = (kind, id) => reviews[key(kind, id)] || {};
 
-  const RULES = [['tier', 'Ba tầng mạch'], ['road', 'Đường đời: chọn mạch chính'], ['turn', 'Ngã rẽ: đổi mạch chính'], ['follow', 'Đi theo mạch, tiến độ'], ['marks', 'Dấu hệ quả'], ['lone', 'Sự kiện ngoài mạch']];
+  const RULES = [['tier', 'Khuôn mạch, vai chính và phụ'], ['road', 'Đường đời: chọn mạch chính'], ['turn', 'Ngã rẽ: đổi mạch chính'], ['follow', 'Đi theo mạch, tiến độ'], ['marks', 'Dấu hệ quả'], ['lone', 'Sự kiện ngoài mạch']];
   const tierArcs = t => D.arcs.filter(a => a.tier === t);
   const arcItems = t => tierArcs(t).flatMap(a => [{ kind: 'arc', id: a.id, name: a.nameVi }, ...a.nodes.map(n => ({ kind: 'node', id: n.id, name: `${a.nameVi} · ${stepVi(n.at[0])}` }))]);
   const items = {
     rules: RULES.map(([id, name]) => ({ kind: 'rule', id, name })),
-    main: arcItems('main'), side: arcItems('side'), short: arcItems('short'),
+    main: arcItems('main'), arc: arcItems('arc'),
     marks: Object.entries(D.marks).map(([id, m]) => ({ kind: 'mark', id, name: m.nameVi })),
     seeds: Object.keys(D.seeds).map(id => ({ kind: 'seed', id, name: id }))
   };
@@ -171,7 +171,7 @@ code{font-family:var(--font-mono);font-size:12px}
   function rulesView() {
     const C = D.cfg, S = D.story;
     const BODY = {
-      tier: `<p style="margin:0">Ba tầng mạch cùng chạy: <b>mạch chính</b> (một mạch, cả đời, 5 hồi và một nhịp lặp), <b>mạch phụ</b> (mạch người quen: đối thủ, ân nhân, tình xưa, thầy trò…, tối đa ${S.arcMax} cùng lúc), <b>mạch ngắn</b> (một hai hồi, mọc từ quyết định thường hay chuyện nhỏ, tối đa ${S.shortMax} cùng lúc). Nút của mạch đang mở được kéo trọng số × ${num(S.pull)}; mạch chính × ${num(S.mainK)} nữa.</p>`,
+      tier: `<p style="margin:0">Mọi mạch dùng chung một khuôn đầy đủ (docs/16 mục 10): <b>mở đầu</b> → <b>chọn lối</b> (quyết định) → <b>thử thách</b> → <b>cao trào</b> (quyết định) → <b>kết</b>, có nhiều kết. Kết chọn theo cả đường đi: lối đã chọn, thử thách thành hay bại, tiến độ, lựa chọn ở cao trào (luật từng mạch ở thẻ mạch). Không còn "mạch phụ" như một loại mạch: <b>phụ là vai trò</b>. Chọn lối đứng ngoài (away) thì mạch vẫn chạy tới kết nhưng chạy nền: nút thưa hơn, không có nhịp, cao trào là chuyện của người trong mạch hay của thế giới (không hỏi), kết riêng. Cùng lúc một mạch chính (đường đời) và tối đa ${S.arcMax} mạch khác; nút của mạch đang mở được kéo trọng số × ${num(S.pull)}; mạch chính của chương × ${num(S.mainK)} nữa. Người trong mạch chết trước cao trào thì mạch dở dang (gone); đã qua cao trào thì mạch khép bằng kết đã định.</p>`,
       road: `<p style="margin:0">Từ lúc sinh tới hết thiếu thời, sự kiện và quyết định cộng điểm cho các mạch chính hợp với nó (tab Gieo mạch). Điểm lúc chọn = điểm gieo + 3 × phần quỹ đạo theo hướng của mạch + 2 nếu hợp chí hướng + phần theo tính cách. Món nợ máu, Tên nhà, Một mối tình, Chuộc lỗi, Tham vọng chỉ hiện khi đã có chuyện gieo (người thân chết, con ngoài giá thú, mồ côi…); Con đường đức tin cần có đạo.</p><dl class="kv"><dt>Khi nào</dt><dd>${esc(D.road.when)}</dd></dl>${lines(D.road.texts)}`,
       turn: D.turn ? `<p style="margin:0">Một đời có thể đi qua nhiều mạch chính nối nhau. Sau khi chọn đường đời, sự kiện, quyết định, dấu vẫn gieo điểm cho các mạch khác. Có ba lối đổi mạch: (1) hồi <b>chọn lối</b> của mọi mạch chính có thêm lựa chọn "Thôi, rẽ sang …" khi một mạch khác đang gọi mạnh (điểm ≥ 3); (2) quyết định <b>Ngã rẽ</b> (${esc(D.turn.when)}): một lần gieo ≥ ${num(D.turn.cfg.hit)} hoặc mạch đó lớn thêm ≥ ${num(D.turn.cfg.grow)} từ lúc chọn; Tự sống gặp chuyện lớn thì rẽ theo tính cách (gan thì báo thù, mộ đạo thì chuộc lỗi…); (3) mạch đã khép mà còn ở tuổi trưởng thành thì hỏi <b>Đường đời mới</b> trong các mạch chưa đi (điểm ≥ ${num(D.turn.cfg.newMin)}, chuyện gần đây nặng hơn chuyện thơ ấu), hoặc sống nốt đời theo ngày. Mạch bỏ dở khép với kết <i>turned</i> (bỏ dở giữa chừng, rẽ sang …), không để dấu; tối đa ${D.turn.cfg.max} lần đổi một đời, cách nhau ≥ ${D.turn.cfg.gap} lượt.</p>
         <p class="sub">Kết của mạch này gieo cho mạch sau:</p><ul class="lines">${D.turn.chain.map(([a, o, L]) => `<li>${esc(a)} · ${esc(o)} → ${L.map(([b, v]) => esc(b) + ' +' + num(v)).join(', ')}</li>`).join('')}</ul>` : '',
@@ -189,15 +189,15 @@ code{font-family:var(--font-mono);font-size:12px}
     const outs = `<div class="out">${a.outcomes.map(o => `<span class="o">${esc(o.o)}</span><span class="${o.good ? 'g' : 'b'}">${esc(o.sum || '—')}</span><span>${o.mark ? markChip(o.mark) : ''}</span>`).join('')}</div>`;
     const opens = a.tier === 'main' ? (a.opens.length ? `<dl class="kv"><dt>Gieo từ</dt><dd class="chips">${a.opens.slice(0, 16).map(([id, v]) => `<span class="chip" title="${esc(D.evText[id] || '')}">${esc(id)} +${num(v)}</span>`).join('')}</dd></dl>` : '') : chips('Mở từ', a.opens);
     const meta = a.tier === 'main' ? `<dl class="kv"><dt>Lời gọi</dt><dd>${esc(a.pitch)}</dd><dt>Câu hỏi chương</dt><dd>${esc(a.quest || '')}</dd><dt>Hướng</dt><dd>${Object.entries(a.axes).map(([k, v]) => `${AX[k]} ${num(v)}`).join(', ')}${a.themes.length ? '; chủ đề ' + a.themes.join(', ') : ''}${a.aim ? '; chí hướng ' + (D.aims[a.aim] || a.aim) : ''}</dd></dl><p class="sub">Câu nối khi sự kiện đi theo mạch:</p>${lines(a.follow)}` : (a.quest ? `<dl class="kv"><dt>Câu hỏi chương</dt><dd>${esc(a.quest)}</dd></dl>` : '');
-    return card('arc', a.id, a.nameVi, `<div class="meta"><span class="tier ${a.tier}">${TIER[a.tier]}</span>${a.passive ? ' · không chiếm chỗ' : ''}</div>${meta}${opens}${flow}<p class="sub">Kết → tóm tắt trong đoạn tưởng nhớ → dấu để lại:</p>${outs}`);
+    return card('arc', a.id, a.nameVi, `<div class="meta"><span class="tier ${a.tier}">${TIER[a.tier]}</span>${a.passive ? ' · không chiếm chỗ' : ''}</div>${meta}${opens}${flow}<p class="sub">Kết → tóm tắt trong đoạn tưởng nhớ → dấu để lại:</p>${outs}${a.away ? '<p class="sub">Có lối đứng ngoài: mạch chạy nền, kết do người trong mạch hay thế giới quyết.</p>' : ''}${a.endRule ? `<details><summary>Luật chọn kết theo đường đi</summary><code>${esc(a.endRule)}</code></details>` : ''}`);
   }
   function nodeCard(a, n) {
-    const tags = [n.kind === 'dec' ? 'quyết định' : n.beat ? 'nhịp lặp' : 'sự kiện', n.at.map(stepVi).join(' / '), n.wait ? `chờ ${n.wait[0]}–${n.wait[1]} lượt` : null, n.w != null ? `trọng số ${num(n.w)}` : null].filter(Boolean);
+    const tags = [n.kind === 'dec' ? 'quyết định' : n.beat ? 'nhịp lặp' : n.bg ? 'sự kiện khi chạy nền' : 'sự kiện', n.at.map(stepVi).join(' / '), n.wait ? `chờ ${n.wait[0]}–${n.wait[1]} lượt` : null, n.w != null ? `trọng số ${num(n.w)}` : null].filter(Boolean);
     return card('node', n.id, `${a.nameVi} · ${n.title || stepVi(n.at[0])}`, `<div class="meta">${esc(tags.join(' · '))}</div>${n.choices && n.choices.length ? chips('Lựa chọn', n.choices) : ''}${lines(n.texts)}${chips('Tác dụng', n.fx)}`);
   }
   function arcsView(t) {
-    const INTRO = { main: 'Tám mạch cả đời. Mỗi mạch: mở đầu → chọn đường (quyết định) → thử thách → cao trào (quyết định, từ trung niên) → kết (tuổi già hoặc 12 lượt sau cao trào), cùng một nhịp lặp góp tiến độ.',
-      side: 'Mạch của người quen (docs/13); giờ mỗi kết để lại dấu hệ quả.', short: 'Mạch một hai hồi: mạch ngắn mới mọc từ quyết định thường (nhận việc thuê, vào hội, săn thưởng, di cư, mua đồ, lập làng…), và các mạch cũ ngắn (nợ cờ bạc, bí mật, người mang ơn, người mất tích, lời bà đồng).' };
+    const INTRO = { main: 'Mười ba mạch cả đời (đường đời), gieo từ thơ ấu, chốt bằng quyết định Đường đời; một đời có thể rẽ qua nhiều mạch. Cao trào từ trung niên; kết lúc tuổi già hoặc 12 lượt sau cao trào; có nhịp lặp góp tiến độ.',
+      arc: 'Mạch người quen (đối thủ, ân nhân, tình xưa, thầy trò…; mở từ sự kiện có sẵn) và mạch đời thường (mọc từ quyết định thường: nhận việc thuê, vào hội, săn thưởng, di cư, lập làng…). Cùng khuôn 5 hồi, nhiều kết như mạch chính; mỗi mạch đi chừng 10–25 lượt.' };
     return overview(TIER[t].charAt(0).toUpperCase() + TIER[t].slice(1), INTRO[t])
       + grid(tierArcs(t).map(a => `<h3 class="group-title">${esc(a.nameVi)}</h3>` + arcCard(a) + a.nodes.map(n => nodeCard(a, n)).join('')).join(''));
   }

@@ -100,7 +100,7 @@ svg .hit:focus-visible .ring,svg .sel .ring{stroke:var(--ink);stroke-width:2}
 .card .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .card h4{margin:0;font-size:14.5px;font-weight:600}
 .tier{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
-.tier.main{color:var(--main)} .tier.side{color:var(--side)} .tier.short{color:var(--short)}
+.tier.main{color:var(--main)} .tier.arc{color:var(--side)}
 .end{font-size:13px} .end.good{color:var(--ok)}
 .chrows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;margin-top:8px}
 .chrow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 10px;padding:8px 12px;border-top:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;background:none;border-left:0;border-right:0;border-bottom:0;width:100%}
@@ -222,9 +222,10 @@ code{font-family:var(--font-mono);font-size:12px}
     <section class="facts" id="facts" aria-label="Tóm tắt"></section>
     <div class="legend" aria-hidden="true">
       <span><i style="background:var(--trunk);height:6px"></i>Thân đời</span>
-      <span><i style="background:var(--main)"></i>Mạch chính</span>
-      <span><i style="background:var(--side)"></i>Mạch phụ (người quen)</span>
-      <span><i style="background:var(--short)"></i>Mạch ngắn</span>
+      <span><i style="background:var(--main)"></i>Đường đời (mạch chính)</span>
+      <span><i style="background:var(--side)"></i>Mạch truyện khác</span>
+      <span><i style="background:var(--side);height:5px"></i>Nét đậm: nhân vật theo mạch</span>
+      <span><i style="background:var(--side);height:2px"></i>Nét mảnh: mạch chạy nền (vai phụ)</span>
       <span><i style="background:var(--mark)"></i>Hệ quả của dấu</span>
       <span><i class="dia"></i>Quyết định</span>
       <span><i class="star">★</i>Thành tựu</span>
@@ -303,6 +304,7 @@ code{font-family:var(--font-mono);font-size:12px}
 <script src="../vankiep/js/racev.js"></script>
 <script src="../vankiep/js/culture.js"></script>
 <script src="../vankiep/js/saga.js"></script>
+<script src="../vankiep/js/arcs.js"></script>
 <script src="../vankiep/js/fame.js"></script>
 <script>
 (function () {
@@ -311,7 +313,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const G = window.LifeSim, J = window.JobLibrary;
   if (!G || !G.Sim || !G.storyTree) { $('status').textContent = 'Không nạp được mã game (thiếu file js).'; $('status').className = 'status err'; return; }
   const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
-  const TIER_VI = { main: 'Mạch chính', side: 'Mạch phụ', short: 'Mạch ngắn' };
+  const TIER_VI = { main: 'Đường đời', arc: 'Mạch truyện', all: 'Mạch truyện' };
   const ORIGIN_VI = { royal_main: 'hoàng gia, dòng chính', royal_side: 'hoàng gia, dòng phụ', noble: 'quý tộc' };
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
   const PREF = 'caytruyen.pref.v1', HIST = 'caytruyen.hist.v1', REB = 'caytruyen.reb.v1', PLAY = 'caytruyen.play.v1';
@@ -620,13 +622,10 @@ code{font-family:var(--font-mono);font-size:12px}
     chapLines = T.log.filter(e => e.k === 'chapter');
     chapters = T.chapters.map(c => ({ ...c, key: 'chap:' + c.ph }));
     ach = T.ach.map(a => ({ ...a, key: 'ach:' + a.id }));
-    // Xếp nhánh vào làn: mạch chính một làn; mạch phụ, mạch ngắn xếp tham lam theo khoảng năm (chừa chỗ cho nhãn) không chồng nhau.
+    // Xếp nhánh vào làn (người dùng chốt 17/10/2026: một làn chung theo năm): mọi mạch, chính hay không, xếp tham lam theo khoảng năm
+    // (chừa chỗ cho nhãn) không chồng nhau; "phụ" là vai trò nên không tách làn: nét đậm là đoạn nhân vật theo mạch.
     const pack = list => { const lanes = []; for (const a of list.sort((x, y) => x.y0 - y.y0)) { let L = lanes.find(l => l.end < a.y0 - 1); if (!L) { L = { end: -99, arcs: [] }; lanes.push(L); } L.arcs.push(a); L.end = Math.max(a.y1 + Math.ceil(Math.min(46, tailOf(a).length) * 6.3 / 24) + 1, a.y0 + Math.ceil(Math.min(40, a.tag.length + 12) * 6.3 / 24)); } return lanes; };
-    laneGroups = [
-      { tier: 'main', lanes: pack(mains.slice()) },
-      { tier: 'side', lanes: pack(arcs.filter(a => a.tier === 'side')) },
-      { tier: 'short', lanes: pack(arcs.filter(a => a.tier === 'short')) }
-    ];
+    laneGroups = [{ tier: 'all', lanes: pack(arcs.slice()) }];
     all = {};
     arcs.forEach(a => all[a.key] = { kind: 'arc', name: `${TIER_VI[a.tier]}: ${a.tag}`, obj: a });
     choices.forEach(c => all[c.key] = { kind: 'dec', name: `${c.y} ${yu} · ${c.title}: ${c.label}`, obj: c });
@@ -637,7 +636,7 @@ code{font-family:var(--font-mono);font-size:12px}
   }
 
   // ═════════ Tóm tắt, cây (SVG) ═════════
-  const colorOf = t => t === 'main' ? 'var(--main)' : t === 'side' ? 'var(--side)' : 'var(--short)';
+  const colorOf = t => (t === 'main' ? 'var(--main)' : 'var(--side)');
   function renderHead() {
     $('who').innerHTML = `<span class="nm">${esc(nm)}</span><span class="sub">${esc(T.race)} · ${T.years} ${esc(yu)} · ${esc(T.cause)} · năm ${T.born}–${T.died} lịch Varen · kiếp ${T.kiep}</span><span class="sub">seed <code>${esc(T.seed)}</code>, thế giới <code>${esc(T.world)}</code></span>`;
     const good = arcs.filter(a => a.done && a.good).length, closed = arcs.filter(a => a.done && a.o !== 'gone' && a.o !== 'faded').length;
@@ -695,10 +694,13 @@ code{font-family:var(--font-mono);font-size:12px}
       o.push(hit(c.key, `<rect class="ring" x="${cx - 3.6}" y="${cy - 3.6}" width="7.2" height="7.2" transform="rotate(45 ${cx} ${cy})" fill="${c.fx.length ? 'var(--accent)' : 'var(--panel)'}" stroke="var(--accent)" stroke-width="1.2"/>`, `${c.y} ${yu} · ${c.title}: ${c.label}`)); }
     for (const g of laneGroups) if (g.lanes.length) o.push(`<text class="lab" x="12" y="${g.y0 + 4}" style="fill:${colorOf(g.tier)}">${TIER_VI[g.tier]}</text>`);
     for (const g of laneGroups) for (const l of g.lanes) for (const a of l.arcs) {
-      const col = colorOf(a.tier), x0 = X(a.y0), x1 = Math.max(X(a.y1), x0 + 8), y = l.y, w = a.tier === 'main' ? 5 : 3;
+      const col = colorOf(a.tier), x0 = X(a.y0), x1 = Math.max(X(a.y1), x0 + 8), y = l.y, w = 5;
+      // Nét đậm: đoạn nhân vật theo mạch; từ lúc đứng ngoài (a.bg) mạch chạy nền, nét mảnh.
+      const xb = a.bg != null && a.tier !== 'main' ? Math.min(x1, Math.max(x0, X(a.bg))) : x1;
       const ended = a.done && a.o !== 'gone' && a.o !== 'faded', name = a.tag + (a.role ? ` (${a.role})` : '');
       const inner = [`<path d="M${x0},${ty + 4} C${x0},${(ty + y) / 2} ${x0},${y} ${x0 + 10},${y}" fill="none" stroke="${col}" stroke-width="1.2" opacity=".55"/>`,
-        `<line class="ring" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${a.done ? '' : 'stroke-dasharray="6 4"'}/>`,
+        `<line class="ring" x1="${x0}" x2="${xb}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" ${a.done ? '' : 'stroke-dasharray="6 4"'}/>`,
+        xb < x1 ? `<line x1="${xb}" x2="${x1}" y1="${y}" y2="${y}" stroke="${col}" stroke-width="1.6" stroke-linecap="round" ${a.done ? '' : 'stroke-dasharray="6 4"'}/>` : '',
         `<text class="lbl" x="${x0 + 4}" y="${y - 8}" font-weight="600">${esc(short(name, Math.max(10, Math.floor((x1 - x0) / 6.2) + 12)))}</text>`];
       for (const e of a.ev) inner.push(`<circle cx="${X(e.y)}" cy="${y}" r="${e.k === 'big' ? 4 : 3}" fill="var(--panel)" stroke="${col}" stroke-width="1.5"/>`);
       const end = ended ? (a.good ? 'var(--ok)' : 'var(--drop)') : 'var(--panel)';
@@ -753,7 +755,7 @@ code{font-family:var(--font-mono);font-size:12px}
       const tail = o.done ? (o.o === 'gone' ? 'Người trong mạch mất trước khi mạch khép.' : o.o === 'faded' ? 'Mạch phai: quá lâu không có chuyện gì xảy ra.' : `Kết: ${o.sum || o.o}.`) : 'Còn dở lúc chết.';
       const cs = choices.filter(c => c.lane === o);
       h = `<div class="kind" style="color:${colorOf(o.tier)}">${TIER_VI[o.tier]}</div><h3>${esc(o.tag)}</h3>
-        <p class="muted">${o.role ? esc(o.role) + ' · ' : ''}${o.y0}–${o.y1} ${esc(yu)}${o.at ? ' · đang ở bước ' + esc(o.at) : ''}</p>
+        <p class="muted">${o.role ? esc(o.role) + ' · ' : ''}${o.y0}–${o.y1} ${esc(yu)}${o.at ? ' · đang ở bước ' + esc(o.at) : ''}${o.bg != null && o.tier !== 'main' ? ` · từ ${o.bg} ${esc(yu)} đứng ngoài, mạch chạy nền (vai phụ)` : ' · nhân vật theo mạch'}</p>
         <p class="end ${o.good ? 'good' : ''}">${esc(tail)}${o.mark ? ` Để lại dấu <b>${esc(o.mark)}</b>.` : ''}</p>
         ${o.ev.length ? `<ul class="lines">${o.ev.map(evLi).join('')}</ul>` : '<p class="muted">Không có dòng nhật ký riêng (mạch chỉ đi qua quyết định).</p>'}
         ${cs.length ? `<p class="muted">Quyết định trong mạch:</p><ul class="lines">${cs.map(c => `<li><span class="y">${c.y}</span><b>${esc(c.title)}</b>: ${esc(c.label)}</li>`).join('')}</ul>` : ''}`;
@@ -773,8 +775,7 @@ code{font-family:var(--font-mono);font-size:12px}
     $('detail').innerHTML = h + reviewBlock(sel || 'whole') + (it.kind === 'dec' && o.n != null ? rebBlock(o.n) : '') + (sel ? '<button class="btn" data-pick="whole">Về đánh dấu cả cây</button>' : '');
   }
   function renderArcs() {
-    const order = { main: 0, side: 1, short: 2 };
-    $('arcs').innerHTML = arcs.slice().sort((a, b) => order[a.tier] - order[b.tier] || a.y0 - b.y0).map(a => {
+    $('arcs').innerHTML = arcs.slice().sort((a, b) => a.y0 - b.y0).map(a => {
       const s = rv(a.key).status;
       return `<button class="card${s ? ' s-' + s : ''}" data-pick="${a.key}"><div class="top"><span class="tier ${a.tier}">${TIER_VI[a.tier]}</span><span class="muted">${a.y0}–${a.y1}</span></div>
         <h4>${esc(a.tag)}</h4><span class="end ${a.good ? 'good' : ''}">${esc(tailOf(a))}</span><span class="muted">${a.ev.length} sự kiện · ${a.dec} quyết định</span></button>`;
