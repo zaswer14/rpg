@@ -63,6 +63,12 @@ Nhật ký: dòng "Tiêu đề: lựa chọn. Kết quả." như trước, rồi
 
 Trang chạy thật bộ mô phỏng (`vankiep/caytruyen.html`, người dùng yêu cầu thêm 17/10/2026): nút **Nhân vật khác** sinh một đời mới ngay trong trình duyệt (~0,2–1,5 giây một đời); chọn giống loài (Bộ Xương thì chết non rồi trỗi dậy ngay, như chế độ kiểm duyệt), vùng sinh, xuất thân, cách chọn quyết định (Tự sống theo tính cách, hoặc bốc ngẫu nhiên bằng xúc xắc của chính đời đó để xem nhánh khác), seed, thế giới; đời tung trúng trỗi dậy thì có nút xem tiếp kiếp Bộ Xương. Cùng mã mẫu (`seed~giống loài~vùng~xuất thân~r~thế giới`) thì ra cùng một đời; mã mẫu nằm trên `#` của liên kết, trong danh sách Đã xem, và trong mỗi đánh dấu. Bản claude.ai dựng bằng `bash tools/caytruyen.sh` (trang + 53 file mã game làm file phụ). Xuất thân và vùng sinh mâu thuẫn (nhà quý tộc ở vùng khác) thì xuất thân thắng; trước đây chế độ kiểm duyệt chết lỗi ở chỗ này (`js/life.js` newLife).
 
+**Trùng sinh (chơi lại)** (người dùng yêu cầu thêm 17/10/2026): mỗi lần đời gặp quyết định là một **mốc lựa chọn**, đánh số theo thứ tự của cả lần chạy (qua cả kiếp Bộ Xương). Ô **Trùng sinh ở mốc** chọn mốc nào cũng được, hoặc bấm ↺ ở một dòng của **Lịch sử mốc lựa chọn** (mục Quyết định cũ: mỗi mốc ghi phương án đã chọn, ai chọn: Tự sống, xúc xắc hay ✋ bạn, bỏ qua gì, tác động). Thẻ mốc liệt kê mọi phương án, phương án đời này đã chọn có nhãn; bấm một phương án là đời chạy lại từ lúc sinh với cùng seed tới mốc đó rồi theo phương án mới. Tùy chọn **chơi lại**: sau mốc, mỗi quyết định dừng ở một bảng (mười dòng nhật ký gần nhất, câu hỏi, phương án, nhãn phương án Tự sống sẽ chọn, phím 1–9) chờ người chơi chọn; nút để Tự sống chọn tiếp tới hết đời.
+
+- Giữ đúng hướng cũ: RNG của `Sim` là một dòng duy nhất theo seed. Ở mỗi mốc trang luôn tính lựa chọn của Tự sống / xúc xắc trước (rút đúng số lần như đời gốc) rồi mới thay bằng phương án người chơi chọn. Tự sống mở quyết định ở chế độ chờ (bọc `openDecision`, ngoài lúc mở vẫn `autoDecide` để `js/cult.js` tự học kỹ năng như cũ) và chạy nốt phần còn lại của nhịp sau khi chọn, nên đời không trùng sinh vẫn y như trước. Chọn trùng phương án cũ thì từng dòng nhật ký trùng; trang so với đời trước và báo "giống hệt đời trước tới lúc chết" hoặc "rẽ khác từ … tuổi", có nút về đời trước và về đời gốc của seed.
+- Mã mẫu thêm trường thứ bảy `p<mốc>-<thứ tự phương án>.<…>` (mốc từ 0; chỉ ghi các mốc người chơi chọn, giữ những mốc trước điểm trùng sinh, bỏ những mốc sau). Mã dài hơn 80 ký tự thì id đánh dấu dùng 48 ký tự đầu + băm. Danh sách **Đã trùng sinh** (trong trình duyệt) ghi mốc, phương án cũ → mới, có đi đúng hướng cũ không.
+- `G.storyTree` trả thêm số mốc `n` của từng lựa chọn (trang gắn vào `S.choices`).
+
 ## 6. Kết quả đo
 
 1000 đời, thế giới `can-bang`, 17/10/2026, 137 giây (cùng máy, 150 đời: bản trước 25,9 giây, bản này 24,2 giây):
@@ -80,6 +86,6 @@ Trang chạy thật bộ mô phỏng (`vankiep/caytruyen.html`, người dùng y
 - **Lên ngôi** 3% vẫn ở bậc Huyền thoại (thách đấu ngai của bộ lạc, hãn quốc dễ hơn tưởng); cân lại nếu muốn hiếm hơn.
 - "Lấy yếu thắng mạnh" 52%, "Hạ đầu đàn" 40%, "Bác học" 25%, "Trọn một đường đời" 59% là thành tựu phổ biến; giữ ở bậc thấp.
 - Thanh danh chưa đổi giá, chưa đổi lời người quen nói; NPC chưa nhớ ai tiếng xấu.
-- Trong game chưa có nút mở cây cốt truyện của đời vừa chết (trang `caytruyen.html` chỉ chạy đời mới).
+- Trong game chưa có nút mở cây cốt truyện của đời vừa chết (trang `caytruyen.html` chỉ chạy đời mới); trùng sinh mới có trên trang Cây Cốt Truyện, game chính chưa có.
 - Sự kiện thường (không phải quyết định) chưa có dòng tác động.
 - Bản lưu cũ chưa có `S.fameS`: được tạo ở lần đổi danh vọng đầu, nguồn trước đó không biết.

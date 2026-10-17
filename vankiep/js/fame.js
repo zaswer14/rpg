@@ -465,7 +465,7 @@ window.LifeSim = window.LifeSim || {};
         return { k: d.k, nameVi: A.nameVi || d.k, tier: A.tier || 'side', who: d.name || (q ? q.name : null), role: q ? (G.ROLE_VI[q.role] || q.role) : null, o: d.o, good: !!(A.good && A.good.includes(d.o)),
           sum: sumOf(d), y0: yr(d.t0), y1: yr(d.t), done: d.done, at: d.at || null, mark: mk && G.MARKS[mk] ? G.MARKS[mk].nameVi : null, tag: (A.nameVi || d.k) + (d.name ? ' · ' + first(d.name) : d.d && d.d.kin ? ' · ' + d.d.kin : '') }; }),
       log: (S.log || []).filter(e => e.kiep === S.kiep && e.kind !== 'fx').map(e => ({ y: e.yrs, wy: e.wy, k: e.kind, arc: e.arc || null, ev: e.ev || null, t: e.text })),
-      choices: (S.choices || []).map(c => ({ y: c.y, id: c.id, title: c.title, label: c.label, sub: c.sub, alts: c.alts, arc: c.arc, out: c.out, fx: c.fx, ph: c.ph })),
+      choices: (S.choices || []).map(c => ({ y: c.y, id: c.id, title: c.title, label: c.label, sub: c.sub, alts: c.alts, arc: c.arc, out: c.out, fx: c.fx, ph: c.ph, n: c.n })),   // n: số mốc lựa chọn do trang Cây Cốt Truyện gắn (trùng sinh)
       ach: G.achList(S).map(a => ({ id: a.id, y: a.y, nameVi: a.A.nameVi, rank: a.A.rank, rankVi: G.ACH_RANK[a.A.rank].nameVi, cat: G.ACH_CAT[a.A.cat], d: a.A.d })),
       marks: (S.marks || []).map(m => ({ id: m.id, nameVi: G.MARKS[m.id] ? G.MARKS[m.id].nameVi : m.id, tone: G.MARKS[m.id] ? G.MARKS[m.id].tone : 'info', y: yr(m.t), src: m.src })),
       stats: G.lifeStats(S, X)
