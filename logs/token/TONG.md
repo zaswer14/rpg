@@ -6,7 +6,7 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày | Phiên | Việc | Ra | Quy đổi |
 |---|---:|---:|---:|---:|
-| 2026-10-17 | 6 | 32 | 1.017.152 | 38.575.108 |
+| 2026-10-17 | 6 | 32 | 1.017.805 | 38.729.947 |
 | 2026-10-16 | 4 | 6 | 405.949 | 15.122.787 |
 | 2026-10-14 | 7 | 16 | 274.401 | 6.047.613 |
 
@@ -14,7 +14,7 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày giờ | Phiên | Việc | Lượt | Ra | Quy đổi |
 |---|---|---|---:|---:|---:|
-| 2026-10-17 21:51 | [15f58cef](2026-10-17_15f58cef.md) | bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh… | 1 | 1.003 | 75.786 |
+| 2026-10-17 21:51 | [15f58cef](2026-10-17_15f58cef.md) | bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh… | 4 | 1.656 | 230.625 |
 | 2026-10-17 21:20 | [15f58cef](2026-10-17_15f58cef.md) | sửa: 1 nhân vật có thể ko chỉ có 1 mạch truyện chính, có thể đổi mạch truyện chính tùy th… | 58 | 87.631 | 3.687.857 |
 | 2026-10-17 18:01 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok, thêm vào rồi commit push | 1 | 450 | 24.235 |
 | 2026-10-17 17:56 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok, làm cả 3 | 12 | 16.598 | 378.632 |
