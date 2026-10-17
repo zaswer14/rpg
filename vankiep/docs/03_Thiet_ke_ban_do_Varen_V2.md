@@ -563,7 +563,7 @@ Còn để ý: nhà Cùng khổ đi học sơ cấp nhiều hơn nhà Nông hộ
 | H4 Quân đoàn | thắng thế thì chiếm tỉnh mỗi năm (thay vì 50%), mỗi tỉnh chiếm được ổn định −.03 |
 | R4 Bạo chúa | chiếm tỉnh thì ổn định −.05; nổi loạn × 1,5 |
 | O1 Kỵ binh | năm đầu chiến tranh +.3 điểm |
-| O3 Lò chiến | sức mạnh +1% mỗi năm hòa bình, tối đa +30% |
+| O3 Bầy lớn dần (trước 17/10/2026 là Lò chiến) | sức mạnh +1% mỗi năm hòa bình, tối đa +30% |
 | D2 Sổ thù | chỉ tuyên chiến để đòi tỉnh đã tách; mất tỉnh thì chiến tranh kéo dài |
 | C3 Giao thức chiến | chiến tranh tới điểm ±1,5 hoặc 10 năm (thay vì ±1 hoặc 6) |
 | B1 Bầy | bên bị đánh +.08 điểm mỗi năm |

@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -51,6 +51,7 @@ function parseRun(fn) {
   if (/X\.money\((?!-)/.test(src)) fx.push('được bạc');
   for (const [, v] of src.matchAll(/S\.fame \+= (\d+)/g)) fx.push(`Danh vọng +${v}`);
   for (const [, v] of src.matchAll(/S\.devotion \+ (\d+)/g)) fx.push(`Đức tin +${v}`);
+  for (const [, v] of src.matchAll(/\bdev\(S, (\d+)\)/g)) fx.push(`Đức tin +${v}`);   // culture.js: dev(S, n)
   if (/S\.gear\+\+/.test(src)) fx.push('Trang bị +1');
   if (/X\.fight\(/.test(src)) fx.push('đánh một trận với quái');
   if (/X\.cond\('hunted'\)/.test(src)) fx.push('có thể bị săn đuổi');
@@ -274,6 +275,12 @@ const data = {
     conds: Object.fromEntries(['grief', 'dry', 'torpid'].map(k => [k, G.CONDS[k]])), home: Object.fromEntries(Object.keys(G.RACE_EV).map(r => [r, G.RACE_HOME(r)])),
     nodes: Object.entries(G.RACE_EV).flatMap(([race, ids]) => ids.map(id => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id), [title, when] = G.RACEV_TITLE[id] || [id, ''];
       return D && G.RACEV_DECS[id] ? { id, race, title, when, ev: false, prio: D.prio, tree: D.tree, ...parseRun(both(D.build, D.apply)) } : { id, race, title, when, ev: true, st: E.st, w: typeof E.wBase === 'number' ? E.wBase : null, rep: !!E.rep, gap: E.gap || null, tree: E.tree, ...parseRun(E.run) }; })) },
+  // Tín ngưỡng gốc của tộc (shared/faiths.js trường folk, vankiep/js/culture.js, docs/15).
+  faithc: { faiths: pickF(L.faiths, f => ({ nameVi: f.nameVi, symbol: f.symbol, folk: f.folk || null, scale: f.scale, tenet: f.tenet, powerNote: f.powerNote, gain: f.devotion.gain, lose: f.devotion.lose,
+      favored: f.races.favored || [], wary: f.races.wary || [], ranks: f.ranks, blessing: f.blessing, crowns: (f.crowns || []).length })),
+    bless: G.RACE_VOICE_TEXT.BLESS, feast: G.RACE_VOICE_TEXT.FEAST,
+    nodes: Object.entries(G.FAITH_EV).flatMap(([faith, ids]) => ids.map(id => { const E = G.EVENTS.find(e => e.id === id), [title, when] = G.RACEV_TITLE[id] || [id, ''];
+      return { id, faith, title, when, ev: true, st: E.st, w: typeof E.wBase === 'number' ? E.wBase : null, rep: !!E.rep, gap: E.gap || null, tree: E.tree, ...parseRun(E.run) }; })) },
   // Mạch truyện (vankiep/js/story.js, docs/13).
   story: { cfg: G.STORY, roles: G.ROLE_VI, phases: G.PHASE_VI,
     arcs: Object.entries(G.ARCS).map(([id, a]) => ({ id, nameVi: a.nameVi, good: a.good, passive: !!a.passive, ...parseRun(both(...[a.quest, a.sum, a.gone].filter(Boolean))) })),

@@ -76,7 +76,7 @@ window.LifeSim = window.LifeSim || {};
       hedge_witch: S => S.urban ? 0 : .5,
       adept: S => S.work === 'scholar' ? .8 : 0,
       gravekeeper: S => S.undead ? .8 : S.work === 'priest' ? .3 : 0,
-      spirit_caller: S => S.work === 'priest' || S.faith === 'ancestor' ? .8 : 0,
+      spirit_caller: S => S.work === 'priest' || ['ancestor', 'stone', 'totem'].includes(S.faith) ? .8 : 0,
       herbalist: S => S.work === 'healer' ? 1 : S.work === 'farmer' ? .3 : 0,
       tinkerer: S => S.work === 'smith' || S.work === 'miner' ? .7 : 0,
       wrestler: S => S.work === 'farmer' || S.work === 'miner' || S.work === 'woodcutter' ? .5 : 0,

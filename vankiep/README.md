@@ -103,7 +103,7 @@ Thứ **không** bắt chước: ~50 hàm `xxxYear()` gọi cứng. Ở đây m�
 ## 4. Phát triển nhân vật
 
 - **Cấp và Tier sức mạnh.** XP từ săn, luyện tập, làm việc. Tier = cấp / 10 (tối đa T5, cấp 60).
-- **Nghề chiến đấu** lấy từ thư viện: `JobLibrary.compose()` với cả 10 chủng tộc và 6 giáo phái (183 nghề). Bắt đầu ở nghề gốc của chủng tộc (Nông Dân, Kẻ Lang Thang…), chuyển nghề khi đủ mastery `req` (+15 nếu trường phái ngoại lai), đủ cấp (T1:3, T2:12, T3:24, T4:36, T5:48) và Devotion nếu là ngọn tín ngưỡng. Thử thách có thể trượt.
+- **Nghề chiến đấu** lấy từ thư viện: `JobLibrary.compose()` với cả 10 chủng tộc và 10 giáo phái (mỗi tộc một tín ngưỡng gốc, `docs/15`; 183 nghề). Bắt đầu ở nghề gốc của chủng tộc (Nông Dân, Kẻ Lang Thang…), chuyển nghề khi đủ mastery `req` (+15 nếu trường phái ngoại lai), đủ cấp (T1:3, T2:12, T3:24, T4:36, T5:48) và Devotion nếu là ngọn tín ngưỡng. Thử thách có thể trượt.
 - **Mastery** (26 cái, theo 8 trường phái): bản địa học nhanh ×1,15, ngoại lai ×0,8, bị cấm không học được.
 - **Căn cốt, thiên phú** (`js/talent.js`, `docs/06_Thien_phu_chi_huong.md`): căn cốt sáu bậc màu Trắng → Đỏ là hệ số tu luyện ×0,85–×2 (nhân vào kinh nghiệm và mọi lần rèn kỹ năng), nâng được ở bình cảnh cấp 10, 20, 30, 40, 50; 0–3 thiên phú lúc sinh (40 cái, mỗi cái một bậc màu), thức tỉnh thêm trong đời (chọn 1 trong 3).
 - **Chí hướng**: 8 hướng (mạo hiểm, võ đạo, học vấn, làm giàu, tu hành, quyền thế, gia đình, tự nhiên). Dịch tính cách, focus và nghề ưu tiên; mở quyết định cãi lời gia đình, đổi nghề giữa đời, cơ hội theo chí hướng.
@@ -148,8 +148,9 @@ vankiep/
   js/tree.js                cây sự kiện: quỹ đạo (S.traj), danh phận (G.standing), chủ đề, cổng chung bọc mọi sự kiện / quyết định, nhánh mới; hệ con traj; `G.treeWrap` cho file nạp sau
   js/story.js               mạch truyện: dàn nhân vật (S.cast, hệ con cast), mạch nhiều hồi (G.ARCS, S.arcs), móc vào sự kiện có sẵn, người quen xuất hiện, chương đời (G.CHAPTERS); nạp sau tree.js
   js/racev.js               sự kiện giống loài: nút riêng của tám tộc (G.RACE_EV), đời thường (G.RACE_LIFE), giọng theo tộc (G.RACE_VOICE), môi trường sống (G.raceHome, G.amongKin, G.hostRace), Sầu héo, Khô vảy, Máu lạnh; nạp sau story.js
+  js/culture.js             văn hóa tộc, tín ngưỡng gốc: nút văn hóa của từng tộc (Người Lùn: lò, mỏ, rune, cổng, thành cổ; Orc: sói, thử thách, tù trưởng, đi cướp), sự kiện của mười đạo (G.FAITH_EV), giọng theo tộc cho thêm mười sự kiện chung; nạp sau racev.js
   js/ui.js                  giao diện (chỉ nghe hook)
-  docs/                     01 ý tưởng 1in8b · 02 phương án bản đồ · 03 thiết kế bản đồ V2 · 04 mẫu quốc gia · 05 thành phố, làng mạc · 06 thiên phú, chí hướng · 07 xã hội tu luyện · 08 hệ sức mạnh · 09 Tier, danh xưng · 10 cây nghề riêng · 11 tuổi thọ giống loài · 12 cây sự kiện · 13 mạch truyện · 14 sự kiện giống loài
+  docs/                     01 ý tưởng 1in8b · 02 phương án bản đồ · 03 thiết kế bản đồ V2 · 04 mẫu quốc gia · 05 thành phố, làng mạc · 06 thiên phú, chí hướng · 07 xã hội tu luyện · 08 hệ sức mạnh · 09 Tier, danh xưng · 10 cây nghề riêng · 11 tuổi thọ giống loài · 12 cây sự kiện · 13 mạch truyện · 14 sự kiện giống loài · 15 tín ngưỡng gốc, văn hóa tộc
 ```
 
 Phần chung game này dùng (ở `../shared/`, sơ đồ trong `shared/README.md`): thư viện nghề, chủng tộc, giáo phái, bestiary; `terrain/terrain.js` (địa hình và độ hoang theo biome, đặc trưng ô, quái theo địa hình); `terrain/ecology.js` (10 biome và 44 loài quái của Varen, 8 loài biển); `names/names.js` (kho tên riêng). Server tĩnh: `../tools/serve.ps1`. Trang duyệt mẫu quốc gia: `../review/`.

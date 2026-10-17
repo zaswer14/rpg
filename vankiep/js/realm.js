@@ -362,7 +362,10 @@ window.LifeSim = window.LifeSim || {};
     for (const s of settlements) {
       if (s.tier === 'ruin') continue;
       const reg = G.REGION[s.region], natives = reg.races;
-      if (s.nation === NONE) { s.races = norm({ ...natives }); s.faiths = norm({ ...reg.faiths }); }
+      // Đạo của khu (17/10/2026): mỗi tộc mang theo tín ngưỡng gốc của mình (G.raceFaith), cộng quốc giáo và đạo của vùng.
+      const mixF = (f, o, k) => { const t = Object.values(o).reduce((a, b) => a + b, 0) || 1; for (const [id, w] of Object.entries(o)) f[id] = (f[id] || 0) + k * w / t; };
+      const folkF = races => { const o = {}; for (const [r, w] of Object.entries(races)) { const fid = G.raceFaith(r); if (fid) o[fid] = (o[fid] || 0) + .8 * w; o.none = (o.none || 0) + (fid ? .2 : 1) * w; } return o; };
+      if (s.nation === NONE) { s.races = norm({ ...natives }); const f = {}; mixF(f, folkF(s.races), .65); mixF(f, reg.faiths, .35); s.faiths = norm(f); }
       else {
         const n = nations[s.nation], t = chosen[s.nation].tpl, main = n.race;
         const mShare = n.tolerant ? .55 : G.clamp(.85 - .08 * (n.fav.length - 1), .5, .85);
@@ -374,9 +377,7 @@ window.LifeSim = window.LifeSim || {};
         for (const k of n.wary) if (r[k] && k !== main) r[k] *= .3;
         s.races = norm(r);
         const f = {};
-        for (const [k, w] of Object.entries(t.faith)) f[k] = (f[k] || 0) + .7 * w;
-        const rf = reg.faiths, rfTot = Object.values(rf).reduce((a, b) => a + b, 0) || 1;
-        for (const [k, w] of Object.entries(rf)) f[k] = (f[k] || 0) + 30 * w / rfTot;
+        mixF(f, t.faith, .45); mixF(f, folkF(s.races), .4); mixF(f, reg.faiths, .15);
         s.faiths = norm(f);
       }
       // Công trình theo bậc.

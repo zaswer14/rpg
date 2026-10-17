@@ -124,7 +124,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], ['racev', 'Sự kiện giống loài'], null,
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], ['racev', 'Sự kiện giống loài'], ['faith', 'Tín ngưỡng gốc của tộc'], null,
     ['tree', 'Cây sự kiện'], ['story', 'Mạch truyện']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
@@ -139,7 +139,7 @@ code{font-family:var(--font-mono);font-size:12px}
   const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
   const STRULES = [['cast', 'Dàn nhân vật'], ['arc', 'Mạch: bước, khoảng chờ, phai'], ['open', 'Mở mạch, người quen xuất hiện'], ['chap', 'Chương đời'], ['tag', 'Nhãn nhật ký, đoạn tưởng nhớ']];
   const VRULES = [['env', 'Môi trường sống: quê tộc, xa tộc'], ['voice', 'Giọng theo giống loài'], ['cond', 'Tình trạng mới: Sầu héo, Khô vảy, Máu lạnh'], ['theme', 'Chủ đề mới: xa tộc, nợ thù của tộc']];
-  const VOICEK = [['FEST', 'Lễ hội (ch_festival)'], ['HARVEST', 'Được mùa, mất mùa ở quê tộc (ad_harvest)'], ['FIRST', 'Từ đầu đời (inf_word)'], ['LETTERS', 'Học chữ (ch_letters)'], ['HUNGER', 'Năm đói (ch_hunger)'], ['ACHES', 'Tuổi già (el_aches)'], ['OLDFRIEND_LONG', 'Bạn thơ ấu của loài sống lâu (ad_old_friend)']];
+  const VOICEK = [['FEST', 'Lễ hội (ch_festival)'], ['HARVEST', 'Được mùa, mất mùa ở quê tộc (ad_harvest)'], ['FIRST', 'Từ đầu đời (inf_word)'], ['LETTERS', 'Học chữ (ch_letters)'], ['HUNGER', 'Năm đói (ch_hunger)'], ['ACHES', 'Tuổi già (el_aches)'], ['OLDFRIEND_LONG', 'Bạn thơ ấu của loài sống lâu (ad_old_friend)'], ['KID', 'Con cái (ad_kid)'], ['BRAWL', 'Ẩu đả (tn_brawl)'], ['SUITOR', 'Người để ý (ad_suitor)'], ['INHERIT', 'Thừa kế (ad_inherit)'], ['COIN', 'Nhặt được tiền (ch_coin)'], ['DICE', 'Cờ bạc (ad_dice)'], ['TAX', 'Thuế khi sống giữa tộc (ad_tax)'], ['TEST_AT', 'Lễ thử thiên phú ở làng không có đền, trường (cv_test)']];
   const TRULES = [['traj', 'Quỹ đạo'], ['soc', 'Danh phận'], ['body', 'Thân thể, giống loài, lượt đầu của Bộ Xương'], ['theme', 'Chủ đề'], ['tree', 'Cây: nhánh, khoảng chờ']];
   const CULTRULES =[['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
@@ -167,6 +167,8 @@ code{font-family:var(--font-mono);font-size:12px}
     // Sự kiện giống loài (docs/14): luật, giọng, đời thường theo tộc, nút (sự kiện rnode, quyết định dec).
     racev: [...VRULES.map(([id, name]) => ({ kind: 'vrule', id, name })), ...VOICEK.map(([id, name]) => ({ kind: 'rvoice', id, name })), ...Object.keys(D.racev.life).map(r => ({ kind: 'rlife', id: r, name: `Đời thường: ${raceVi(r)}` })),
       ...D.racev.nodes.filter(n => !n.id.endsWith('_days')).map(n => ({ kind: n.ev ? 'rnode' : 'dec', id: n.id, name: n.title }))],
+    // Tín ngưỡng gốc của tộc (docs/15): mười giáo phái (faith), sự kiện của đạo (fnode).
+    faith: [...Object.entries(D.faithc.faiths).map(([id, f]) => ({ kind: 'faith', id, name: f.nameVi })), ...D.faithc.nodes.map(n => ({ kind: 'fnode', id: n.id, name: n.title }))],
     // Mạch truyện (docs/13): luật, mạch, nút (sự kiện snode, quyết định dec), chỗ móc vào sự kiện có sẵn, chương đời.
     story: [...STRULES.map(([id, name]) => ({ kind: 'stru', id, name })), ...D.story.arcs.map(a => ({ kind: 'sarc', id: a.id, name: a.nameVi })),
       ...D.story.nodes.map(n => ({ kind: n.ev ? 'snode' : 'dec', id: n.id, name: n.title })), ...D.story.hooks.map(h => ({ kind: 'shook', id: h.id, name: h.title })),
@@ -181,7 +183,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Sự kiện giống loài', items.racev) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Sự kiện giống loài', items.racev) + part('Tín ngưỡng', items.faith) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story);
   }
 
   // ---- Tab ----
@@ -664,10 +666,27 @@ code{font-family:var(--font-mono);font-size:12px}
       + grid(part('Luật', rules) + part('Giọng theo giống loài', voices) + races.map(r => part(raceVi(r), [T.life[r] ? lifeCard(r) : '', ...T.nodes.filter(n => n.race === r && !n.id.endsWith('_days')).map(nodeCard)])).join(''));
   }
 
+  // ---- Tín ngưỡng gốc của tộc (shared/faiths.js trường folk, vankiep/js/culture.js, docs/15) ----
+  function faithView() {
+    const F = D.faithc, lines = L => L.length ? `<ul class="lines">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+    const chips = (dt, L) => L.length ? `<dl class="kv"><dt>${dt}</dt><dd class="chips">${L.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : '';
+    const faithCard = ([id, f]) => passes('faith', id) ? card('faith', id, `${f.symbol || ''} ${f.nameVi}`, `<div class="meta">${f.scale === 'major' ? 'đạo lớn' : 'đạo nhỏ'} · tộc gốc ${f.folk ? esc(raceVi(f.folk)) : '—'} · ${f.crowns ? f.crowns + ' ngọn tín ngưỡng' : 'chưa có ngọn tín ngưỡng'}</div>
+      <p style="margin:0 0 6px"><i>${esc(f.tenet)}</i></p>
+      <dl class="kv"><dt>Cấp sức mạnh</dt><dd>${esc(f.powerNote)}</dd><dt>Tích Devotion</dt><dd>${esc(f.gain)}</dd><dt>Mất Devotion</dt><dd>${esc(f.lose)}</dd>
+        <dt>Ưu ái</dt><dd>${esc(f.favored.map(raceVi).join(', ') || '—')}</dd><dt>Dè chừng</dt><dd>${esc(f.wary.map(raceVi).join(', ') || '—')}</dd>
+        <dt>Bậc</dt><dd>${esc(f.ranks.join(' → '))}</dd><dt>Phước lành</dt><dd>${esc(f.blessing)}</dd>
+        ${F.bless[id] ? `<dt>Ban phước sơ sinh</dt><dd>${esc(F.bless[id])}</dd>` : ''}${F.feast[id] ? `<dt>Lễ quốc giáo</dt><dd>${esc(F.feast[id])}</dd>` : ''}</dl>`) : '';
+    const nodeCard = n => passes('fnode', n.id) ? card('fnode', n.id, n.title, `<div class="meta">sự kiện${n.w != null ? ` · trọng số ${num(n.w)}` : ''}${n.rep ? ` · lặp cách ${n.gap}` : ''} · <code>${esc(n.id)}</code></div>
+      <dl class="kv"><dt>Khi nào</dt><dd>${esc(n.when)}</dd></dl>${lines(n.texts)}${chips('Tác dụng', n.fx)}`) : '';
+    const part = (t, a) => a.filter(Boolean).length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    return overview('Tín ngưỡng gốc của tộc', 'Mỗi chủng tộc có một tín ngưỡng gốc (docs/15): người Quang Minh, Bộ Xương Hắc Giáo, Tiên Tộc Cổ Thần Hoang Dã, Orc Tổ Linh Đạo, Hải Tộc Vực Giáo, Cơ Nhân Giáo Hội Lò Rèn; bốn đạo mới cho Người Lùn (Đạo Đá Tổ), Người Thú (Thú Linh Đạo), Yêu Tinh (Khế Ước Bốn Mùa), Long Nhân (Long Hỏa Đạo). Gia đình phần lớn theo đạo gốc của tộc; đạo của khu dân cư tính theo dân từng tộc trong khu, quốc giáo và đạo của vùng. Tộc khác vẫn cải đạo được, chỉ không được ưu ái. Sự kiện của đạo gắn với đạo đang theo, không gắn với tộc.')
+      + grid(Object.entries(F.faiths).map(([id, f]) => part(`${f.symbol || ''} ${f.nameVi}`, [faithCard([id, f]), ...F.nodes.filter(n => n.faith === id).map(nodeCard)])).join(''));
+  }
+
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'racev' ? racevView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'racev' ? racevView() : t === 'faith' ? faithView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }

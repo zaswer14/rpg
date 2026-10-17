@@ -4,7 +4,7 @@
 
 ## 1. Mô hình
 
-- Thế giới có **2 giáo phái lớn** loại trừ nhau và **4 giáo phái nhỏ**. Mọi giáo phái mở cho mọi chủng tộc, nhưng mỗi giáo phái **ưu ái** vài chủng tộc (Devotion ×1,5), **dè dặt** vài chủng tộc (gate +15, như foreign) và có thể **xa lánh** (không vào được; hiện chưa dùng).
+- Thế giới có **2 giáo phái lớn** loại trừ nhau và **8 giáo phái nhỏ**. **Mỗi chủng tộc có đúng một tín ngưỡng gốc** (trường `folk`, 17/10/2026; thiết kế và cách Vạn Kiếp dùng: `vankiep/docs/15_Tin_nguong_van_hoa_toc.md`): đạo đó chỉ ưu ái tộc gốc. Mọi giáo phái mở cho mọi chủng tộc (cải đạo), nhưng mỗi giáo phái **ưu ái** tộc gốc (Devotion ×1,5), **dè dặt** vài chủng tộc (gate +15, như foreign) và có thể **xa lánh** (không vào được; hiện chưa dùng).
 - Nhân vật theo **một** giáo phái tại một thời điểm. **Devotion 0–100** tích qua hành vi hợp giáo lý, mất qua hành vi trái giáo lý. Mốc Devotion mở nghề tín ngưỡng theo Tier: T3 ≥ 30, T4 ≥ 60, T5 ≥ 90.
 - **Bỏ đạo (apostasy)**: mất hết Devotion; giáo phái cũ nhớ. Bỏ Quang Minh sang Hắc Giáo mở nghề ẩn **Kẻ Phá Thề** (Oathbreaker) nếu đang là Thánh Kỵ Sĩ.
 - Mỗi giáo phái có một **blessing**: luật thụ động mọi tín đồ nhận ở Devotion ≥ 30, bất kể nghề. Đây là cách tín ngưỡng ảnh hưởng tới nghề không có dạng tín ngưỡng riêng.
@@ -12,14 +12,18 @@
 
 | Giáo phái | Quy mô | Khí chất | Cấp sức mạnh bằng | Ưu ái | Dè dặt |
 |---|---|---|---|---|---|
-| ☀ **Thánh Giáo Quang Minh** / Church of the Dawn | lớn | Ánh Sáng | **Lời thề**: có sức mạnh chừng nào còn giữ giới; phá giới mất ngay | human, dwarf, dragonkin | skeleton (kẻ sám hối), fae |
-| ☾ **Hắc Giáo** / Covenant of Dusk | lớn | Hắc Ám | **Giao kèo**: trả giá (máu, Devotion, thuộc hạ) để lấy; không có giới, chỉ có nợ | skeleton, orc, merfolk | dragonkin, construct (trả bằng Nhiệt) |
-| ❦ Cổ Thần Hoang Dã / Old Gods of the Wild | nhỏ | Tự Nhiên | **Hiệp thông**: mạnh theo địa hình sống, yếu ở nơi không sự sống | elf, beastfolk, fae | construct, dwarf |
-| ⌂ Tổ Linh Đạo / Way of the Ancestors | nhỏ | Tổ Linh | **Nghi lễ**: hồn tổ tiên hiện ở mốc máu/thời điểm cố định | dwarf, orc, beastfolk | fae, construct |
-| ◉ Vực Giáo / Cult of the Deep | nhỏ | Vực Sâu | **Giao kèo** trả bằng lý trí (Sanity) thay vì máu | merfolk, skeleton | dragonkin, human |
-| ⚙ Giáo Hội Lò Rèn / Church of the Eternal Forge | nhỏ | Cơ Khí | **Nghi lễ cải tạo**: thay dần bộ phận bằng máy; Nhiệt thay mana | construct, dwarf | elf, beastfolk, fae |
+| ☀ **Thánh Giáo Quang Minh** / Church of the Dawn | lớn | Ánh Sáng | **Lời thề**: có sức mạnh chừng nào còn giữ giới; phá giới mất ngay | human | skeleton (kẻ sám hối), fae |
+| ☾ **Hắc Giáo** / Covenant of Dusk | lớn | Hắc Ám | **Giao kèo**: trả giá (máu, Devotion, thuộc hạ) để lấy; không có giới, chỉ có nợ | skeleton | dragonkin, construct (trả bằng Nhiệt) |
+| ❦ Cổ Thần Hoang Dã / Old Gods of the Wild | nhỏ | Tự Nhiên | **Hiệp thông**: mạnh theo địa hình sống, yếu ở nơi không sự sống | elf | construct, dwarf |
+| ⌂ Tổ Linh Đạo / Way of the Ancestors | nhỏ | Tổ Linh | **Nghi lễ**: hồn tổ tiên hiện ở mốc máu/thời điểm cố định | orc | fae, construct |
+| ◉ Vực Giáo / Cult of the Deep | nhỏ | Vực Sâu | **Giao kèo** trả bằng lý trí (Sanity) thay vì máu | merfolk | dragonkin, human |
+| ⚙ Giáo Hội Lò Rèn / Church of the Eternal Forge | nhỏ | Cơ Khí | **Nghi lễ cải tạo**: thay dần bộ phận bằng máy; Nhiệt thay mana | construct | elf, beastfolk, fae |
+| ▲ Đạo Đá Tổ / Faith of the Stone Fathers | nhỏ | Thạch | **Nghi lễ** của lò và vách: tổ tiên ngủ trong đá, lửa lò chung; mạnh dưới hầm | dwarf | elf, fae |
+| ✶ Thú Linh Đạo / Way of the Beast Spirits | nhỏ | Hoang Dã | **Hiệp thông** với thú tổ: mạnh khi đi cùng bầy | beastfolk | construct |
+| ❀ Khế Ước Bốn Mùa / Compact of Seasons | nhỏ | Mị Ảo | **Giao kèo** với mùa: mỗi mùa cho một thứ phép, đòi lại một thứ (ký ức, giọng hát, năm tuổi) | fae | dwarf, construct |
+| ✺ Long Hỏa Đạo / Way of the Dragonfire | nhỏ | Hỏa | **Nghi lễ** đài lửa: thị tộc giữ ngọn lửa không tắt | dragonkin | merfolk |
 
-Đối địch: Quang Minh ↔ Hắc Giáo; Vực Giáo ↔ Quang Minh; Lò Rèn ↔ Cổ Thần.
+Đối địch: Quang Minh ↔ Hắc Giáo; Vực Giáo ↔ Quang Minh; Lò Rèn ↔ Cổ Thần. Bốn đạo mới không có đối địch và chưa có ngọn tín ngưỡng.
 
 **Hắc Giáo không phải bản sao âm của Quang Minh.** Quang Minh có tư tế chữa lành (Mục Sư, Hồng Y); Hắc Giáo không có kẻ chữa, chỉ có kẻ **chuyển** vết thương (Tư Tế Thống Khổ, Tiên Tri Hắc Ám). Quang Minh mất sức mạnh khi phá giới; Hắc Giáo không bao giờ mất, chỉ nợ thêm.
 

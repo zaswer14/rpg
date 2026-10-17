@@ -244,7 +244,11 @@ window.LifeSim = window.LifeSim || {};
       const qw = [0, .14, .38, .28, .15, .05].map((w, k) => k ? w * Math.exp((k - 3) * (reg.wealth - .5) * 1.8) * (urban && k >= 3 ? rich : 1) * (!urban && k === 2 ? 1.4 : 1) * (!urban && k >= 4 ? .5 : 1) : 0);
       const q = +T.wpick([1, 2, 3, 4, 5], k => qw[k]);
       const cr = G.CLASSES[q].pctRange;
-      const faith = T.wkey(st.faiths);
+      // Đạo của gia đình (docs/15): phần lớn theo tín ngưỡng gốc của tộc mình, sống giữa tộc khác thì hay theo đạo của khu hơn.
+      // Gia đình không theo đạo nào thì giữ tỉ lệ "không đạo" của khu.
+      const own = G.raceFaith(race), kinHere = st.race === race || (st.races[race] || 0) >= 30;
+      const faith = T.chance((st.faiths.none || 0) / 100) ? 'none' : own && T.chance(kinHere ? .88 : .65) ? own
+        : T.wkey(Object.fromEntries(Object.entries(st.faiths).filter(([k]) => k !== 'none'))) || 'none';
       const lt = G.lifeTable(race, sex, reg.wealth);
       const mastery = Object.fromEntries(Object.keys(G.MASTERY).map(m => [m, 0]));
       const S = this.S = {

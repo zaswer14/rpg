@@ -91,6 +91,7 @@
 <script src="js/tree.js"></script>
 <script src="js/story.js"></script>
 <script src="js/racev.js"></script>
+<script src="js/culture.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -128,9 +129,9 @@ $('run').onclick = () => {
     const t0 = performance.now();
     // Cây sự kiện (js/tree.js, docs/12): đếm nút, nhánh, chủ đề, lần bị cổng chặn; quỹ đạo, danh phận lúc chết.
     G.TREE.stats = true; const TS = G.treeStatsReset(), TJ = { top: {}, mid: {}, midN: 0, aim: {}, soc: {}, sk: {}, skN: 0, ad: 0 };
-    // Sự kiện giống loài (js/racev.js, docs/14): phần sự kiện của riêng tộc, phần đổi giọng, lựa chọn ở các quyết định của tộc.
+    // Sự kiện giống loài (js/racev.js, docs/14; js/culture.js, docs/15): phần sự kiện của riêng tộc, phần đổi giọng, lựa chọn ở các quyết định của tộc.
     G.RACEV.stats = true; G.racevReset(); const RV = { k: {} };
-    const RVK = ['elfAxe_warn', 'elfAxe_talk', 'elfAxe_leave', 'grudge_book', 'grudge_forgive', 'grudgeOk', 'slayer_oath', 'slayerEnd', 'dwfArt', 'dwfMad', 'price_pay', 'price_fight', 'price_refuse', 'rivalWin', 'rivalLose', 'alpha_challenge', 'alpha_back',
+    const RVK = ['trade_forge', 'trade_mine', 'trade_rune', 'trade_gate', 'claim_report', 'claim_secret', 'claim_sell', 'dwfMasterN', 'hold_go', 'hold_stay', 'holdWin', 'holdLose', 'chief_challenge', 'chief_serve', 'chief_leave', 'raid_ride', 'raid_stay', 'raid_warn', 'elfAxe_warn', 'elfAxe_talk', 'elfAxe_leave', 'grudge_book', 'grudge_forgive', 'grudgeOk', 'slayer_oath', 'slayerEnd', 'dwfArt', 'dwfMad', 'price_pay', 'price_fight', 'price_refuse', 'rivalWin', 'rivalLose', 'alpha_challenge', 'alpha_back',
       'court_summer', 'court_winter', 'titheSave', 'titheLet', 'deal_memory', 'deal_gold', 'deal_free', 'cloak_stay', 'cloak_sing', 'cloak_leave', 'siren_sing', 'siren_warn', 'siren_away', 'hoard_keep', 'hoard_give', 'clan_pay', 'clan_hunt', 'clan_disown', 'core_new', 'core_slow', 'core_keep'];
     // Mạch truyện (js/story.js, docs/13): sự kiện thuộc mạch theo đời, dàn nhân vật, mạch mở / khép, chương đời.
     G.STORY.stats = true; const SZ = G.storyStatsReset(), SL = { ad: 0, adEv: 0, adLink: 0, dist: [0, 0, 0, 0, 0], noArc: 0, cast: 0, meet2: 0, ends: 0, sk: 0, skEv: 0, skLink: 0, skEnds: 0, epi: 0 };
@@ -340,7 +341,7 @@ $('run').onclick = () => {
     // Sự kiện giống loài (js/racev.js, docs/14).
     { const R = G.RACEV, rows = Object.keys(R.n).sort((a, b) => R.n[b] - R.n[a]).map(r => { const ids = (G.RACE_EV[r] || []).filter(id => R.byId[id]).sort((a, b) => R.byId[b] - R.byId[a]);
         return [J.races[r].nameVi, (A.byRace[r] || []).length, R.n[r], pct(R.own[r] || 0, R.n[r]), pct(R.voice[r] || 0, R.n[r]), ids.slice(0, 4).map(id => `${id} ${R.byId[id]}`).join(', ')]; });
-      out.push(table('Sự kiện giống loài', rows, ['Giống loài', 'Đời', 'Sự kiện', 'Của riêng tộc', 'Đổi giọng', 'Hay gặp nhất'], { note: 'Đời đầu, người sống. "Của riêng tộc": nút của js/racev.js và tn_rite, con_oil, con_dream; "Đổi giọng": sự kiện chung kể bằng giọng của tộc (lễ hội, được mùa, tuổi già…). Mẫu số gồm cả sự kiện của mạch truyện, người quen.' }));
+      out.push(table('Sự kiện giống loài', rows, ['Giống loài', 'Đời', 'Sự kiện', 'Của riêng tộc', 'Đổi giọng', 'Hay gặp nhất'], { note: 'Đời đầu, người sống. "Của riêng tộc": nút của js/racev.js, js/culture.js (cả sự kiện của đạo đang theo) và tn_rite, con_oil, con_dream; "Đổi giọng": sự kiện chung kể bằng giọng của tộc (lễ hội, được mùa, tuổi già…). Mẫu số gồm cả sự kiện của mạch truyện, người quen.' }));
       const rk = k => [k, RV.k[k] || 0, pct(RV.k[k] || 0, N)];
       out.push(table('Sự kiện giống loài: lựa chọn', RVK.map(rk).filter(r => r[1]), ['Cờ', 'Đời', '% mọi đời'], { note: 'Tiền tố: elfAxe tiều phu (Tiên Tộc), grudge Sổ Thù, slayer Kẻ Diệt, dwfArt/dwfMad cơn nhập thần (Người Lùn), price giá máu, rival kẻ thù cũ (Orc), alpha con đầu đàn (Người Thú), court/tithe/deal đình và giao kèo (Yêu Tinh), cloak/siren (Hải Tộc), hoard/clan (Long Nhân), core thay lõi (Cơ Nhân).' })); }
     out.push(table('Nơi sinh: quốc gia', Object.entries(A.bornNation).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, n, pct(n, N)]), ['Nước', 'Đời', '%'], { bar: true }));

@@ -16,7 +16,7 @@ shared/
   races/<race>.js       10 chủng tộc: origin T0, thân, quyền trường phái, ngọn riêng, nghề ẩn, body evolution
   compose.js            compose({races:[...], overlay?}) → nghề + cạnh + quyền + kiểm tra cấu trúc; overlay = lớp nghề riêng của một game (Vạn Kiếp: vankiep/data/jobtree.js)
   aspects.js            23 khí chất (Ánh Sáng, Hắc Ám, Tử Linh, Thủy Triều…): màu, trạng thái, luật gợi ý
-  faiths.js             6 GIÁO PHÁI (2 lớn: Quang Minh / Hắc Giáo; 4 nhỏ), mở cho mọi chủng tộc; 23 ngọn tín ngưỡng
+  faiths.js             10 GIÁO PHÁI (2 lớn: Quang Minh / Hắc Giáo; 8 nhỏ), mỗi chủng tộc một tín ngưỡng gốc (folk), mở cho mọi chủng tộc; 23 ngọn tín ngưỡng
   archetypes/<school>.js 34 KHUÔN NGHỀ × 278 DẠNG theo chủng tộc và/hoặc giáo phái
   catalog.js            catalog() → kiểm tra + bảng tra khuôn × chủng tộc; catalogMarkdown()
   catalog.html          trang xem thư viện khuôn nghề (ma trận / theo khuôn / theo chủng tộc, lọc khí chất)

@@ -41,7 +41,7 @@ window.LifeSim = window.LifeSim || {};
   T('D5', AD, (S, X) => { const c = Math.round(med(X, S) * .8); if (S.gear >= 10 || S.gold < c) return null; X.money(-c); S.gear++; return { t: `Thợ rune khắc dấu lên giáp của bạn (${G.coin(c)}). Trang bị ${S.gear}/10.`, k: 'good' }; });
   T('O1', TA, (S, X) => { X.gain('Riding', 4); return { t: 'Bạn được cho một con ngựa thảo nguyên chưa thuần.', k: 'good' }; });
   T('O2', AD, (S, X) => { const win = X.chance(.3 + X.power(S) * .12); if (win) { S.fame += 2; return { t: 'Bạn thắng trận vật ở hội tộc. Tù trưởng nhớ mặt bạn.', k: 'good' }; } X.add('hl', -6); return { t: 'Bạn thua trận vật ở hội tộc, gãy hai cái răng.', k: 'bad' }; });
-  T('O3', TA, (S, X) => { X.gain('Axe', 3); X.gain('Body', 2); return { t: 'Lò chiến đỏ lửa cả năm. Bạn kéo bễ và học cách vung rìu.', k: 'info' }; });
+  T('O3', TA, (S, X) => { X.gain('Riding', 3); X.gain('Taming', 2); return { t: 'Bầy nuôi thêm một lứa sói chiến. Bạn được giao một con, tập cưỡi nó xuyên rừng tới khi nó chịu nghe lời.', k: 'info' }; });
   T('O4', AD, (S, X) => { if (!S.world.dyn.wars.length) { X.add('so', 2); return { t: 'Năm nay không ai thuê kiếm. Cả trại ngồi mài lưỡi chờ.', k: 'info' }; } const g = Math.round(med(X, S) * 1.2); X.money(g); X.add('hl', -5); return { t: `Một nước xa thuê cả trại đi đánh trận. Bạn về với ${G.coin(g)} và một vết sẹo.`, k: 'good' }; });
   T('O5', ALL, (S, X) => { const L = G.local(S); X.add('sm', 1); return { t: L.plague || L.war ? 'Tổ tiên báo mộng: lửa và bệnh đang tới. Sáng ra cả làng đóng cửa.' : 'Đồng cốt nhập tổ tiên, nhắc bạn sửa lại mộ ông.', k: 'info' }; });
   T('B1', AD, (S, X) => { X.add('so', 6); return { t: 'Bầy họp dưới trăng. Ai cũng có tiếng nói.', k: 'good' }; });

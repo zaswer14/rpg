@@ -135,6 +135,7 @@ window.LifeSim = window.LifeSim || {};
   // Nguồn: Dawi của Warhammer (Sổ Thù, lời thề Kẻ Diệt, tổ tiên khắc trên vách), Durin của Tolkien (đào quá sâu, đàn bà cũng có râu),
   // Dwarf Fortress (cơn nhập thần làm ra kiệt tác hoặc phát điên; đào trúng mạch nước, dung nham).
   const dwfMount = S => ['crystal_cave', 'ash_peak', 'frost_tundra', 'storm_spire'].includes(bio(S));
+  const dwfHold = S => { const s = G.here(S).s; return !!s && s.race === 'dwarf'; };   // khu Người Lùn: luôn đục vào đồi, núi
   add('dwarf', [
     { id: 'dwf_dark', st: ['child'], w: 4, run(S, X) { X.gain('Stealth', 3); X.add('h', 3);
         return { t: `Cha dẫn bạn xuống tầng sâu nhất của ${homeName(S, X)} rồi tắt đèn. Một lúc sau bạn thấy được vân đá trên vách: mắt Người Lùn sinh ra để nhìn trong tối.`, k: 'good' }; } },
@@ -167,12 +168,12 @@ window.LifeSim = window.LifeSim || {};
     { id: 'dwf_shame', st: AD, c: S => !S.flags.slayer && !S.flags.slayerQ && (S.flags.outcast || S.h < 22 || S.flags.dwfMad), w: 3, run(S, X) {
         S.flags.slayerQ = true;
         return { t: 'Bạn không dám nhìn vào mắt những người tổ tiên khắc trên vách đại sảnh. Đi qua đó bạn cúi đầu.', k: 'bad' }; } },
-    { id: 'dwf_flood', st: AD, rep: true, gap: 6, c: S => S.work === 'miner' || (G.raceHome(S) && dwfMount(S)), w: S => S.work === 'miner' ? 2 : .8, tree: { theme: 'hardship' }, run(S, X) {
+    { id: 'dwf_flood', st: AD, rep: true, gap: 6, c: S => S.work === 'miner' || (G.raceHome(S) && dwfMount(S)) || dwfHold(S), w: S => S.work === 'miner' ? 2 : .8, tree: { theme: 'hardship' }, run(S, X) {
         const lava = bio(S) === 'ash_peak'; X.add('hl', -6); X.money(-Math.round(med(S, X) * .3));
         if (X.chance(.02)) { X.die({ id: lava ? 'mine' : 'drown', text: lava ? 'bị dung nham tràn vào hầm' : 'chết đuối dưới hầm khi đào trúng mạch nước' }); return null; }
         return lava ? { t: 'Vách hầm nóng lên rồi rỉ ra thứ đá chảy đỏ rực. Cả tổ chạy lên, bỏ lại đồ nghề; ba tầng hầm bị lấp trong một đêm.', k: 'bad' }
           : { t: 'Cuốc của tổ bạn bổ trúng một mạch nước ngầm. Nước dâng tới thắt lưng trong một khắc; cả tổ chạy lên, bỏ lại đồ nghề.', k: 'bad' }; } },
-    { id: 'dwf_deep', st: AD, c: S => (S.work === 'miner' || dwfMount(S)) && G.raceHome(S), w: 1, run(S, X) {
+    { id: 'dwf_deep', st: AD, c: S => (S.work === 'miner' || dwfMount(S)) && G.raceHome(S) || dwfHold(S), w: 1, run(S, X) {
         X.add('sm', 3); X.add('h', -3); S.flags.deepSealed = true;
         return { t: 'Tầng dưới cùng của mỏ vọng lên tiếng gõ đều đều, như có ai đang đào ngược lên. Hội đồng thị tộc cho xây tường đá chặn lối, khắc rune cấm lên từng viên.', k: 'info', f: 'Sử Người Lùn chép không ít thành dưới núi bị bỏ hoang vì đào quá sâu.' }; } },
     { id: 'dwf_sky', st: AD, rep: true, gap: 6, c: S => !dwfMount(S) && stranger(S), w: 1.4, tree: { theme: 'stranger' }, run(S, X) {

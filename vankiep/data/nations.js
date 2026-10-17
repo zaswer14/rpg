@@ -67,6 +67,13 @@ window.LifeSim = window.LifeSim || {};
     skeleton:  { biomes:['grave_hills','abyss_rift','red_desert'], feats:[], urban:.70, noFarm:true, signature:'Lăng chính' }
   };
 
+  // ── Tín ngưỡng gốc của từng chủng tộc (shared/faiths.js, trường folk; docs/15): đạo mà gia đình của tộc đó thường theo ──
+  G.raceFaith = race => {
+    const F = (window.JobLibrary || {}).faiths || {};
+    if (!G._raceFaith) { G._raceFaith = {}; for (const [id, f] of Object.entries(F)) if (f.folk) G._raceFaith[f.folk] = id; }
+    return G._raceFaith[race] || null;
+  };
+
   // ── Công trình theo bậc (docs/05 mục 6): tên theo bậc và xác suất có ──
   G.BUILDINGS = [
     { id:'temple',   name:{ village:'Miếu', town:'Đền', city:'Đền lớn', capital:'Thánh đường' },               p:{ village:.6, town:1, city:1, capital:1 } },
@@ -90,54 +97,54 @@ window.LifeSim = window.LifeSim || {};
     T('H1','human','Vương Quốc Hiệp Sĩ','monarchy',{ light:80, none:20 },['golden_plains','moss_forest'],[],[],'L',[.18,1.2,1.25,.70,.50],['hunt_undead','bounties'],['caste'],['human'],['orc'],'Thập tự chinh','Ổn định cao thì hay tuyên chiến với nước Hắc Giáo hoặc nước Bộ Xương.'),
     T('H2','human','Cộng Hòa Thương Cảng','merchant',{ light:40, none:60 },['mist_coast','golden_plains'],[],['coast'],'M',[.12,.8,1.0,.60,.30],['free_trade','sea_toll'],['open_borders'],['human','merfolk'],[],'Lính đánh thuê','Trong chiến tranh mua thêm sức quân bằng tiền.'),
     T('H3','human','Thánh Quốc Bình Minh','theocracy',{ light:100 },['golden_plains','grave_hills'],[],[],'M',[.20,1.0,1.1,.75,.40],['hunt_undead','ban_death'],['mage_license'],['human','dragonkin'],['fae','skeleton'],'Tòa dị giáo','Người khác đạo bị phạt; Devotion Quang Minh tăng nhanh hơn.'),
-    T('H4','human','Đế Chế Kỷ Luật','empire',{ none:60, ancestor:40 },['golden_plains','wind_steppe'],[],[],'L',[.25,1.4,1.3,.55,.90],['conscript','caste'],[],['human'],[],'Quân đoàn','Chiếm tỉnh nhanh gấp đôi, nhưng tỉnh mới làm nước bất ổn.'),
+    T('H4','human','Đế Chế Kỷ Luật','empire',{ none:60, light:40 },['golden_plains','wind_steppe'],[],[],'L',[.25,1.4,1.3,.55,.90],['conscript','caste'],[],['human'],[],'Quân đoàn','Chiếm tỉnh nhanh gấp đôi, nhưng tỉnh mới làm nước bất ổn.'),
     T('H5','human','Liên Minh Biên Viễn','confederacy',{ none:70, wild:30 },['moss_forest','venom_marsh','red_desert'],[],[],'M',[.08,.9,.8,.50,.30],['bounties','open_borders'],[],[],[],'Đất lành','Kẻ bị truy nã nơi khác được ân xá; lập làng rẻ hơn.',{ tolerant:true }),
     // Tiên Tộc
     T('E1','elf','Rừng Quốc Cây Mẹ','council',{ wild:85, none:15 },['elder_wood','fae_glade'],['forest'],[],'M',[.10,.8,1.1,.85,.15],['no_outsiders','no_logging'],[],['elf','fae'],['orc','construct','dwarf'],'Ký ức dài','Gần như không nổi loạn; sử của nước không bao giờ bị cắt.'),
-    T('E2','elf','Tháp Quốc Ngân Nguyệt','magocracy',{ none:60, light:40 },['elder_wood','crystal_cave'],[],[],'S',[.20,1.0,1.0,.70,.40],['mage_license','caste'],[],['elf'],['human'],'Tháp pháp sư','Huyền thuật học nhanh hơn; chiến tranh cộng sức phép.'),
+    T('E2','elf','Tháp Quốc Ngân Nguyệt','magocracy',{ none:60, wild:40 },['elder_wood','crystal_cave'],[],[],'S',[.20,1.0,1.0,.70,.40],['mage_license','caste'],[],['elf'],['human'],'Tháp pháp sư','Huyền thuật học nhanh hơn; chiến tranh cộng sức phép.'),
     T('E3','elf','Thị Tộc Hoang Tiên','tribal',{ wild:100 },['moss_forest'],['jungle','forest'],[],'M',[.05,1.1,.9,.60,.30],['no_logging','beast_bond'],[],['elf','beastfolk'],['human'],'Rừng là tường','Tỉnh rừng phòng thủ mạnh; người lạ đi rừng bị phục kích.'),
     T('E4','elf','Hạm Đội Trăng','merchant',{ wild:50, deep:50 },['mist_coast','serpent_bay'],[],['coast'],'S',[.12,.9,1.0,.65,.35],['free_trade','sea_toll'],[],['elf','merfolk'],[],'Tàu lá','Mọi cảng của nước có tàu viễn dương.'),
     T('E5','elf','Giáo Quốc Tiên Sa Ngã','theocracy',{ dark:100 },['crystal_cave','grave_hills','abyss_rift'],[],[],'M',[.22,1.1,1.0,.55,.60],['penal_labor'],['undead_citizen'],['elf'],[],'Ẩn trong bóng','Ẩn thân học nhanh hơn; chiến tranh bằng ám sát.',{ xeno:true }),
     // Người Lùn
-    T('D1','dwarf','Liên Bang Thị Tộc Lò','council',{ forge:50, ancestor:50 },['crystal_cave'],['mountain','hills'],['mountain'],'M',[.20,1.1,1.15,.75,.30],['ban_arcane','guild_monopoly'],[],['dwarf'],['elf'],'Đường hầm','Các tỉnh núi nối nhau dưới đất, qua núi không cần đèo.'),
-    T('D2','dwarf','Vương Quốc Núi Sâu','monarchy',{ ancestor:90, none:10 },['ash_peak','frost_tundra'],['mountain'],['mountain'],'M',[.18,1.2,1.2,.80,.20],['ancestor_tithe','no_outsiders'],[],['dwarf'],[],'Sổ thù','Không tuyên chiến trước, nhưng mất tỉnh thì đánh tới khi lấy lại.'),
-    T('D3','dwarf','Hội Buôn Mạch Bạc','merchant',{ forge:40, none:60 },['crystal_cave'],['hills'],[],'S',[.14,.8,1.0,.65,.35],['free_trade','guild_monopoly'],[],['dwarf','human'],[],'Ngân hàng','Cho vay tiền; nước khác vay để đánh nhau.'),
-    T('D4','dwarf','Thệ Ước Giữ Cổng','military',{ ancestor:70, light:30 },['storm_spire','ash_peak','abyss_rift','frost_tundra'],[],[],'S',[.15,1.35,1.4,.70,.10],['conscript','bounties'],[],['dwarf'],[],'Giữ cổng','Tỉnh giáp vùng nguy hiểm tuần tra mạnh, dọn quái nhiều.',{ forts:2 }),
-    T('D5','dwarf','Giáo Hội Đe Rune','theocracy',{ forge:100 },['forge_ruins','ash_peak'],[],[],'S',[.22,1.0,1.1,.70,.30],['ban_death','construct_citizen'],[],['dwarf','construct'],['elf','fae'],'Rune','Trang bị mua trong nước tốt hơn một bậc.'),
+    T('D1','dwarf','Liên Bang Thị Tộc Lò','council',{ stone:80, forge:20 },['crystal_cave'],['mountain','hills'],['mountain'],'M',[.20,1.1,1.15,.75,.30],['ban_arcane','guild_monopoly'],[],['dwarf'],['elf'],'Đường hầm','Các tỉnh núi nối nhau dưới đất, qua núi không cần đèo.'),
+    T('D2','dwarf','Vương Quốc Núi Sâu','monarchy',{ stone:100 },['ash_peak','frost_tundra'],['mountain'],['mountain'],'M',[.18,1.2,1.2,.80,.20],['ancestor_tithe','no_outsiders'],[],['dwarf'],[],'Sổ thù','Không tuyên chiến trước, nhưng mất tỉnh thì đánh tới khi lấy lại.'),
+    T('D3','dwarf','Hội Buôn Mạch Bạc','merchant',{ stone:50, none:50 },['crystal_cave'],['hills'],[],'S',[.14,.8,1.0,.65,.35],['free_trade','guild_monopoly'],[],['dwarf','human'],[],'Ngân hàng','Cho vay tiền; nước khác vay để đánh nhau.'),
+    T('D4','dwarf','Thệ Ước Giữ Cổng','military',{ stone:100 },['storm_spire','ash_peak','abyss_rift','frost_tundra'],[],[],'S',[.15,1.35,1.4,.70,.10],['conscript','bounties'],[],['dwarf'],[],'Giữ cổng','Tỉnh giáp vùng nguy hiểm tuần tra mạnh, dọn quái nhiều.',{ forts:2 }),
+    T('D5','dwarf','Giáo Hội Đe Rune','theocracy',{ stone:75, forge:25 },['forge_ruins','ash_peak'],[],[],'S',[.22,1.0,1.1,.70,.30],['ban_death','construct_citizen'],[],['dwarf','construct'],['elf','fae'],'Rune','Trang bị mua trong nước tốt hơn một bậc.'),
     // Orc
     T('O1','orc','Hãn Quốc Thảo Nguyên','horde',{ ancestor:80, none:20 },['wind_steppe','red_desert'],['open'],[],'L',[.08,1.3,.8,.45,.80],['conscript','duel_law'],[],['orc','beastfolk'],['elf'],'Kỵ binh','Năm đầu chiến tranh đánh mạnh; kinh đô dời được.'),
-    T('O2','orc','Bộ Lạc Huyết Nộ','tribal',{ dark:70, ancestor:30 },['ash_peak','grave_hills'],[],[],'M',[.05,1.4,.7,.35,.95],['duel_law','raid_law'],[],['orc'],[],'Kẻ mạnh nhất','Tù trưởng chết thì nội chiến một năm.',{ xeno:true }),
-    T('O3','orc','Thị Tộc Rèn Sắt','tribal',{ ancestor:60, forge:40 },['wind_steppe','crystal_cave'],['hills','mountain'],['mountain'],'M',[.12,1.2,1.0,.55,.50],['conscript'],['guild_monopoly'],['orc','dwarf'],[],'Lò chiến','Mỗi năm hòa bình quân mạnh thêm.'),
-    T('O4','orc','Liên Minh Nanh Gãy','confederacy',{ none:70, dark:30 },[],[],[],'S',[.10,1.1,.9,.50,.40],['open_borders'],[],[],[],'Bán kiếm','Nước khác thuê họ khi có chiến tranh.',{ tolerant:true }),
-    T('O5','orc','Thần Quốc Xương Tổ','theocracy',{ ancestor:100 },['frost_tundra','grave_hills'],[],[],'M',[.10,1.0,1.0,.60,.40],['hunt_undead','ancestor_tithe'],[],['orc','beastfolk'],['skeleton'],'Đồng cốt','Tổ tiên báo mộng trước dịch và chiến tranh.'),
+    T('O2','orc','Bộ Lạc Huyết Nộ','tribal',{ ancestor:60, dark:40 },['ash_peak','grave_hills'],[],[],'M',[.05,1.4,.7,.35,.95],['duel_law','raid_law'],[],['orc'],[],'Kẻ mạnh nhất','Tù trưởng chết thì nội chiến một năm.',{ xeno:true }),
+    T('O3','orc','Bầy Sói Rừng Thẳm','tribal',{ ancestor:100 },['moss_forest','wind_steppe'],['forest','hills'],[],'M',[.12,1.2,1.0,.55,.50],['beast_bond'],['raid_law'],['orc','beastfolk'],['construct'],'Bầy lớn dần','Mỗi năm hòa bình bầy đông thêm, quân mạnh thêm.'),
+    T('O4','orc','Liên Minh Nanh Gãy','confederacy',{ ancestor:50, none:50 },[],[],[],'S',[.10,1.1,.9,.50,.40],['open_borders'],[],[],[],'Bán kiếm','Nước khác thuê họ khi có chiến tranh.',{ tolerant:true }),
+    T('O5','orc','Liên Bộ Lạc Xương Tổ','tribal',{ ancestor:100 },['frost_tundra','grave_hills'],[],[],'M',[.10,1.0,1.0,.60,.40],['hunt_undead','ancestor_tithe'],[],['orc','beastfolk'],['skeleton'],'Đồng cốt','Tổ tiên báo mộng trước dịch và chiến tranh.'),
     // Người Thú
-    T('B1','beastfolk','Liên Minh Bầy','confederacy',{ wild:70, ancestor:30 },['moss_forest','wind_steppe'],['forest'],[],'M',[.06,1.1,1.0,.60,.40],['beast_bond','no_logging'],[],['beastfolk'],['construct'],'Bầy','Tỉnh bị đánh thì tỉnh kề tiếp viện.'),
-    T('B2','beastfolk','Hội Săn Mặt Trăng','order',{ wild:100 },['elder_wood','moss_forest'],['jungle','forest'],[],'S',[.08,1.0,1.2,.65,.30],['bounties'],[],['beastfolk','elf'],[],'Thợ săn','Dọn quái nhiều, vòng an toàn rộng hơn.'),
-    T('B3','beastfolk','Hãn Quốc Vằn','horde',{ ancestor:90, none:10 },['wind_steppe','red_desert'],['open'],[],'M',[.07,1.25,.8,.45,.70],['raid_law','beast_bond'],[],['beastfolk','orc'],[],'Cưỡi thú','Đi ngoài đường không bị địa hình làm chậm.'),
-    T('B4','beastfolk','Cộng Đồng Đồng Cỏ','council',{ ancestor:60, wild:40 },['golden_plains','wind_steppe'],['open'],[],'M',[.10,.8,1.0,.70,.10],['beast_bond'],[],['beastfolk','human'],[],'Đàn gia súc','Chăn nuôi thu nhập cao; nạn đói hiếm hơn.'),
-    T('B5','beastfolk','Vương Quốc Sư Tử','monarchy',{ ancestor:60, light:40 },['red_desert','wind_steppe'],['jungle'],[],'M',[.15,1.2,1.0,.60,.60],['duel_law','caste'],[],['beastfolk'],[],'Ngai thách đấu','Ai thắng vua trong quyết đấu thì làm vua.'),
+    T('B1','beastfolk','Liên Minh Bầy','confederacy',{ totem:80, wild:20 },['moss_forest','wind_steppe'],['forest'],[],'M',[.06,1.1,1.0,.60,.40],['beast_bond','no_logging'],[],['beastfolk'],['construct'],'Bầy','Tỉnh bị đánh thì tỉnh kề tiếp viện.'),
+    T('B2','beastfolk','Hội Săn Mặt Trăng','order',{ totem:100 },['elder_wood','moss_forest'],['jungle','forest'],[],'S',[.08,1.0,1.2,.65,.30],['bounties'],[],['beastfolk','elf'],[],'Thợ săn','Dọn quái nhiều, vòng an toàn rộng hơn.'),
+    T('B3','beastfolk','Hãn Quốc Vằn','horde',{ totem:90, none:10 },['wind_steppe','red_desert'],['open'],[],'M',[.07,1.25,.8,.45,.70],['raid_law','beast_bond'],[],['beastfolk','orc'],[],'Cưỡi thú','Đi ngoài đường không bị địa hình làm chậm.'),
+    T('B4','beastfolk','Cộng Đồng Đồng Cỏ','council',{ totem:70, none:30 },['golden_plains','wind_steppe'],['open'],[],'M',[.10,.8,1.0,.70,.10],['beast_bond'],[],['beastfolk','human'],[],'Đàn gia súc','Chăn nuôi thu nhập cao; nạn đói hiếm hơn.'),
+    T('B5','beastfolk','Vương Quốc Sư Tử','monarchy',{ totem:80, none:20 },['red_desert','wind_steppe'],['jungle'],[],'M',[.15,1.2,1.0,.60,.60],['duel_law','caste'],[],['beastfolk'],[],'Ngai thách đấu','Ai thắng vua trong quyết đấu thì làm vua.'),
     // Yêu Tinh
-    T('F1','fae','Hạ Đình','court',{ wild:90, none:10 },['fae_glade','moss_forest'],['forest'],[],'M',[.10,.8,1.0,.70,.30],['contract_law'],[],['fae','elf'],['construct','dwarf'],'Thời gian lệch','Người ngoài ở lâu có thể ngủ quên bảy năm.'),
-    T('F2','fae','Đông Đình','court',{ wild:50, dark:50 },['frost_tundra','grave_hills'],[],[],'M',[.15,1.1,1.0,.60,.55],['contract_law','no_outsiders'],[],['fae'],['human'],'Mùa đông dài','Tỉnh của nước lạnh quanh năm; quái băng thuần.'),
-    T('F3','fae','Chợ Nấm Ma','merchant',{ none:70, wild:30 },['fae_glade','venom_marsh'],[],[],'S',[.05,.6,.8,.50,.20],['free_trade','contract_law'],[],[],[],'Mặc cả','Đổi ký ức, năm tuổi, tên thật lấy đồ vật.',{ tolerant:true }),
-    T('F4','fae','Bầy Tiểu Yêu Lang Thang','confederacy',{ none:100 },['moss_forest','fae_glade'],['forest'],[],'S',[0,.7,.7,.30,.20],['open_borders'],[],['fae'],[],'Đường đổi hướng','Đi trong lãnh thổ dễ lạc; biên giới tự dịch.'),
-    T('F5','fae','Vương Quốc Giấc Mơ','theocracy',{ wild:70, none:30 },['fae_glade'],[],[],'S',[.12,.7,1.0,.75,.20],[],['mage_license'],['fae'],[],'Tiên tri','Mỗi kiếp sinh trong nước nhận một lời tiên tri.'),
+    T('F1','fae','Hạ Đình','court',{ season:100 },['fae_glade','moss_forest'],['forest'],[],'M',[.10,.8,1.0,.70,.30],['contract_law'],[],['fae','elf'],['construct','dwarf'],'Thời gian lệch','Người ngoài ở lâu có thể ngủ quên bảy năm.'),
+    T('F2','fae','Đông Đình','court',{ season:70, dark:30 },['frost_tundra','grave_hills'],[],[],'M',[.15,1.1,1.0,.60,.55],['contract_law','no_outsiders'],[],['fae'],['human'],'Mùa đông dài','Tỉnh của nước lạnh quanh năm; quái băng thuần.'),
+    T('F3','fae','Chợ Nấm Ma','merchant',{ none:60, season:40 },['fae_glade','venom_marsh'],[],[],'S',[.05,.6,.8,.50,.20],['free_trade','contract_law'],[],[],[],'Mặc cả','Đổi ký ức, năm tuổi, tên thật lấy đồ vật.',{ tolerant:true }),
+    T('F4','fae','Bầy Tiểu Yêu Lang Thang','confederacy',{ season:50, none:50 },['moss_forest','fae_glade'],['forest'],[],'S',[0,.7,.7,.30,.20],['open_borders'],[],['fae'],[],'Đường đổi hướng','Đi trong lãnh thổ dễ lạc; biên giới tự dịch.'),
+    T('F5','fae','Vương Quốc Giấc Mơ','theocracy',{ season:100 },['fae_glade'],[],[],'S',[.12,.7,1.0,.75,.20],[],['mage_license'],['fae'],[],'Tiên tri','Mỗi kiếp sinh trong nước nhận một lời tiên tri.'),
     // Hải Tộc
     T('M1','merfolk','Thị Quốc San Hô','merchant',{ deep:60, none:40 },['serpent_bay','mist_coast'],[],['coast'],'M',[.12,.9,1.0,.60,.35],['free_trade','sea_toll'],[],['merfolk','human'],[],'Hải lộ','Mỗi cảng giàu thêm.'),
     T('M2','merfolk','Vương Triều Triều Dâng','monarchy',{ deep:80, none:20 },['serpent_bay'],[],['coast'],'M',[.18,1.1,1.0,.65,.55],['sea_toll'],['conscript'],['merfolk'],[],'Hải quân','Đánh nước ven biển thì thắng thế.'),
     T('M3','merfolk','Giáo Đoàn Vực Thẳm','theocracy',{ deep:100 },['serpent_bay','abyss_rift'],[],['coast'],'S',[.20,1.0,.9,.55,.50],['undead_citizen'],[],['merfolk','skeleton'],['human','dragonkin'],'Tiếng gọi','Chúa biển không đánh tàu của nước này.'),
     T('M4','merfolk','Liên Minh Cướp Biển','confederacy',{ none:60, dark:40 },['serpent_bay'],[],['coast'],'S',[.05,1.0,.6,.40,.70],['raid_law','open_borders'],[],[],[],'Cướp biển','Hải trình gần lãnh thổ hay gặp cướp.',{ tolerant:true }),
-    T('M5','merfolk','Bộ Tộc Rạn Ngầm','tribal',{ wild:60, deep:40 },['serpent_bay'],[],['coast'],'S',[.05,.9,1.0,.70,.10],['no_outsiders'],[],['merfolk'],[],'Dưới nước','Làng dưới nước; nước không có cảng không chiếm được.'),
+    T('M5','merfolk','Bộ Tộc Rạn Ngầm','tribal',{ deep:100 },['serpent_bay'],[],['coast'],'S',[.05,.9,1.0,.70,.10],['no_outsiders'],[],['merfolk'],[],'Dưới nước','Làng dưới nước; nước không có cảng không chiếm được.'),
     // Long Nhân
-    T('R1','dragonkin','Long Vương Quốc','monarchy',{ light:70, ancestor:30 },['storm_spire','ash_peak'],['hills'],[],'M',[.20,1.3,1.1,.65,.70],['caste'],[],['dragonkin'],['orc'],'Huyết thống rồng','Chỉ Long Nhân được phong tước.'),
-    T('R2','dragonkin','Thị Tộc Tro','tribal',{ ancestor:90, none:10 },['ash_peak'],['hills'],[],'S',[.12,1.2,1.0,.60,.40],['ancestor_tithe'],[],['dragonkin','dwarf'],[],'Ấp trứng','Dân tăng sau mỗi lần núi lửa phun.'),
-    T('R3','dragonkin','Giáo Hội Ngọn Lửa','theocracy',{ light:100 },['ash_peak','storm_spire'],[],[],'M',[.22,1.1,1.1,.70,.55],['hunt_undead','ban_death'],[],['dragonkin','human'],['skeleton'],'Thánh hỏa','Bộ Xương trong nước bị thiêu nhiều hơn.'),
-    T('R4','dragonkin','Đế Chế Sừng Đen','empire',{ dark:90, none:10 },['ash_peak','abyss_rift'],[],[],'L',[.28,1.4,1.0,.45,.90],['conscript','penal_labor'],[],['dragonkin'],[],'Bạo chúa','Tỉnh mới chiếm bị khổ sai; nổi loạn nhiều.',{ xeno:true }),
-    T('R5','dragonkin','Thủ Hộ Đoàn Cổ Long','order',{ none:70, ancestor:30 },['storm_spire'],['hills'],['mountain'],'S',[.08,1.0,1.2,.80,.05],['bounties'],[],['dragonkin'],[],'Canh giấc rồng','Cổ Long hiếm thức dậy; ai đánh thức nó thì bị truy nã.'),
+    T('R1','dragonkin','Long Vương Quốc','monarchy',{ flame:100 },['storm_spire','ash_peak'],['hills'],[],'M',[.20,1.3,1.1,.65,.70],['caste'],[],['dragonkin'],['orc'],'Huyết thống rồng','Chỉ Long Nhân được phong tước.'),
+    T('R2','dragonkin','Thị Tộc Tro','tribal',{ flame:90, none:10 },['ash_peak'],['hills'],[],'S',[.12,1.2,1.0,.60,.40],['ancestor_tithe'],[],['dragonkin','dwarf'],[],'Ấp trứng','Dân tăng sau mỗi lần núi lửa phun.'),
+    T('R3','dragonkin','Giáo Hội Ngọn Lửa','theocracy',{ flame:100 },['ash_peak','storm_spire'],[],[],'M',[.22,1.1,1.1,.70,.55],['hunt_undead','ban_death'],[],['dragonkin','human'],['skeleton'],'Thánh hỏa','Bộ Xương trong nước bị thiêu nhiều hơn.'),
+    T('R4','dragonkin','Đế Chế Sừng Đen','empire',{ flame:50, dark:50 },['ash_peak','abyss_rift'],[],[],'L',[.28,1.4,1.0,.45,.90],['conscript','penal_labor'],[],['dragonkin'],[],'Bạo chúa','Tỉnh mới chiếm bị khổ sai; nổi loạn nhiều.',{ xeno:true }),
+    T('R5','dragonkin','Thủ Hộ Đoàn Cổ Long','order',{ flame:70, none:30 },['storm_spire'],['hills'],['mountain'],'S',[.08,1.0,1.2,.80,.05],['bounties'],[],['dragonkin'],[],'Canh giấc rồng','Cổ Long hiếm thức dậy; ai đánh thức nó thì bị truy nã.'),
     // Cơ Nhân
     T('C1','construct','Xưởng Quốc Tự Trị','collective',{ forge:100 },['forge_ruins'],[],[],'S',[.25,1.0,1.0,.90,.10],['construct_citizen','ban_death'],[],['construct'],[],'Dây chuyền','Dân tăng bằng đúc, theo độ giàu.'),
     T('C2','construct','Hội Đồng Bánh Răng','council',{ forge:70, none:30 },['crystal_cave'],['hills'],[],'M',[.18,1.0,1.1,.75,.30],['construct_citizen','guild_monopoly'],[],['construct','dwarf','human'],[],'Kỹ nghệ','Cơ khí học nhanh hơn.'),
-    T('C3','construct','Quân Đoàn Sắt','military',{ none:100 },['golden_plains','forge_ruins'],[],[],'M',[.20,1.4,1.2,.80,.75],['conscript','construct_citizen'],[],['construct'],[],'Giao thức chiến','Không cầu hòa; chiến tranh kéo dài.'),
+    T('C3','construct','Quân Đoàn Sắt','military',{ forge:50, none:50 },['golden_plains','forge_ruins'],[],[],'M',[.20,1.4,1.2,.80,.75],['conscript','construct_citizen'],[],['construct'],[],'Giao thức chiến','Không cầu hòa; chiến tranh kéo dài.'),
     T('C4','construct','Thành Phố Đồng Hồ','merchant',{ none:80, forge:20 },['golden_plains','mist_coast'],[],['coastOrRiver'],'S',[.15,.8,1.1,.85,.20],['free_trade','construct_citizen'],[],['construct','human'],[],'Giờ chính xác','Đường và hải trình qua nước nhanh hơn.'),
     T('C5','construct','Phong Trào Thức Tỉnh','confederacy',{ none:70, dark:30 },['forge_ruins'],[],[],'S',[.10,1.1,.9,.40,.60],['construct_citizen','liberation'],[],['construct'],['human'],'Phá xích','Tỉnh chiếm được thả Cơ Nhân thành công dân.'),
     // Bộ Xương
