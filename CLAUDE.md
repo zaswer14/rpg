@@ -6,7 +6,7 @@ Kho chung của các dự án game nhập vai (tài liệu tiếng Việt). Bả
 - `vankiep/`: **Vạn Kiếp**, game mô phỏng một đời kiểu 1in8b trên đại lục Varen (HTML/JS tĩnh); thiết kế ở `vankiep/docs/` (01 1in8b; 02–05 bản đồ V2, quốc gia, thành phố; 06 thiên phú, chí hướng; 07 định hướng xã hội tu luyện; 08 hệ sức mạnh, level, chuyển nghề; 09 bậc Tier, danh xưng, độ hiếm; 10 cây nghề riêng; 11 tuổi thọ giống loài, tập tục; 12 cây sự kiện, quỹ đạo, danh phận; 13 mạch truyện, dàn nhân vật, chương đời; 14 sự kiện giống loài, môi trường sống; 15 tín ngưỡng gốc của tộc, văn hóa tộc; 16 đường đời: mạch chính, mạch ngắn, dấu hệ quả; 17 danh vọng, thành tựu, lịch sử lựa chọn, biên bản lúc chết).
 - `platform/`: **Skeleton Codex**, game hành động platformer 2D (tài liệu cân bằng, bản chơi thử, quy trình art).
 - `review/`: trang duyệt nhanh trên claude.ai (mã nguồn, dữ liệu, `published.txt`).
-- `tools/`: `sync.sh`, `muc_luc.sh`, `duyet.sh`, `token.pl` (token theo việc, hook `Stop` ghi `logs/token/`), `caytruyen.sh` (dựng bản đăng trang Cây Cốt Truyện), `serve.ps1`.
+- `tools/`: `sync.sh`, `muc_luc.sh`, `duyet.sh`, `tim.sh` (tra mã Vạn Kiếp: tên ở đâu, ai bọc, ai dùng), `token.pl` (token theo việc, hook `Stop` ghi `logs/token/`), `caytruyen.sh` (dựng bản đăng trang Cây Cốt Truyện), `serve.ps1`.
 
 ## Đồng bộ máy tính / điện thoại (một lệnh)
 
@@ -29,7 +29,8 @@ Khi người dùng bảo commit (hoặc trước khi hỏi họ có commit khôn
 
 Mọi thứ đã đọc, đã viết, đã chạy đều nằm lại trong đoạn chat và bị đọc lại ở mỗi lượt sau. Đo 17/10/2026: phiên mở đầu ~64k, phình tới 500–850k, nguồn phình số 1 là Bash in file (`logs/token/`, `perl tools/token.pl`). Người dùng hỏi context / token dùng thế nào: skill `xem-context`.
 
-- File lớn (`bash tools/muc_luc.sh` liệt kê) thì không đọc cả: `bash tools/muc_luc.sh FILE [mẫu]` ra số dòng từng mục / hàm, rồi Read đúng đoạn bằng `offset` / `limit`.
+- File lớn (`bash tools/muc_luc.sh` liệt kê) thì không đọc cả: `bash tools/muc_luc.sh FILE [mẫu]` ra số dòng từng phần / hàm (kèm chú thích tác dụng nếu mã có), rồi Read đúng đoạn bằng `offset` / `limit`.
+- **Tra mã Vạn Kiếp trước khi đọc**: `bash tools/tim.sh -k "từ khóa"` (file nào lo việc đó, tên `G.*` khớp), `bash tools/tim.sh G.tên` (định nghĩa, mọi lớp bọc theo thứ tự nạp, chỗ dùng theo file; nhiều hàm bị bọc ở 3–4 file, như `G.teachList`, `G.runEvent`). Không đọc cả bảng Bản đồ mã nguồn (`TIEN_DO.md` mục 2) khi chỉ cần một file / một hàm. Viết hàm mới: một dòng chú thích `//` ngay trên nó để `muc_luc.sh` hiện tác dụng.
 - **Tìm hiểu qua nhiều file mà chỉ cần kết luận** (lần đầu đọc một hệ thống, tìm chỗ dùng một hàm, đối chiếu tài liệu với mã, nghiên cứu): giao subagent `Explore` (hoặc `general-purpose` khi phải chạy lệnh), dặn trả lời gọn kèm số dòng; đừng tự `cat` / `sed` cả loạt vào đoạn chat chính. Tự đọc khi sắp sửa đúng đoạn đó (Edit cần Read ở luồng chính; đọc đúng khoảng dòng subagent chỉ).
 - **Khi nào đáng gọi subagent** (đo 17/10/2026): một subagent mới tốn cố định ~37k context của riêng nó (~70k quy đổi lượt đầu), nên đọc 1 file nhỏ hay vài đoạn có số dòng thì tự đọc (`muc_luc.sh` + `offset` / `limit`) rẻ hơn. Đáng gọi khi phải đọc nhiều (≳ 30 KB mã / tài liệu) mà phiên còn dài: phần đó không nằm lại trong luồng chính.
 - **Hỏi lại cùng file / cùng chủ đề thì gọi lại đúng subagent cũ** bằng `SendMessage` (tên hoặc id trong kết quả `Agent`), dặn "trả lời từ những gì đã đọc, chỉ đọc thêm khi thiếu": nó còn nguyên context, một lượt hỏi lại chỉ ~5k quy đổi, rẻ hơn ~15 lần so với gọi con mới và không đọc lại file. Gọi con mới khi: chủ đề khác hẳn, quá 1 giờ chưa dùng (cache hết, gọi lại tốn như con mới), hoặc context của nó đã lớn (> ~150k; `perl tools/token.pl` có dòng Subagent).

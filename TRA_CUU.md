@@ -18,8 +18,9 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 
 ## 2. Đọc tiết kiệm
 
-- **File lớn thì đọc theo mục.** `bash tools/muc_luc.sh FILE [mẫu]` in `L<đầu>-<cuối> (<số dòng>) <mục>` (tiêu đề với `.md`, hàm `G.x` / `function` với `.js`), rồi Read với `offset` / `limit`. Ví dụ `bash tools/muc_luc.sh vankiep/docs/03_Thiet_ke_ban_do_Varen_V2.md "hang ổ"`.
+- **File lớn thì đọc theo mục.** `bash tools/muc_luc.sh FILE [mẫu]` in `L<đầu>-<cuối> (<số dòng>) <mục>` (tiêu đề với `.md`; với `.js`: phần `== … ==` theo dòng ngăn, hàm `G.x` / `function` kèm chú thích `//` ngay trên nó), rồi Read với `offset` / `limit`. Ví dụ `bash tools/muc_luc.sh vankiep/docs/03_Thiet_ke_ban_do_Varen_V2.md "hang ổ"`.
 - `bash tools/muc_luc.sh` (không đối số): danh sách file ≥ 15 KB. Đừng đọc cả những file này.
+- **Tra mã Vạn Kiếp**: `bash tools/tim.sh -k "từ khóa"` ra file lo việc đó (dò bảng Bản đồ mã nguồn) và tên `G.*` khớp; `bash tools/tim.sh G.tên` ra định nghĩa, các lớp bọc theo thứ tự nạp, chỗ dùng theo file (vd `G.teachList`: gốc ở `cult.js`, bọc ở `status`, `econ`, `inst`, `fate`).
 - Tìm một tên hàm / khóa: Grep trước, đọc vùng quanh dòng khớp sau.
 - Trạng thái Vạn Kiếp đã có trong kết quả `sync.sh` (đoạn mở đầu TIEN_DO.md). Chỉ đọc tiếp TIEN_DO.md khi bắt tay làm, và chỉ mục cần (`muc_luc.sh vankiep/TIEN_DO.md`).
 - Không tạo commit riêng chỉ để ghi hash vào tài liệu; tra hash bằng `git log --oneline --grep "bước 8"`. Lịch sử file trước khi tách kho (15/10/2026): `git log --follow vankiep/js/life.js`.
@@ -32,7 +33,7 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | `TRA_CUU.md` | file này | đầu phiên, khi chưa biết file nào |
 | `index.html` | trang chủ cho người dùng: link tới mọi trang, tài liệu | thêm trang / tài liệu mới thì thêm link |
 | `README.md` gốc | giới thiệu kho, cách mở | |
-| `tools/` | `sync.sh`, `muc_luc.sh`, `duyet.sh`, `token.pl` (token theo việc, ghi `logs/token/`; skill `/xem-context` ở `.claude/skills/` đọc nó và báo context dùng thế nào), `serve.ps1` (server tĩnh cả kho, cổng 8765) | |
+| `tools/` | `sync.sh`, `muc_luc.sh`, `duyet.sh`, `tim.sh` (tra mã Vạn Kiếp: tên ở đâu, ai bọc, ai dùng), `token.pl` (token theo việc, ghi `logs/token/`; skill `/xem-context` ở `.claude/skills/` đọc nó và báo context dùng thế nào), `serve.ps1` (server tĩnh cả kho, cổng 8765) | |
 | **Phần chung** `shared/` | nghề, chủng tộc, giáo phái, khuôn nghề, quái, tên, địa hình; mọi game đọc | `shared/README.md` mục 1 là sơ đồ |
 | `shared/docs/00_Luat_chung.md` | luật chung: Tier, chuyển nghề, quái, địa hình, tên, dữ liệu | trước khi thêm nội dung dùng chung |
 | `shared/names/names.js` (24K) | kho tên riêng `JobLibrary.names` | theo khóa, qua Grep |

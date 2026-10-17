@@ -6,7 +6,7 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày | Phiên | Việc | Ra | Quy đổi |
 |---|---:|---:|---:|---:|
-| 2026-10-17 | 5 | 21 | 808.375 | 31.724.520 |
+| 2026-10-17 | 5 | 23 | 828.115 | 32.215.015 |
 | 2026-10-16 | 4 | 6 | 405.949 | 15.122.787 |
 | 2026-10-14 | 7 | 16 | 274.401 | 6.047.613 |
 
@@ -14,7 +14,9 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày giờ | Phiên | Việc | Lượt | Ra | Quy đổi |
 |---|---|---|---:|---:|---:|
-| 2026-10-17 17:50 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok cách 2 | 6 | 7.775 | 160.560 |
+| 2026-10-17 17:56 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok, làm cả 3 | 11 | 15.231 | 347.679 |
+| 2026-10-17 17:55 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | hiện tại bên vạn kiếp đã có file map chưa? là có những file nào, những hàm gì tác dụng gì… | 4 | 3.746 | 119.340 |
+| 2026-10-17 17:50 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | ok cách 2 | 7 | 8.538 | 184.036 |
 | 2026-10-17 17:48 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | khi 1 đoạn chat cạn context, mình thường phải mở lại đoạn chat mới trong chính phiên làm … | 1 | 2.927 | 30.962 |
 | 2026-10-17 17:44 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | bổ sung thêm nếu cần đọc lại file thì con subagent đọc file được huy động sẽ được tái sử … | 16 | 9.473 | 310.534 |
 | 2026-10-17 17:25 | [Theo dõi token và công việc trong chat](2026-10-17_6804238b.md) | commit và push | 3 | 983 | 50.684 |

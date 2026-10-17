@@ -47,8 +47,11 @@ Trang duyệt nhanh (claude.ai, lưu quyết định trong db, collection `revie
 
 ## 2. Bản đồ mã nguồn
 
+Tra nhanh, đừng đọc cả bảng: `bash tools/tim.sh -k "từ khóa"` (file nào lo việc đó), `bash tools/tim.sh G.tên` (định nghĩa, các lớp bọc theo thứ tự nạp, chỗ dùng), `bash tools/muc_luc.sh FILE [mẫu]` (phần, hàm, chú thích, số dòng). Thứ tự nạp: `index.html`.
+
 | File | Vai trò |
 |---|---|
+| `js/core.js` | lõi toán, RNG có seed (mọi ngẫu nhiên qua `sim.rnd()`, không `Math.random()`): `G.hash`, `G.mulberry32`, `G.makeRng`, `G.newSeed`, `G.clamp`, `G.lerp`, `G.coin` (đồng / bạc / vàng), `G.tools(rnd)` (`chance`, `int`, `pick`, `wpick`, `wkey`, `gauss`, `poisson`), `G.odds`, `G.ncdf`, `G.ninv`, `G.sigmaFromGini` (thu nhập log-normal), `G.noise2` (nhiễu dựng bản đồ) |
 | `data/world.js` | chủng tộc, tầng lớp, sinh kế (`G.WORKS`: bld / role / town / land / guild / banLaw / seaBand), 16 vùng × 4 khu, `G.SEAS` (7 vùng biển × 4 tầng, thời tiết), `G.SEA_BAND_W`, `G.SHIPS`, `G.BAND_W`, nguyên nhân chết (có `shipwreck`), `G.DUNGEON_TIERS` (dải Tier 3 tầng di tích theo biome), `validateWorld` (kiểm vùng đất, vùng biển, tầng di tích `G.DG`); gán `G.TERRAIN`, `G.FEATURES`, `G.FEATURE_SPAWN`, `G.NAMES` từ phần chung |
 | `data/nations.js` | `G.GOVS`, `G.LAWS`, `G.RACE_SETTLE`, `G.BUILDINGS`, `G.NATION_TEMPLATES` (50), `G.QUIRKS` |
 | `data/skills.js` | tên, mô tả kỹ năng `G.SKILL_NAMES` (docs/08 mục 3.1): id, bộ chung `<Tier>:<trường phái>#k`, gate tạm `<nghề>#g1/g2`; `js/cult.js` `G.skName`, `G.skDesc` đọc |
