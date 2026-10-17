@@ -10,6 +10,8 @@
 | Có commit mới | `bash tools/sync.sh pull` | chỉ fast-forward; lệch hai phía thì dừng và hỏi |
 | Trước khi commit | `bash tools/duyet.sh` | trang duyệt nhanh có khớp dữ liệu không, nội dung mới nào chưa có trang (CLAUDE.md mục Trang duyệt nhanh) |
 | Cuối phiên | `bash tools/sync.sh push` | chỉ sau khi người dùng đồng ý commit / push |
+| Sau mỗi lượt trả lời | tự động (hook `Stop` chạy `perl tools/token.pl --hook`) | ghi token từng việc (mỗi lời nhắn là một việc) và tiến trình từng bước vào `logs/token/`: `TONG.md` mọi phiên, `<ngày>_<phiên>.md` chi tiết; xem nhanh phiên hiện tại: `perl tools/token.pl` |
+| Mỗi lời nhắn | tự động (hook `UserPromptSubmit` chạy `perl tools/token.pl --ctx`) | context vượt 400k (rồi mỗi 150k) thì nhắc Claude đề nghị mở chat mới, kèm khối tóm tắt để dán (CLAUDE.md mục Đọc tiết kiệm) |
 
 Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ khi cần chi tiết. Không đọc diff của commit mới kéo về; chỉ mở file liên quan tới việc đang làm. `origin` là máy chủ công ty: chỉ push khi được bảo.
 
@@ -29,7 +31,7 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | `TRA_CUU.md` | file này | đầu phiên, khi chưa biết file nào |
 | `index.html` | trang chủ cho người dùng: link tới mọi trang, tài liệu | thêm trang / tài liệu mới thì thêm link |
 | `README.md` gốc | giới thiệu kho, cách mở | |
-| `tools/` | `sync.sh`, `muc_luc.sh`, `duyet.sh`, `serve.ps1` (server tĩnh cả kho, cổng 8765) | |
+| `tools/` | `sync.sh`, `muc_luc.sh`, `duyet.sh`, `token.pl` (token theo việc, ghi `logs/token/`), `serve.ps1` (server tĩnh cả kho, cổng 8765) | |
 | **Phần chung** `shared/` | nghề, chủng tộc, giáo phái, khuôn nghề, quái, tên, địa hình; mọi game đọc | `shared/README.md` mục 1 là sơ đồ |
 | `shared/docs/00_Luat_chung.md` | luật chung: Tier, chuyển nghề, quái, địa hình, tên, dữ liệu | trước khi thêm nội dung dùng chung |
 | `shared/names/names.js` (24K) | kho tên riêng `JobLibrary.names` | theo khóa, qua Grep |

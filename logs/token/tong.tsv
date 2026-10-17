@@ -1,0 +1,39 @@
+phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	3	1792232296	ok, làm cả 2 rồi commit	6	12	8720	768125	6321	125870
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	2	1792232070	phần context chưa làm gì đã mất 100-200k, dẫn đến giới hạn 1triệu trong đoạn chat có vẻ h…	8	16	13539	909529	10432	170207
+6804238b-ce83-4ba5-a64d-6f5ea05d2dd8	Theo dõi token và công việc trong chat	1	1792231695	mình muốn làm 1 cái tracking xem việc sử dụng claude trong 1 đoạn chat là công việc nào h…	31	62	64046	2741380	24900	526792
+4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	3	1792216007	commit và push	3	6	2302	1563863	1128	166636
+4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	2	1792215426	mình muốn làm 1 web giống cây cốt truyện vạn kiếp nhưng ko giới hạn 1 nhân vật mà có nút …	25	50	62778	12413022	44202	1587918
+4cbc7988-5ab1-47ab-a071-86dc6dcbe292	Hệ thống danh vọng và thành tựu	1	1792213126	vạn kiếp: thêm hệ thống danh vọng, thành tựu, sẽ thống kê toàn bộ lúc chết, lúc lựa chọn …	152	304	407531	44665499	148189	6022861
+910f3660-0552-400c-9830-d400ce579b5f	Nghiên cứu môi trường và đặc sắc chủng tộc	5	1792212364	ok	5	10	2731	4222856	1577	435643
+910f3660-0552-400c-9830-d400ce579b5f	Nghiên cứu môi trường và đặc sắc chủng tộc	4	1792210195	mình muốn có 1 hệ thống mạch truyện: * hiện tại sự kiện đưa ra chỉ làm thay đổi chỉ số là…	73	146	267050	53154966	164757	6673528
+910f3660-0552-400c-9830-d400ce579b5f	Nghiên cứu môi trường và đặc sắc chủng tộc	3	1792209745	ok	7	14	87712	3746199	3206	566088
+910f3660-0552-400c-9830-d400ce579b5f	Nghiên cứu môi trường và đặc sắc chủng tộc	2	1792207739	hiện tại mình thấy người lùn có tín ngưỡng là ánh sáng, cái này ko đúng lắm, mình cũng qu…	123	246	333984	43200792	141946	5698023
+910f3660-0552-400c-9830-d400ce579b5f	Nghiên cứu môi trường và đặc sắc chủng tộc	1	1792206807	vạn kiếp: nghiên cứu, tìm hiểu lại môi trường, tập tính, đặc sắc của các chủng tộc, chưa …	21	42	97116	2281849	13576	490339
+1ee42e82-ea87-4456-a598-4e8632e496af	Sự kiện riêng theo chủng tộc	4	1792205932	commit push	2	4	1054	1058926	717	111590
+1ee42e82-ea87-4456-a598-4e8632e496af	Sự kiện riêng theo chủng tộc	3	1792205390	thêm tính năng dành cho người kiểm duyệt, trong đó có tính năng chơi lại, chọn chủng tộc …	35	70	70430	17588275	38798	2093748
+1ee42e82-ea87-4456-a598-4e8632e496af	Sự kiện riêng theo chủng tộc	2	1792204909	đăng lại trang duyệt rồi commit push	7	14	31076	3101717	1911	381893
+1ee42e82-ea87-4456-a598-4e8632e496af	Sự kiện riêng theo chủng tộc	1	1792202438	nghiên cứu các câu truyện, bổ sung thêm vào cây sự kiện. Hiện tại sự kiện các chủng tộc k…	144	288	377165	42910584	178123	5936291
+930f8825-9dc2-4d9d-ab5e-9fb728da2452		1	1792202427	nghiên cứu các câu truyện, bổ sung thêm vào cây sự kiện. Hiện tại sự kiện các chủng tộc k…	1	2	20841	43136	227	47133
+89c08738-8cdc-459d-992c-7ae3cff835e2	Hệ thống liên kết mạch truyện	3	1792168190	cả 3	7	14	32199	3639719	2301	439889
+89c08738-8cdc-459d-992c-7ae3cff835e2	Hệ thống liên kết mạch truyện	2	1792165728	2	141	282	385647	51164077	206095	6918459
+89c08738-8cdc-459d-992c-7ae3cff835e2	Hệ thống liên kết mạch truyện	1	1792164545	vạn kiếp: tạo hệ thống liên kết mạch truyện, hiện tại mạch truyện của nhân vật đang quá n…	7	14	62372	568176	9876	230956
+27f1f2f2-3850-4d71-b08c-8f8574f2c20e		1	1792164513	vạn kiếp: tạo hệ thống liên kết mạch truyện, hiện tại mạch truyện của nhân vật đang quá n…	1	2	16832	47144	317	39965
+d22c82cb-c3d5-4741-9755-866cc762aa7b	Cấu trúc sự kiện dạng cây	1	1792160031	vạn kiếp: cấu trúc lại sự kiện, để dạng cây sự kiện có thể có nhiều nhánh, tránh những sự…	155	310	356761	45668141	140814	5984716
+28a5525e-8a84-408f-82d4-9c4490ba97ae	Cấu trúc lại giao diện nhân vật	1	1792158422	cấu trúc lại giao diện, sao cho tập trung vào thông tin của nhân vật, hiện tại map đang q…	66	132	144941	9860576	46546	1508802
+dca90030-b4c9-4a4e-ae68-589c315ac145	RPG Life Sim game với bản đồ vùng đất	3	1791993447	commit nốt file này đi, merge nhánh rồi push	3	6	1668	1124649	623	118922
+dca90030-b4c9-4a4e-ae68-589c315ac145	RPG Life Sim game với bản đồ vùng đất	2	1791993369	commit đi	3	6	330942	786785	1682	748978
+dca90030-b4c9-4a4e-ae68-589c315ac145	RPG Life Sim game với bản đồ vùng đất	1	1791986593	dựa theo ý tưởng của 01_Life_Sim_1in8b trong research, tạo 1 game dạng vậy với bối cảnh r…	80	160	323341	21033261	204786	3774098
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	7	1791986423	đã có thông báo claude hoàn thành task trên máy này chưa	3	6	3908	323602	851	44437
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	6	1791986274	có cách nào chuyển trạng thái nhanh hơn so với việc giữ shift phải 8s không	3	6	4591	309968	4957	64970
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	5	1791985906	tạo shortcut ở desktop, và mình muốn nó có thể hiện là trạng thái đang bật hay tắt	10	20	13803	941152	12550	184491
+cbd3bd0f-ac21-4fa0-9249-00ebe7143122	Nghiên cứu logic trang web	2	1791985755	viết 1 file mô tả ý tưởng cách làm	11	22	39243	1157569	14619	267360
+25a32df4-16c3-4cb5-b53b-38717cfdc8d6	Tắt tiếng gõ phím	1	1791985708	hiện tại mỗi lần mình gõ phím (trên máy) thì đều có tiếng, tắt điều đó ở đâu	2	4	13657	105727	1530	45541
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	4	1791985675	mình muốn viết 1 tool tắt bật tính năng filter này	3	6	8558	240991	8838	85411
+cbd3bd0f-ac21-4fa0-9249-00ebe7143122	Nghiên cứu logic trang web	1	1791985621	https://1in8b.life/en/ nghiên cứu trang web này, bạn có lấy được code logic hoạt động khô…	10	20	38861	647437	5615	170561
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	3	1791985117	hoàn tác	2	4	233	154975	212	17028
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	2	1791984879	máy tính hiện tại của mình đang bị chung như thế, ko phải là lên game	1	2	670	74754	2047	19052
+0bbb5601-71d6-462d-8377-f0a765505989	Phím bị lặp khi nhả	1	1791984721	hiện tại máy mình dễ bị ấn 1 phím mà nhả ra nhiều lần, sửa giúp mình	12	24	27344	781949	6701	166412
+3aae312a-7eef-4197-8078-160ed455188a	Phím bị lặp khi nhả	1	1791984721	hiện tại máy mình dễ bị ấn 1 phím mà nhả ra nhiều lần, sửa giúp mình	12	24	27344	781949	6701	166412
+0e915e65-c001-4e0c-878a-97e1d62be62e	Xóa nhánh thợ chế tác xương	1	1791984702	bỏ nhánh thợ chế tác xương và các nghề phát triển từ nó đi	7	14	33449	442672	2054	121449
+82f9bf3a-957d-4c63-9edf-8aefa158726e	Pull dự án về	1	1791984320	https://github.com/zaswer14/rpg/tree/main pull dự án về	3	6	16587	161364	635	52491

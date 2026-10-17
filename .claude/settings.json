@@ -6,7 +6,9 @@
       "Bash(bash tools/muc_luc.sh)",
       "Bash(bash tools/muc_luc.sh:*)",
       "Bash(bash tools/duyet.sh)",
-      "Bash(bash tools/duyet.sh nhanh)"
+      "Bash(bash tools/duyet.sh nhanh)",
+      "Bash(perl tools/token.pl)",
+      "Bash(perl tools/token.pl:*)"
     ]
   },
   "hooks": {
@@ -19,6 +21,28 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/tools/sync.sh\" 2>&1 || true",
             "timeout": 30,
             "statusMessage": "Đồng bộ GitHub..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "perl \"$CLAUDE_PROJECT_DIR/tools/token.pl\" --ctx 2>/dev/null || true",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "perl \"$CLAUDE_PROJECT_DIR/tools/token.pl\" --hook 2>/dev/null || true",
+            "timeout": 30
           }
         ]
       }
