@@ -3,7 +3,7 @@
 Kho chung của các dự án game nhập vai (tài liệu tiếng Việt). Bản đồ kho, file nào đọc khi nào: **`TRA_CUU.md`**. Trang chủ cho người dùng: `index.html`.
 
 - `shared/`: **phần chung** mọi game đọc: nghề, chủng tộc, giáo phái, khuôn nghề, quái (`bestiary/`), kho tên (`names/`), địa hình (`terrain/`), luật chung (`docs/00_Luat_chung.md`). Sửa ở đây thì kiểm cả hai game.
-- `vankiep/`: **Vạn Kiếp**, game mô phỏng một đời kiểu 1in8b trên đại lục Varen (HTML/JS tĩnh); thiết kế ở `vankiep/docs/` (01 1in8b; 02–05 bản đồ V2, quốc gia, thành phố; 06 thiên phú, chí hướng; 07 định hướng xã hội tu luyện; 08 hệ sức mạnh, level, chuyển nghề; 09 bậc Tier, danh xưng, độ hiếm; 10 cây nghề riêng; 11 tuổi thọ giống loài, tập tục; 12 cây sự kiện, quỹ đạo, danh phận; 13 mạch truyện, dàn nhân vật, chương đời).
+- `vankiep/`: **Vạn Kiếp**, game mô phỏng một đời kiểu 1in8b trên đại lục Varen (HTML/JS tĩnh); thiết kế ở `vankiep/docs/` (01 1in8b; 02–05 bản đồ V2, quốc gia, thành phố; 06 thiên phú, chí hướng; 07 định hướng xã hội tu luyện; 08 hệ sức mạnh, level, chuyển nghề; 09 bậc Tier, danh xưng, độ hiếm; 10 cây nghề riêng; 11 tuổi thọ giống loài, tập tục; 12 cây sự kiện, quỹ đạo, danh phận; 13 mạch truyện, dàn nhân vật, chương đời; 14 sự kiện giống loài, môi trường sống).
 - `platform/`: **Skeleton Codex**, game hành động platformer 2D (tài liệu cân bằng, bản chơi thử, quy trình art).
 - `review/`: trang duyệt nhanh trên claude.ai (mã nguồn, dữ liệu, `published.txt`).
 - `tools/`: `sync.sh`, `muc_luc.sh`, `duyet.sh`, `serve.ps1`.

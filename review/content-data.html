@@ -15,7 +15,7 @@
 <script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
 <script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
 <script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
-<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script>
 <pre id="out"></pre>
 <script>
 const L = JobLibrary, G = LifeSim;
@@ -269,6 +269,11 @@ const data = {
     meta: G.TREE_META,
     nodes: Object.entries(TNODE).map(([id, [arc, title, when]]) => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id);
       return D ? { id, arc, title, when, ev: false, prio: D.prio, gap: D.gap, tree: D.tree, ...parseRun(both(D.build, D.apply)) } : { id, arc, title, when, ev: true, st: E.st, w: typeof E.wBase === 'number' ? E.wBase : null, rep: !!E.rep, gap: E.gap || null, tree: E.tree, ...parseRun(E.run), ...(id === 'sk_wake' ? { texts: Object.values(G.SK_WAKE) } : {}) }; }) },
+  // Sự kiện giống loài, môi trường sống (vankiep/js/racev.js, docs/14).
+  racev: { voice: G.RACE_VOICE_TEXT, life: G.RACE_LIFE, themes: { stranger: G.THEMES.stranger, clan: G.THEMES.clan },
+    conds: Object.fromEntries(['grief', 'dry', 'torpid'].map(k => [k, G.CONDS[k]])), home: Object.fromEntries(Object.keys(G.RACE_EV).map(r => [r, G.RACE_HOME(r)])),
+    nodes: Object.entries(G.RACE_EV).flatMap(([race, ids]) => ids.map(id => { const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id), [title, when] = G.RACEV_TITLE[id] || [id, ''];
+      return D && G.RACEV_DECS[id] ? { id, race, title, when, ev: false, prio: D.prio, tree: D.tree, ...parseRun(both(D.build, D.apply)) } : { id, race, title, when, ev: true, st: E.st, w: typeof E.wBase === 'number' ? E.wBase : null, rep: !!E.rep, gap: E.gap || null, tree: E.tree, ...parseRun(E.run) }; })) },
   // Mạch truyện (vankiep/js/story.js, docs/13).
   story: { cfg: G.STORY, roles: G.ROLE_VI, phases: G.PHASE_VI,
     arcs: Object.entries(G.ARCS).map(([id, a]) => ({ id, nameVi: a.nameVi, good: a.good, passive: !!a.passive, ...parseRun(both(...[a.quest, a.sum, a.gone].filter(Boolean))) })),

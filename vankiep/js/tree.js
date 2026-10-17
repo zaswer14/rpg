@@ -261,11 +261,11 @@ window.LifeSim = window.LifeSim || {};
   G.treeBlock = function (S, X, m) {
     m = m || {};
     if (S.undead && S.age < G.TREE.fresh && !m.fresh) return 'fresh';
+    if (m.race && !m.race.includes(S.race)) return 'race';
     if (m.body) {
       const con = !!G.RACES[S.race].construct;
       if (m.body === 'flesh' ? (S.undead || con) : m.body === 'living' ? S.undead : m.body === 'undead' ? !S.undead : false) return 'body';
     }
-    if (m.race && !m.race.includes(S.race)) return 'race';
     if (m.notRace && m.notRace.includes(S.race)) return 'race';
     if (m.minAge && S.age < m.minAge) return 'age';
     if (m.soc || m.dark) {
@@ -289,7 +289,7 @@ window.LifeSim = window.LifeSim || {};
       const why = G.treeBlock(S, X, m);
       if (why) {
         if (m.q && HARD[why] && S.flags[m.q] != null && S.flags[m.q] !== false) S.flags[m.q] = null;
-        if (G.TREE.stats && orig && G.TREE_STATS && why !== 'from') {   // nhánh chưa mở là chuyện thường, không đếm
+        if (G.TREE.stats && orig && G.TREE_STATS && why !== 'from' && !(why === 'race' && m.race)) {   // nhánh chưa mở, nút riêng của tộc khác (js/racev.js) là chuyện thường, không đếm
          let ok = false; try { ok = !!orig(S, X); } catch (e) { ok = false; } if (ok) { const B = G.TREE_STATS.block, k = why + (S.undead ? ' (xương)' : ''); (B[k] = B[k] || {})[id] = (B[k][id] || 0) + 1; } }
         return false;
       }

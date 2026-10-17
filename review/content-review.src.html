@@ -124,7 +124,7 @@ code{font-family:var(--font-mono);font-size:12px}
     ['org', 'Hội, tổ chức'], ['edu', 'Học viện'], ['noble', 'Quý tộc'], ['promo', 'Thăng tiến'], ['inst', 'Học viện danh tiếng, gia tộc, đấu giá'], null,
     ['work', 'Sinh kế'], ['econ', 'Kinh tế bốn vòng'], ['bld', 'Công trình'], null,
     ['tal', 'Thiên phú, căn cốt'], ['aim', 'Chí hướng'], ['tdec', 'Quyết định định hướng'], null,
-    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], null,
+    ['cult', 'Sức mạnh'], ['status', 'Địa vị'], ['fate', 'Kỳ ngộ, mặt trái'], ['race', 'Giống loài: tuổi thọ, tập tục'], ['racev', 'Sự kiện giống loài'], null,
     ['tree', 'Cây sự kiện'], ['story', 'Mạch truyện']
   ];
   const state = { tab: 'ev_tpl', filter: 'all' };
@@ -138,6 +138,8 @@ code{font-family:var(--font-mono);font-size:12px}
   const IRULES = [['academy', 'Học viện danh tiếng, lớp tài năng'], ['tourney', 'Đại hội tỉ thí'], ['auction', 'Đấu giá hội'], ['blood', 'Huyết mạch'], ['match', 'Liên hôn'], ['mine', 'Mỏ ma tinh']];
   const SRULES = [['office', 'Chức theo Tier'], ['title', 'Tước theo Tier'], ['promo', 'Thăng tiến nhân Tier'], ['strict', 'Nước quản chặt, quản lỏng'], ['retainer', 'Cung phụng'], ['elixir', 'Dược tề'], ['blood', 'Căn cốt theo cha mẹ']];
   const STRULES = [['cast', 'Dàn nhân vật'], ['arc', 'Mạch: bước, khoảng chờ, phai'], ['open', 'Mở mạch, người quen xuất hiện'], ['chap', 'Chương đời'], ['tag', 'Nhãn nhật ký, đoạn tưởng nhớ']];
+  const VRULES = [['env', 'Môi trường sống: quê tộc, xa tộc'], ['voice', 'Giọng theo giống loài'], ['cond', 'Tình trạng mới: Sầu héo, Khô vảy, Máu lạnh'], ['theme', 'Chủ đề mới: xa tộc, nợ thù của tộc']];
+  const VOICEK = [['FEST', 'Lễ hội (ch_festival)'], ['HARVEST', 'Được mùa, mất mùa ở quê tộc (ad_harvest)'], ['FIRST', 'Từ đầu đời (inf_word)'], ['LETTERS', 'Học chữ (ch_letters)'], ['HUNGER', 'Năm đói (ch_hunger)'], ['ACHES', 'Tuổi già (el_aches)'], ['OLDFRIEND_LONG', 'Bạn thơ ấu của loài sống lâu (ad_old_friend)']];
   const TRULES = [['traj', 'Quỹ đạo'], ['soc', 'Danh phận'], ['body', 'Thân thể, giống loài, lượt đầu của Bộ Xương'], ['theme', 'Chủ đề'], ['tree', 'Cây: nhánh, khoảng chờ']];
   const CULTRULES =[['skill', 'Kỹ năng nghề, mười kỹ năng được nâng'], ['level', 'Level'], ['promote', 'Chuyển nghề, kẹt'], ['ascend', 'Thăng hoa, trần chỉ số'], ['res', 'Cộng hưởng chiêu thức'], ['power', 'Sức mạnh'], ['equip', 'Lắp kỹ năng'], ['life', 'Thọ nguyên'], ['coin', 'Tiền đồng, bạc, vàng']];
   const evName =e => e.kind === 'tpl' ? (tplOf(e.ref) || {}).label || e.ref : e.kind === 'quirk' ? (quirkOf(e.ref) || {}).nameVi || e.ref : e.title || e.id;
@@ -162,6 +164,9 @@ code{font-family:var(--font-mono);font-size:12px}
       ...D.cult.teachers.map(t => ({ kind: 'teacher', id: t.id, name: t.nameVi })), { kind: 'dec', id: 'cv_learn', name: 'Nâng kỹ năng mới' }, { kind: 'dec', id: 'promote', name: 'Thử thách chuyển nghề' }, ...D.cult.jobs.map(j => ({ kind: 'jobsk', id: j.id, name: j.nameVi }))],
     tree: [...TRULES.map(([id, name]) => ({ kind: 'trule', id, name })), ...Object.entries(D.tree.axes).map(([id, a]) => ({ kind: 'traj', id, name: a.nameVi })), ...Object.entries(D.tree.themes).map(([id, t]) => ({ kind: 'theme', id, name: t.nameVi })), ...D.tree.nodes.map(n => ({ kind: n.ev ? 'tnode' : 'dec', id: n.id, name: n.title }))],
     status: [...[0, 1, 2, 3, 4, 5].map(t => ({ kind: 'stier', id: String(t), name: `Tier ${t} · ${D.cult.tierName[t]}` })), ...SRULES.map(([id, name]) => ({ kind: 'srule', id, name })), ...D.status.decs.map(d => ({ kind: 'dec', id: d.id, name: d.title }))],
+    // Sự kiện giống loài (docs/14): luật, giọng, đời thường theo tộc, nút (sự kiện rnode, quyết định dec).
+    racev: [...VRULES.map(([id, name]) => ({ kind: 'vrule', id, name })), ...VOICEK.map(([id, name]) => ({ kind: 'rvoice', id, name })), ...Object.keys(D.racev.life).map(r => ({ kind: 'rlife', id: r, name: `Đời thường: ${raceVi(r)}` })),
+      ...D.racev.nodes.filter(n => !n.id.endsWith('_days')).map(n => ({ kind: n.ev ? 'rnode' : 'dec', id: n.id, name: n.title }))],
     // Mạch truyện (docs/13): luật, mạch, nút (sự kiện snode, quyết định dec), chỗ móc vào sự kiện có sẵn, chương đời.
     story: [...STRULES.map(([id, name]) => ({ kind: 'stru', id, name })), ...D.story.arcs.map(a => ({ kind: 'sarc', id: a.id, name: a.nameVi })),
       ...D.story.nodes.map(n => ({ kind: n.ev ? 'snode' : 'dec', id: n.id, name: n.title })), ...D.story.hooks.map(h => ({ kind: 'shook', id: h.id, name: h.title })),
@@ -176,7 +181,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
     $('progress').innerHTML = part('Sự kiện', [...items.ev_tpl, ...items.ev_quirk, ...items.ev_misc]) + part('Hội', items.org) + part('Học viện', items.edu)
       + part('Quý tộc, thăng tiến', [...items.noble, ...items.promo, ...items.inst]) + part('Sinh kế, công trình', [...items.work, ...items.econ, ...items.bld])
-      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story);
+      + part('Thiên phú, chí hướng', [...items.tal, ...items.aim, ...items.tdec]) + part('Sức mạnh', items.cult) + part('Địa vị', items.status) + part('Kỳ ngộ', items.fate) + part('Giống loài', items.race) + part('Sự kiện giống loài', items.racev) + part('Cây sự kiện', items.tree) + part('Mạch truyện', items.story);
   }
 
   // ---- Tab ----
@@ -628,10 +633,41 @@ code{font-family:var(--font-mono);font-size:12px}
       + grid(part('Thân phận theo Tier', tiers) + part('Luật', rules) + part('Sự kiện, quyết định', decs));
   }
 
+  // ---- Sự kiện giống loài, môi trường sống (vankiep/js/racev.js, docs/14) ----
+  function racevView() {
+    const T = D.racev, V = T.voice;
+    const lines = L => L.length ? `<ul class="lines">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+    const chips = (dt, L) => L.length ? `<dl class="kv"><dt>${dt}</dt><dd class="chips">${L.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : '';
+    const condCard = ([k, c]) => `<dt>${esc(c.nameVi)}</dt><dd>tử suất × ${num(c.mult)}, lành ${Math.round(c.heal * 100)}%/năm</dd>`;
+    const RULE = {
+      env: `<p style="margin:0">Sự kiện của một tộc xét ba điều: đang ở đất quê tộc (biome quê), đang sống giữa người cùng tộc (khu của tộc mình, hoặc tộc mình ≥ 30% dân khu), và tộc chủ nhà nơi đang ở. Ở quê tộc thì có rừng, mỏ, thảo nguyên, biển của tộc; ở khu của tộc khác thì bị nhìn khác (chủ đề xa tộc), nặng hơn ở nước dè chừng tộc đó.</p>
+        <dl class="kv">${Object.entries(T.home).map(([r, b]) => `<dt>${esc(raceVi(r))}</dt><dd>${esc(b.map(x => D.biomes && D.biomes[x] ? D.biomes[x] : x).join(', '))}</dd>`).join('')}</dl>`,
+      voice: '<p style="margin:0">Tám sự kiện chung hay rơi nhất giữ nguyên tác dụng, đổi câu chữ theo tộc. Lễ hội là lễ của tộc mình khi sống giữa người cùng tộc; ở khu của tộc khác thì là lễ của tộc chủ nhà, bạn đứng ở rìa đám đông (người sống ở khu Người Lùn cũng dự Ngày Mở Lò). Câu chữ của từng nhóm ở các thẻ bên dưới.</p>',
+      cond: `<p style="margin:0">Sầu héo: Tiên Tộc mất bạn đời hoặc con; một nửa số lần chết khi đang Sầu héo là "héo mòn vì sầu". Khô vảy: Hải Tộc xa biển, kèm cờ muốn đi. Máu lạnh: Long Nhân ở xứ lạnh.</p><dl class="kv">${Object.entries(T.conds).map(condCard).join('')}</dl>`,
+      theme: `<dl class="kv">${Object.entries(T.themes).map(([k, t]) => `<dt>${esc(t.nameVi)}</dt><dd>lặp ${t.gap} lượt · ${T.nodes.filter(n => n.tree && n.tree.theme === k).map(n => `<code>${esc(n.id)}</code>`).join(', ')}</dd>`).join('')}</dl>`
+    };
+    const rules = VRULES.filter(([id]) => passes('vrule', id)).map(([id, name]) => card('vrule', id, name, RULE[id]));
+    const voiceBody = k => { const v = V[k];
+      if (typeof v === 'string') return lines([v]);
+      return `<dl class="kv">${Object.entries(v).map(([r, x]) => `<dt>${esc(raceVi(r))}</dt><dd>${esc(Array.isArray(x) ? x.join(' / ') : x)}</dd>`).join('')}</dl>`; };
+    const voices = VOICEK.filter(([id]) => passes('rvoice', id)).map(([id, name]) => card('rvoice', id, name, voiceBody(id)));
+    const BV = { young: 'Nhỏ (trẻ con, thiếu niên)', home: 'Ở quê tộc, giữa người cùng tộc', away: 'Ở khu của tộc khác', inland: 'Xa biển', old: 'Tuổi già' };
+    const nodeCard = n => { const kind = n.ev ? 'rnode' : 'dec'; if (!passes(kind, n.id)) return '';
+      const m = n.tree || {}, tags = [m.from ? `con của ${m.from.join(' / ')}` : null, m.wait ? `chờ ${m.wait[0]}–${m.wait[1]} lượt` : null, m.theme ? `chủ đề ${((D.tree.themes || {})[m.theme] || T.themes[m.theme] || {}).nameVi || m.theme}` : null, m.dir ? 'hợp ' + Object.keys(m.dir).map(a => (D.tree.axes[a] || { nameVi: a }).nameVi).join(', ') : null].filter(Boolean);
+      return card(kind, n.id, n.title, `<div class="meta">${n.ev ? `sự kiện${n.w != null ? ` · trọng số ${num(n.w)}` : ''}${n.rep ? ` · lặp cách ${n.gap}` : ''}` : `quyết định · ưu tiên ${n.prio}`} · <code>${esc(n.id)}</code></div>
+        <dl class="kv"><dt>Khi nào</dt><dd>${esc(n.when)}</dd>${tags.length ? `<dt>Nhãn</dt><dd class="chips">${tags.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</dd>` : ''}</dl>${lines(n.texts)}${chips('Tác dụng', n.fx)}`); };
+    const part = (t, a) => a.filter(Boolean).length ? `<h3 class="group-title">${t}</h3>` + a.join('') : '';
+    const races = [...new Set(T.nodes.map(n => n.race))];
+    const lifeCard = r => passes('rlife', r) ? card('rlife', r, `Đời thường: ${raceVi(r)}`, `<div class="meta">sự kiện lặp mọi tuổi · <code>${esc(T.nodes.find(n => n.race === r && n.id.endsWith('_days')).id)}</code></div>`
+      + Object.entries(BV).filter(([b]) => T.life[r][b]).map(([b, name]) => `<p style="margin:6px 0 2px"><b>${name}</b></p>${lines(T.life[r][b].map(t => t.replace(/{h}/g, '‹nơi ở›').replace(/{z}/g, '‹khu săn›')))}`).join('')) : '';
+    return overview('Sự kiện giống loài, môi trường sống', 'Mỗi giống loài có sự kiện riêng rút từ truyện, game, văn học dân gian (Tolkien, Warhammer, Dwarf Fortress, Elder Scrolls, ballad Tam Lin, selkie, golem…), gắn với đất quê của tộc và với việc đang sống giữa tộc mình hay giữa tộc khác (docs/14). Sự kiện chung hay gặp nhất được kể bằng giọng của tộc.')
+      + grid(part('Luật', rules) + part('Giọng theo giống loài', voices) + races.map(r => part(raceVi(r), [T.life[r] ? lifeCard(r) : '', ...T.nodes.filter(n => n.race === r && !n.id.endsWith('_days')).map(nodeCard)])).join(''));
+  }
+
   function renderContent() {
     const t = state.tab;
     $('content').innerHTML = t === 'ev_tpl' ? evView('tpl') : t === 'ev_quirk' ? evView('quirk') : t === 'ev_misc' ? evView('misc')
-      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : bldView();
+      : t === 'org' ? orgView() : t === 'edu' ? eduView() : t === 'noble' ? nobleView() : t === 'promo' ? promoView() : t === 'work' ? workView() : t === 'tal' ? talView() : t === 'aim' ? aimView() : t === 'tdec' ? tdecView() : t === 'cult' ? cultView() : t === 'status' ? statusView() : t === 'econ' ? econView() : t === 'inst' ? instView() : t === 'fate' ? fateView() : t === 'race' ? raceView() : t === 'racev' ? racevView() : t === 'tree' ? treeView() : t === 'story' ? storyView() : bldView();
     if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
   }
   function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
