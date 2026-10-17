@@ -38,6 +38,8 @@ Kết quả có hai phần:
 
 **Thêm trang mới**: tạo cặp `<ten>-data.html` / `<ten>-review.src.html` theo mẫu hai trang có sẵn (giao diện giống nhau, đổi màu nhấn), đăng, thêm một dòng vào `published.txt` (`ten`, dấu, ngày, tên, URL), thêm `ten` vào `PAGES` và hàm `cover` trong `tools/duyet.sh`, thêm dòng vào bảng mục 1 và vào `index.html` ở gốc.
 
+**Thử nội dung trong game**: mở `vankiep/index.html?kd=1` (chế độ kiểm duyệt, `vankiep/README.md`): chọn giống loài, gọi thẳng một sự kiện hay quyết định theo mã trên trang duyệt, chơi lại, quay về trước quyết định để xem nhánh khác; tích "Hiện mã sự kiện trong nhật ký" để biết dòng nào do mục nào sinh ra.
+
 **Đọc kết quả duyệt**: `ArtifactData` action `list`, collection `reviews`, `url` của trang. Sửa nguồn theo quyết định, rồi đăng lại trang để người dùng thấy bản mới.
 
 ## 3. Nội dung chưa có trang duyệt

@@ -24,7 +24,39 @@
         <select id="origin" class="btn" title="Xuất thân của kiếp mới"><option value="">Xuất thân: ngẫu nhiên</option><option value="royal_main">Hoàng gia, dòng chính</option><option value="royal_side">Hoàng gia, dòng phụ</option><option value="noble">Quý tộc</option></select>
         <button id="btnNew" class="btn">Kiếp mới</button>
         <button id="btnWorld" class="btn" title="Tạo một đại lục mới: quốc gia, thành phố, làng mạc khác">Thế giới mới</button>
+        <label class="toggle" title="Bảng công cụ cho người kiểm duyệt: chọn giống loài, chơi lại, quay về năm cũ, gọi sự kiện theo mã (cũng bật được bằng ?kd=1 trên URL)"><input type="checkbox" id="kdMode"> Chế độ kiểm duyệt</label>
         <span class="seed" id="seedLabel"></span>
+      </div>
+    </details>
+    <!-- Chế độ kiểm duyệt (js/ui.js mục Kiểm duyệt): chỉ hiện khi bật trong menu hoặc ?kd=1 -->
+    <details class="menu kd" id="kdPanel" hidden>
+      <summary class="btn" title="Công cụ kiểm duyệt">Kiểm duyệt</summary>
+      <div class="menubody kdbody">
+        <section>
+          <h4>Kiếp mới theo ý</h4>
+          <div class="kdrow"><select id="kdRace" class="btn" title="Giống loài lúc sinh"></select><select id="kdRegion" class="btn" title="Vùng sinh"></select></div>
+          <div class="kdrow"><select id="kdOrigin" class="btn" title="Xuất thân"><option value="">Xuất thân: ngẫu nhiên</option><option value="royal_main">Hoàng gia, dòng chính</option><option value="royal_side">Hoàng gia, dòng phụ</option><option value="noble">Quý tộc</option></select><input id="kdSeed" class="btn" placeholder="seed đời (tùy chọn)" title="Cùng seed, cùng lựa chọn thì ra cùng một đời"></div>
+          <button id="kdNew" class="btn">Sinh kiếp này</button>
+          <small class="kdnote" id="kdNewNote">Chọn Bộ Xương: một kiếp người chết non rồi trỗi dậy ngay ở vùng đã chọn.</small>
+        </section>
+        <section>
+          <h4>Chơi lại</h4>
+          <button id="kdReplay" class="btn" title="Về đúng lúc vừa sinh của kiếp đang chơi: cùng thế giới, cùng xúc xắc; chọn khác thì đời rẽ khác">Chơi lại kiếp này từ đầu</button>
+          <div class="kdrow"><select id="kdSnaps" class="btn" title="Mốc đã qua: đầu mỗi năm, trước mỗi quyết định"></select><button id="kdBack" class="btn">Quay về</button></div>
+          <small class="kdnote" id="kdSnapNote"></small>
+        </section>
+        <section>
+          <h4>Gọi sự kiện, quyết định</h4>
+          <div class="kdrow"><input id="kdEv" class="btn" list="kdEvList" placeholder="mã, ví dụ dwf_mood, fae_court" autocomplete="off"><button id="kdFire" class="btn">Gọi</button></div>
+          <datalist id="kdEvList"></datalist>
+          <label class="toggle"><input type="checkbox" id="kdForce"> Bỏ qua điều kiện</label>
+          <small class="kdnote" id="kdFireNote"></small>
+        </section>
+        <section>
+          <h4>Tua, hiển thị</h4>
+          <div class="kdrow"><button id="kdFf1" class="btn" title="Sống một năm, quyết định tự chọn">+1 năm</button><button id="kdFf10" class="btn">+10 năm</button><button id="kdFfEnd" class="btn">Tới khi chết</button></div>
+          <label class="toggle"><input type="checkbox" id="kdIds"> Hiện mã sự kiện trong nhật ký</label>
+        </section>
       </div>
     </details>
   </div>

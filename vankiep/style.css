@@ -30,6 +30,19 @@ h3 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: v
 .menu summary::-webkit-details-marker { display: none; }
 .menubody { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: grid; gap: 6px; min-width: 220px; padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 .menubody .seed { word-break: break-all; }
+/* Chế độ kiểm duyệt */
+.kd summary { color: var(--choice); border-color: color-mix(in srgb, var(--choice) 50%, var(--line)); }
+.kdbody { min-width: 340px; max-width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 80px); overflow: hidden auto; gap: 10px; }
+.kdbody select, .kdbody input { max-width: 100%; text-overflow: ellipsis; }
+.kdbody section { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.kdbody section:last-child { border-bottom: 0; padding-bottom: 0; }
+.kdbody h4 { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--choice); font-weight: 600; }
+.kdrow { display: flex; gap: 6px; flex-wrap: wrap; }
+.kdrow > select, .kdrow > input { flex: 1 1 140px; min-width: 0; }
+.kdbody input.btn { cursor: text; }
+.kdnote { color: var(--dim); font-size: 12px; }
+.kdnote.bad { color: var(--bad); }
+.log .evid { font: 11px ui-monospace, monospace; color: var(--choice); opacity: .8; margin-left: 6px; }
 
 /* Bố cục: nhân vật | cuộc đời (phần chính) | bản đồ nhỏ, khu săn, vùng */
 .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr) 360px; gap: 12px; padding: 12px; height: calc(100vh - 58px); }

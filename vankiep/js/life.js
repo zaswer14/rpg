@@ -183,7 +183,7 @@ window.LifeSim = window.LifeSim || {};
 
     // ═════════ Ghi sổ ═════════
     log(text, kind = 'info', fact = null) {
-      const S = this.S, e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact, arc: this._tag || null };   // arc: nhãn mạch truyện (js/story.js)
+      const S = this.S, e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact, arc: this._tag || null, ev: this._ev || null };   // arc: nhãn mạch truyện (js/story.js); ev: mã sự kiện, quyết định sinh ra dòng này (chế độ kiểm duyệt)
       if (!this.headless) { S.log.push(e); if (S.log.length > 500) S.log.splice(0, S.log.length - 500); }
       this.hook.log(e);
       return e;
@@ -414,8 +414,10 @@ window.LifeSim = window.LifeSim || {};
       S.pending = null;
       const D = G.DECISIONS[P.id];
       const choice = P.choices.find(c => c.k === k) || P.choices[0];
+      this._ev = 'dec:' + P.id;
       const out = D.apply(S, this, choice.k, choice);
       if (out) this.log(`${P.title}: ${choice.label}. ${out}`, 'choice');
+      this._ev = null;
     }
 
     endYear() {

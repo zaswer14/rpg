@@ -17,6 +17,7 @@
   // running: Tự chạy (thời gian trôi theo tốc độ). step: đang sống hết một lượt sau khi bấm Sang năm (quyết định chen giữa thì chờ chọn rồi đi tiếp).
   let sim = null, running = false, step = null, dirty = true, selRegion = null, selNation = null, lastHeader = null, deathShown = false, tab = 'log';
   let graves = store.get(GRAVES) || [];
+  let dieIv = null;   // xúc xắc trỗi dậy đang lăn
   // Thế giới: ?world=… trên URL, hoặc thế giới đang chơi, hoặc một thế giới mới.
   function useWorld(seed) { G.useWorld(seed); store.set(WORLD, seed); for (const k of Object.keys(bases)) if (k !== 'terrain') delete bases[k]; }
   // Ảnh nền mỗi chế độ xem dựng lần đầu khi cần rồi giữ lại (Vùng, Chính trị, Nguy hiểm dựng lại khi đổi thế giới).
@@ -52,24 +53,27 @@
     };
   }
   // Kiếp mới sinh vào thế giới của kiếp trước (cùng seed thế giới): năm, nước, khu dân cư, sử biên niên nối tiếp.
-  function start(seed, origin) {
+  function start(seed, origin, extra) {
     const prev = sim && sim.S && sim.S.world && sim.S.worldSeed === G.realm.seed ? sim.S.world : null;
-    sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() });
+    sim = new G.Sim({ seed: seed || G.newSeed(), hook: hook() }); instrument(sim);
     sim.autoDecide = pref.auto;
+    clearInterval(dieIv);
     clearLog(); step = null;
     deathShown = false; $('deathModal').hidden = true; $('decBox').hidden = true;
-    sim.newLife({ ...(prev ? { world: prev } : {}), ...(origin ? { origin } : {}) });   // origin: xuất thân chọn ở nút Kiếp mới (js/noble.js)
+    quiet = true;
+    try { sim.newLife({ ...(prev ? { world: prev } : {}), ...(origin ? { origin } : {}), ...(extra || {}) }); } finally { quiet = false; }   // origin: xuất thân (js/noble.js); extra: giống loài, vùng (chế độ kiểm duyệt)
     sim.S.auto = pref.auto;
     selRegion = sim.S.loc;
-    dirty = true; save();
+    kdBirth(); dirty = true; save();
   }
   function rise() {
+    clearInterval(dieIv);
     clearLog(); step = null; $('decBox').hidden = true;
     deathShown = false; $('deathModal').hidden = true;
-    sim.rise();
+    quiet = true; try { sim.rise(); } finally { quiet = false; }
     sim.S.auto = pref.auto;
     selRegion = sim.S.loc;
-    dirty = true; save();
+    kdBirth(); dirty = true; save();
   }
   function save() { if (sim && sim.S) store.set(SAVE, { seed: sim.seed, rs: sim.rs, S: sim.S, world: G.realm.seed }); }
   function load() {
@@ -78,8 +82,9 @@
     try {
       if (urlWorld && d.world !== urlWorld) return false;   // ?world=… trên URL: bắt đầu đời mới ở thế giới đó
       if (d.world && d.world !== G.realm.seed) useWorld(d.world);
-      sim = new G.Sim({ seed: d.seed, hook: hook() });
+      sim = new G.Sim({ seed: d.seed, hook: hook() }); instrument(sim);
       sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto;
+      { const b = store.get(KD_BIRTH); if (b && b.seed === d.seed && b.kiep === d.S.kiep) { birth = b.json; snaps = [{ label: b.label || 'Lúc sinh', kind: 'birth', json: b.json }]; } } renderSnaps();
       G.skMigrate(d.S);   // bản lưu S.v 2 (trước docs/08): quy ra kỹ năng của từng nghề, level 0–60 (js/cult.js)
       G.bindWorld(d.S.world);
       clearLog(); for (const e of d.S.log) appendLog(e, true);
@@ -103,7 +108,7 @@
       box.appendChild(h);
     }
     const d = document.createElement('div'); d.className = 'e ' + e.kind;
-    d.innerHTML = (e.arc ? `<span class="arc">${esc(e.arc)}</span>` : '') + esc(e.text) + (e.fact ? `<span class="f">${esc(e.fact)}</span>` : '');   // e.arc: mạch truyện (js/story.js)
+    d.innerHTML = (e.arc ? `<span class="arc">${esc(e.arc)}</span>` : '') + esc(e.text) + (pref.kd && pref.kdIds && e.ev ? `<code class="evid">${esc(e.ev)}</code>` : '') + (e.fact ? `<span class="f">${esc(e.fact)}</span>` : '');   // e.arc: mạch truyện (js/story.js)
     box.appendChild(d);
     if (!bulk && nearBottom) box.scrollTop = box.scrollHeight;
     if (bulk) box.scrollTop = box.scrollHeight;
@@ -112,8 +117,8 @@
 
   // ───────── Quyết định ─────────
   // Hiện ngay dưới nhật ký (không che bản đồ, nhân vật); phím 1–9 chọn nhanh.
-  function showDecision(d) {
-    if (sim.autoDecide && !sim.S.dead) { const D = G.DECISIONS[d.id]; sim.choose(D.auto ? D.auto(sim.S, sim, d) : d.choices[0].k); dirty = true; return; }
+  function showDecision(d, force) {   // force: chế độ kiểm duyệt gọi thẳng, không để Tự sống chọn thay
+    if (!force && sim.autoDecide && !sim.S.dead) { const D = G.DECISIONS[d.id]; sim.choose(D.auto ? D.auto(sim.S, sim, d) : d.choices[0].k); dirty = true; return; }
     $('dTitle').textContent = d.title;
     $('dBody').textContent = d.body || '';
     $('dFact').textContent = d.fact || '';
@@ -159,7 +164,8 @@
     const die = $('die'), txt = $('rollTxt'), btns = $('deathBtns');
     die.className = 'die'; btns.innerHTML = ''; txt.textContent = 'Xương cốt có chịu nằm yên? Tung d100: từ 20 trở xuống thì trỗi dậy.';
     let n = 0;
-    const iv = setInterval(() => {
+    clearInterval(dieIv);   // cái chết trước còn đang lăn xúc xắc (tua nhanh qua hai kiếp liền nhau) thì dừng
+    const iv = dieIv = setInterval(() => {
       die.textContent = 1 + Math.floor(Math.random() * 100);
       if (++n > 16) {
         clearInterval(iv); die.textContent = final;
@@ -167,6 +173,7 @@
         else { die.classList.add('rest'); txt.textContent = `${final} > 20. Yên nghỉ.`; }
         if (S.rose) addBtn(btns, `Trỗi dậy thành Bộ Xương`, `Giữ kỹ năng ${G.mv(S.rose.skill)} ${S.rose.value}; mọi thứ khác về số 0.`, rise, true);
         addBtn(btns, 'Sang kiếp mới', 'Một đứa trẻ khác chào đời đâu đó trên đại lục.', () => start());
+        if (pref.kd && birth) addBtn(btns, 'Chơi lại kiếp này', 'Chế độ kiểm duyệt: về lúc sinh, cùng xúc xắc; chọn khác thì đời rẽ khác.', kdReplay);
         addBtn(btns, 'Xem lại cuộc đời', 'Đóng bảng này; nút cuối nhật ký mở lại.', () => { $('deathModal').hidden = true; });
       }
     }, 70);
@@ -648,6 +655,135 @@
     b.onclick = () => { pref.speed = s; store.set(PREF, pref); [...$('speeds').children].forEach((c, i) => c.classList.toggle('on', SPEEDS[i] === s)); };
     if (s === pref.speed) b.classList.add('on');
     $('speeds').appendChild(b);
+  }
+
+  // ───────── Chế độ kiểm duyệt ─────────
+  // Bảng công cụ cho người duyệt nội dung (bật trong menu hoặc ?kd=1): kiếp mới theo giống loài, vùng, xuất thân, seed; chơi lại
+  // từ lúc sinh; quay về mốc đã qua (đầu mỗi năm, trước mỗi quyết định); gọi một sự kiện, quyết định theo mã; tua nhanh; hiện mã
+  // sự kiện trong nhật ký (khớp mã trên trang Duyệt Nội Dung). Mốc là ảnh chụp { rs, S } dạng JSON trong bộ nhớ: cùng xúc xắc nên
+  // đi lại đúng như cũ, chọn khác thì đời rẽ khác. Mốc lúc sinh lưu cả vào bộ nhớ trình duyệt để tải lại trang vẫn chơi lại được.
+  const KD_BIRTH = 'vankiep.kd.birth.v1', SNAP_MAX = 200;
+  let snaps = [], birth = null, quiet = false;
+  const shot = () => JSON.stringify({ seed: sim.seed, rs: sim.rs, S: sim.S, world: G.realm.seed });
+  const yrLabel = S => S.undead ? `Năm ${S.world.year} · năm thứ ${sim.years(S)} sau khi trỗi dậy` : `Năm ${S.world.year} · ${sim.years(S)} tuổi`;
+  function pushSnap(label, kind) { snaps.push({ label, kind, json: shot() }); if (snaps.length > SNAP_MAX) snaps.splice(1, 1); renderSnaps(); }
+  // Chụp mốc: sau khi xếp lịch một năm (đầu năm), và ngay trước khi chọn một quyết định (cả khi Tự sống chọn thay).
+  function instrument(s) {
+    const p0 = s.planYear, c0 = s.choose;
+    s.planYear = function () { p0.call(this); if (this === sim && !quiet && pref.kd && this.S && !this.S.dead) pushSnap(yrLabel(this.S), 'year'); };
+    s.choose = function (k) { const P = this.S && this.S.pending; if (this === sim && P && pref.kd) pushSnap(`${yrLabel(this.S)} · quyết định: ${P.title}`, 'dec'); return c0.call(this, k); };
+  }
+  function kdBirth() {
+    const label = `Lúc ${sim.S.undead ? 'trỗi dậy' : 'sinh'} · ${yrLabel(sim.S)}`;
+    birth = shot(); snaps = [{ label, kind: 'birth', json: birth }];
+    store.set(KD_BIRTH, { seed: sim.seed, kiep: sim.S.kiep, label, json: birth });
+    renderSnaps();
+  }
+  function restore(json) {
+    const d = JSON.parse(json);
+    if (d.world && d.world !== G.realm.seed) useWorld(d.world);
+    clearInterval(dieIv);
+    setRun(false); step = null;
+    sim = new G.Sim({ seed: d.seed, hook: hook() }); instrument(sim);
+    sim.rs = d.rs; sim.S = d.S; sim.autoDecide = pref.auto; d.S.auto = pref.auto;
+    G.bindWorld(d.S.world);
+    deathShown = false; $('deathModal').hidden = true; $('decBox').hidden = true;
+    clearLog(); for (const e of d.S.log) appendLog(e, true);
+    selRegion = d.S.loc;
+    if (d.S.pending) showDecision(d.S.pending, true);   // mốc trước quyết định: người duyệt tự chọn lại
+    dirty = true; save();
+  }
+  function renderSnaps() {
+    const box = $('kdSnaps'); if (!box) return;
+    box.innerHTML = snaps.map((s, i) => [i, s]).reverse().map(([i, s]) => `<option value="${i}">${s.kind === 'dec' ? '↳ ' : ''}${esc(s.label)}</option>`).join('');
+    $('kdSnapNote').textContent = birth ? `${snaps.length} mốc (giữ ${SNAP_MAX} mốc gần nhất và lúc sinh). Quay về rồi chọn khác thì các mốc sau đó bị bỏ.` : 'Chưa có mốc lúc sinh của kiếp này.';
+  }
+  function kdReplay() { if (!birth) return; const b = snaps[0] && snaps[0].kind === 'birth' ? snaps[0] : { label: 'Lúc sinh', kind: 'birth', json: birth }; snaps = [b]; restore(birth); renderSnaps(); }
+  function kdBack() {
+    const i = +$('kdSnaps').value, s = snaps[i]; if (!s) return;
+    snaps = snaps.slice(0, s.kind === 'dec' ? i : i + 1);   // mốc quyết định được chụp lại khi chọn
+    restore(s.json); renderSnaps();
+  }
+  // Gọi sự kiện, quyết định theo mã. Không ép thì phải đủ điều kiện (giai đoạn, thân thể, điều kiện riêng, cổng chung của js/tree.js).
+  const WHY = { fresh: 'Bộ Xương lượt đầu', body: 'thân thể', race: 'giống loài', age: 'chưa đủ lượt', soc: 'danh phận', need: 'thiếu nút trước', from: 'chưa có nút cha đang mở', theme: 'chủ đề đang lặp', dir: 'quỹ đạo không hợp' };
+  const why = id => { const m = G.treeMeta && G.treeMeta(id); const w = m ? G.treeBlock(sim.S, sim, m) : null; return w ? WHY[w] || w : 'điều kiện riêng'; };
+  const kdNote = (id, t, bad) => { const n = $(id); n.textContent = t; n.classList.toggle('bad', !!bad); };
+  function kdFire() {
+    const id = $('kdEv').value.trim().split(/\s/)[0], S = sim.S, force = $('kdForce').checked, note = (t, b) => kdNote('kdFireNote', t, b);
+    if (!id) return note('Gõ mã sự kiện hoặc quyết định.', true);
+    if (!S || S.dead) return note('Nhân vật đã chết.', true);
+    if (S.pending) return note('Đang có quyết định chờ chọn.', true);
+    G.bindWorld(S.world);
+    const D = G.DECISIONS[id], E = G.EVENTS.find(e => e.id === id) || (G.NATION_EVENTS || []).find(e => e.id === id);
+    if (D) {
+      let ok = false; try { ok = !!D.when(S, sim); } catch (e) { ok = false; }
+      if (!ok && !force) return note(`Quyết định ${id} chưa đủ điều kiện (${why(id)}). Tích "Bỏ qua điều kiện" để ép.`, true);
+      let d; try { d = D.build(S, sim); } catch (e) { return note(`Không dựng được ${id} (${e.message}): quyết định này cần sự kiện mở trước. Gọi sự kiện mở rồi thử lại.`, true); }
+      if (!d || !d.choices || !d.choices.length) return note(`${id} không có lựa chọn nào ở hoàn cảnh này.`, true);
+      S.recentDec[id] = S.age; S.pending = { id, ...d }; showDecision(S.pending, true);
+      return note(`Đã mở quyết định ${id}.`);
+    }
+    if (!E) return note(`Không có sự kiện hay quyết định mã "${id}".`, true);
+    const st = sim.stage(S), okSt = E.st.includes(st), okU = S.undead ? !!E.undead : E.undead !== true;
+    let okC = true; try { okC = !E.c || !!E.c(S, sim); } catch (e) { okC = false; }
+    if (!(okSt && okU && okC) && !force) return note(`${id} chưa đủ điều kiện: ${[!okSt ? `giai đoạn hiện tại không thuộc ${E.st.join(', ')}` : '', !okU ? 'thân thể (Bộ Xương hay người sống)' : '', !okC ? why(id) : ''].filter(Boolean).join('; ')}. Tích "Bỏ qua điều kiện" để ép.`, true);
+    let lines = 0; const h0 = sim.hook.log; sim.hook.log = e => { lines++; h0(e); };
+    try { G.runEvent(sim, E); } catch (e) { return note(`Lỗi khi chạy ${id}: ${e.message} (thường do thiếu dữ kiện của nút trước).`, true); } finally { sim.hook.log = h0; }
+    note(lines ? `Đã gọi ${id}.` : `Đã gọi ${id}, nhưng sự kiện không ra dòng nào ở hoàn cảnh này.`);
+    dirty = true; save();
+  }
+  // Tua: sống n lượt với mọi quyết định tự chọn (theo tính cách, chí hướng), rồi trả lại chế độ cũ.
+  function kdFf(n) {
+    const S = sim.S; if (!S || S.dead) return;
+    setRun(false); step = null;
+    const ad = sim.autoDecide, au = S.auto; sim.autoDecide = true; S.auto = true;
+    try {
+      if (S.pending) { const D = G.DECISIONS[S.pending.id]; $('decBox').hidden = true; sim.choose(D && D.auto ? D.auto(S, sim, S.pending) : S.pending.choices[0].k); }
+      const a0 = S.age;
+      for (let g = 0; g < 400000 && sim.S === S && !S.dead && S.age < a0 + n; g++) sim.tick(.05);
+    } finally { sim.autoDecide = ad; if (sim.S === S) S.auto = au; }
+    if (S.pending && !S.dead) showDecision(S.pending, true);
+    dirty = true; save();
+  }
+  function setKd(on) {
+    pref.kd = on; store.set(PREF, pref);
+    $('kdMode').checked = on; $('kdPanel').hidden = !on; if (!on) $('kdPanel').open = false;
+    clearLog(); if (sim && sim.S) for (const e of sim.S.log) appendLog(e, true);
+  }
+  {
+    $('kdRace').innerHTML = '<option value="">Giống loài: ngẫu nhiên</option>' + Object.keys(G.RACES).map(r => `<option value="${r}">${esc(J.races[r].nameVi)}${G.RACES[r].undead ? ' (trỗi dậy ngay)' : ''}</option>`).join('');
+    // Vùng sinh theo thế giới đang chơi: vùng không có khu dân cư bị khóa; chọn giống loài thì ghi vùng nào không có tộc đó.
+    const fillRegions = () => {
+      const race = $('kdRace').value, cur = $('kdRegion').value, live = s => s.tier !== 'ruin';
+      $('kdRegion').innerHTML = '<option value="">Vùng: ngẫu nhiên</option>' + G.REGIONS.map(r => { const ss = G.realm.settlements.filter(s => live(s) && s.region === r.id), has = !race || G.RACES[race].undead || ss.some(s => (s.races[race] || 0) > 0);
+        return `<option value="${r.id}"${ss.length ? '' : ' disabled'}>${esc(r.nameVi)}${!ss.length ? ' (không có khu dân cư)' : has ? '' : ` (không có ${esc(J.races[race].nameVi)})`}</option>`; }).join('');
+      if ([...$('kdRegion').options].some(o => o.value === cur && !o.disabled)) $('kdRegion').value = cur;
+    };
+    fillRegions(); $('kdRace').onchange = fillRegions; $('kdPanel').addEventListener('toggle', () => { if ($('kdPanel').open) fillRegions(); });
+    const T = G.RACEV_TITLE || {};
+    $('kdEvList').innerHTML = [...G.EVENTS.map(e => [e.id, 'sự kiện']), ...(G.NATION_EVENTS || []).map(e => [e.id, 'sự kiện quốc gia']), ...Object.keys(G.DECISIONS).map(id => [id, 'quyết định'])]
+      .map(([id, k]) => `<option value="${esc(id)}">${esc(T[id] ? T[id][0] + ' · ' + k : k)}</option>`).join('');
+    if (new URLSearchParams(location.search).get('kd') === '1') pref.kd = true;
+    $('kdMode').onchange = e => setKd(e.target.checked);
+    $('kdIds').checked = !!pref.kdIds;
+    $('kdIds').onchange = e => { pref.kdIds = e.target.checked; store.set(PREF, pref); clearLog(); if (sim && sim.S) for (const x of sim.S.log) appendLog(x, true); };
+    $('kdNew').onclick = () => {
+      if (sim && sim.S && !sim.S.dead && !confirm('Bỏ kiếp đang sống để sinh kiếp theo lựa chọn?')) return;
+      const race = $('kdRace').value || undefined, region = $('kdRegion').value || undefined, seed = $('kdSeed').value.trim() || null, origin = $('kdOrigin').value || null;
+      if (region && !G.realm.settlements.some(s => s.tier !== 'ruin' && s.region === region)) { fillRegions(); return kdNote('kdNewNote', 'Vùng này không còn khu dân cư nào trong thế giới đang chơi.', true); }
+      if (race && G.RACES[race].undead) {   // Bộ Xương: một kiếp người chết non rồi trỗi dậy ngay ở vùng đã chọn
+        start(seed, origin, { region });
+        const S = sim.S; S.dead = true; S.cause = 'chết non'; S.causeId = 'newborn'; S.rose = sim.dominant(S) || { skill: 'Body', value: 5 };
+        rise(); return;
+      }
+      start(seed, origin, { race, region });
+    };
+    $('kdReplay').onclick = () => { if (!birth) return kdNote('kdSnapNote', 'Chưa có mốc lúc sinh của kiếp này.', true); if (confirm('Chơi lại kiếp này từ lúc sinh?')) kdReplay(); };
+    $('kdBack').onclick = kdBack;
+    $('kdFire').onclick = kdFire;
+    $('kdEv').addEventListener('keydown', e => { if (e.key === 'Enter') kdFire(); });
+    $('kdFf1').onclick = () => kdFf(1); $('kdFf10').onclick = () => kdFf(10); $('kdFfEnd').onclick = () => kdFf(1e6);
+    setKd(!!pref.kd);
   }
 
   // ───────── Vòng lặp ─────────

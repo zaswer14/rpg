@@ -517,8 +517,9 @@ window.LifeSim = window.LifeSim || {};
   };
   G.EVENT_FLOOR = 12;
   G.runEvent = function (X, ev) {
-    const S = X.S; S.recent[ev.id] = S.age;
+    const S = X.S; S.recent[ev.id] = S.age; X._ev = ev.id;
     const r = ev.run(S, X);
     if (r && !S.dead) X.log(r.t, r.k || 'info', r.f || null);
+    X._ev = null;
   };
 })(window.LifeSim);
