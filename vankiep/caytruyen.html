@@ -6,7 +6,9 @@
 /* Cây cốt truyện Vạn Kiếp (docs/17 mục 5): trang chạy thật bộ mô phỏng trong trình duyệt. Bấm "Nhân vật khác" là sinh một đời mới
    (Tự sống chọn mọi quyết định, hoặc chọn ngẫu nhiên để xem nhánh khác), chọn giống loài, vùng sinh, xuất thân, seed như chế độ kiểm duyệt.
    Mở ở máy: http://localhost:8765/vankiep/caytruyen.html. Bản đăng claude.ai dựng bằng bash tools/caytruyen.sh (trang + mã game làm file phụ).
-   Bố cục: bảng chọn mẫu → tóm tắt đời → cây (trục ngang là tuổi) → thẻ chi tiết mục đang chọn → các nhánh → quyết định → biên bản lúc chết. */
+   Trùng sinh (chơi lại): chọn một mốc lựa chọn của đời đang xem, đời chạy lại từ đầu với cùng seed tới mốc đó rồi đi theo phương án mới
+   (tùy chọn tự chọn từng quyết định sau đó). Chọn đúng phương án cũ thì ra đúng đời cũ (xem liveOut).
+   Bố cục: bảng chọn mẫu, trùng sinh → bảng chơi lại → tóm tắt đời → cây (trục ngang là tuổi) → thẻ chi tiết mục đang chọn → các nhánh → lịch sử mốc lựa chọn → biên bản lúc chết. */
 :root{
   --bg:#f4f1ee; --panel:#fcfaf8; --ink:#231d19; --muted:#6c625a; --line:#ddd4cc; --chip:#eee6de; --grid:#e8e0d8;
   --accent:#8a4b1c; --accent-ink:#ffffff; --trunk:#5a3a22;
@@ -101,7 +103,7 @@ svg .hit:focus-visible .ring,svg .sel .ring{stroke:var(--ink);stroke-width:2}
 .tier.main{color:var(--main)} .tier.side{color:var(--side)} .tier.short{color:var(--short)}
 .end{font-size:13px} .end.good{color:var(--ok)}
 .chrows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;margin-top:8px}
-.chrow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:4px 10px;padding:8px 12px;border-top:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;background:none;border-left:0;border-right:0;border-bottom:0;width:100%}
+.chrow{display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 10px;padding:8px 12px;border-top:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;background:none;border-left:0;border-right:0;border-bottom:0;width:100%}
 .chrow:first-child{border-top:0}
 .chrow:hover,.chrow:focus-visible{background:var(--chip);outline:none}
 .chrow .y{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
@@ -122,13 +124,38 @@ textarea{width:100%;min-height:56px;font:inherit;font-size:13px;padding:6px 8px;
 .progress{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .progress b{color:var(--ink)}
 code{font-family:var(--font-mono);font-size:12px}
+.play[hidden],.rebnote[hidden],.ctl .row[hidden]{display:none}
+.reb-row label{min-width:0;max-width:100%;flex:0 1 560px}
+.reb-row select{width:100%}
+.chk{flex-direction:row!important;align-items:center;gap:6px!important;font-size:12.5px!important;color:var(--ink)!important}
+.chk input{width:auto}
+.rebnote{background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid var(--accent);border-radius:10px;padding:8px 12px;font-size:13.5px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.rebnote .btn{font-size:12px;padding:2px 8px}
+.reb{border-top:1px dashed var(--accent);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.reb .kind{color:var(--accent)}
+.opts{display:flex;flex-direction:column;gap:5px}
+.btn.opt{text-align:left;display:flex;flex-direction:column;gap:1px;padding:7px 10px}
+.btn.opt:hover{border-color:var(--accent)}
+.btn.opt .sub{color:var(--muted);font-size:12px}
+.btn.opt .tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:600;color:var(--accent);letter-spacing:.03em}
+.btn.opt.was{border-color:var(--accent)}
+.play{background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.play .kind{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.play h3{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0}
+.play .row{display:flex;flex-wrap:wrap;gap:8px}
+.chline{display:flex;border-top:1px solid var(--line)}
+.chline:first-child{border-top:0}
+.chline .chrow{border-top:0;flex:1;min-width:0}
+.chline .reb-open{border:0;border-left:1px solid var(--line);border-radius:0;background:none;color:var(--accent);font-size:16px;padding:0 12px}
+.chline .reb-open:hover,.chline .reb-open:focus-visible{background:var(--chip)}
+.chip.me{background:var(--accent);color:var(--accent-ink)} .chip.cut{border:1px solid var(--accent);background:transparent;color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){ .card,.chrow{transition:border-color .15s,background .15s} .result{transition:opacity .2s} }
 </style>
 </head><body>
 <div class="page" id="page">
   <header>
     <h1>Cây Cốt Truyện Vạn Kiếp</h1>
-    <p class="lede">Mỗi lần bấm <b>Nhân vật khác</b>, trang cho một đứa trẻ chào đời ở đại lục Varen và để nó sống hết đời ngay trong trình duyệt, rồi vẽ đời đó thành cây: trục ngang là tuổi, thân là các năm của đời, mỗi nhánh là một mạch truyện, hình thoi là quyết định, sao là thành tựu. Chọn giống loài, vùng, xuất thân, seed như chế độ kiểm duyệt; bấm vào bất cứ thứ gì để đọc câu chữ và đánh dấu ✓ giữ, ✎ cần sửa, ✕ bỏ.</p>
+    <p class="lede">Mỗi lần bấm <b>Nhân vật khác</b>, trang cho một đứa trẻ chào đời ở đại lục Varen và để nó sống hết đời ngay trong trình duyệt, rồi vẽ đời đó thành cây: trục ngang là tuổi, thân là các năm của đời, mỗi nhánh là một mạch truyện, hình thoi là quyết định, sao là thành tựu. Chọn giống loài, vùng, xuất thân, seed như chế độ kiểm duyệt; bấm vào bất cứ thứ gì để đọc câu chữ và đánh dấu ✓ giữ, ✎ cần sửa, ✕ bỏ. <b>Trùng sinh</b> ở một mốc lựa chọn để sống lại đời đó và chọn khác: cùng seed nên chọn lại phương án cũ thì đời đi đúng hướng cũ.</p>
   </header>
 
   <section class="ctl" aria-label="Chọn mẫu thử">
@@ -143,12 +170,20 @@ code{font-family:var(--font-mono);font-size:12px}
       <label for="inWorld">Thế giới<input id="inWorld" value="can-bang" autocomplete="off" spellcheck="false"></label>
       <button class="btn" id="btnBone" hidden title="Đời này tung trúng trỗi dậy: xem tiếp kiếp Bộ Xương">Xem kiếp Bộ Xương ▸</button>
     </div>
+    <div class="row reb-row" id="rebRow" hidden>
+      <label for="selMoc">Trùng sinh ở mốc<select id="selMoc"></select></label>
+      <button class="btn" id="btnReb" title="Sống lại đời này từ đầu với cùng seed, tới mốc đã chọn thì bạn chọn lại phương án">↺ Trùng sinh</button>
+    </div>
     <div class="status" id="status" aria-live="polite">Đang nạp mã game…</div>
     <div class="hist" id="hist"></div>
+    <div class="hist" id="rebHist"></div>
   </section>
+
+  <section class="play" id="play" hidden aria-live="polite" aria-label="Chơi lại: chọn phương án"></section>
 
   <div class="result" id="result">
     <section class="who" id="who" aria-label="Nhân vật"></section>
+    <div class="rebnote" id="rebNote" hidden></div>
     <section class="facts" id="facts" aria-label="Tóm tắt"></section>
     <div class="legend" aria-hidden="true">
       <span><i style="background:var(--trunk);height:6px"></i>Thân đời</span>
@@ -166,7 +201,7 @@ code{font-family:var(--font-mono);font-size:12px}
       <aside class="detail" id="detail" aria-live="polite"></aside>
       <div class="lists">
         <section><h2>Các nhánh</h2><p class="lede">Mỗi mạch đã mở trong đời: ai, từ năm nào tới năm nào, kết thế nào, để lại dấu gì.</p><div class="grid" id="arcs"></div></section>
-        <section><h2>Quyết định</h2><p class="lede">Mọi lựa chọn theo chương đời: đã chọn gì, bỏ qua gì, tác động thấy ngay.</p><div class="chrows" id="choices"></div></section>
+        <section><h2>Lịch sử mốc lựa chọn</h2><p class="lede">Mỗi lần đời gặp quyết định là một mốc: chọn phương án nào, ai chọn (Tự sống, xúc xắc hay bạn), bỏ qua gì, tác động thấy ngay. Bấm ↺ để trùng sinh ở mốc đó.</p><div class="chrows" id="choices"></div></section>
         <section><h2>Biên bản lúc chết</h2><div class="stats" id="stats"></div></section>
       </div>
     </div>
@@ -237,17 +272,21 @@ code{font-family:var(--font-mono);font-size:12px}
   const TIER_VI = { main: 'Mạch chính', side: 'Mạch phụ', short: 'Mạch ngắn' };
   const ORIGIN_VI = { royal_main: 'hoàng gia, dòng chính', royal_side: 'hoàng gia, dòng phụ', noble: 'quý tộc' };
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
-  const PREF = 'caytruyen.pref.v1', HIST = 'caytruyen.hist.v1';
+  const PREF = 'caytruyen.pref.v1', HIST = 'caytruyen.hist.v1', REB = 'caytruyen.reb.v1', PLAY = 'caytruyen.play.v1';
   const reviews = {}, drafts = {};
-  let db = null, sel = null, T = null, busy = false, cur = null, lastSim = null, lastLog = null;
-  let hist = store.get(HIST) || [];
+  let db = null, sel = null, T = null, busy = false, cur = null, lastSim = null, lastLog = null, curCtx = null, trail = [], playAsk = null;
+  let hist = store.get(HIST) || [], rebHist = store.get(REB) || [], playPref = !!store.get(PLAY);
 
   // ═════════ Mẫu thử: seed + lựa chọn → một đời ═════════
-  // Mã mẫu (dùng cho db, lịch sử, #liên kết): seed~giống loài~vùng~xuất thân~cách chọn~thế giới, bỏ phần mặc định ở cuối.
+  // Mã mẫu (dùng cho db, lịch sử, #liên kết): seed~giống loài~vùng~xuất thân~cách chọn~thế giới~phương án tự chọn, bỏ phần mặc định ở cuối.
+  // Phương án tự chọn (trùng sinh, chơi lại): p<mốc>-<thứ tự phương án>.<mốc>-<…>, mốc đếm từ 0 theo thứ tự quyết định của cả lần chạy.
   const DEF_WORLD = 'can-bang';
-  const sidOf = o => { const p = [o.seed, o.race || '', o.region || '', o.origin || '', o.policy === 'rand' ? 'r' : '', o.world && o.world !== DEF_WORLD ? o.world : '']; while (p.length > 1 && !p[p.length - 1]) p.pop(); return p.join('~'); };
-  const parseSid = s => { const [seed, race, region, origin, pol, world] = String(s).split('~'); return { seed, race: race || '', region: region || '', origin: origin || '', policy: pol === 'r' ? 'rand' : 'auto', world: world || DEF_WORLD }; };
-  const hashOK = s => /^[A-Za-z0-9._~-]+$/.test(s);
+  const picksStr = ps => ps && ps.length ? 'p' + ps.map(([n, i]) => n + '-' + i).join('.') : '';
+  const sidOf = o => { const p = [o.seed, o.race || '', o.region || '', o.origin || '', o.policy === 'rand' ? 'r' : '', o.world && o.world !== DEF_WORLD ? o.world : '', picksStr(o.picks)]; while (p.length > 1 && !p[p.length - 1]) p.pop(); return p.join('~'); };
+  const parseSid = s => { const [seed, race, region, origin, pol, world, ps] = String(s).split('~');
+    const picks = /^p\d/.test(ps || '') ? ps.slice(1).split('.').map(x => x.split('-').map(Number)).filter(x => x.length === 2 && x.every(Number.isFinite)) : [];
+    return { seed, race: race || '', region: region || '', origin: origin || '', policy: pol === 'r' ? 'rand' : 'auto', world: world || DEF_WORLD, picks }; };
+  const hashOK = s => /^[A-Za-z0-9._~:-]+$/.test(s);
   const newSeed = () => 'ct-' + Math.random().toString(36).slice(2, 8);
 
   function ensureWorld(w) {
@@ -263,29 +302,67 @@ code{font-family:var(--font-mono);font-size:12px}
   }
   const pause = () => new Promise(r => setTimeout(r, 0));
   // Sống tới khi chết, từng đợt ~40 ms để trang không đơ; quyết định chọn theo Tự sống hoặc ngẫu nhiên (xúc xắc của chính đời đó).
-  async function liveOut(sim, policy, label) {
-    const S = sim.S; let n = 0;
-    while (!S.dead && n < 400 * 40) {
-      const t0 = performance.now();
-      while (!S.dead && n < 400 * 40 && performance.now() - t0 < 40) {
-        if (S.pending) { const P = S.pending, D = G.DECISIONS[P.id];
-          sim.choose(policy === 'rand' ? P.choices[Math.floor(sim.rnd() * P.choices.length)].k : D.auto ? D.auto(S, sim, P) : P.choices[0].k); }
+  // Trùng sinh giữ đúng hướng cũ: mọi quyết định đều qua đây theo thứ tự mốc (ctx.trail). Máy luôn tính lựa chọn của Tự sống / xúc xắc trước,
+  // rút từ rng đúng như đời gốc, rồi mới thay bằng phương án người chơi đã chọn ở mốc đó (ctx.picks); seed không đổi, chọn trùng thì đời trùng.
+  // Tự sống: quyết định mở ra rồi chờ ở đây (openDecision bọc trong run), chọn xong thì chạy nốt phần còn lại của nhịp như khi game tự chọn ngay.
+  const resume = sim => { const S = sim.S; G.bindWorld(S.world); while (S.queue.length && S.queue[0].at <= S.t && !S.pending && !S.dead) sim.fire(S.queue.shift()); if (S.t >= 1 && !S.pending && !S.dead) sim.endYear(); };
+  async function liveOut(sim, ctx, label) {
+    const rand = ctx.o.policy === 'rand'; let n = 0;
+    while (!sim.S.dead && n < 400 * 40) {
+      let t0 = performance.now();
+      while (!sim.S.dead && n < 400 * 40 && performance.now() - t0 < 40) {
+        const S = sim.S;
+        if (S.pending) {
+          const P = S.pending, D = G.DECISIONS[P.id], dn = ctx.trail.length;
+          const k0 = rand ? P.choices[Math.floor(sim.rnd() * P.choices.length)].k : D.auto ? D.auto(S, sim, P) : P.choices[0].k;
+          const i0 = Math.max(0, P.choices.findIndex(c => c.k === k0));
+          const e = { n: dn, id: P.id, title: P.title, body: P.body || '', ch: P.choices.map(c => ({ label: c.label, sub: c.sub || '' })), i0, i: i0, by: rand ? 'rand' : 'auto',
+            y: sim.years(S), unit: S.undead ? 'năm sau khi trỗi dậy' : 'tuổi', kiep: S.kiep, wy: S.world.year };
+          if (ctx.picks.has(dn)) { e.i = Math.min(ctx.picks.get(dn), P.choices.length - 1); e.by = 'me'; }
+          else if (ctx.play && dn > ctx.cut) {
+            const i = await askPlay(sim, ctx, e); t0 = performance.now();
+            if (i >= 0) { e.i = i; e.by = 'me'; ctx.picks.set(dn, i); ctx.o.picks.push([dn, i]); } else ctx.play = false;
+          }
+          ctx.trail.push(e);
+          sim.choose(P.choices[e.i].k);
+          const L = S.choices, last = L && L[L.length - 1]; if (last && last.n == null) last.n = dn;   // gắn số mốc vào lịch sử lựa chọn (js/fame.js)
+          if (!rand) resume(sim);
+        }
         sim.tick(.05); n++;
       }
-      $('status').textContent = `${label}: ${sim.years(S)} ${S.undead ? 'năm sau khi trỗi dậy' : 'tuổi'}…`;
+      $('status').textContent = `${label}: ${sim.years(sim.S)} ${sim.S.undead ? 'năm sau khi trỗi dậy' : 'tuổi'}…`;
       await pause();
     }
   }
-  async function run(o) {
+  // Chơi lại: sau mốc trùng sinh, mỗi quyết định dừng ở bảng này chờ người chơi chọn (-1: để Tự sống / xúc xắc chọn tiếp tới hết đời).
+  function askPlay(sim, ctx, e) {
+    const S = sim.S, recent = ctx.log.slice(ctx.seen).filter(x => x.kind !== 'fx').slice(-10); ctx.seen = ctx.log.length;
+    const who = ctx.o.policy === 'rand' ? 'xúc xắc ra' : 'Tự sống sẽ chọn';
+    $('play').innerHTML = `<div class="kind">Chơi lại · mốc ${e.n + 1} · ${e.y} ${esc(e.unit)} · ${esc(S.name)}</div>
+      ${recent.length ? `<ul class="lines">${recent.map(x => `<li class="${x.kind === 'big' ? 'big' : x.kind === 'bad' ? 'bad' : x.kind === 'good' ? 'good' : ''}"><span class="y">${x.yrs}</span>${esc(x.text)}</li>`).join('')}</ul>` : ''}
+      <h3>${esc(e.title)}</h3>${e.body ? `<p>${esc(e.body)}</p>` : ''}
+      <div class="opts">${e.ch.map((c, i) => `<button class="btn opt" data-play="${i}">${i + 1}. ${esc(c.label)}${i === e.i0 ? ` <span class="tag">${who}</span>` : ''}${c.sub ? `<span class="sub">${esc(c.sub)}</span>` : ''}</button>`).join('')}</div>
+      <div class="row"><button class="btn" data-play="-1">${ctx.o.policy === 'rand' ? 'Để xúc xắc chọn' : 'Để Tự sống chọn'} tới hết đời</button><span class="status">Phím 1–${Math.min(9, e.ch.length)} để chọn nhanh.</span></div>`;
+    $('play').hidden = false; $('status').textContent = `Đang chơi lại: chờ bạn chọn ở mốc ${e.n + 1} (${e.y} ${e.unit}).`;
+    $('play').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const b = $('play').querySelector('[data-play]'); if (b) b.focus({ preventScroll: true });
+    return new Promise(res => { playAsk = i => { playAsk = null; $('play').hidden = true; $('play').innerHTML = ''; res(i); }; });
+  }
+  // o: mẫu (seed, giống loài…, picks: [[mốc, phương án]], kiep: chạy tới kiếp mấy, play / cut: chơi lại sau mốc cut); from: đời trước khi trùng sinh.
+  async function run(o, from) {
     if (busy) return; busy = true; $('page').classList.add('busy'); $('btnBone').hidden = true;
     const t0 = performance.now();
+    o.picks = (o.picks || []).slice();
     try {
       $('status').className = 'status'; $('status').textContent = `Đang dựng thế giới ${o.world}…`; await pause();
       ensureWorld(o.world);
       if (o.region && !G.realm.settlements.some(s => s.tier !== 'ruin' && s.region === o.region)) o.region = '';
       const all = [];
       const sim = new G.Sim({ seed: o.seed, hook: { log: e => all.push(e) } });
-      sim.autoDecide = o.policy !== 'rand';   // Tự sống: chọn ngay lúc quyết định mở như trong game; ngẫu nhiên: để chờ rồi bốc
+      const ctx = { o, trail: [], picks: new Map(o.picks), play: !!o.play, cut: o.cut ?? -1, log: all, seen: 0 };
+      sim.autoDecide = o.policy !== 'rand';   // Tự sống: chọn như lúc game tự chọn ngay khi quyết định mở; ngẫu nhiên: để chờ rồi bốc
+      if (sim.autoDecide) { const od = sim.openDecision;   // mở quyết định ở chế độ chờ để liveOut chen phương án tự chọn; ngoài lúc mở vẫn là Tự sống (cult.js tự học kỹ năng)
+        sim.openDecision = function (id) { this.autoDecide = false; try { od.call(this, id); } finally { this.autoDecide = true; } }; }
       const bone = o.race && G.RACES[o.race] && G.RACES[o.race].undead;
       sim.newLife({ noPeers: true, ...(o.race && !bone ? { race: o.race } : {}), ...(o.region ? { region: o.region } : {}), ...(o.origin ? { origin: o.origin } : {}) });
       o.moved = !!o.region && sim.S.born.region !== o.region;   // xuất thân đã đặt nơi sinh ở vùng khác
@@ -293,47 +370,85 @@ code{font-family:var(--font-mono);font-size:12px}
       if (bone) {   // như chế độ kiểm duyệt: một kiếp người chết non rồi trỗi dậy ngay ở vùng đó
         const S = sim.S; S.dead = true; S.cause = 'chết non'; S.causeId = 'newborn'; S.rose = sim.dominant(S) || { skill: 'Body', value: 5 }; sim.rise(); sim.S.auto = true;
       }
-      await liveOut(sim, o.policy, `Đang sống đời ${o.seed}`);
-      lastSim = sim; lastLog = all; cur = o;
-      show(sim, all, o, performance.now() - t0);
+      const lb = from ? `Trùng sinh ${o.seed}: tua lại tới mốc ${o.cut + 1}` : `Đang sống đời ${o.seed}`;
+      await liveOut(sim, ctx, lb);
+      if ((o.kiep || 1) > 1 && sim.S.dead && sim.S.rose) { sim.rise(); sim.S.auto = true; await liveOut(sim, ctx, 'Kiếp Bộ Xương'); }
+      lastSim = sim; lastLog = all; cur = o; curCtx = ctx; trail = ctx.trail;
+      show(sim, all, o, performance.now() - t0, from);
     } catch (e) {
       console.error(e); $('status').className = 'status err'; $('status').textContent = 'Đời này chạy lỗi: ' + (e && e.message ? e.message : e) + '. Thử nhân vật khác.';
-    } finally { busy = false; $('page').classList.remove('busy'); }
+    } finally { busy = false; $('page').classList.remove('busy'); $('play').hidden = true; }
   }
   async function runBone() {
     const sim = lastSim; if (busy || !sim || !sim.S.dead || !sim.S.rose) return;
     busy = true; $('page').classList.add('busy'); $('btnBone').hidden = true; const t0 = performance.now();
-    try { sim.rise(); sim.S.auto = true; await liveOut(sim, cur.policy, 'Kiếp Bộ Xương'); show(sim, lastLog, cur, performance.now() - t0); }
+    try { sim.rise(); sim.S.auto = true; await liveOut(sim, curCtx, 'Kiếp Bộ Xương'); cur.kiep = sim.S.kiep; show(sim, lastLog, cur, performance.now() - t0); }
     catch (e) { console.error(e); $('status').className = 'status err'; $('status').textContent = 'Kiếp Bộ Xương chạy lỗi: ' + (e && e.message ? e.message : e); }
-    finally { busy = false; $('page').classList.remove('busy'); }
+    finally { busy = false; $('page').classList.remove('busy'); $('play').hidden = true; }
   }
-  function show(sim, all, o, ms) {
+  // Trùng sinh ở mốc n với phương án i: giữ seed, giữ mọi phương án tự chọn trước mốc, bỏ những gì sau mốc (tương lai của đời cũ).
+  function reborn(n, i) {
+    const e = trail[n]; if (busy || !e || !e.ch[i]) return;
+    const o = { seed: cur.seed, race: cur.race, region: cur.region, origin: cur.origin, policy: cur.policy, world: cur.world,
+      picks: (cur.picks || []).filter(p => p[0] < n).concat([[n, i]]), kiep: Math.max(e.kiep, lastSim.S.kiep), play: playPref, cut: n };
+    run(o, { sid: T.sid, name: T.name, sig: lastLog.map(x => x.text), n, y: e.y, unit: e.unit, title: e.title, old: e.ch[e.i].label, neu: e.ch[i].label });
+  }
+  function openReb(n) {
+    const c = choices.find(c => c.n === n);
+    if (c) pick(c.key); else { sel = 'reb:' + n; drawTree(); renderDetail(); }
+    const b = $('detail').querySelector('.reb'); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function show(sim, all, o, ms, from) {
     const S = sim.S; S.log = all;
     T = G.storyTree(S, sim); T.seed = o.seed; T.world = o.world; T.opt = o; T.sid = sidOf(o) + (S.kiep > 1 ? '~k' + S.kiep : '');
     const sid = sidOf(o);
-    if (hashOK(sid)) { try { history.replaceState(null, '', '#' + sid); } catch (e) {} }
+    if (hashOK(T.sid)) { try { history.replaceState(null, '', '#' + T.sid); } catch (e) {} }
     $('inSeed').value = o.seed;
-    const h = { sid: T.sid, base: sid, kiep: S.kiep, name: T.name, race: T.race, years: T.years };
+    const h = { sid: T.sid, base: sid, kiep: S.kiep, name: T.name, race: T.race, years: T.years, reb: o.picks.length };
     hist = [h, ...hist.filter(x => x.sid !== h.sid)].slice(0, 14); store.set(HIST, hist);
+    // So với đời trước khi trùng sinh: trùng từng dòng nhật ký thì đời đi đúng hướng cũ; không thì chỉ ra năm bắt đầu rẽ.
+    let note = '';
+    if (from) {
+      const a = from.sig, b = all.map(x => x.text); let d = 0; while (d < a.length && d < b.length && a[d] === b[d]) d++;
+      const same = d === a.length && d === b.length, at = all[d] || all[all.length - 1];
+      const r = { sid: T.sid, from: from.sid, name: T.name, n: from.n, y: from.y, unit: from.unit, title: from.title, old: from.old, neu: from.neu, same, t: Date.now() };
+      rebHist = [r, ...rebHist.filter(x => x.sid !== r.sid)].slice(0, 20); store.set(REB, rebHist);
+      note = `<span><b>Trùng sinh ở mốc ${from.n + 1}</b> (${from.y} ${esc(from.unit)}) · ${esc(from.title)}: ${from.old === from.neu ? `chọn lại <b>${esc(from.neu)}</b> như đời trước` : `<b>${esc(from.neu)}</b> thay cho ${esc(from.old)}`}.</span>
+        <span>${same ? 'Đời đi đúng hướng cũ: giống hệt đời trước tới lúc chết.' : `Đời rẽ khác từ ${at ? at.yrs + ' ' + (at.kiep > 1 ? 'năm sau khi trỗi dậy' : 'tuổi') : 'mốc này'}.`}</span>
+        <button class="btn" data-sid="${esc(from.sid)}">◂ Về đời trước</button>`;
+    } else if (o.picks.length) {
+      note = `<span>Đời trùng sinh: ${o.picks.length} mốc do bạn chọn (đánh dấu ✋ trong lịch sử mốc lựa chọn).</span>`;
+    }
+    if (o.picks.length) note += `<button class="btn" data-sid="${esc(sidOf({ ...o, picks: [] }))}">Đời gốc của seed này</button>`;
+    $('rebNote').innerHTML = note; $('rebNote').hidden = !note;
     $('btnBone').hidden = !(S.dead && S.rose);
     $('status').textContent = `Xong trong ${(ms / 1000).toFixed(1).replace('.', ',')} giây · seed ${o.seed} · thế giới ${o.world}${o.race ? ' · ép ' + J.races[o.race].nameVi : ''}${o.region ? (o.moved ? " · vùng " + G.REGION[o.region].nameVi + " bị bỏ qua vì xuất thân đã chọn nơi sinh" : " · vùng " + G.REGION[o.region].nameVi) : ""}${o.origin ? ' · ' + ORIGIN_VI[o.origin] : ''} · ${o.policy === 'rand' ? 'quyết định chọn ngẫu nhiên' : 'Tự sống chọn'}${S.dead && S.rose ? ' · đời này trỗi dậy thành Bộ Xương' : ''}.`;
     build(); sel = mainArc ? mainArc.key : null;
-    renderStats(); render(); renderHist();
+    if (from) { const c = choices.find(c => c.n === from.n); if (c) sel = c.key; }
+    renderStats(); render(); renderHist(); renderReb();
     window.scrollTo({ top: 0 });
   }
-  const optsNow = seed => ({ seed: seed || newSeed(), race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: ($('inWorld').value.trim() || DEF_WORLD) });
+  const optsNow = seed => ({ picks: [], seed: seed || newSeed(), race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: ($('inWorld').value.trim() || DEF_WORLD) });
   function savePref() { store.set(PREF, { race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: $('inWorld').value.trim() }); }
   function applyOpts(o) { $('selRace').value = o.race || ''; if (G.realm) fillRegions(); $('selRegion').value = o.region || ''; $('selOrigin').value = o.origin || ''; $('selPolicy').value = o.policy || 'auto'; $('inWorld').value = o.world || DEF_WORLD; $('inSeed').value = o.seed || ''; }
   function renderHist() {
     const marked = new Set(Object.values(reviews).map(r => r.sid).filter(Boolean));
-    const L = hist.map(h => `<button data-sid="${esc(h.sid)}" class="${T && T.sid === h.sid ? 'cur' : ''}${marked.has(h.sid) ? ' marked' : ''}" title="${esc(h.sid)}">${esc(h.name)} · ${esc(h.race)} ${h.years}</button>`);
+    const L = hist.map(h => `<button data-sid="${esc(h.sid)}" class="${T && T.sid === h.sid ? 'cur' : ''}${marked.has(h.sid) ? ' marked' : ''}" title="${esc(h.sid)}">${esc(h.name)} · ${esc(h.race)} ${h.years}${h.reb ? ' · ↺' + h.reb : ''}</button>`);
     const extra = [...marked].filter(s => !hist.some(h => h.sid === s)).slice(0, 10).map(s => `<button data-sid="${esc(s)}" class="marked" title="${esc(s)}">${esc(s.split('~')[0])}</button>`);
     $('hist').innerHTML = L.length || extra.length ? `<span class="lbl">Đã xem:</span>${L.join('')}${extra.length ? `<span class="lbl" style="margin-left:8px">Có đánh dấu:</span>${extra.join('')}` : ''}` : '';
   }
   function openSid(sid) {
     const k = /~k(\d+)$/.exec(sid), o = parseSid(sid.replace(/~k\d+$/, ''));
     applyOpts(o); savePref();
-    run(o).then(() => { if (k && +k[1] > 1 && lastSim && lastSim.S.rose) runBone(); });
+    o.kiep = k ? +k[1] : 1; run(o);
+  }
+  // Ô chọn mốc trùng sinh và danh sách các lần đã trùng sinh (lưu trong trình duyệt; mã mẫu trên # mở lại đúng đời).
+  function renderReb() {
+    $('rebRow').hidden = !trail.length;
+    $('selMoc').innerHTML = trail.map(e => `<option value="${e.n}">Mốc ${e.n + 1} · ${e.y} ${esc(e.unit)} · ${esc(short(e.title, 34))}: ${esc(short(e.ch[e.i].label, 36))}${e.by === 'me' ? ' ✋' : ''}</option>`).join('');
+    const s = choices.find(c => c.key === sel); if (s && s.n != null) $('selMoc').value = s.n;
+    const L = rebHist.slice(0, 10).map(r => `<button data-sid="${esc(r.sid)}" class="${T && T.sid === r.sid ? 'cur' : ''}" title="${esc(r.sid)}">${esc(r.name)} · mốc ${r.n + 1} (${r.y} ${esc(r.unit === 'tuổi' ? 't' : 'n')}): ${r.old === r.neu ? '= ' + esc(short(r.neu, 24)) : esc(short(r.old, 18)) + ' → ' + esc(short(r.neu, 22))}${r.same ? ' · đúng hướng cũ' : ''}</button>`);
+    $('rebHist').innerHTML = L.length ? `<span class="lbl">Đã trùng sinh:</span>${L.join('')}` : '';
   }
 
   // ═════════ Gom dữ liệu của một đời: nhánh, sự kiện theo nhánh, quyết định ═════════
@@ -466,7 +581,8 @@ code{font-family:var(--font-mono);font-size:12px}
   }
 
   // ═════════ Mục đang chọn, khối duyệt ═════════
-  const dbKey = k => 'lt_' + (T.sid + '_' + k).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 190);
+  const sidKey = s => s.length > 80 ? s.slice(0, 48) + '_h' + G.hash(s).toString(36) : s;   // mã mẫu dài (nhiều phương án tự chọn): rút gọn bằng băm để id không bị cắt mất mục
+  const dbKey = k => 'lt_' + (sidKey(T.sid) + '_' + k).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 190);
   const rv = k => reviews[dbKey(k)] || {};
   function reviewBlock(k) {
     const r = rv(k), note = drafts[dbKey(k)] != null ? drafts[dbKey(k)] : (r.note || ''), off = db ? '' : 'disabled';
@@ -476,7 +592,22 @@ code{font-family:var(--font-mono);font-size:12px}
   }
   const fxChips = fx => fx.length ? `<div class="chips">${fx.map(f => `<span class="chip ${f.tone === 'good' ? 'good' : f.tone === 'bad' ? 'bad' : ''}">${esc(f.t)}</span>`).join('')}</div>` : '<p class="muted">Không đổi gì thấy ngay.</p>';
   const evLi = e => `<li class="${e.k === 'big' ? 'big' : e.k === 'bad' ? 'bad' : e.k === 'good' ? 'good' : ''}"><span class="y">${e.y}</span>${esc(e.t)}</li>`;
+  const BY_VI = { me: '✋ bạn chọn', auto: 'Tự sống chọn', rand: 'xúc xắc chọn' };
+  // Khối trùng sinh ở mốc n: các phương án của mốc, phương án đời này đã chọn có nhãn; bấm là sống lại từ đầu tới mốc rồi theo phương án đó.
+  function rebBlock(n) {
+    const e = trail[n]; if (!e) return '';
+    const by = cur.policy === 'rand' ? 'xúc xắc' : 'Tự sống';
+    return `<div class="reb"><div class="kind">↺ Trùng sinh ở mốc ${n + 1}</div>
+      <p class="muted">Sống lại đời này từ lúc ${e.kiep > 1 && T.kiep === 1 ? 'sinh, qua kiếp Bộ Xương' : 'sinh'} với cùng seed: mọi thứ trước mốc giữ y nguyên, tới đây bạn chọn lại. Chọn đúng phương án cũ thì đời đi đúng hướng cũ.</p>
+      <div class="opts">${e.ch.map((c, i) => `<button class="btn opt${i === e.i ? ' was' : ''}" data-reb="${n}:${i}">${i + 1}. ${esc(c.label)}${i === e.i ? ` <span class="tag">đời này chọn (${BY_VI[e.by]})</span>` : ''}${c.sub ? `<span class="sub">${esc(c.sub)}</span>` : ''}</button>`).join('')}</div>
+      <label class="chk"><input type="checkbox" id="chkPlay"${playPref ? ' checked' : ''}> Sau mốc này tự chọn từng quyết định (chơi lại); bỏ trống thì ${by} chọn tiếp tới lúc chết</label></div>`;
+  }
   function renderDetail() {
+    if (sel && sel.startsWith('reb:')) {
+      const e = trail[+sel.slice(4)];
+      $('detail').innerHTML = e ? `<div class="kind">Mốc ${e.n + 1} · ${e.y} ${esc(e.unit)}${e.kiep > 1 ? ' · kiếp Bộ Xương' : ''}</div><h3>${esc(e.title)}</h3>${e.body ? `<p>${esc(e.body)}</p>` : ''}${rebBlock(e.n)}<button class="btn" data-pick="whole">Về đánh dấu cả cây</button>` : '';
+      return;
+    }
     const it = all[sel] || all.whole, o = it.obj;
     let h = '';
     if (it.kind === 'whole') {
@@ -490,8 +621,9 @@ code{font-family:var(--font-mono);font-size:12px}
         ${o.ev.length ? `<ul class="lines">${o.ev.map(evLi).join('')}</ul>` : '<p class="muted">Không có dòng nhật ký riêng (mạch chỉ đi qua quyết định).</p>'}
         ${cs.length ? `<p class="muted">Quyết định trong mạch:</p><ul class="lines">${cs.map(c => `<li><span class="y">${c.y}</span><b>${esc(c.title)}</b>: ${esc(c.label)}</li>`).join('')}</ul>` : ''}`;
     } else if (it.kind === 'dec') {
-      h = `<div class="kind">Quyết định · ${o.y} ${esc(yu)}${o.lane ? ' · ' + esc(o.lane.tag) : ''}</div><h3>${esc(o.title)}</h3>
-        <div class="chips"><span class="chip pick">${esc(o.label)}</span>${o.alts.map(a => `<span class="chip alt">${esc(a)}</span>`).join('')}</div>
+      const e = trail[o.n];
+      h = `<div class="kind">${o.n != null ? `Mốc ${o.n + 1} · ` : ''}Quyết định · ${o.y} ${esc(yu)}${o.lane ? ' · ' + esc(o.lane.tag) : ''}</div><h3>${esc(o.title)}</h3>
+        <div class="chips"><span class="chip pick">${esc(o.label)}</span>${o.alts.map(a => `<span class="chip alt">${esc(a)}</span>`).join('')}${e ? `<span class="chip${e.by === 'me' ? ' me' : ''}">${BY_VI[e.by]}</span>` : ''}</div>
         ${o.out ? `<p>${esc(o.out)}</p>` : ''}<p class="muted">Tác động:</p>${fxChips(o.fx)}<p class="muted"><code>${esc(o.id)}</code></p>`;
     } else if (it.kind === 'chap') {
       const ln = chapLines.filter(e => e.y >= o.y0 && e.y <= o.y1);
@@ -501,7 +633,7 @@ code{font-family:var(--font-mono);font-size:12px}
     } else if (it.kind === 'ach') {
       h = `<div class="kind" style="color:var(--star)">Thành tựu ${esc(o.rankVi.toLowerCase())} · ${esc(o.cat)} · ${o.y} ${esc(yu)}</div><h3>${esc(o.nameVi)}</h3><p>${esc(o.d)}</p>`;
     }
-    $('detail').innerHTML = h + reviewBlock(sel || 'whole') + (sel ? '<button class="btn" data-pick="whole">Về đánh dấu cả cây</button>' : '');
+    $('detail').innerHTML = h + reviewBlock(sel || 'whole') + (it.kind === 'dec' && o.n != null ? rebBlock(o.n) : '') + (sel ? '<button class="btn" data-pick="whole">Về đánh dấu cả cây</button>' : '');
   }
   function renderArcs() {
     const order = { main: 0, side: 1, short: 2 };
@@ -516,9 +648,10 @@ code{font-family:var(--font-mono);font-size:12px}
     for (const c of choices) {
       const p = c.ph || '';
       if (p !== ph) { ph = p; const C = chapters.find(x => x.ph === p); o.push(`<div class="phase">${esc(C ? C.phVi + ': ' + C.q : p || 'Thơ ấu')}</div>`); }
-      const s = rv(c.key).status;
-      o.push(`<button class="chrow${s ? ' s-' + s : ''}" data-pick="${c.key}"><span class="y">${c.y} ${s ? STATUS[s].t : ''}</span><span><span class="t">${esc(c.title)}:</span> ${esc(c.label)}${c.lane ? ` <span class="muted">· ${esc(c.lane.tag)}</span>` : ''}
-        <span class="s">${c.fx.length ? esc(c.fx.map(f => f.t).join(' · ')) : 'không đổi gì ngay'}${c.alts.length ? ' · bỏ qua: ' + esc(c.alts.join(' / ')) : ''}</span></span></button>`);
+      const s = rv(c.key).status, e = trail[c.n], cut = cur.cut === c.n;
+      const tags = e ? `${e.by === 'me' ? ' <span class="chip me">✋ bạn chọn</span>' : ''}${cut ? ' <span class="chip cut">↺ trùng sinh ở đây</span>' : ''}` : '';
+      o.push(`<div class="chline"><button class="chrow${s ? ' s-' + s : ''}" data-pick="${c.key}"><span class="y">${c.n != null ? '#' + (c.n + 1) + ' · ' : ''}${c.y} ${s ? STATUS[s].t : ''}</span><span><span class="t">${esc(c.title)}:</span> ${esc(c.label)}${tags}${c.lane ? ` <span class="muted">· ${esc(c.lane.tag)}</span>` : ''}
+        <span class="s">${c.fx.length ? esc(c.fx.map(f => f.t).join(' · ')) : 'không đổi gì ngay'}${c.alts.length ? ' · bỏ qua: ' + esc(c.alts.join(' / ')) : ''}</span></span></button>${e ? `<button class="btn reb-open" data-reb-open="${c.n}" title="Trùng sinh ở mốc ${c.n + 1}" aria-label="Trùng sinh ở mốc ${c.n + 1}">↺</button>` : ''}</div>`);
     }
     $('choices').innerHTML = o.join('') || '<p class="muted" style="padding:8px 12px;margin:0">Đời này chưa kịp quyết định gì.</p>';
   }
@@ -555,11 +688,16 @@ code{font-family:var(--font-mono);font-size:12px}
   $('btnSeed').onclick = () => run(optsNow($('inSeed').value.trim() || null));
   $('inSeed').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnSeed').click(); });
   $('btnBone').onclick = runBone;
+  $('btnReb').onclick = () => { if (trail.length) openReb(+$('selMoc').value); };
   document.addEventListener('keydown', e => {
+    if (playAsk && /^[1-9]$/.test(e.key) && !e.target.closest('input,textarea,select')) { const b = $('play').querySelector(`[data-play="${+e.key - 1}"]`); if (b) { e.preventDefault(); b.click(); } return; }
     if ((e.key === 'n' || e.key === 'N') && !e.target.closest('input,textarea,select')) { e.preventDefault(); $('btnNext').click(); return; }
     const g = e.target.closest && e.target.closest('.hit'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(g.dataset.key); }
   });
   document.addEventListener('click', e => {
+    const pl = e.target.closest('[data-play]'); if (pl) { if (playAsk) playAsk(+pl.dataset.play); return; }
+    const rb = e.target.closest('[data-reb]'); if (rb) { const [n, i] = rb.dataset.reb.split(':').map(Number); reborn(n, i); return; }
+    const ro = e.target.closest('[data-reb-open]'); if (ro) { openReb(+ro.dataset.rebOpen); return; }
     const hs = e.target.closest('[data-sid]'); if (hs) { openSid(hs.dataset.sid); return; }
     const p = e.target.closest('[data-pick]'); if (p) { pick(p.dataset.pick); return; }
     const g = e.target.closest('.hit'); if (g) { pick(g.dataset.key); return; }
@@ -569,6 +707,7 @@ code{font-family:var(--font-mono);font-size:12px}
     if (e.target.closest('[data-clear]')) { write(k, null); return; }
     if (e.target.closest('[data-savenote]')) write(k, curS || 'fix', note);
   });
+  document.addEventListener('change', e => { if (e.target.id === 'chkPlay') { playPref = e.target.checked; store.set(PLAY, playPref); } });
   document.addEventListener('input', e => { if (!e.target.matches('[data-note]') || !T) return; drafts[dbKey(e.target.closest('.review').dataset.k)] = e.target.value; });
 
   // Lần đầu: mẫu trên #liên kết, không có thì mẫu đã duyệt mau:17 (Orc Mokzul Sẹo Dài); lựa chọn lần trước giữ trong trình duyệt.

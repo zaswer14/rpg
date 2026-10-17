@@ -55,6 +55,6 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | Duyệt Nội Dung Vạn Kiếp | https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/js/realmev.js`, `org.js`, `edu.js`, `noble.js`, `G.WORKS`, `G.BUILDINGS` |
 | Duyệt Quái và Địa hình | https://claude.ai/artifact/EAQXqvNeqpS36378wdaaFN | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `shared/bestiary/`, `shared/terrain/`, `shared/names/` |
 | Duyệt Mạch Truyện Vạn Kiếp | https://claude.ai/artifact/GDCQtaV7DY2rdrjhBwAR36 | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/js/saga.js`, mạch của `vankiep/js/story.js` |
-| Cây Cốt Truyện Vạn Kiếp | https://claude.ai/artifact/MUyMaYGsmE22koNLReHC29 | db `reviews`, id `lt_<seed>_<mục>`; chạy đời mới trong trình duyệt (`vankiep/caytruyen.html`, `G.storyTree`; đăng lại bằng `bash tools/caytruyen.sh`), đọc trước khi sửa mạch, quyết định, câu chữ được đánh dấu trên cây; mỗi đánh dấu có `sid` để mở lại đúng mẫu |
+| Cây Cốt Truyện Vạn Kiếp | https://claude.ai/artifact/MUyMaYGsmE22koNLReHC29 | db `reviews`, id `lt_<seed>_<mục>`; chạy đời mới trong trình duyệt, trùng sinh ở một mốc lựa chọn (`vankiep/caytruyen.html`, `G.storyTree`; đăng lại bằng `bash tools/caytruyen.sh`), đọc trước khi sửa mạch, quyết định, câu chữ được đánh dấu trên cây; mỗi đánh dấu có `sid` để mở lại đúng mẫu |
 
 Kiểm, dựng lại, đăng lại, thêm trang: `review/README.md` mục 2. Nội dung chưa có trang duyệt: mục 3 của file đó.
