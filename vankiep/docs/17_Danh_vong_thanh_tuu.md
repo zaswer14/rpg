@@ -69,6 +69,10 @@ Trang chạy thật bộ mô phỏng (`vankiep/caytruyen.html`, người dùng y
 - Mã mẫu thêm trường thứ bảy `p<mốc>-<thứ tự phương án>.<…>` (mốc từ 0; chỉ ghi các mốc người chơi chọn, giữ những mốc trước điểm trùng sinh, bỏ những mốc sau). Mã dài hơn 80 ký tự thì id đánh dấu dùng 48 ký tự đầu + băm. Danh sách **Đã trùng sinh** (trong trình duyệt) ghi mốc, phương án cũ → mới, có đi đúng hướng cũ không.
 - `G.storyTree` trả thêm số mốc `n` của từng lựa chọn (trang gắn vào `S.choices`).
 
+**Mọi kết cục** (người dùng yêu cầu thêm 17/10/2026): nút ☰ Mọi kết cục thử, ở mỗi mốc của kiếp đang xem, từng phương án đời này chưa chọn; phần còn lại để Tự sống / xúc xắc sống tiếp tới lúc chết (một lần rẽ, cùng seed). Kết cục gom theo đường đời + kết mạch chính; thẻ kết cục ghi số ngả rẽ, khoảng tuổi chết, danh vọng cao nhất, nguyên nhân chết, danh xưng, danh sách ngả rẽ (mốc, phương án thay cho phương án cũ, kết cục: tuổi, nguyên nhân, danh xưng, nghề, đường đời, trỗi dậy). Bấm một ngả rẽ là trùng sinh vào đời đó; muốn rẽ sâu hơn thì xem mọi kết cục của đời ấy. Thẻ trùng sinh ghi luôn kết cục của từng phương án đã thử.
+
+- Nhanh: một lần sống lại có chụp trạng thái đầu mỗi năm (JSON của `S` + `rs`, như bản lưu của game); mỗi ngả rẽ chạy từ ảnh chụp gần mốc nhất. Mẫu `mau:17`: 150 ngả rẽ, 9 kết cục, ~9 giây; kết cục tính từ ảnh chụp khớp đời trùng sinh chạy từ lúc sinh (đã thử). Có nút Dừng / Thử tiếp; kết quả giữ trong trang theo mã mẫu.
+
 ## 6. Kết quả đo
 
 1000 đời, thế giới `can-bang`, 17/10/2026, 137 giây (cùng máy, 150 đời: bản trước 25,9 giây, bản này 24,2 giây):

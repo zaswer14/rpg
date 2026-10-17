@@ -148,6 +148,23 @@ code{font-family:var(--font-mono);font-size:12px}
 .chline .chrow{border-top:0;flex:1;min-width:0}
 .chline .reb-open{border:0;border-left:1px solid var(--line);border-radius:0;background:none;color:var(--accent);font-size:16px;padding:0 12px}
 .chline .reb-open:hover,.chline .reb-open:focus-visible{background:var(--chip)}
+.ends{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.ends[hidden]{display:none}
+.ends-head{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline}
+.ends-head .row{display:flex;gap:6px}
+.ends .progress{margin:0}
+.ecard{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--drop);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ecard.good{border-left-color:var(--ok)} .ecard.base{box-shadow:0 0 0 1px var(--accent)}
+.ecard .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ecard h4{margin:0;font-size:14.5px;font-weight:600}
+.ecard p{margin:0;font-size:12.5px}
+.ecard summary{cursor:pointer;font-size:12.5px;color:var(--accent)}
+.erows{display:flex;flex-direction:column;margin-top:4px}
+.erow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:2px 8px;padding:5px 4px;border:0;border-top:1px solid var(--line);background:none;font:inherit;font-size:12.5px;color:inherit;text-align:left;cursor:pointer}
+.erow:hover,.erow:focus-visible{background:var(--chip);outline:none}
+.erow .y{font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.erow .s{display:block;color:var(--muted)}
+.btn.opt .sub.end{color:var(--ink)} .btn.opt .sub.end.good{color:var(--ok)}
 .chip.me{background:var(--accent);color:var(--accent-ink)} .chip.cut{border:1px solid var(--accent);background:transparent;color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){ .card,.chrow{transition:border-color .15s,background .15s} .result{transition:opacity .2s} }
 </style>
@@ -173,6 +190,7 @@ code{font-family:var(--font-mono);font-size:12px}
     <div class="row reb-row" id="rebRow" hidden>
       <label for="selMoc">Trùng sinh ở mốc<select id="selMoc"></select></label>
       <button class="btn" id="btnReb" title="Sống lại đời này từ đầu với cùng seed, tới mốc đã chọn thì bạn chọn lại phương án">↺ Trùng sinh</button>
+      <button class="btn" id="btnEnds" title="Thử mọi phương án chưa chọn ở mọi mốc của đời này, gom các kết cục">☰ Mọi kết cục</button>
     </div>
     <div class="status" id="status" aria-live="polite">Đang nạp mã game…</div>
     <div class="hist" id="hist"></div>
@@ -180,6 +198,7 @@ code{font-family:var(--font-mono);font-size:12px}
   </section>
 
   <section class="play" id="play" hidden aria-live="polite" aria-label="Chơi lại: chọn phương án"></section>
+  <section class="ends" id="ends" hidden aria-label="Mọi kết cục"></section>
 
   <div class="result" id="result">
     <section class="who" id="who" aria-label="Nhân vật"></section>
@@ -311,6 +330,7 @@ code{font-family:var(--font-mono);font-size:12px}
     while (!sim.S.dead && n < 400 * 40) {
       let t0 = performance.now();
       while (!sim.S.dead && n < 400 * 40 && performance.now() - t0 < 40) {
+        if (ctx.stop) throw STOP;
         const S = sim.S;
         if (S.pending) {
           const P = S.pending, D = G.DECISIONS[P.id], dn = ctx.trail.length;
@@ -328,11 +348,35 @@ code{font-family:var(--font-mono);font-size:12px}
           const L = S.choices, last = L && L[L.length - 1]; if (last && last.n == null) last.n = dn;   // gắn số mốc vào lịch sử lựa chọn (js/fame.js)
           if (!rand) resume(sim);
         }
+        // Mọi kết cục: chụp trạng thái đầu mỗi năm (giống bản lưu của game) để thử ngả rẽ từ năm có mốc thay vì sống lại từ lúc sinh.
+        if (ctx.snaps && sim.S.t === 0 && !sim.S.pending && !sim.S.dead) ctx.snaps.push({ dn: ctx.trail.length, rs: sim.rs, json: JSON.stringify(sim.S) });
         sim.tick(.05); n++;
       }
-      $('status').textContent = `${label}: ${sim.years(sim.S)} ${sim.S.undead ? 'năm sau khi trỗi dậy' : 'tuổi'}…`;
+      if (!ctx.quiet) $('status').textContent = `${label}: ${sim.years(sim.S)} ${sim.S.undead ? 'năm sau khi trỗi dậy' : 'tuổi'}…`;
       await pause();
     }
+  }
+  const STOP = new Error('dừng');
+  // Sim mới theo mẫu: Tự sống mở quyết định ở chế độ chờ để liveOut chen phương án tự chọn; ngoài lúc mở vẫn là Tự sống (cult.js tự học kỹ năng).
+  function makeSim(o, log) {
+    const sim = new G.Sim({ seed: o.seed, hook: { log: e => log.push(e) } });
+    sim.autoDecide = o.policy !== 'rand';   // Tự sống: chọn như lúc game tự chọn ngay khi quyết định mở; ngẫu nhiên: để chờ rồi bốc
+    if (sim.autoDecide) { const od = sim.openDecision; sim.openDecision = function (id) { this.autoDecide = false; try { od.call(this, id); } finally { this.autoDecide = true; } }; }
+    return sim;
+  }
+  function birth(sim, o) {
+    const bone = o.race && G.RACES[o.race] && G.RACES[o.race].undead;
+    sim.newLife({ noPeers: true, ...(o.race && !bone ? { race: o.race } : {}), ...(o.region ? { region: o.region } : {}), ...(o.origin ? { origin: o.origin } : {}) });
+    o.moved = !!o.region && sim.S.born.region !== o.region;   // xuất thân đã đặt nơi sinh ở vùng khác
+    sim.S.auto = true;
+    if (bone) {   // như chế độ kiểm duyệt: một kiếp người chết non rồi trỗi dậy ngay ở vùng đó
+      const S = sim.S; S.dead = true; S.cause = 'chết non'; S.causeId = 'newborn'; S.rose = sim.dominant(S) || { skill: 'Body', value: 5 }; sim.rise(); sim.S.auto = true;
+    }
+  }
+  // Sống hết kiếp đang chạy; mẫu xem kiếp Bộ Xương (o.kiep > 1) thì trỗi dậy rồi sống tiếp.
+  async function liveAll(sim, ctx, label) {
+    await liveOut(sim, ctx, label);
+    if ((ctx.o.kiep || 1) > sim.S.kiep && sim.S.dead && sim.S.rose) { sim.rise(); sim.S.auto = true; await liveOut(sim, ctx, 'Kiếp Bộ Xương'); }
   }
   // Chơi lại: sau mốc trùng sinh, mỗi quyết định dừng ở bảng này chờ người chơi chọn (-1: để Tự sống / xúc xắc chọn tiếp tới hết đời).
   function askPlay(sim, ctx, e) {
@@ -357,22 +401,11 @@ code{font-family:var(--font-mono);font-size:12px}
       $('status').className = 'status'; $('status').textContent = `Đang dựng thế giới ${o.world}…`; await pause();
       ensureWorld(o.world);
       if (o.region && !G.realm.settlements.some(s => s.tier !== 'ruin' && s.region === o.region)) o.region = '';
-      const all = [];
-      const sim = new G.Sim({ seed: o.seed, hook: { log: e => all.push(e) } });
+      const all = [], sim = makeSim(o, all);
       const ctx = { o, trail: [], picks: new Map(o.picks), play: !!o.play, cut: o.cut ?? -1, log: all, seen: 0 };
-      sim.autoDecide = o.policy !== 'rand';   // Tự sống: chọn như lúc game tự chọn ngay khi quyết định mở; ngẫu nhiên: để chờ rồi bốc
-      if (sim.autoDecide) { const od = sim.openDecision;   // mở quyết định ở chế độ chờ để liveOut chen phương án tự chọn; ngoài lúc mở vẫn là Tự sống (cult.js tự học kỹ năng)
-        sim.openDecision = function (id) { this.autoDecide = false; try { od.call(this, id); } finally { this.autoDecide = true; } }; }
-      const bone = o.race && G.RACES[o.race] && G.RACES[o.race].undead;
-      sim.newLife({ noPeers: true, ...(o.race && !bone ? { race: o.race } : {}), ...(o.region ? { region: o.region } : {}), ...(o.origin ? { origin: o.origin } : {}) });
-      o.moved = !!o.region && sim.S.born.region !== o.region;   // xuất thân đã đặt nơi sinh ở vùng khác
-      sim.S.auto = true;
-      if (bone) {   // như chế độ kiểm duyệt: một kiếp người chết non rồi trỗi dậy ngay ở vùng đó
-        const S = sim.S; S.dead = true; S.cause = 'chết non'; S.causeId = 'newborn'; S.rose = sim.dominant(S) || { skill: 'Body', value: 5 }; sim.rise(); sim.S.auto = true;
-      }
+      birth(sim, o);
       const lb = from ? `Trùng sinh ${o.seed}: tua lại tới mốc ${o.cut + 1}` : `Đang sống đời ${o.seed}`;
-      await liveOut(sim, ctx, lb);
-      if ((o.kiep || 1) > 1 && sim.S.dead && sim.S.rose) { sim.rise(); sim.S.auto = true; await liveOut(sim, ctx, 'Kiếp Bộ Xương'); }
+      await liveAll(sim, ctx, lb);
       lastSim = sim; lastLog = all; cur = o; curCtx = ctx; trail = ctx.trail;
       show(sim, all, o, performance.now() - t0, from);
     } catch (e) {
@@ -387,10 +420,11 @@ code{font-family:var(--font-mono);font-size:12px}
     finally { busy = false; $('page').classList.remove('busy'); $('play').hidden = true; }
   }
   // Trùng sinh ở mốc n với phương án i: giữ seed, giữ mọi phương án tự chọn trước mốc, bỏ những gì sau mốc (tương lai của đời cũ).
-  function reborn(n, i) {
+  const branchOpts = (n, i) => ({ seed: cur.seed, race: cur.race, region: cur.region, origin: cur.origin, policy: cur.policy, world: cur.world,
+    picks: (cur.picks || []).filter(p => p[0] < n).concat([[n, i]]), kiep: Math.max(trail[n].kiep, lastSim.S.kiep), cut: n });
+  function reborn(n, i, play = playPref) {
     const e = trail[n]; if (busy || !e || !e.ch[i]) return;
-    const o = { seed: cur.seed, race: cur.race, region: cur.region, origin: cur.origin, policy: cur.policy, world: cur.world,
-      picks: (cur.picks || []).filter(p => p[0] < n).concat([[n, i]]), kiep: Math.max(e.kiep, lastSim.S.kiep), play: playPref, cut: n };
+    const o = { ...branchOpts(n, i), play };
     run(o, { sid: T.sid, name: T.name, sig: lastLog.map(x => x.text), n, y: e.y, unit: e.unit, title: e.title, old: e.ch[e.i].label, neu: e.ch[i].label });
   }
   function openReb(n) {
@@ -425,7 +459,8 @@ code{font-family:var(--font-mono);font-size:12px}
     $('status').textContent = `Xong trong ${(ms / 1000).toFixed(1).replace('.', ',')} giây · seed ${o.seed} · thế giới ${o.world}${o.race ? ' · ép ' + J.races[o.race].nameVi : ''}${o.region ? (o.moved ? " · vùng " + G.REGION[o.region].nameVi + " bị bỏ qua vì xuất thân đã chọn nơi sinh" : " · vùng " + G.REGION[o.region].nameVi) : ""}${o.origin ? ' · ' + ORIGIN_VI[o.origin] : ''} · ${o.policy === 'rand' ? 'quyết định chọn ngẫu nhiên' : 'Tự sống chọn'}${S.dead && S.rose ? ' · đời này trỗi dậy thành Bộ Xương' : ''}.`;
     build(); sel = mainArc ? mainArc.key : null;
     if (from) { const c = choices.find(c => c.n === from.n); if (c) sel = c.key; }
-    renderStats(); render(); renderHist(); renderReb();
+    $('ends').hidden = true;
+    renderStats(); render(); renderHist(); renderReb(); renderEnds();
     window.scrollTo({ top: 0 });
   }
   const optsNow = seed => ({ picks: [], seed: seed || newSeed(), race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: ($('inWorld').value.trim() || DEF_WORLD) });
@@ -442,6 +477,83 @@ code{font-family:var(--font-mono);font-size:12px}
     applyOpts(o); savePref();
     o.kiep = k ? +k[1] : 1; run(o);
   }
+  // ═════════ Mọi kết cục: ở mỗi mốc của kiếp đang xem, thử từng phương án chưa chọn, phần còn lại để Tự sống / xúc xắc sống tiếp ═════════
+  // Mỗi ngả rẽ chạy từ ảnh chụp đầu năm gần mốc nhất (một lần sống lại có chụp ảnh), không sống lại từ lúc sinh; gom theo đường đời + kết mạch chính.
+  const endsCache = new Map(); let exp = null;
+  function endOf(sim) {
+    const S = sim.S, X = G.storyTree(S, sim), m = X.arcs.find(a => a.tier === 'main');
+    let job = ''; try { job = S.job ? sim.jobName(S) : ''; } catch (e) {}
+    const saga = X.saga && X.saga.nameVi ? X.saga.nameVi : S.kiep > 1 ? 'Bộ Xương chưa có đường đời' : 'Chưa định đường đời';
+    const fin = m ? (m.done ? (m.o === 'gone' ? 'người trong mạch mất' : m.o === 'faded' ? 'mạch phai' : m.sum || m.o) : 'còn dở lúc chết') : '';
+    return { key: saga + '|' + fin, saga, fin, good: !!(m && m.done && m.good), years: X.years, unit: X.unit, cause: X.cause, title: X.title || '', rank: G.TIER_NAME[sim.ctier(S)] || '',
+      job, fame: X.fame.peak, scope: X.fame.scope, ach: X.ach.length, rose: !!(S.dead && S.rose && S.kiep === 1) };
+  }
+  const endTxt = d => `${d.years} ${d.unit}, ${d.cause} · ${d.rank}${d.job ? ' (' + d.job + ')' : ''} · ${d.saga}${d.fin ? ': ' + d.fin : ''}${d.rose ? ' · trỗi dậy' : ''}`;
+  async function explore() {
+    if (busy || !T || !trail.length) return;
+    const sid = T.sid, kiep = lastSim.S.kiep, t0 = performance.now();
+    let E = endsCache.get(sid);
+    if (!E) { E = { sid, name: T.name, base: null, rows: [], total: 0, done: false }; endsCache.set(sid, E); }
+    $('ends').hidden = false; $('ends').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (E.done) { renderEnds(); return; }
+    busy = true; E.err = null; renderEnds();
+    try {
+      const o0 = { ...cur, picks: (cur.picks || []).slice() }, ctx0 = { o: o0, trail: [], picks: new Map(o0.picks), play: false, cut: -1, log: [], quiet: true, snaps: [] };
+      exp = ctx0; const sim0 = makeSim(o0, ctx0.log); birth(sim0, o0); await liveAll(sim0, ctx0);
+      E.base = endOf(sim0);
+      const list = trail.filter(e => e.kiep === kiep).flatMap(e => e.ch.map((c, i) => [e.n, i]).filter(([n, i]) => i !== e.i));
+      E.total = list.length;
+      const have = new Set(E.rows.map(r => r.n + ':' + r.i));
+      let last = performance.now();
+      for (const [n, i] of list) {
+        if (have.has(n + ':' + i)) continue;
+        let sn = ctx0.snaps[0]; for (const x of ctx0.snaps) if (x.dn <= n) sn = x; else break;
+        const o = branchOpts(n, i), log = [], sim = makeSim(o, log);
+        sim.S = JSON.parse(sn.json); sim.rs = sn.rs;
+        const ctx = { o, trail: trail.slice(0, sn.dn), picks: new Map(o.picks), play: false, cut: n, log, quiet: true };
+        exp = ctx; await liveAll(sim, ctx);
+        E.rows.push({ n, i, end: endOf(sim) });
+        if (performance.now() - last > 700) { last = performance.now(); renderEnds(); }
+      }
+      E.done = true; E.ms = performance.now() - t0;
+    } catch (e) { if (e !== STOP) { console.error(e); E.err = e && e.message ? e.message : String(e); } }
+    finally { busy = false; exp = null; renderEnds(); }
+  }
+  function renderEnds() {
+    const E = T && endsCache.get(T.sid);
+    $('btnEnds').textContent = E && E.done ? '☰ Mọi kết cục ✓' : '☰ Mọi kết cục';
+    if (!E || $('ends').hidden) return;
+    const G2 = new Map();
+    for (const r of E.rows) { let g = G2.get(r.end.key); if (!g) G2.set(r.end.key, g = { key: r.end.key, rows: [] }); g.rows.push(r); }
+    if (E.base && !G2.has(E.base.key)) G2.set(E.base.key, { key: E.base.key, rows: [] });
+    const groups = [...G2.values()].sort((a, b) => (b.key === (E.base || {}).key) - (a.key === (E.base || {}).key) || b.rows.length - a.rows.length);
+    const ages = E.rows.map(r => r.end.years).concat(E.base ? [E.base.years] : []), yu0 = E.base ? E.base.unit : 'tuổi';
+    const going = busy && exp;
+    const head = `<div class="ends-head"><h2>Mọi kết cục của ${esc(E.name)}</h2><div class="row">
+      ${going ? '<button class="btn" data-ends="stop">Dừng</button>' : !E.done ? '<button class="btn" data-ends="go">Thử tiếp</button>' : ''}<button class="btn" data-ends="close">Đóng</button></div></div>
+      <p class="lede">Mỗi ngả rẽ đổi đúng một lựa chọn ở một mốc của đời này (cùng seed), phần còn lại để ${cur.policy === 'rand' ? 'xúc xắc' : 'Tự sống'} sống tiếp tới lúc chết. Kết cục gom theo đường đời và kết của mạch chính. Bấm một ngả rẽ để trùng sinh vào đời đó; muốn rẽ sâu hơn thì xem mọi kết cục của đời ấy.</p>
+      <p class="progress">${E.err ? `<span class="status err">Lỗi: ${esc(E.err)}</span> · ` : ''}${E.done ? `Đã thử <b>${E.total}</b> ngả rẽ trong ${(E.ms / 1000).toFixed(0)} giây` : `${going ? 'Đang thử' : 'Đã dừng ở'} ngả rẽ <b>${E.rows.length}</b>/${E.total || '…'}`} · <b>${groups.length}</b> kết cục khác nhau${ages.length ? ` · chết từ ${Math.min(...ages)} tới ${Math.max(...ages)} ${esc(yu0)}` : ''} · ${E.rows.filter(r => r.end.good).length} ngả kết mạch chính làm được${E.rows.some(r => r.end.rose) ? ` · ${E.rows.filter(r => r.end.rose).length} ngả trỗi dậy thành Bộ Xương` : ''}</p>`;
+    const card = g => {
+      const R = g.rows, isBase = E.base && g.key === E.base.key, d = (R[0] || {}).end || E.base, ys = R.map(r => r.end.years).concat(isBase ? [E.base.years] : []);
+      const cnt = (f, xs) => { const m = new Map(); for (const x of xs) m.set(f(x), (m.get(f(x)) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
+      const all = R.map(r => r.end).concat(isBase ? [E.base] : []), causes = cnt(x => x.cause, all), ranks = cnt(x => x.rank, all);
+      return `<div class="ecard${d.good ? ' good' : ''}${isBase ? ' base' : ''}"><div class="top"><span class="tier main">${esc(d.saga)}</span><span class="muted">${R.length} ngả rẽ${isBase ? ' + đời này' : ''}</span></div>
+        <h4 class="${d.good ? 'end good' : ''}">${esc(d.fin || 'Không có mạch chính')}</h4>
+        <span class="muted">Chết ${Math.min(...ys)}${Math.max(...ys) !== Math.min(...ys) ? '–' + Math.max(...ys) : ''} ${esc(d.unit)} · danh vọng cao nhất ${Math.max(...all.map(x => x.fame))}</span>
+        <div class="chips">${causes.slice(0, 4).map(([c, k]) => `<span class="chip">${esc(c)}${k > 1 ? ' ×' + k : ''}</span>`).join('')}${ranks.slice(0, 3).map(([c, k]) => `<span class="chip alt">${esc(c)}${k > 1 ? ' ×' + k : ''}</span>`).join('')}</div>
+        ${isBase ? `<p class="muted">Đời này: ${esc(endTxt(E.base))}</p>` : ''}
+        ${R.length ? `<details${R.length <= 3 ? ' open' : ''}><summary>Các ngả rẽ dẫn tới đây</summary><div class="erows">${R.map(r => { const e = trail[r.n];
+          return `<button class="erow" data-endreb="${r.n}:${r.i}"><span class="y">#${r.n + 1} · ${e.y}</span><span><b>${esc(e.title)}:</b> ${esc(e.ch[r.i].label)} <span class="muted">(thay ${esc(e.ch[e.i].label)})</span><span class="s">→ ${esc(endTxt(r.end))}</span></span></button>`; }).join('')}</div></details>` : ''}</div>`;
+    };
+    $('ends').innerHTML = head + `<div class="grid">${groups.map(card).join('')}</div>`;
+  }
+  // Ở thẻ trùng sinh: phương án nào đã thử trong Mọi kết cục thì ghi luôn kết cục.
+  function endHint(n, i) {
+    const E = T && endsCache.get(T.sid); if (!E) return '';
+    const e = trail[n], d = i === e.i ? E.base : (E.rows.find(r => r.n === n && r.i === i) || {}).end;
+    return d ? `<span class="sub end${d.good ? ' good' : ''}">→ ${esc(endTxt(d))}</span>` : '';
+  }
+
   // Ô chọn mốc trùng sinh và danh sách các lần đã trùng sinh (lưu trong trình duyệt; mã mẫu trên # mở lại đúng đời).
   function renderReb() {
     $('rebRow').hidden = !trail.length;
@@ -599,7 +711,7 @@ code{font-family:var(--font-mono);font-size:12px}
     const by = cur.policy === 'rand' ? 'xúc xắc' : 'Tự sống';
     return `<div class="reb"><div class="kind">↺ Trùng sinh ở mốc ${n + 1}</div>
       <p class="muted">Sống lại đời này từ lúc ${e.kiep > 1 && T.kiep === 1 ? 'sinh, qua kiếp Bộ Xương' : 'sinh'} với cùng seed: mọi thứ trước mốc giữ y nguyên, tới đây bạn chọn lại. Chọn đúng phương án cũ thì đời đi đúng hướng cũ.</p>
-      <div class="opts">${e.ch.map((c, i) => `<button class="btn opt${i === e.i ? ' was' : ''}" data-reb="${n}:${i}">${i + 1}. ${esc(c.label)}${i === e.i ? ` <span class="tag">đời này chọn (${BY_VI[e.by]})</span>` : ''}${c.sub ? `<span class="sub">${esc(c.sub)}</span>` : ''}</button>`).join('')}</div>
+      <div class="opts">${e.ch.map((c, i) => `<button class="btn opt${i === e.i ? ' was' : ''}" data-reb="${n}:${i}">${i + 1}. ${esc(c.label)}${i === e.i ? ` <span class="tag">đời này chọn (${BY_VI[e.by]})</span>` : ''}${c.sub ? `<span class="sub">${esc(c.sub)}</span>` : ''}${endHint(n, i)}</button>`).join('')}</div>
       <label class="chk"><input type="checkbox" id="chkPlay"${playPref ? ' checked' : ''}> Sau mốc này tự chọn từng quyết định (chơi lại); bỏ trống thì ${by} chọn tiếp tới lúc chết</label></div>`;
   }
   function renderDetail() {
@@ -689,6 +801,7 @@ code{font-family:var(--font-mono);font-size:12px}
   $('inSeed').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnSeed').click(); });
   $('btnBone').onclick = runBone;
   $('btnReb').onclick = () => { if (trail.length) openReb(+$('selMoc').value); };
+  $('btnEnds').onclick = explore;
   document.addEventListener('keydown', e => {
     if (playAsk && /^[1-9]$/.test(e.key) && !e.target.closest('input,textarea,select')) { const b = $('play').querySelector(`[data-play="${+e.key - 1}"]`); if (b) { e.preventDefault(); b.click(); } return; }
     if ((e.key === 'n' || e.key === 'N') && !e.target.closest('input,textarea,select')) { e.preventDefault(); $('btnNext').click(); return; }
@@ -696,6 +809,8 @@ code{font-family:var(--font-mono);font-size:12px}
   });
   document.addEventListener('click', e => {
     const pl = e.target.closest('[data-play]'); if (pl) { if (playAsk) playAsk(+pl.dataset.play); return; }
+    const en = e.target.closest('[data-ends]'); if (en) { const a = en.dataset.ends; if (a === 'stop' && exp) exp.stop = true; else if (a === 'go') explore(); else if (a === 'close') $('ends').hidden = true; return; }
+    const er = e.target.closest('[data-endreb]'); if (er) { const [n, i] = er.dataset.endreb.split(':').map(Number); reborn(n, i, false); return; }
     const rb = e.target.closest('[data-reb]'); if (rb) { const [n, i] = rb.dataset.reb.split(':').map(Number); reborn(n, i); return; }
     const ro = e.target.closest('[data-reb-open]'); if (ro) { openReb(+ro.dataset.rebOpen); return; }
     const hs = e.target.closest('[data-sid]'); if (hs) { openSid(hs.dataset.sid); return; }
