@@ -3,13 +3,13 @@
 #   bash tools/duyet.sh              đầy đủ: sinh lại dữ liệu từng trang (trình duyệt headless) so với bản đã đăng
 #                                    + file nội dung đã đổi mà chưa trang nào hiện
 #   bash tools/duyet.sh nhanh        chỉ phần git, không cần trình duyệt (sync.sh gọi lúc đầu phiên)
-#   bash tools/duyet.sh dung TRANG   dựng trang để đăng: review/out/TRANG.html (TRANG = tree | nation | content | bestiary)
+#   bash tools/duyet.sh dung TRANG   dựng trang để đăng: review/out/TRANG.html (TRANG = tree | nation | content | bestiary | story)
 #   bash tools/duyet.sh ghi TRANG    sau khi đã đăng lại TRANG lên claude.ai: ghi dấu dữ liệu vào review/published.txt
 # Mốc so: lần cuối review/published.txt được commit. Danh sách trang, URL, phạm vi: review/README.md.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 PUB=review/published.txt
-PAGES="tree nation content bestiary"
+PAGES="tree nation content bestiary story"
 
 # File mỗi trang hiện ra (đổi thì trang có thể phải đăng lại).
 cover() { case $1 in
@@ -17,6 +17,7 @@ cover() { case $1 in
   nation)   echo "vankiep/data/nations.js shared/names/names.js shared/terrain/ecology.js review/nation-" ;;
   content)  echo "vankiep/js/realmev.js vankiep/js/org.js vankiep/js/edu.js vankiep/js/noble.js vankiep/js/talent.js vankiep/js/cult.js vankiep/js/status.js vankiep/js/econ.js vankiep/js/inst.js vankiep/js/fate.js vankiep/js/race.js vankiep/js/tree.js vankiep/js/story.js vankiep/js/racev.js vankiep/js/culture.js shared/faiths.js vankiep/js/state.js shared/skills.js vankiep/data/world.js vankiep/data/nations.js vankiep/data/skills.js vankiep/data/jobtree.js shared/compose.js review/content-" ;;
   bestiary) echo "shared/bestiary/ shared/terrain/ shared/names/ review/bestiary-" ;;
+  story)    echo "vankiep/js/saga.js vankiep/js/story.js review/story-" ;;
 esac; }
 # File chứa nội dung đáng duyệt (dữ liệu và bảng nội dung trong mã).
 # Cả vankiep/js/: file hệ thống mới tự bị báo cho tới khi có tab trên trang Duyệt Nội Dung (CLAUDE.md: mỗi hệ thống mới thêm vào trang đó).

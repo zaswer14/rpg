@@ -1,0 +1,105 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body>
+<!-- Sinh dữ liệu cho story-review.src.html (Duyệt Mạch Truyện, docs/16): bash tools/duyet.sh dung story.
+     Nạp như vankiep/sim.html (không có ui.js). Câu chữ, tác dụng trích từ mã nguồn hàm (parseRun như content-data.html). -->
+<script src="../shared/aspects.js"></script><script src="../shared/schools.js"></script><script src="../shared/trunk.js"></script>
+<script src="../shared/races/human.js"></script><script src="../shared/races/elf.js"></script><script src="../shared/races/dwarf.js"></script>
+<script src="../shared/races/orc.js"></script><script src="../shared/races/beastfolk.js"></script><script src="../shared/races/fae.js"></script>
+<script src="../shared/races/merfolk.js"></script><script src="../shared/races/dragonkin.js"></script><script src="../shared/races/construct.js"></script>
+<script src="../shared/races/skeleton.js"></script><script src="../shared/faiths.js"></script><script src="../shared/compose.js"></script><script src="../shared/skills.js"></script>
+<script src="../shared/bestiary/rules.js"></script><script src="../shared/bestiary/species.js"></script><script src="../shared/bestiary/biomes.js"></script>
+<script src="../shared/bestiary/bestiary.js"></script><script src="../shared/terrain/ecology.js"></script><script src="../shared/terrain/terrain.js"></script>
+<script src="../shared/names/names.js"></script>
+<script src="../vankiep/js/core.js"></script><script src="../vankiep/data/world.js"></script><script src="../vankiep/data/nations.js"></script><script src="../vankiep/data/skills.js"></script><script src="../vankiep/data/jobtree.js"></script>
+<script src="../vankiep/js/map.js"></script><script src="../vankiep/js/realm.js"></script><script src="../vankiep/js/life.js"></script>
+<script src="../vankiep/js/systems.js"></script><script src="../vankiep/js/events.js"></script><script src="../vankiep/js/state.js"></script>
+<script src="../vankiep/js/travel.js"></script><script src="../vankiep/js/dynamic.js"></script><script src="../vankiep/js/org.js"></script>
+<script src="../vankiep/js/edu.js"></script><script src="../vankiep/js/noble.js"></script><script src="../vankiep/js/realmev.js"></script><script src="../vankiep/js/talent.js"></script><script src="../vankiep/js/cult.js"></script><script src="../vankiep/js/status.js"></script><script src="../vankiep/js/econ.js"></script><script src="../vankiep/js/inst.js"></script><script src="../vankiep/js/fate.js"></script><script src="../vankiep/js/race.js"></script><script src="../vankiep/js/tree.js"></script><script src="../vankiep/js/story.js"></script><script src="../vankiep/js/racev.js"></script><script src="../vankiep/js/culture.js"></script><script src="../vankiep/js/saga.js"></script>
+<pre id="out"></pre>
+<script>
+const L = JobLibrary, G = LifeSim;
+// Biểu thức ${…} trong câu: thay bằng nhãn dễ đọc.
+const slot = e => /tierName/.test(e) ? '‹danh xưng›' : /^G\.coin\(/.test(e) ? '‹tiền›' : /NOBLE_VI/.test(e) ? '‹tước›' : /^[gfcn]$|gear/.test(e) ? '‹số›' : e === 'h.y' ? '‹năm›' : e === 'h.t' ? '‹dòng sử›' : /prophecy/.test(e) ? '‹lời tiên tri›'
+  : /faith/.test(e) && /nameVi/.test(e) ? '‹tên đạo›' : /WORKS|\bw\.nameVi|cur\b/.test(e) ? '‹nghề›' : /AIMS|A\.dream/.test(e) ? '‹chí hướng›'
+  : /RARITY|rarityOf|\br\.nameVi/.test(e) ? '‹bậc màu›' : /TALENTS|\bt\.nameVi/.test(e) ? '‹thiên phú›' : /\bz\b/.test(e) ? '‹khu›'
+  : /rootText/.test(e) ? '‹căn cốt›' : /talText/.test(e) ? '‹căn cốt, thiên phú›' : /homeName/.test(e) ? '‹làng›' : /ruler/.test(e) ? '‹người cai trị›' : /kid\.name/.test(e) ? '‹tên con›' : /name/.test(e) ? '‹tên›' : '‹…›';
+const STAT = { hl: 'Sinh lực', h: 'Tâm trạng', so: 'Quan hệ', sm: 'Hiểu biết' };
+function parseRun(fn) {
+  const src = fn.toString(), texts = [], fx = [], tone = [];
+  const re = /(['`])((?:\\.|(?!\1)[^\\])*)\1/g; let m;
+  while ((m = re.exec(src))) {
+    const s = m[2].replace(/\$\{([^{}]*)\}/g, (_, e) => slot(e.trim()));
+    if (/^(good|bad|info|big)$/.test(s)) { if (!tone.includes(s)) tone.push(s); continue; }
+    if (s.length >= 12 && / /.test(s) && !texts.includes(s)) texts.push(s);
+  }
+  for (const [, k, v] of src.matchAll(/X\.add\('(\w+)',\s*([^)]+)\)/g)) fx.push(`${STAT[k] || k} ${/^-?[\d.]+$/.test(v.trim()) ? (+v > 0 ? '+' : '') + v.trim() : '±'}`);
+  for (const [, k, v] of src.matchAll(/X\.gain\('(\w+)',\s*(\d+)\)/g)) fx.push(`${G.MASTERY_VI[k] || k} +${v}`);
+  if (/X\.money\(-/.test(src) || /S\.gold = Math\.round\(S\.gold \*/.test(src)) fx.push('mất bạc');
+  if (/X\.money\((?!-)/.test(src)) fx.push('được bạc');
+  for (const [, v] of src.matchAll(/S\.fame \+= (\d+)/g)) fx.push(`Danh vọng +${v}`);
+  for (const [, v] of src.matchAll(/S\.devotion \+ (\d+)/g)) fx.push(`Đức tin +${v}`);
+  for (const [, v] of src.matchAll(/\bdev\(S, (\d+)\)/g)) fx.push(`Đức tin +${v}`);   // culture.js: dev(S, n)
+  if (/S\.gear\+\+/.test(src)) fx.push('Trang bị +1');
+  if (/X\.fight\(/.test(src)) fx.push('đánh một trận với quái');
+  if (/X\.cond\('hunted'\)/.test(src)) fx.push('có thể bị săn đuổi');
+  if (/flags\.wanted = \{\}|delete S\.flags\.wanted/.test(src)) fx.push('xóa truy nã');
+  if (/flags\.debt/.test(src)) fx.push('thêm nợ');
+  if (/relations\[/.test(src)) fx.push('quan hệ hai nước +1');
+  if (/\.stab = Math\.max\(0, d\.stab - \.0(\d)\)/.test(src)) fx.push(`ổn định nước −${src.match(/d\.stab - \.0(\d)/)[1]}`);
+  if (/setField\(.*'urban'/.test(src)) fx.push('khu thêm dân');
+  return { texts, fx: [...new Set(fx)], tone };
+}
+const both = (...fs) => ({ toString: () => fs.filter(Boolean).map(f => f.toString()).join('\n') });
+const labels = fn => [...String(fn).matchAll(/label: ['`]([^'`]+)['`]/g)].map(m => m[1]);
+const P = { name: '‹người›' }, REC = { d: { kin: '‹người thân›', fv: '‹đạo›', t0: 0 } };
+const sumText = (k, o) => { try { return G.ARCS[k].sum ? G.ARCS[k].sum(o, P, REC) || null : null; } catch (e) { return null; } };
+const sumKeys = k => { const D = G.ARCS[k]; return D.sum ? [...D.sum.toString().matchAll(/\b([a-z_]+): [`(]/g)].map(m => m[1]) : []; };
+const evById = id => G.EVENTS.find(e => e.id === id);
+const opensOf = k => {
+  const pat = "arcOpen(S, X, '" + k + "'", re = { test: s => s.includes(pat) }, out = [];
+  for (const h of G.STORY_HOOKS || []) if (re.test(h.fn.toString())) out.push((h.dec ? 'quyết định ' : '') + h.id);
+  for (const e of G.EVENTS) if (!e.story && re.test(e.run.toString())) out.push(e.id);
+  return [...new Set(out)];
+};
+const nodeOf = (id, kind, s, extra) => ({ id, kind, at: [].concat(s.at || 'open'), wait: s.wait || null, ...extra });
+const arcs = [];
+for (const [k, A] of Object.entries(G.ARCS)) {
+  const tier = A.tier || 'side', main = G.SAGA[k], sh = G.SAGA_SHORT[k];
+  const outs = [...new Set([...(A.good || []), ...Object.keys(A.marks || {}), ...(main ? Object.keys(main.sum) : sumKeys(k))])];
+  const outcomes = outs.map(o => ({ o, good: (A.good || []).includes(o), sum: sumText(k, o), mark: (A.marks || {})[o] || null }));
+  let nodes;
+  if (main) {
+    const d = main;
+    nodes = [
+      nodeOf(k + '_open', 'ev', { at: 'open', wait: [0, 30] }, parseRun(d.open)),
+      nodeOf(k + '_knot', 'dec', { at: 'knot', wait: [2, 40] }, { title: d.knot.title, choices: labels(d.knot.choices), ...parseRun(both(d.knot.body, d.knot.choices, d.knot.apply)) }),
+      nodeOf(k + '_trial', 'ev', { at: 'trial', wait: [3, 40] }, parseRun(d.trial.run)),
+      nodeOf(k + '_climax', 'dec', { at: 'climax', wait: [3, 60] }, { title: d.climax.title, choices: labels(d.climax.choices), ...parseRun(both(d.climax.body, d.climax.choices, d.climax.apply)) }),
+      nodeOf(k + '_after', 'ev', { at: 'after', wait: [4, 80] }, parseRun(both(...Object.values(d.after)))),
+      nodeOf(k + '_beat', 'ev', { at: ['open', 'knot', 'trial', 'climax'], wait: [1, 99] }, { beat: true, texts: Object.values(d.beat).flat(), fx: [] })
+    ];
+  } else {
+    nodes = [];
+    for (const e of G.EVENTS) if (e.story && e.story.arc === k) nodes.push(nodeOf(e.id, 'ev', e.story, { w: e.wSt ?? null, ...parseRun(e.run) }));
+    for (const [id, D] of Object.entries(G.DECISIONS)) if (D.story && D.story.arc === k) nodes.push(nodeOf(id, 'dec', D.story, { choices: labels(D.build), ...parseRun(both(D.build, D.apply)) }));
+  }
+  arcs.push({ id: k, tier, nameVi: A.nameVi, passive: !!A.passive, pitch: main ? main.pitch : null, quest: A.quest ? (() => { try { return A.quest(P, REC); } catch (e) { return null; } })() : null,
+    axes: main ? main.axes : null, themes: main ? main.themes : null, aim: main ? main.aim : null, follow: main ? main.follow : null,
+    opens: main ? Object.entries(G.SAGA_SEED).filter(([, v]) => (v[k] || 0) > 0).sort((a, b) => b[1][k] - a[1][k]).map(([id, v]) => [id, v[k]]) : sh ? [`quyết định ${sh.from} (${Math.round(sh.p * 100)}%)`] : opensOf(k),
+    outcomes, nodes });
+}
+const markSrc = {};
+for (const a of arcs) for (const o of a.outcomes) if (o.mark) (markSrc[o.mark] = markSrc[o.mark] || []).push(`${a.nameVi}: ${o.sum || o.o}`);
+const marks = Object.fromEntries(Object.entries(G.MARKS).map(([id, M]) => [id, { nameVi: M.nameVi, tone: M.tone, fade: M.fade, d: M.d, w: Object.entries(M.w || {}), echo: M.echo || {},
+  yr: M.yr ? parseRun(M.yr).fx.concat(/devotion/.test(M.yr.toString()) ? ['Đức tin +2'] : [], /X\.money\(Math\.round/.test(M.yr.toString()) ? ['được bạc'] : []) : [], on: M.on ? M.on.toString().replace(/\s+/g, ' ').slice(0, 160) : null, src: markSrc[id] || [] }]));
+const evIds = new Set([...Object.keys(G.SAGA_SEED), ...G.SAGA_UNIVERSAL, ...Object.values(G.MARKS).flatMap(M => Object.keys(M.w || {}))]);
+const evText = {};
+for (const id of evIds) { const e = evById(id); if (!e) continue; const t = parseRun(e.run).texts[0]; evText[id] = t ? (t.length > 90 ? t.slice(0, 88) + '…' : t) : ''; }
+const data = {
+  cfg: G.SAGA_CFG, story: { arcMax: G.STORY.arcMax, shortMax: G.STORY.shortMax, pull: G.STORY.pull, mainK: G.STORY.mainK, late: G.STORY.late },
+  stepVi: G.SAGA_STEP_VI, arcs, marks, seeds: G.SAGA_SEED, universal: [...G.SAGA_UNIVERSAL], evText,
+  road: { ...parseRun(both(G.DECISIONS.sg_road.build, G.DECISIONS.sg_road.apply)), when: G.SAGA_TITLE.sg_road[1] },
+  aims: Object.fromEntries(Object.entries(G.AIMS).map(([k, a]) => [k, a.nameVi]))
+};
+document.getElementById('out').textContent = JSON.stringify(data);
+</script>
+</body></html>

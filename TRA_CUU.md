@@ -40,7 +40,7 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | `vankiep/README.md` (26K) | mô tả game cho người đọc | khi cập nhật sau mỗi bước |
 | `vankiep/js/*.js`, `data/*.js` | mã (bảng vai trò từng file: TIEN_DO mục 2) | theo hàm, qua `muc_luc.sh` |
 | `vankiep/sim.html` | 1000 đời headless + kiểm dữ liệu | kiểm sau mỗi bước |
-| `vankiep/docs/` | 01 ý tưởng 1in8b · 02 phương án bản đồ · **03 thiết kế bản đồ V2 (62K, mục 12 = thứ tự bước)** · 04 50 mẫu quốc gia · 05 thành phố, làng · 06 thiên phú, chí hướng · **07 định hướng xã hội tu luyện (mục 7 = thứ tự bước, mục 8 = chờ chốt)** · **08 thiết kế lại hệ sức mạnh, lên cấp, chuyển nghề (mục 10 = việc trong mã, mục 11 = đã chốt)** · 09 Tier, danh xưng · 10 cây nghề riêng · 11 tuổi thọ giống loài · 12 cây sự kiện, quỹ đạo, danh phận · 13 mạch truyện, dàn nhân vật, chương đời · 14 sự kiện giống loài, môi trường sống · 15 tín ngưỡng gốc của tộc, văn hóa tộc | theo mục, qua `muc_luc.sh` |
+| `vankiep/docs/` | 01 ý tưởng 1in8b · 02 phương án bản đồ · **03 thiết kế bản đồ V2 (62K, mục 12 = thứ tự bước)** · 04 50 mẫu quốc gia · 05 thành phố, làng · 06 thiên phú, chí hướng · **07 định hướng xã hội tu luyện (mục 7 = thứ tự bước, mục 8 = chờ chốt)** · **08 thiết kế lại hệ sức mạnh, lên cấp, chuyển nghề (mục 10 = việc trong mã, mục 11 = đã chốt)** · 09 Tier, danh xưng · 10 cây nghề riêng · 11 tuổi thọ giống loài · 12 cây sự kiện, quỹ đạo, danh phận · 13 mạch truyện, dàn nhân vật, chương đời · 14 sự kiện giống loài, môi trường sống · 15 tín ngưỡng gốc của tộc, văn hóa tộc · 16 đường đời, mạch chính, mạch ngắn, dấu hệ quả | theo mục, qua `muc_luc.sh` |
 | **Platform** `platform/` | Skeleton Codex: game platformer 2D, tài liệu + bản chơi thử cân bằng V12 | `README.md` đầu file |
 | `platform/docs/*_EXPORT_CANONICAL.json` (224–275K) | dữ liệu xuất | không đọc cả; Grep theo id |
 | `platform/docs/11_Art_Pipeline_ChatGPT_PixelLab.md` | quy trình vẽ art | khi làm art |
@@ -54,5 +54,6 @@ Không chạy thêm `git status`, `git log`, `git branch -a` sau `sync.sh` trừ
 | Duyệt Cây Nghề | https://claude.ai/artifact/K36G3cQRbzHMALuN7q3SaK | db `reviews`, id `<race>__<jobId>` |
 | Duyệt Nội Dung Vạn Kiếp | https://claude.ai/artifact/VuihS4NqSLx296iVLSwZTY | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/js/realmev.js`, `org.js`, `edu.js`, `noble.js`, `G.WORKS`, `G.BUILDINGS` |
 | Duyệt Quái và Địa hình | https://claude.ai/artifact/EAQXqvNeqpS36378wdaaFN | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `shared/bestiary/`, `shared/terrain/`, `shared/names/` |
+| Duyệt Mạch Truyện Vạn Kiếp | https://claude.ai/artifact/GDCQtaV7DY2rdrjhBwAR36 | db `reviews`, id `<kind>__<id>`; đọc trước khi sửa `vankiep/js/saga.js`, mạch của `vankiep/js/story.js` |
 
 Kiểm, dựng lại, đăng lại, thêm trang: `review/README.md` mục 2. Nội dung chưa có trang duyệt: mục 3 của file đó.

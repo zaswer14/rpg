@@ -21,7 +21,7 @@ window.LifeSim = window.LifeSim || {};
   const J = window.JobLibrary, DEC = G.DECISIONS;
   const cnt = (S, k, v = 1) => { S.flags[k] = (S.flags[k] || 0) + v; };
 
-  G.STORY = { castMax: 12, arcMax: 3, pull: 4, mainK: 1.5, late: 2, chapBoost: .5, stats: false };
+  G.STORY = { castMax: 12, arcMax: 3, shortMax: 3, pull: 4, mainK: 1.5, late: 2, chapBoost: .5, stats: false };
   G.STORY_STATS = null;
   G.storyStatsReset = () => { G.STORY_STATS = { node: {}, open: {}, end: {}, fade: {}, gone: {}, chap: {}, ev: 0, link: 0, dec: 0, dlink: 0 }; return G.STORY_STATS; };
   const stat = (k, id, n = 1) => { const Z = G.STORY.stats && G.STORY_STATS; if (Z) Z[k][id] = (Z[k][id] || 0) + n; };
@@ -163,13 +163,21 @@ window.LifeSim = window.LifeSim || {};
       gone: (S, p) => `Lâu lắm không thấy ${first(p)} lên đồi. Lữ khách kể người đó đã mất. Bạn để một bông hoa dại trước cửa hầm.` },
     prophecy: { nameVi: 'Lời bà đồng', passive: true, good: ['survived'], sum: (o, p, a) => (o === 'survived' ? `sống qua năm bà đồng nói sẽ chết` : null) }
   };
-  const isActive = a => !G.ARCS[a.k].passive;
+  // Tầng mạch (docs/16): main = mạch chính cả đời (js/saga.js, tối đa 1), side = mạch phụ (mạch người quen, tối đa arcMax),
+  // short = mạch ngắn mọc từ quyết định thường (tối đa shortMax). Mạch passive (lời bà đồng) không chiếm chỗ.
+  const tierOf = a => G.ARCS[a.k].tier || 'side';
+  const isActive = a => !G.ARCS[a.k].passive && tierOf(a) === 'side';
+  const isOpen = a => !G.ARCS[a.k].passive;
+  const TIER_MAX = { main: () => 1, side: () => G.STORY.arcMax, short: () => G.STORY.shortMax };
   G.arcOpen = function (S, X, k, p, d, at) {
     const A = S.arcs || (S.arcs = []), D = G.ARCS[k], who = p ? p.id : null;
     if (A.some(a => a.k === k && a.who === who)) return null;
-    if (!D.passive && A.filter(isActive).length >= G.STORY.arcMax) return null;
+    const tier = D.tier || 'side';
+    if (!D.passive && A.filter(x => isOpen(x) && tierOf(x) === tier).length >= TIER_MAX[tier]()) return null;
     const a = { k, who, at: at || 'open', t: S.age, t0: S.age, main: false, d: d || {} };
-    if (!D.passive && !A.some(x => x.main)) a.main = true;
+    // Mạch chính của chương: mạch chính cả đời nếu có, không thì mạch phụ mở đầu tiên.
+    if (tier === 'main') { for (const x of A) x.main = false; a.main = true; }
+    else if (tier === 'side' && !D.passive && !A.some(x => x.main)) a.main = true;
     A.push(a); stat('open', k); X._lk = true; X._tag = tagOf(a, p);
     return a;
   };
@@ -179,7 +187,7 @@ window.LifeSim = window.LifeSim || {};
     const p = G.castGet(S, a.who);
     (S.arcDone || (S.arcDone = [])).push({ k: a.k, who: a.who, name: p ? p.name : null, o, y: X.years(S), t0: a.t0, t: S.age, d: a.d, main: a.main });
     if (o !== 'gone' && o !== 'faded') stat('end', a.k + ':' + o);
-    if (a.main) { const nx = A.find(isActive); if (nx) nx.main = true; }
+    if (a.main) { const nx = A.find(x => tierOf(x) === 'main') || A.find(isActive); if (nx) nx.main = true; }
   };
   G.arcStep = function (S, X, a, to, o) {
     if (o != null) a.o = String(o);
@@ -930,7 +938,7 @@ window.LifeSim = window.LifeSim || {};
       q: (S, X, c) => { const D = G.ARCS[c.arc.k]; return D.quest(G.castGet(S, c.arc.who) || { name: '?' }, c.arc); },
       ok: (S, X, c) => (S.arcDone || []).some(d => d.k === c.arc.k && d.who === c.arc.who && G.ARCS[d.k].good.includes(d.o)) },
     { id: 'legacy', ph: ['elder'], q: () => 'Để lại gì cho đời', w: () => 2, ok: S => (S.disciples || []).length > 0 || S.family.kids.some(k => k.alive) || !!(S.tree && S.tree.el_memoir), dir: { tri: .5, gia: .5 } },
-    { id: 'close', ph: ['elder', 'skE'], q: () => 'Khép lại chuyện cũ', w: S => ((S.arcs || []).filter(isActive).length ? 3 : 0), ok: (S, X, c) => !(S.arcs || []).some(a => c.open0.includes(a.k + ':' + a.who)) },
+    { id: 'close', ph: ['elder', 'skE'], q: () => 'Khép lại chuyện cũ', w: S => ((S.arcs || []).filter(isOpen).length ? 3 : 0), ok: (S, X, c) => !(S.arcs || []).some(a => c.open0.includes(a.k + ':' + a.who)) },
     { id: 'calm', ph: ['elder'], q: () => 'Sống cho yên những năm còn lại', w: () => 1, ok: S => S.h >= 55 },
     { id: 'sk_who', ph: ['sk1', 'sk2'], q: () => 'Nhớ lại mình là ai', w: S => (S.flags.pastName && !(S.tree && S.tree.sk_grave) ? 3 : 0), ok: S => !!(S.tree && (S.tree.sk_memory || S.tree.sk_grave)) },
     { id: 'sk_hide', ph: ['sk1'], q: () => 'Sống sót giữa người sống', w: () => 2, ok: S => !S.dead },
@@ -957,7 +965,7 @@ window.LifeSim = window.LifeSim || {};
     if (!cand.length) return;
     const C = X.wpick(cand, 'w').c, a = mainArc(S);
     const c = { id: C.id, ph, t0: S.age, y0: X.years(S), q0: S.q, tier0: X.ctier(S), soc0: G.standing(S, X).soc, sm0: S.sm, edu0: G.eduLv(S),
-      trips0: (S.flags.trips || 0) + (S.flags.voyages || 0), loc0: S.loc, open0: (S.arcs || []).filter(isActive).map(a => a.k + ':' + a.who),
+      trips0: (S.flags.trips || 0) + (S.flags.voyages || 0), loc0: S.loc, open0: (S.arcs || []).filter(isOpen).map(a => a.k + ':' + a.who),
       arc: C.arc && a ? { k: a.k, who: a.who, d: a.d } : null };
     c.q = C.q(S, X, c);
     S.chap = c;
@@ -988,20 +996,26 @@ window.LifeSim = window.LifeSim || {};
     const C = S.chap && CH[S.chap.id]; if (!C || !C.dir || !m || !m.dir) return 0;
     let k = 0, f = 0; for (const [a, x] of Object.entries(m.dir)) { k += x; f += x * Math.min(1, C.dir[a] || 0); } return k ? f / k : 0;
   };
-  for (const e of G.EVENTS) {
-    if (e._story) continue; e._story = true;
+  // G.storyLinkHook (js/saga.js): sau khi sự kiện chạy, mạch chính, dấu hệ quả có thể nhận sự kiện là của mình (gắn nhãn, nối câu).
+  function wrapStory(e) {
+    if (e._story) return; e._story = true;
     const w0 = e.w, r0 = e.run, m = G.treeMeta(e.id), child = !!(m && m.from);
     e.w = keep((S, X) => { const w = typeof w0 === 'function' ? w0(S, X) : w0; return w * (1 + G.STORY.chapBoost * fitChap(S, m)); }, w0);
     e.run = keep(function (S, X) {
       X._tag = null; X._lk = false;
       const r = r0.call(this, S, X);
       if (r && !S.dead) {
+        if (!X._lk && G.storyLinkHook && G.storyLinkHook(S, X, e, r)) X._lk = true;
         const lk = X._lk || child; cnt(S, 'stEv'); if (lk) cnt(S, 'stLink');
         const Z = G.STORY.stats && G.STORY_STATS; if (Z) { Z.ev++; if (lk) Z.link++; }
       }
       return r;
     }, r0);
   }
+  for (const e of G.EVENTS) wrapStory(e);
+  // Cho file nạp sau (js/saga.js): nút mạch, móc vào sự kiện có sẵn, bọc đếm cho sự kiện thêm sau story.js.
+  G.storyApi = { node, dnode, patch, patchDec, wrapStory, touch, tagOf, first, ref, refE, castHas, stat, keep, MAXW,
+    newNodes: () => ({ ev: NEW_EV, dec: NEW_DEC }), mainArc: S => mainArc(S) };
   { const re0 = G.runEvent; G.runEvent = function (X, ev) { re0(X, ev); X._tag = null; }; }
   { const P = G.Sim.prototype, ch0 = P.choose;
     P.choose = function (k) {

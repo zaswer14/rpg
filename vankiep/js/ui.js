@@ -223,6 +223,7 @@
       ['Thân phận', G.statusText ? G.statusText(S) : G.tierName(X.ctier(S))],   // địa vị theo Tier (js/status.js, docs/09 mục 6.4)
       ['Danh phận', G.standingText ? G.standingText(S, X) : ''],   // xã hội nhận bạn tới đâu (js/tree.js, docs/12)
       ['Quỹ đạo', G.trajText ? G.trajText(S) : ''],   // hướng đời tích từ việc đã làm (js/tree.js)
+      ['Đường đời', G.sagaText ? G.sagaText(S) : '—'],   // mạch chính cả đời (js/saga.js, docs/16)
       ['Chương', (G.chapText && G.chapText(S)) || '—'],   // câu hỏi của quãng đời này (js/story.js, docs/13)
       ['Tầng lớp', S.undead ? 'ngoài vòng xã hội' : `${G.CLASSES[S.q].nameVi} · phân vị ${Math.round(S.pct * 100)}`],
       ['Tiền', G.coin(S.gold)], ['Trang bị', `${S.gear}/10`], ['Danh vọng', Math.round(S.fame)],
@@ -250,6 +251,8 @@
     const chips = S.conds.map(c => `<span class="chip">${esc(G.CONDS[c.id].nameVi)}</span>`);
     if (S.flags.companion) chips.push(`<span class="chip ok">Đồng đội: ${esc(S.flags.companion.name)}</span>`);
     if (S.flags.pet) chips.push(`<span class="chip ok">Nuôi ${esc(S.flags.pet)}</span>`);
+    // Dấu hệ quả (js/saga.js, docs/16): để lại từ kết của mạch và lựa chọn; di chuột xem từ đâu, còn bao lâu.
+    for (const m of (G.markChips ? G.markChips(S) : [])) chips.push(`<span class="chip${m.tone === 'good' ? ' ok' : ''}" title="${esc(m.title)}">${esc(m.text)}</span>`);
     // Học vấn, sư đồ (js/edu.js).
     for (const t of [G.royalText && G.royalText(S), G.houseText && G.houseText(S)]) if (t) chips.push(`<span class="chip ok">${esc(t)}</span>`);
     { const e = G.eduText && G.eduText(S); if (e) chips.push(`<span class="chip ok">${esc(e)}</span>`); for (const t of (G.mentorText ? G.mentorText(S) : [])) chips.push(`<span class="chip ok">${esc(t)}</span>`); }

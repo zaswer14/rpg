@@ -92,6 +92,7 @@
 <script src="js/story.js"></script>
 <script src="js/racev.js"></script>
 <script src="js/culture.js"></script>
+<script src="js/saga.js"></script>
 <script>
 const G = LifeSim.init(), J = JobLibrary, $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -134,6 +135,7 @@ $('run').onclick = () => {
     const RVK = ['trade_forge', 'trade_mine', 'trade_rune', 'trade_gate', 'claim_report', 'claim_secret', 'claim_sell', 'dwfMasterN', 'hold_go', 'hold_stay', 'holdWin', 'holdLose', 'chief_challenge', 'chief_serve', 'chief_leave', 'raid_ride', 'raid_stay', 'raid_warn', 'elfAxe_warn', 'elfAxe_talk', 'elfAxe_leave', 'grudge_book', 'grudge_forgive', 'grudgeOk', 'slayer_oath', 'slayerEnd', 'dwfArt', 'dwfMad', 'price_pay', 'price_fight', 'price_refuse', 'rivalWin', 'rivalLose', 'alpha_challenge', 'alpha_back',
       'court_summer', 'court_winter', 'titheSave', 'titheLet', 'deal_memory', 'deal_gold', 'deal_free', 'cloak_stay', 'cloak_sing', 'cloak_leave', 'siren_sing', 'siren_warn', 'siren_away', 'hoard_keep', 'hoard_give', 'clan_pay', 'clan_hunt', 'clan_disown', 'core_new', 'core_slow', 'core_keep'];
     // Mạch truyện (js/story.js, docs/13): sự kiện thuộc mạch theo đời, dàn nhân vật, mạch mở / khép, chương đời.
+    G.SAGA_CFG.stats = true; const SG = G.sagaStatsReset();   // Đường đời (js/saga.js, docs/16)
     G.STORY.stats = true; const SZ = G.storyStatsReset(), SL = { ad: 0, adEv: 0, adLink: 0, dist: [0, 0, 0, 0, 0], noArc: 0, cast: 0, meet2: 0, ends: 0, sk: 0, skEv: 0, skLink: 0, skEnds: 0, epi: 0 };
     const storyLife = (S, sk) => { const F = S.flags, ends = (S.arcDone || []).filter(d => d.o !== 'faded' && d.o !== 'gone').length;
       if (sk) { SL.sk++; SL.skEv += F.stEv || 0; SL.skLink += F.stLink || 0; SL.skEnds += ends; return; }
@@ -330,11 +332,18 @@ $('run').onclick = () => {
         ['Quyết định thuộc mạch', pct(SZ.dlink, SZ.dec)], ['Người trong dàn lúc chết (TB, đời đầu)', (SL.cast / N).toFixed(1)], ['… trong đó gặp từ 2 lần', (SL.meet2 / N).toFixed(1)],
         ['Mạch khép mỗi đời (TB, đời đầu)', (SL.ends / N).toFixed(1)], ['Mạch khép mỗi kiếp Bộ Xương', (SL.skEnds / Math.max(1, SL.sk)).toFixed(1)], ['Đời trưởng thành không khép mạch nào', pct(SL.noArc, Math.max(1, SL.ad))],
         ['Đời trưởng thành theo phần thuộc mạch: <20 / 20–40 / 40–60 / 60–80 / ≥80%', SL.dist.map(n => pct(n, Math.max(1, SL.ad))).join(' / ')]], ['', ''],
-        { note: 'Mục tiêu người dùng chốt 16/10/2026: khoảng một nửa sự kiện thuộc mạch (nút của mạch, sự kiện mở mạch, người quen xuất hiện, nhánh của cây sự kiện), nửa còn lại ngẫu nhiên.' }));
+        { note: 'Mục tiêu người dùng chốt 17/10/2026 (docs/16): khoảng 80% sự kiện thuộc mạch (nút của mạch, mở mạch, người quen xuất hiện, nhánh của cây sự kiện, đi theo mạch chính, gieo mạch chính, xảy ra vì một dấu hệ quả).' }));
       const AK = Object.keys(G.ARCS), endsOf = k => Object.entries(SZ.end).filter(([e]) => e.split(':')[0] === k), sumN = L => L.reduce((a, x) => a + x[1], 0);
       out.push(table('Mạch truyện: mở, khép', AK.map(k => { const E = endsOf(k), fd = Object.entries(SZ.fade).filter(([e]) => e.split(':')[0] === k);
         return [G.ARCS[k].nameVi, SZ.open[k] || 0, per(SZ.open[k] || 0), sumN(E), E.sort((a, b) => b[1] - a[1]).map(([e, n]) => `${e.split(':')[1]} ${n}`).join(', '), SZ.gone[k] || 0, fd.map(([e, n]) => `${e.split(':')[1]} ${n}`).join(', ') || '0']; }).filter(r => r[1]),
         ['Mạch', 'Mở', '/ 1000 đời', 'Khép', 'Kết', 'Người chết trước', 'Phai (bước)'], { note: 'Mở: mạch được gieo (đủ chỗ: tối đa 3 mạch cùng lúc, trừ lời bà đồng). Còn lại = mạch đang dở khi nhân vật chết.' }));
+      // Đường đời (js/saga.js, docs/16): mạch chính được chọn, dấu hệ quả.
+      { const P = Object.entries(SG.pick).sort((a, b) => b[1] - a[1]), np = P.reduce((a, x) => a + x[1], 0);
+        out.push(table('Đường đời: mạch chính', [...P.map(([k, n]) => [G.ARCS[k].nameVi, n, pct(n, Math.max(1, np + SG.free))]), ['Chưa định (chọn sống theo ngày)', SG.free, pct(SG.free, Math.max(1, np + SG.free))],
+          ['Sự kiện đi theo mạch chính / gieo mạch / vì dấu hệ quả (mỗi đời)', `${(SG.follow / lives).toFixed(1)} / ${(SG.seedEv / lives).toFixed(1)} / ${(SG.markEv / lives).toFixed(1)}`, '']], ['Mạch chính', 'Đời', '%'],
+          { bar: true, note: 'Lần chọn ở quyết định Đường đời (sg_road). Kết của từng mạch ở bảng Mạch truyện: mở, khép.' }));
+        const MK = Object.entries(SG.mark).sort((a, b) => b[1] - a[1]);
+        out.push(table('Dấu hệ quả', MK.map(([k, n]) => [G.MARKS[k].nameVi, n, per(n)]), ['Dấu', 'Lần nhận', '/ 1000 đời'], { note: 'Dấu để lại từ kết của mạch và lựa chọn (G.MARKS).' })); }
       const CI = {}; for (const [e, n] of Object.entries(SZ.chap)) { const [id, r] = e.split(':'); (CI[id] = CI[id] || [0, 0])[r === 'ok' ? 0 : 1] += n; }
       out.push(table('Chương đời', Object.entries(CI).sort((a, b) => (b[1][0] + b[1][1]) - (a[1][0] + a[1][1])).map(([id, [ok, no]]) => { const C = G.CHAPTERS.find(c => c.id === id);
         return [id === 'arc' ? 'Câu hỏi của mạch chính' : id === 'tier' ? 'Bước lên Tier kế tiếp' : C ? C.q() : id, ok + no, pct(ok, ok + no)]; }), ['Câu hỏi', 'Chương', 'Làm được'], { bar: true, note: 'Mỗi quãng đời (thiếu thời, lập thân, trung niên, xế chiều; Bộ Xương: thức giấc, giữa hai cõi, lửa hồn lụi dần) một câu hỏi. Chương đang mở lúc chết tính là chưa làm được.' })); }

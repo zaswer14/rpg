@@ -1,0 +1,268 @@
+<title>Duyệt Mạch Truyện Vạn Kiếp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Spectral+SC:wght@500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Bố cục: tiêu đề + tiến độ → tab (luật, mạch chính, mạch phụ, mạch ngắn, dấu hệ quả, gieo mạch) → lưới thẻ.
+   Chữ, nút giống các trang duyệt khác; màu nhấn xanh rêu để không lẫn. */
+:root{
+  --bg:#f3f1f2; --panel:#fbfafb; --ink:#211e24; --muted:#6a6470; --line:#dbd5dc; --chip:#ebe5ec;
+  --accent:#2f6f5e; --accent-ink:#ffffff;
+  --ok:#2f7d4a; --fix:#b07a12; --drop:#b0352f;
+  --font-display:"Spectral SC", Georgia, serif; --font-body:"Be Vietnam Pro", system-ui, sans-serif; --font-mono:"JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151317; --panel:#1d1a20; --ink:#ebe7ee; --muted:#a29aa8; --line:#342f39; --chip:#28242c;
+  --accent:#7fcfb4; --accent-ink:#0b1f19; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#151317; --panel:#1d1a20; --ink:#ebe7ee; --muted:#a29aa8; --line:#342f39; --chip:#28242c;
+  --accent:#7fcfb4; --accent-ink:#0b1f19; --ok:#6cc08a; --fix:#e3b04f; --drop:#e86a60; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+.page{padding-inline:16px;padding-block:16px 48px;max-width:1500px;margin:0 auto}
+h1{font-family:var(--font-display);font-weight:600;font-size:26px;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lede{color:var(--muted);margin:4px 0 12px;max-width:72ch}
+.progress{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin-bottom:12px;font-size:13px;font-variant-numeric:tabular-nums}
+.progress .grp{display:inline-flex;gap:6px;align-items:center}
+.progress b{font-weight:600}
+.n-ok{color:var(--ok)} .n-fix{color:var(--fix)} .n-drop{color:var(--drop)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;min-width:96px}
+.tabs button small{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tabs button[aria-selected="true"] small{color:inherit;opacity:.85}
+.tabs .sep{width:1px;background:var(--line);margin:2px 4px}
+.btn:focus-visible,.tabs button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar2{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:13px}
+.bar2 select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.save{color:var(--muted);font-size:12px}
+.overview{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.overview h2{font-family:var(--font-display);font-weight:600;font-size:21px;margin:0 0 2px}
+.overview p{margin:2px 0 6px;color:var(--muted);max-width:80ch}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{background:var(--chip);border-radius:5px;padding:1px 7px;font-size:12px;white-space:nowrap}
+.chip.dash{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.chip.good{color:var(--ok)} .chip.bad{color:var(--drop)} .chip.big{color:var(--accent);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.s-ok{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.card.s-fix{border-color:color-mix(in srgb,var(--fix) 60%,var(--line))}
+.card.s-drop{border-color:color-mix(in srgb,var(--drop) 55%,var(--line));opacity:.8}
+.card header{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.card h3{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.tid{font-family:var(--font-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.pill{flex:none;font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;line-height:1.7}
+.pill.ok{background:var(--ok);color:var(--panel)} .pill.fix{background:var(--fix);color:var(--panel)} .pill.drop{background:var(--drop);color:var(--panel)}
+.meta{color:var(--muted);font-size:13px;margin-top:-4px}
+dl.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 10px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0}
+.trait{background:var(--chip);border-radius:8px;padding:7px 10px;font-size:13px}
+.trait b{font-weight:600}
+.lines{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.lines li{border-left:3px solid color-mix(in srgb,var(--accent) 45%,var(--line));padding:2px 0 2px 9px;font-size:13.5px}
+.ladder{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px}
+.ladder .step{background:var(--chip);border-radius:5px;padding:1px 7px}
+.ladder .step small{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px}
+.ladder .arr{color:var(--muted)}
+table.mini{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;width:100%}
+table.mini th{text-align:left;color:var(--muted);font-weight:500;padding:2px 6px 2px 0;border-bottom:1px solid var(--line)}
+table.mini td{padding:2px 6px 2px 0;border-bottom:1px solid var(--line)}
+table.mini tr:last-child td{border-bottom:0}
+.review{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.review .row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+.btn.fix[aria-pressed="true"]{background:var(--fix);border-color:var(--fix);color:var(--panel)}
+.btn.drop[aria-pressed="true"]{background:var(--drop);border-color:var(--drop);color:var(--panel)}
+textarea{width:100%;min-height:52px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
+.group-title{font-family:var(--font-display);font-weight:600;font-size:17px;margin:14px 0 8px;grid-column:1/-1}
+.empty{color:var(--muted);padding:20px 0}
+.rar{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600}
+.rar i{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.card.rarc{border-left:4px solid var(--rc)}
+code{font-family:var(--font-mono);font-size:12px}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12.5px}
+.flow .st{background:var(--chip);border-radius:5px;padding:1px 7px}
+.flow .st b{font-weight:600}
+.flow .arr{color:var(--muted)}
+.tier{font-size:11px;font-weight:700;border-radius:4px;padding:0 6px;line-height:1.7;border:1px solid var(--line);color:var(--muted)}
+.tier.main{color:var(--accent);border-color:var(--accent)}
+.out{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:3px 8px;font-size:12.5px;align-items:baseline}
+.out .o{font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.out .g{color:var(--ok)} .out .b{color:var(--drop)}
+.mk{font-size:11.5px;border-radius:4px;padding:0 6px;background:var(--chip);white-space:nowrap}
+.mk.good{color:var(--ok)} .mk.bad{color:var(--drop)}
+.sub{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+</style>
+
+<div class="page">
+  <h1>Duyệt Mạch Truyện Vạn Kiếp</h1>
+  <p class="lede">Các mạch truyện một đời nhân vật có thể đi qua (docs/16): mạch chính cả đời (tự nổi lên từ những năm thơ ấu, chốt bằng quyết định Đường đời), mạch phụ (người quen), mạch ngắn (mọc từ quyết định thường). Mỗi mạch có các hồi, các kết, và dấu hệ quả mỗi kết để lại cho phần đời sau. Đánh dấu giữ, cần sửa, bỏ; ghi chú chỗ muốn đổi.</p>
+  <div class="progress" id="progress"></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Nhóm"></div>
+  <div class="bar2">
+    <label for="filter">Hiện</label>
+    <select id="filter">
+      <option value="all">tất cả</option><option value="todo">chưa duyệt</option><option value="ok">đã giữ</option><option value="fix">cần sửa</option><option value="drop">bỏ</option>
+    </select>
+    <span class="save" id="saveState" aria-live="polite"></span>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+(function () {
+  const D = /*DATA*/null;
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const STATUS = { ok: { t: '✓', vi: 'Giữ' }, fix: { t: '✎', vi: 'Cần sửa' }, drop: { t: '✕', vi: 'Bỏ' } };
+  const TIER = { main: 'mạch chính', side: 'mạch phụ', short: 'mạch ngắn' };
+  const AX = { vo: 'Võ', phap: 'Pháp', am: 'Ám', tri: 'Trí', nghe: 'Nghề', thuong: 'Thương', dao: 'Đạo', quyen: 'Quyền', gia: 'Gia', du: 'Du' };
+  const num = v => String(v).replace('.', ',');
+  const stepVi = s => (D.stepVi && D.stepVi[s]) || ({ open: 'mở đầu', knot: 'thắt nút', climax: 'cao trào', after: 'sau đó' }[s] || s);
+  const reviews = {}, drafts = {};
+  let db = null, dbState = 'connecting';
+  const TABS = [['rules', 'Luật'], ['main', 'Mạch chính'], ['side', 'Mạch phụ'], ['short', 'Mạch ngắn'], ['marks', 'Dấu hệ quả'], ['seeds', 'Gieo mạch, đi theo']];
+  const state = { tab: 'main', filter: 'all' };
+  try { const h = location.hash.slice(1); if (TABS.some(t => t[0] === h)) state.tab = h; } catch (e) {}
+  try { const f = localStorage.getItem('storyReview.filter'); if (f) state.filter = f; } catch (e) {}
+  const key = (kind, id) => kind + '__' + id;
+  const rv = (kind, id) => reviews[key(kind, id)] || {};
+
+  const RULES = [['tier', 'Ba tầng mạch'], ['road', 'Đường đời: chọn mạch chính'], ['follow', 'Đi theo mạch, tiến độ'], ['marks', 'Dấu hệ quả'], ['lone', 'Sự kiện ngoài mạch']];
+  const tierArcs = t => D.arcs.filter(a => a.tier === t);
+  const arcItems = t => tierArcs(t).flatMap(a => [{ kind: 'arc', id: a.id, name: a.nameVi }, ...a.nodes.map(n => ({ kind: 'node', id: n.id, name: `${a.nameVi} · ${stepVi(n.at[0])}` }))]);
+  const items = {
+    rules: RULES.map(([id, name]) => ({ kind: 'rule', id, name })),
+    main: arcItems('main'), side: arcItems('side'), short: arcItems('short'),
+    marks: Object.entries(D.marks).map(([id, m]) => ({ kind: 'mark', id, name: m.nameVi })),
+    seeds: Object.keys(D.seeds).map(id => ({ kind: 'seed', id, name: id }))
+  };
+  const allItems = Object.values(items).flat();
+  const count = list => { const c = { ok: 0, fix: 0, drop: 0, n: list.length }; for (const it of list) { const s = rv(it.kind, it.id).status; if (c[s] != null) c[s]++; } return c; };
+  const passes = (kind, id) => { const s = rv(kind, id).status; return state.filter === 'all' || (state.filter === 'todo' ? !s : s === state.filter); };
+
+  function renderProgress() {
+    const part = (label, list) => { const c = count(list); return `<span class="grp"><b>${label}</b> ${c.ok + c.fix + c.drop}/${c.n} · <span class="n-ok">✓ ${c.ok}</span> <span class="n-fix">✎ ${c.fix}</span> <span class="n-drop">✕ ${c.drop}</span></span>`; };
+    $('progress').innerHTML = TABS.map(([id, label]) => part(label, items[id])).join('');
+  }
+  function renderTabs() {
+    $('tabs').innerHTML = TABS.map(([id, label]) => { const c = count(items[id]), done = c.ok + c.fix + c.drop;
+      return `<button role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${esc(label)}<small>${done}/${c.n}${c.fix ? ` · ✎ ${c.fix}` : ''}${c.drop ? ` · ✕ ${c.drop}` : ''}</small></button>`; }).join('');
+  }
+  function reviewBlock(kind, id) {
+    const r = rv(kind, id), k = key(kind, id), note = drafts[k] != null ? drafts[k] : (r.note || ''), off = db ? '' : 'disabled';
+    return `<div class="review" data-kind="${kind}" data-id="${esc(id)}">
+      <div class="row" role="group" aria-label="Quyết định">${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}</div>
+      <textarea id="note-${esc(k)}" data-note placeholder="Ghi chú: đổi câu chữ, đổi kết, đổi dấu, thêm hồi…" ${off}>${esc(note)}</textarea>
+      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div>
+    </div>`;
+  }
+  const pill = (kind, id) => { const s = rv(kind, id).status; return s ? `<span class="pill ${s}">${STATUS[s].t} ${STATUS[s].vi}</span>` : ''; };
+  const card = (kind, id, title, body) => passes(kind, id) ? `<article class="card${rv(kind, id).status ? ' s-' + rv(kind, id).status : ''}"><header><h3><span class="tid">${esc(id)}</span>${esc(title)}</h3>${pill(kind, id)}</header>${body}${reviewBlock(kind, id)}</article>` : '';
+  const grid = cards => `<div class="grid">${cards || '<p class="empty">Không có mục nào khớp bộ lọc.</p>'}</div>`;
+  const overview = (title, text) => `<section class="overview"><h2>${title}</h2><p>${text}</p></section>`;
+  const lines = L => L && L.length ? `<ul class="lines">${L.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+  const chips = (dt, L) => L && L.length ? `<dl class="kv"><dt>${dt}</dt><dd class="chips">${L.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd></dl>` : '';
+  const markChip = id => { const m = D.marks[id]; return m ? `<span class="mk ${m.tone}">${esc(m.nameVi)}</span>` : ''; };
+  const evLabel = id => D.evText[id] ? `${id} (${D.evText[id]})` : id;
+
+  // ---- Luật ----
+  function rulesView() {
+    const C = D.cfg, S = D.story;
+    const BODY = {
+      tier: `<p style="margin:0">Ba tầng mạch cùng chạy: <b>mạch chính</b> (một mạch, cả đời, 5 hồi và một nhịp lặp), <b>mạch phụ</b> (mạch người quen: đối thủ, ân nhân, tình xưa, thầy trò…, tối đa ${S.arcMax} cùng lúc), <b>mạch ngắn</b> (một hai hồi, mọc từ quyết định thường hay chuyện nhỏ, tối đa ${S.shortMax} cùng lúc). Nút của mạch đang mở được kéo trọng số × ${num(S.pull)}; mạch chính × ${num(S.mainK)} nữa.</p>`,
+      road: `<p style="margin:0">Từ lúc sinh tới hết thiếu thời, sự kiện và quyết định cộng điểm cho các mạch chính hợp với nó (tab Gieo mạch). Điểm lúc chọn = điểm gieo + 3 × phần quỹ đạo theo hướng của mạch + 2 nếu hợp chí hướng + phần theo tính cách. Món nợ máu, Tên nhà chỉ hiện khi đã có chuyện gieo (người thân chết, con ngoài giá thú, mồ côi…); Con đường đức tin cần có đạo.</p><dl class="kv"><dt>Khi nào</dt><dd>${esc(D.road.when)}</dd></dl>${lines(D.road.texts)}`,
+      follow: `<p style="margin:0">Sau khi chọn, sự kiện "đi theo mạch" khi: có trong bảng gieo với điểm ≥ 0,5 cho mạch đã chọn, là sự kiện đời thường hay gặp (${D.universal.length} sự kiện), có chủ đề hoặc hướng quỹ đạo hợp mạch, hoặc là sự kiện của đạo khi đi Con đường đức tin. Sự kiện đi theo mạch: trọng số × (1 + ${num(C.followK)} × điểm), góp tiến độ (0,5 × điểm), mang nhãn "Tên mạch · đường đời", 45% có thêm một câu nối với mạch. Nhịp của mạch chính góp 1 tiến độ. Mỗi điểm tiến độ cộng ${num(C.progK)} vào xác suất thành ở thử thách, cao trào (tối đa +0,3). Mạch chính đã khép vẫn còn dư âm: sự kiện hợp mạch mang nhãn "dư âm".</p>`,
+      marks: '<p style="margin:0">Mỗi kết của mạch (chính, phụ, ngắn) và một số lựa chọn để lại một dấu: dấu đổi trọng số các sự kiện về sau (kèm câu nhắc chuyện cũ), có tác dụng theo năm, có thể phai sau một số lượt. Sự kiện xảy ra vì một dấu mang nhãn "Hệ quả · tên dấu" và tính là thuộc mạch. Dấu hiện trên thẻ nhân vật.</p>',
+      lone: `<p style="margin:0">Khi đã có mạch chính, sự kiện lặp không thuộc mạch nào (không phải nút mạch, không móc người quen, không trong bảng gieo, không phải sự kiện của tộc, của đạo) có trọng số × ${num(C.loneK)}; đời thường của tộc × ${num(C.daysK)}. Mục tiêu ~80% sự kiện thuộc mạch.</p>`
+    };
+    return overview('Luật', 'Cách các mạch nối vào nhau và ảnh hưởng tới phần đời sau (docs/16).') + grid(RULES.map(([id, name]) => card('rule', id, name, BODY[id])).join(''));
+  }
+
+  // ---- Mạch ----
+  function arcCard(a) {
+    const steps = [...new Set(a.nodes.flatMap(n => n.beat ? [] : n.at))];
+    const flow = `<div class="flow">${steps.map((s, i) => `${i ? '<span class="arr">→</span>' : ''}<span class="st"><b>${esc(stepVi(s))}</b> ${a.nodes.filter(n => !n.beat && n.at.includes(s)).map(n => n.kind === 'dec' ? 'quyết định' : 'sự kiện').join(', ')}</span>`).join('')}<span class="arr">→</span><span class="st"><b>khép mạch</b></span></div>`;
+    const outs = `<div class="out">${a.outcomes.map(o => `<span class="o">${esc(o.o)}</span><span class="${o.good ? 'g' : 'b'}">${esc(o.sum || '—')}</span><span>${o.mark ? markChip(o.mark) : ''}</span>`).join('')}</div>`;
+    const opens = a.tier === 'main' ? (a.opens.length ? `<dl class="kv"><dt>Gieo từ</dt><dd class="chips">${a.opens.slice(0, 16).map(([id, v]) => `<span class="chip" title="${esc(D.evText[id] || '')}">${esc(id)} +${num(v)}</span>`).join('')}</dd></dl>` : '') : chips('Mở từ', a.opens);
+    const meta = a.tier === 'main' ? `<dl class="kv"><dt>Lời gọi</dt><dd>${esc(a.pitch)}</dd><dt>Câu hỏi chương</dt><dd>${esc(a.quest || '')}</dd><dt>Hướng</dt><dd>${Object.entries(a.axes).map(([k, v]) => `${AX[k]} ${num(v)}`).join(', ')}${a.themes.length ? '; chủ đề ' + a.themes.join(', ') : ''}${a.aim ? '; chí hướng ' + (D.aims[a.aim] || a.aim) : ''}</dd></dl><p class="sub">Câu nối khi sự kiện đi theo mạch:</p>${lines(a.follow)}` : (a.quest ? `<dl class="kv"><dt>Câu hỏi chương</dt><dd>${esc(a.quest)}</dd></dl>` : '');
+    return card('arc', a.id, a.nameVi, `<div class="meta"><span class="tier ${a.tier}">${TIER[a.tier]}</span>${a.passive ? ' · không chiếm chỗ' : ''}</div>${meta}${opens}${flow}<p class="sub">Kết → tóm tắt trong đoạn tưởng nhớ → dấu để lại:</p>${outs}`);
+  }
+  function nodeCard(a, n) {
+    const tags = [n.kind === 'dec' ? 'quyết định' : n.beat ? 'nhịp lặp' : 'sự kiện', n.at.map(stepVi).join(' / '), n.wait ? `chờ ${n.wait[0]}–${n.wait[1]} lượt` : null, n.w != null ? `trọng số ${num(n.w)}` : null].filter(Boolean);
+    return card('node', n.id, `${a.nameVi} · ${n.title || stepVi(n.at[0])}`, `<div class="meta">${esc(tags.join(' · '))}</div>${n.choices && n.choices.length ? chips('Lựa chọn', n.choices) : ''}${lines(n.texts)}${chips('Tác dụng', n.fx)}`);
+  }
+  function arcsView(t) {
+    const INTRO = { main: 'Tám mạch cả đời. Mỗi mạch: mở đầu → chọn đường (quyết định) → thử thách → cao trào (quyết định, từ trung niên) → kết (tuổi già hoặc 12 lượt sau cao trào), cùng một nhịp lặp góp tiến độ.',
+      side: 'Mạch của người quen (docs/13); giờ mỗi kết để lại dấu hệ quả.', short: 'Mạch một hai hồi: mạch ngắn mới mọc từ quyết định thường (nhận việc thuê, vào hội, săn thưởng, di cư, mua đồ, lập làng…), và các mạch cũ ngắn (nợ cờ bạc, bí mật, người mang ơn, người mất tích, lời bà đồng).' };
+    return overview(TIER[t].charAt(0).toUpperCase() + TIER[t].slice(1), INTRO[t])
+      + grid(tierArcs(t).map(a => `<h3 class="group-title">${esc(a.nameVi)}</h3>` + arcCard(a) + a.nodes.map(n => nodeCard(a, n)).join('')).join(''));
+  }
+
+  // ---- Dấu ----
+  function marksView() {
+    const cards = Object.entries(D.marks).map(([id, m]) => card('mark', id, m.nameVi, `<div class="meta"><span class="mk ${m.tone}">${m.tone === 'good' ? 'tốt' : m.tone === 'bad' ? 'xấu' : 'trung tính'}</span> · ${m.fade == null ? 'cả đời' : `phai sau ${m.fade} lượt`}</div>
+      <p style="margin:0">${esc(m.d)}</p>
+      ${m.w.length ? `<dl class="kv"><dt>Đổi trọng số</dt><dd>${m.w.map(([e, v]) => `${esc(evLabel(e))} × ${num(v)}`).join('<br>')}</dd></dl>` : ''}
+      ${Object.keys(m.echo).length ? `<p class="sub">Câu nhắc chuyện cũ:</p>${lines(Object.entries(m.echo).map(([e, t]) => `${e}: ${t}`))}` : ''}
+      ${chips('Mỗi năm', m.yr)}${m.on ? `<dl class="kv"><dt>Lúc nhận</dt><dd><code>${esc(m.on)}</code></dd></dl>` : ''}
+      ${m.src.length ? `<p class="sub">Để lại bởi:</p>${lines(m.src)}` : '<p class="meta">Chưa có kết nào để lại dấu này.</p>'}`)).join('');
+    return overview('Dấu hệ quả', 'Thứ mỗi kết, mỗi lựa chọn để lại cho phần đời sau.') + grid(cards);
+  }
+
+  // ---- Gieo ----
+  function seedsView() {
+    const names = Object.fromEntries(D.arcs.filter(a => a.tier === 'main').map(a => [a.id, a.nameVi]));
+    const cards = Object.entries(D.seeds).map(([id, v]) => card('seed', id, D.evText[id] ? D.evText[id] : id, `<div class="meta">${D.universal.includes(id) ? 'đời thường: đi theo mọi mạch chính' : 'đi theo mạch có điểm ≥ 0,5'}</div><div class="chips">${Object.entries(v).map(([k, x]) => `<span class="chip">${esc(names[k] || k)} +${num(x)}</span>`).join('')}</div>`)).join('');
+    const uni = D.universal.filter(id => !D.seeds[id]);
+    return overview('Gieo mạch, đi theo', `Trước Đường đời: sự kiện cộng điểm cho các mạch. Sau Đường đời: sự kiện có điểm ≥ 0,5 cho mạch đã chọn thì đi theo mạch. Gieo thêm từ quyết định: chí hướng (+2 mạch hợp), bái sư (+1,5 Đỉnh cao võ đạo), ra tranh ghế trưởng (+1,5 Người đứng đầu), đi học (+0,8 Tác phẩm đời người), chọn nghề (+1 theo nghề); lúc sinh: nhà nghèo, con ngoài giá thú, mồ côi, nhà sùng đạo. Đời thường đi theo mọi mạch nhưng không gieo: ${uni.join(', ') || '—'}.`) + grid(cards);
+  }
+
+  function renderContent() {
+    const t = state.tab;
+    $('content').innerHTML = t === 'rules' ? rulesView() : t === 'marks' ? marksView() : t === 'seeds' ? seedsView() : arcsView(t);
+    if (dbState !== 'ready') $('saveState').textContent = dbState === 'connecting' ? 'Đang kết nối nơi lưu duyệt…' : 'Không lưu được ở chế độ xem này: cần mở trang trên claude.ai khi đã đăng nhập, với quyền chỉnh sửa.';
+  }
+  function render() { renderProgress(); renderTabs(); renderContent(); $('filter').value = state.filter; }
+
+  async function write(kind, id, status, note) {
+    if (!db) return;
+    const it = allItems.find(x => x.kind === kind && x.id === id), k = key(kind, id);
+    $('saveState').textContent = 'Đang lưu…';
+    try {
+      const ref = db.collection('reviews').doc(k);
+      if (status === null) await ref.delete();
+      else await ref.set({ kind, id, name: it ? it.name : id, status, note: note || '', updatedAt: new Date().toISOString() });
+      delete drafts[k];
+      $('saveState').textContent = 'Đã lưu';
+    } catch (e) {
+      $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.';
+    }
+  }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; try { history.replaceState(null, '', '#' + state.tab); } catch (x) {} render(); window.scrollTo({ top: 0 }); });
+  $('filter').addEventListener('change', e => { state.filter = e.target.value; try { localStorage.setItem('storyReview.filter', state.filter); } catch (x) {} renderContent(); });
+  $('content').addEventListener('input', e => { if (!e.target.matches('[data-note]')) return; const box = e.target.closest('.review'); drafts[key(box.dataset.kind, box.dataset.id)] = e.target.value; });
+  $('content').addEventListener('click', e => {
+    const box = e.target.closest('.review'); if (!box) return;
+    const kind = box.dataset.kind, id = box.dataset.id, note = box.querySelector('[data-note]').value, cur = rv(kind, id).status;
+    const st = e.target.closest('[data-status]');
+    if (st) { write(kind, id, cur === st.dataset.status ? null : st.dataset.status, note); return; }
+    if (e.target.closest('[data-clear]')) { write(kind, id, null); return; }
+    if (e.target.closest('[data-savenote]')) write(kind, id, cur || 'fix', note);
+  });
+  render();
+  (async () => {
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { dbState = 'off'; renderContent(); return; }
+    dbState = 'ready'; $('saveState').textContent = 'Quyết định được lưu chung cho trang này; Claude đọc lại được.'; renderContent();
+    db.collection('reviews').onSnapshot(snap => {
+      for (const k of Object.keys(reviews)) delete reviews[k];
+      for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
+      const act = document.activeElement, focusId = act && act.matches && act.matches('[data-note]') ? act.id : null, pos = focusId ? act.selectionStart : 0;
+      renderProgress(); renderTabs(); renderContent();
+      if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } }
+    }, () => { dbState = 'off'; renderContent(); });
+  })();
+})();
+</script>
