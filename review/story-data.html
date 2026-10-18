@@ -48,7 +48,10 @@ function parseRun(fn) {
   if (/setField\(.*'urban'/.test(src)) fx.push('khu thêm dân');
   return { texts, fx: [...new Set(fx)], tone };
 }
-const both = (...fs) => ({ toString: () => fs.filter(Boolean).map(f => f.toString()).join('\n') });
+// Mã nguồn để trích câu chữ: hàm thì lấy mã, bảng (def.texts của mạch: kẻ thù của Món nợ máu, kịch bản thử thách…) thì duyệt sâu, chuỗi bọc trong dấu `.
+const srcOf = x => typeof x === 'function' ? x.toString() : typeof x === 'string' ? '`' + x + '`' : Array.isArray(x) ? x.map(srcOf).join('\n')
+  : x && typeof x === 'object' ? Object.entries(x).map(([k, v]) => k + ': ' + srcOf(v)).join('\n') : '';
+const both = (...fs) => ({ toString: () => fs.filter(Boolean).map(srcOf).join('\n') });
 const labels = fn => [...String(fn).matchAll(/label: ['`]([^'`]+)['`]/g)].map(m => m[1]);
 const P = { name: '‹người›' }, REC = { d: { kin: '‹người thân›', fv: '‹đạo›', t0: 0 } };
 const sumText = (k, o) => { try { return G.ARCS[k].sum ? G.ARCS[k].sum(o, P, REC) || null : null; } catch (e) { return null; } };
@@ -72,16 +75,20 @@ for (const [k, A] of Object.entries(G.ARCS)) {
   const outcomes = outs.map(o => ({ o, good: (A.good || []).includes(o), sum: sumText(k, o), mark: (A.marks || {})[o] || null }));
   let nodes;
   if (F) {
-    const d = F;
+    const d = F, T = d.texts || {};
+    const knotSrc = both(d.knot.choices, T.knot), climSrc = both(d.climax.choices, T.climax);
     nodes = [
-      nodeOf(k + '_open', 'ev', { at: 'open', wait: waitOf(d, 'open') }, parseRun(d.open)),
-      nodeOf(k + '_knot', 'dec', { at: 'knot', wait: waitOf(d, 'knot') }, { title: d.knot.title, choices: labels(d.knot.choices), ...parseRun(both(d.knot.body, d.knot.choices, d.knot.apply)) }),
-      nodeOf(k + '_trial', 'ev', { at: 'trial', wait: waitOf(d, 'trial') }, parseRun(d.trial.run)),
-      nodeOf(k + '_climax', 'dec', { at: 'climax', wait: waitOf(d, 'climax') }, { title: d.climax.title, choices: labels(d.climax.choices), ...parseRun(both(d.climax.body, d.climax.choices, d.climax.apply)) }),
+      nodeOf(k + '_open', 'ev', { at: 'open', wait: waitOf(d, 'open') }, parseRun(both(d.open, T.open))),
+      nodeOf(k + '_knot', 'dec', { at: 'knot', wait: waitOf(d, 'knot') }, { title: d.knot.title, choices: [...new Set(labels(knotSrc))], ...parseRun(both(d.knot.body, d.knot.choices, d.knot.apply, T.knot)) }),
+      nodeOf(k + '_trial', 'ev', { at: 'trial', wait: waitOf(d, 'trial') }, parseRun(both(d.trial.run, T.trial))),
+      nodeOf(k + '_climax', 'dec', { at: 'climax', wait: waitOf(d, 'climax') }, { title: d.climax.title, choices: [...new Set(labels(climSrc))], ...parseRun(both(d.climax.body, d.climax.choices, d.climax.apply, T.climax)) }),
       ...(d.climax.bg ? [nodeOf(k + '_drift', 'ev', { at: 'climax', wait: waitOf(d, 'climax') }, { bg: true, ...parseRun(d.climax.bg) })] : []),
-      nodeOf(k + '_after', 'ev', { at: 'after', wait: waitOf(d, 'after') }, parseRun(both(...Object.values(d.after)))),
-      ...(d.beat ? [nodeOf(k + '_beat', 'ev', { at: ['open', 'knot', 'trial', 'climax'], wait: main ? [1, 99] : [1, 12] }, { beat: true, texts: Object.values(d.beat).flat(), fx: [] })] : [])
+      nodeOf(k + '_after', 'ev', { at: 'after', wait: waitOf(d, 'after') }, parseRun(both(...Object.values(d.after), T.after))),
+      ...(d.beat ? [nodeOf(k + '_beat', 'ev', { at: ['open', 'knot', 'trial', 'climax'], wait: main ? [1, 99] : [1, 12] }, { beat: true, texts: [...new Set([...Object.values(d.beat).flat(), ...(T.beat || []).flat()])], fx: [] })] : [])
     ];
+    // Nút thêm của mạch ngoài khuôn 5 hồi (vd. m_rise_kin: cảnh người nhà trên đường Thoát nghèo).
+    const std = new Set(nodes.map(n => n.id));
+    for (const e of G.EVENTS) if (e.story && e.story.arc === k && !std.has(e.id)) nodes.push(nodeOf(e.id, 'ev', e.story, { w: e.wSt ?? null, ...parseRun(e.run) }));
   } else {
     nodes = [];
     for (const e of G.EVENTS) if (e.story && e.story.arc === k) nodes.push(nodeOf(e.id, 'ev', e.story, { w: e.wSt ?? null, ...parseRun(e.run) }));
@@ -90,7 +97,7 @@ for (const [k, A] of Object.entries(G.ARCS)) {
   arcs.push({ id: k, tier, nameVi: A.nameVi, passive: !!A.passive, pitch: main ? main.pitch : null, quest: A.quest ? (() => { try { return A.quest(P, REC); } catch (e) { return null; } })() : null,
     axes: main ? main.axes : null, themes: main ? main.themes : null, aim: main ? main.aim : null, follow: main ? main.follow : null,
     opens: main ? Object.entries(G.SAGA_SEED).filter(([, v]) => (v[k] || 0) > 0).sort((a, b) => b[1][k] - a[1][k]).map(([id, v]) => [id, v[k]]) : sh ? [`quyết định ${sh.from} (${Math.round(sh.p * 100)}%)`] : opensOf(k),
-    away: !!(F && /ch\('away'/.test(F.knot.choices.toString())), endRule: F ? rule(F.end) : null, outcomes, nodes });
+    away: !!(F && /ch\('away'/.test(F.knot.choices.toString())), endRule: F ? rule(F.end) : null, variants: F && F.variants ? F.variants : null, outcomes, nodes });
 }
 const markSrc = {};
 for (const a of arcs) for (const o of a.outcomes) if (o.mark) (markSrc[o.mark] = markSrc[o.mark] || []).push(`${a.nameVi}: ${o.sum || o.o}`);

@@ -183,7 +183,9 @@ window.LifeSim = window.LifeSim || {};
     if (def.beat) {
       const beat = { id: k + '_beat', st: TAE, undead: ud, tree, story: { arc: k, at: ['open', 'knot', 'trial', 'climax'], wait: main ? [1, 99] : [1, 12] }, w: main ? .45 : .25,
         c: (S, X, a) => !a.d.bg,
-        run(S, X, a, p) { a.d.prog = prog(a) + 1; const L = def.beat[a.at] || def.beat.any; return { t: X.pick(L).replace('{z}', zoneName(S, X, a)).replace(/{p}/g, p ? first(p.name) : 'người ấy').replace(/{kin}/g, a.d.kin === 'cha' ? 'cha' : a.d.kin || 'người thân'), k: 'info', to: null }; } };
+        run(S, X, a, p) { a.d.prog = prog(a) + 1; const L = (def.beatOf && def.beatOf(a)) || def.beat[a.at] || def.beat.any;   // beatOf: nhịp theo biến thể của mạch (kẻ thù của Món nợ máu)
+          const t = X.pick(L).replace('{z}', zoneName(S, X, a)).replace(/{p}/g, p ? first(p.name) : 'người ấy').replace(/{kin}/g, a.d.kin === 'cha' ? 'cha' : a.d.kin || 'người thân');
+          return { t: def.fill ? def.fill(S, X, a, t) : t, k: 'info', to: null }; } };
       sNode(beat); beat.gap = main ? 3 : 4;
     }
   }
@@ -204,63 +206,247 @@ window.LifeSim = window.LifeSim || {};
   const mateOf = (S, a) => { const m = a && a.d.mate != null ? G.castGet(S, a.d.mate) : null; return m && m.alive !== false ? first(m.name) : null; };   // người cùng đi (lối có thêm người quen), còn sống
 
   // ── Món nợ máu ──
+  // Kẻ thù (người dùng ghi chú trên trang Duyệt Mạch Truyện 18/10/2026: thêm kẻ thù cho phong phú, thêm lối đòi nợ, thử thách theo kẻ thù).
+  // a.d.foe: beast (bầy quái), bandit (toán cướp), lord (lãnh chúa), warlord (tướng giặc), cult (tà thuật sư), rival (kẻ phản bội); chọn lúc
+  // mở mạch theo chuyện đã gieo (G.SAGA_FOE_SRC, foeSetup). a.d.foeN: tên kẻ cầm đầu; a.d.nick: biệt danh toán cướp; a.d.kin: người đã mất.
+  // Mỗi loại: mở đầu, thân hồi chọn lối, một lối riêng (alt), thử thách thành / bại (nhiều kịch bản, tự lo tác dụng), cao trào, kết, tóm tắt, nhịp.
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const kn = a => a.d.kin || 'những người đã mất';
+  const fN = a => (a.d.foeN ? first(a.d.foeN) : 'hắn');
+  const hireAlt = { k: 'hire', label: 'Bỏ tiền thuê mạo hiểm giả', sub: (S, X) => `Tốn chừng ${G.coin(Math.round(med(S, X) * 1.5))}.`,
+    apply: (S, X, a) => { X.money(-Math.round(med(S, X) * 1.5)); a.d.hired = true; return 'Bạn đặt túi tiền lên bàn ở hội mạo hiểm. Gã ngồi sau bàn đếm từng đồng, chậm rãi, rồi gật đầu. Số tiền ấy bạn dành dụm mấy năm. Lúc ra về tay nhẹ hẳn, mà lòng thì không.'; } };
+  const AV_FOE = G.AVENGE_FOE = {
+    beast: { nameVi: 'Bầy quái', who: a => spName(a), hate: 'bầy quái', band: 'Tụ một toán thợ săn', alt: hireAlt,
+      open: (S, X, a) => `Bạn giữ lại một món đồ của ${a.d.kin || 'người làng đã mất'}, đặt ở đầu giường. Sáng nào trước khi ra bãi tập bạn cũng cầm nó lên, nhìn một lúc rồi mới đi. Món đồ không nói gì. Nhưng bạn biết, sớm muộn mình cũng sẽ đi tìm ${spName(a)}.`,
+      knot: (S, X, a) => `Ở ${zoneName(S, X, a)}, ${spName(a)} vẫn còn đó, mỗi năm một đông thêm. Một mình bạn chưa đủ sức vào tận tổ. Phải có cách khác, hoặc phải chờ.`,
+      ok: [(S, X, a, pc) => `Suốt một mùa bạn lần theo dấu ${spName(a)} qua ${zoneName(S, X, a)}, ăn lương khô, ngủ dưới gốc cây. ${pc} Rồi một chiều, dưới chân một vách đá, gió đưa tới mùi hôi của tổ. Bạn đã tìm ra nó.`,
+        (S, X, a, pc) => `Một con ${spName(a)} lạc bầy lảng vảng gần làng. Bạn không giết nó ngay mà bôi tro lên người, bám theo nó ba ngày ba đêm. ${pc} Nó dẫn bạn về đúng chỗ bạn cần: một khe núi đầy xương trắng.`,
+        (S, X, a, pc) => `Bạn tìm gặp một bà lão hái thuốc từng sống sót sau một lần chạm mặt ${spName(a)}. Bà vẽ đường cho bạn bằng que củi trên nền bếp, tay run mà nét không sai. ${pc} Bạn đi đúng theo nét vẽ ấy, và thấy cái tổ ở chỗ bà chỉ.`],
+      fail: [(S, X, a) => { X.add('hl', -10); X.cond('wound'); return `Bạn lần theo dấu ${spName(a)} tới ${zoneName(S, X, a)} thì trời đổ mưa ba ngày liền, dấu chân trôi sạch. Đêm thứ ba có thứ gì đó lao ra từ bụi rậm. Bạn về làng với một vết cào dài trên lưng. Cái tổ vẫn chưa thấy đâu.`; },
+        (S, X, a) => { X.add('hl', -6); X.add('h', -5); return 'Bạn đặt bẫy ở lối mòn, rải mồi suốt nửa tháng. Lũ quái không thèm đi qua. Chúng đi vòng, vào chuồng nhà người khác, cắn chết hai con bò. Sáng ra người làng nhìn bạn, không ai nói gì, mà bạn thấy như bị mắng.'; }],
+      cb: (S, X, a) => `Tổ của ${spName(a)} nằm dưới vách đá, cửa tổ hôi mùi xương mục. Từ trong bóng tối vọng ra tiếng con non rúc rích. Bạn nghĩ tới ${kn(a)}, rồi nghĩ tới lũ con non ấy.`,
+      ch: { fight: { label: 'Vào tổ, đánh tới cùng' }, burn: { label: 'Đốt tổ từ bên ngoài', sub: 'Chắc ăn hơn; không biết con đầu đàn đã chết chưa.' }, spare: { label: 'Quay về', sub: 'Tha cho lứa con non.' } },
+      win: (S, X, a) => `Bạn đi vào bóng tối với ngọn đuốc và vũ khí. Trong đó sâu hơn bạn tưởng, và tối hơn. Lúc trở ra trời đã xế, áo bạn đẫm máu không phải của mình, trên tay là cái nanh của con đầu đàn.${a.d.path === 'band' ? ' Toán thợ săn đứng chờ ở cửa tổ, thấy bạn thì reo lên.' : ''}`,
+      lose: () => 'Con đầu đàn to hơn mọi lời kể. Nó hất bạn vào vách đá như hất một bó rơm. Bạn bò ra khỏi tổ, máu chảy theo từng bước, sau lưng vẫn vang tiếng gầm.',
+      burn: () => 'Bạn chất củi khô kín cửa tổ rồi châm lửa. Khói đen bốc lên ba ngày, cả vùng ngửi thấy. Bạn ngồi canh tới khi lửa tàn, mà vẫn không chắc con đầu đàn đã chết hay đã trốn qua một lối khác.',
+      spare: () => 'Bạn đứng lâu ở cửa tổ, đuốc cháy gần tới tay. Lũ con non rúc vào nhau trong góc, mắt sáng lên trong bóng tối. Chúng chưa giết ai cả. Bạn quay đi, và bước chân về nhẹ hơn bước chân đi.',
+      after: { win: (S, X, a) => { const m = mateOf(S, a); return `Bạn đặt cái nanh lên mộ ${kn(a)}, thắp ba nén hương.${m ? ` ${m} đứng sau bạn, cũng thắp một nén.` : ''} Đêm ấy, lần đầu sau bao năm, bạn ngủ một giấc không mộng. Sáng ra bạn cất vũ khí lên gác, lâu lắm mới lấy xuống.`; },
+        burn: (S, X, a) => `Người làng thôi nhắc tới ${spName(a)}. Mấy mùa sau cỏ đã mọc lại trên vách đá cháy đen. Bạn không đi ngang chỗ ấy nữa, có việc phải qua thì vòng đường khác, xa hơn nửa buổi.`,
+        spare: (S, X, a) => `Mấy năm sau người ta vẫn thấy quái ở ${zoneName(S, X, a)}, nhưng chúng không xuống làng nữa. Có lần đi rừng, bạn gặp một con lớn đứng trên mỏm đá nhìn xuống. Nó nhìn bạn rất lâu rồi bỏ đi. Bạn không hối hận.`,
+        fail: (S, X, a) => `Cái tổ vẫn ở đó. Đêm nào trời trở gió, vết thương cũ trên lưng lại nhức, như có người gõ cửa nhắc nợ. Bạn ngồi dậy nhìn món đồ của ${a.d.kin || 'người đã mất'} ở đầu giường, rồi nằm xuống, không ngủ lại được.` },
+      sum: { win: d => `trả được món nợ máu cho ${d.kin || 'làng'}`, burn: d => `đốt sạch tổ của bầy quái đã giết ${d.kin || 'người làng'}`, spare: d => `tha cho lứa quái con, buông được mối thù cho ${d.kin || 'làng'}`, fail: d => `không trả được món nợ máu cho ${d.kin || 'làng'}` },
+      beat: { open: ['Đêm nào bạn cũng ngồi mài lưỡi vũ khí bên bếp, tiếng đá rít đều đều tới khuya. Người nhà đã quen, không ai hỏi nữa.', 'Thợ săn nào đi ngang làng cũng bị bạn giữ lại hỏi chuyện {z}: lối nào, mùa nào, bầy lớn hay nhỏ. Có người cười, bảo bạn hỏi như đi đòi nợ. Bạn không cười.'],
+        knot: ['Bạn tập tới khi tay rớm máu, quấn vải lại rồi tập tiếp. Vết chai cũ chưa lành, vết chai mới đã lên. Ngày giỗ {kin} sắp tới, bạn muốn có thứ gì đó để nói trước mộ.'],
+        trial: ['Bạn vẽ bản đồ {z} lên vách nhà bằng than, chỗ nào thấy dấu chân thì chấm một chấm. Vách giờ chi chít chấm đen, dày nhất ở một góc.', 'Bạn nằm phục cả đêm ở bìa {z}, sương ướt đẫm lưng áo. Gần sáng chúng đi qua, gần tới mức nghe được tiếng thở. Bạn nín thở đếm từng con, rồi lặng lẽ về.'],
+        climax: ['Bạn biết cái tổ ở đâu rồi. Đêm nào cũng ra đầu làng nhìn trời, chờ một ngày khô ráo, gió thổi ngược về phía núi.'] } },
+    bandit: { nameVi: 'Toán cướp', who: a => `toán cướp ${a.d.nick}`, hate: 'bọn cướp', race: ['human', 'human', 'orc', 'beastfolk'], kin: ['chú', 'bác', 'cậu'], alt: hireAlt,
+      open: (S, X, a) => `Cái đòn gánh gãy của ${kn(a)} vẫn dựng ở góc nhà. Năm ấy toán cướp ${a.d.nick} chặn đường ngoài đèo, ${kn(a)} không chịu buông gánh hàng, và không về nữa. Người ta bảo tên cầm đầu là ${a.d.foeN}, cái tên ai nhắc tới cũng hạ giọng. Bạn thì nhắc nó mỗi tối, không hạ giọng.`,
+      knot: (S, X, a) => `Toán cướp ${a.d.nick} giờ đã có hơn ba chục tay đao, đóng trại đâu đó ở ${zoneName(S, X, a)}. Quan trấn treo thưởng mấy năm mà chưa ai lĩnh được. Một mình bạn tới đó thì chỉ thêm một cái xác bên đường.`,
+      ok: [(S, X, a, pc) => `Bạn giả làm phu khuân vác, theo một đoàn buôn qua đèo, cố ý để bị chặn. ${pc} Trong lúc bọn cướp lục hàng, bạn đếm người, nhớ mặt, nhớ cả lối chúng rút về. Đêm ấy bạn vẽ lại tất cả lên một mảnh da, tay không run.`,
+        (S, X, a, pc) => `Một tên lâu la bị đuổi khỏi toán, say khướt trong quán rượu dưới chân đèo. Bạn trả tiền rượu cho hắn ba đêm liền. ${pc} Tới đêm thứ ba hắn khóc, kể hết: trại ở đâu, gác mấy người, ${fN(a)} ngủ ở lều nào.`,
+        (S, X, a, pc) => `Bạn lần theo vết bánh xe hàng cướp tới một khe suối ở ${zoneName(S, X, a)}. ${pc} Sau bụi lau là hàng rào cọc nhọn, khói bếp bốc lên đều đặn. Bạn nằm im tới tối, đếm được mười hai đống lửa.`],
+      fail: [(S, X, a) => { X.add('hl', -12); X.cond('wound'); return `Bạn mò tới gần trại ở ${zoneName(S, X, a)} thì vấp phải dây chuông giăng ngang lối. Cả trại thức dậy. Bạn chạy suốt đêm, một mũi tên cắm vào bắp chân, tới sáng mới dám dừng. Từ hôm ấy, toán cướp biết có người đang tìm chúng.`; },
+        (S, X, a) => { X.money(-Math.round(med(S, X) * .5)); X.add('h', -5); return `Người dẫn đường bạn thuê hóa ra là tai mắt của ${fN(a)}. Hắn dẫn bạn đi vòng ba ngày trong rừng rồi biến mất cùng túi tiền. Bạn về tay trắng, lại nghe tin trại cướp đã dời đi chỗ khác.`; }],
+      cb: (S, X, a) => `Đêm không trăng, trại cướp của ${a.d.nick} nằm ngay dưới chân bạn. Lửa trại đã tàn, chỉ còn tên gác ngồi gật gù bên cổng. ${fN(a)} ngủ trong căn lều lớn nhất, cạnh đống hàng cướp được. Qua khe vải, bạn thấy một đứa trẻ nằm cuộn tròn bên cạnh hắn.`,
+      ch: { fight: { label: 'Lẻn vào lều, đối mặt với hắn' }, burn: { label: 'Về trấn, dẫn lính tới vây trại', sub: 'Bắt được đám lâu la; tên cầm đầu có thể thoát.' }, spare: { label: 'Quay về', sub: 'Đứa trẻ ấy chưa làm gì ai.' } },
+      win: (S, X, a) => `Bạn rạch vách lều, bước vào trước khi hắn kịp với lấy thanh đao. ${fN(a)} già hơn bạn tưởng, nhưng tay vẫn nhanh. Trận đánh không dài. Sáng ra bạn trói hắn sau lưng ngựa, giao cho quan trấn, lĩnh luôn món thưởng đã treo mấy năm.`,
+      lose: () => 'Hắn tỉnh ngủ hơn bạn tưởng. Lưỡi đao chém xuống, bạn chỉ đỡ được một nửa. Cả trại nhao lên, bạn phải lăn xuống dốc mà chạy, máu thấm ướt nửa người. Sau lưng, tiếng hắn cười vang cả khe núi.',
+      burn: (S, X, a) => `Bạn về trấn, dẫn hai chục lính lên vây trại lúc gà gáy. Đám lâu la bị trói thành một chuỗi dài. Nhưng căn lều lớn trống trơn: ${fN(a)} đã trốn qua lối sau, chỉ để lại tấm áo khoác còn ấm.`,
+      spare: (S, X, a) => `Bạn đứng lâu ngoài lều. Đứa trẻ trở mình, gọi cha trong giấc ngủ, và ${fN(a)} vỗ lưng nó, khẽ ru. Con dao trong tay bạn nặng dần. Bạn lùi vào bóng tối, bước xuống núi, không ngoái lại.`,
+      after: { win: (S, X, a) => { const m = mateOf(S, a); return `Người ta xử ${fN(a)} ở chợ trấn, cả vùng đổ về xem. Bạn không xem. Bạn ra mộ ${kn(a)}, cắm cái đòn gánh gãy xuống làm bia, rồi ngồi đó tới tối.${m ? ` ${m} mang rượu tới, ngồi xuống cạnh bạn, không nói gì.` : ''} Từ ấy đường qua đèo có người đi lại, gánh hàng không phải đi thành đoàn nữa.`; },
+        burn: (S, X, a) => `Đám lâu la bị đày xuống mỏ, đường đèo yên được mấy năm. Thỉnh thoảng có tin đồn ${fN(a)} lại tụ người ở một vùng xa. Mỗi lần nghe, bạn đặt bát xuống, ăn không hết bữa.`,
+        spare: () => 'Năm sau trại cướp tan, người ta bảo tên cầm đầu dắt con sang xứ khác làm ruộng. Bạn không biết có thật không. Bạn chỉ biết đêm ấy về nhà, bạn ôm người thân còn sống lâu hơn mọi khi, và thấy thế là đủ.',
+        fail: (S, X, a) => `Toán cướp ${a.d.nick} vẫn chặn đèo. Mỗi lần có gánh hàng mất tích, người ta lại nhìn sang nhà bạn, như hỏi bạn đã làm được gì. Cái đòn gánh gãy vẫn dựng ở góc nhà. Bạn nhìn nó mỗi tối mà không biết nói gì với nó.` },
+      sum: { win: d => `bắt được tên cầm đầu toán cướp đã giết ${d.kin || 'người nhà'}`, burn: d => `dẹp được toán cướp đã giết ${d.kin || 'người nhà'}, mà tên cầm đầu trốn thoát`, spare: () => 'tha cho tên cầm đầu toán cướp vì đứa con của hắn', fail: d => `không đòi được nợ máu với toán cướp đã giết ${d.kin || 'người nhà'}` },
+      beat: { any: ['Đi chợ trấn, bạn đứng lâu trước tấm bảng treo thưởng, đọc lại cái tên {foeN} tới thuộc lòng. Mép giấy đã ngả vàng.', 'Có đoàn buôn nào qua làng, bạn cũng hỏi: đi lối nào, có gặp ai chặn đường không. Người ta trả lời cho xong chuyện, bạn thì nhớ từng chữ.'] } },
+    lord: { nameVi: 'Kẻ quyền thế', who: a => `lãnh chúa ${fN(a)}`, hate: 'nhà lãnh chúa', kin: ['chú', 'bác', 'ông'],
+      alt: { k: 'law', label: 'Tìm chứng cứ, kiện lên trên', sub: () => 'Chậm, phải có người làm chứng; thắng thì đường đường chính chính.',
+        apply: (S, X, a) => { X.add('sm', 3); G.trajBump(S, { tri: .4 }); return 'Bạn học chữ ở nhà thầy đồ đầu làng, học cả cách đọc văn tự, sổ điền. Đêm nào cũng mở ống tre, so tờ văn tự cũ với những gì đã học. Rồi bạn đi gõ cửa từng nhà từng mất đất như nhà mình, hỏi họ có còn giữ giấy tờ gì không.'; } },
+      open: (S, X, a) => `Tờ văn tự đất của nhà đã nhàu, bạn cuộn lại cất trong một ống tre. ${cap(kn(a))} chết vì ba mươi roi trước cổng dinh lãnh chúa ${a.d.foeN}, chỉ vì đòi lại mảnh ruộng nhà cày đã ba đời. Bạn chưa biết làm gì với tờ giấy ấy. Nhưng đêm nào bạn cũng mở ra đọc một lần rồi mới ngủ.`,
+      knot: (S, X, a) => `Lãnh chúa ${fN(a)} có lính, có ấn, có người nhà làm quan trên tỉnh. Trong mắt hắn, nhà bạn chỉ là một dòng trong sổ thuế. Đánh thẳng vào dinh thì chết trước khi tới cổng. Phải tìm cách khác, hoặc đợi tới khi mình cũng có thứ hắn có.`,
+      ok: [(S, X, a, pc) => `Bạn tìm được ông thư lại già từng chép sổ điền cho dinh lãnh chúa, bị đuổi việc vì không chịu chép sai một dòng. ${pc} Ông mở rương, lấy ra cuốn sổ gốc ông lén giữ lại: mốc đất cũ còn nguyên, có cả dấu ấn.`,
+        (S, X, a, pc) => `Lãnh chúa ${fN(a)} mở tiệc mừng thọ, cần thêm người hầu bàn. Bạn xin vào. ${pc} Suốt đêm bạn rót rượu, nghe hắn khoe với khách đã gom được bao nhiêu đất, bằng cách nào. Hắn không nhìn mặt người rót rượu. Bạn nhớ từng chữ.`,
+        (S, X, a, pc) => `Bạn đi khắp các làng quanh vùng, tìm những nhà từng mất đất như nhà mình. Có nhà đóng cửa không tiếp, có nhà mời vào uống nước rồi khóc. ${pc} Cuối mùa, trên tờ đơn của bạn có mười bảy dấu điểm chỉ.`],
+      fail: [(S, X, a) => { X.money(-Math.round(med(S, X) * .6)); X.add('h', -6); return 'Có kẻ mách lên dinh rằng bạn đang dò chuyện đất. Lính tới nhà lúc nửa đêm, lục tung mọi thứ. Bạn bị phạt một khoản tiền vì tội xúi dân. Lúc đóng tiền, viên thư lại cười, bảo lần sau nhớ lấy thân phận mình.'; },
+        (S, X, a) => { X.add('hl', -12); X.cond('wound'); return 'Bạn chặn kiệu lãnh chúa ngoài chợ, quỳ xuống dâng đơn. Hắn không vén rèm. Lính gác lôi bạn ra sau chợ, đánh tới khi bạn không đứng dậy nổi. Tờ đơn bị xé đôi, rơi xuống rãnh nước.'; }],
+      cb: (S, X, a) => `Lãnh chúa ${fN(a)} giờ đã già, nhưng vẫn ngồi trên ghế cao trong dinh. Trong tay bạn đã có đủ: người, chứng cứ, và một lối vào tận phòng hắn. ${cap(kn(a))} đã chết vì ba mươi roi. Bạn nghĩ xem mình muốn hắn trả bằng gì.`,
+      ch: { fight: { label: 'Vào dinh, bắt hắn trả bằng mạng' }, burn: { label: 'Đưa hết ra công đường', sub: 'Hắn mất ghế, mất đất; mạng thì giữ được.' }, spare: { label: 'Chỉ đòi lại mảnh ruộng', sub: 'Hắn già rồi; để trời xử.' } },
+      win: (S, X, a) => `Bạn vào dinh lúc canh ba, đi đúng lối đã dò từ trước. ${fN(a)} tỉnh dậy, thấy bạn đứng cuối giường, há miệng mà không kêu thành tiếng. Bạn đọc cho hắn nghe tên ${kn(a)}, chậm rãi, từng chữ. Sáng hôm sau cả vùng nghe tin lãnh chúa chết trong phòng ngủ.`,
+      lose: (S, X, a) => `Lính gác đông hơn bạn đếm. Bạn chưa tới được cửa phòng hắn đã bị đè xuống nền đá. Họ đánh bạn một trận nhừ tử rồi ném ra ngoài cổng, đúng chỗ ${kn(a)} năm xưa bị đánh. Bạn bò về nhà, vừa bò vừa nghĩ: thế là mình cũng đã nằm đúng chỗ ấy.`,
+      burn: (S, X, a) => `Bạn mang hết giấy tờ, người làm chứng lên tận quan tỉnh. Ngày xử, sân công đường đông như hội. ${fN(a)} bị lột ấn, đất trả về cho từng nhà. Hắn được giữ mạng, dọn về một căn nhà nhỏ ở ngoại ô, ngày ngày ngồi nhìn ra đường.`,
+      spare: (S, X, a) => `Bạn đứng trước cổng dinh, nhìn ông già ${fN(a)} được người đỡ lên kiệu, tay run run, mắt đục. Hắn nhìn qua bạn mà không nhận ra. Bạn chỉ xin lại mảnh ruộng của nhà, hắn ký mà không cần đọc. Về tới bờ ruộng, bạn quỳ xuống, bốc một nắm đất lên ngửi.`,
+      after: { win: () => 'Người lên thay ghế lãnh chúa sợ dân hơn người trước, ruộng đất trả về từng nhà. Không ai biết chắc ai đã vào dinh đêm ấy, mà cũng không ai hỏi. Bạn cày lại mảnh ruộng của nhà. Lưỡi cày đi qua chỗ hàng mốc cũ thì vấp một cái, bạn để mặc nó đó.',
+        burn: (S, X, a) => `Mỗi mùa gặt, có người trong vùng mang tới nhà bạn một bó lúa đầu, đặt ở hiên rồi về, không nói gì. Tờ văn tự đất cũ bạn đóng khung treo lên vách, cạnh bàn thờ ${kn(a)}. Con cháu hỏi thì bạn kể. Kể tới đoạn công đường, giọng bạn chậm lại, như vẫn chưa tin.`,
+        spare: (S, X, a) => `Mùa nào bạn cũng cày mảnh ruộng ấy, cày sâu hơn người ta. Mấy năm sau ${fN(a)} chết già, đám tang to, kèn trống ba ngày. Bạn nghe tiếng kèn từ ngoài đồng, dừng tay một lúc, rồi cày tiếp.`,
+        fail: () => 'Hàng mốc đất vẫn đứng đó, mỗi năm lại nhích thêm một chút về phía làng. Bạn thôi không đi qua cổng dinh nữa. Có những đêm bạn mơ thấy ba mươi tiếng roi, đếm đủ từng tiếng rồi mới tỉnh.' },
+      sum: { win: d => `tự tay đòi mạng lãnh chúa đã đánh chết ${d.kin || 'người nhà'}`, burn: d => `đưa lãnh chúa đã hại ${d.kin || 'người nhà'} ra công đường, đòi đất về cho cả vùng`, spare: () => 'buông mối thù với lãnh chúa già, chỉ đòi lại mảnh ruộng của nhà', fail: d => `không đòi được nợ máu với lãnh chúa đã hại ${d.kin || 'người nhà'}` },
+      beat: { any: ['Mùa thu thuế, bạn đứng xếp hàng trước dinh {foe}, nộp đủ, cúi đầu đúng mực. Không ai thấy bàn tay bạn nắm chặt trong ống tay áo.', 'Đi ngang mảnh ruộng cũ của nhà, bạn dừng lại nhìn người lạ đang cày trên đó. Họ cũng là tá điền, cũng nghèo như bạn. Bạn không giận họ.'] } },
+    warlord: { nameVi: 'Tướng giặc', who: a => `tướng giặc ${fN(a)}`, hate: 'quân giặc', race: ['human', 'orc', 'human'], alt: hireAlt,
+      open: (S, X, a) => `Ngôi làng cũ giờ chỉ còn nền gạch cháy, cỏ mọc qua từng kẽ. Năm chiến tranh, quân bên kia đốt nó trong một đêm, theo lệnh một viên tướng tên ${a.d.foeN}. ${a.d.kin ? cap(a.d.kin) + ' không kịp chạy.' : 'Bao nhiêu người không kịp chạy.'} Hòa ước đã ký, người hai bên bắt tay nhau ở bến đò. Bạn thì không bắt tay ai.`,
+      knot: (S, X, a) => `Hòa ước đã ký, ${fN(a)} giờ chỉ huy đồn biên giới bên kia sông, dưới tay hàng trăm lính. Không ai đòi tội cho một ngôi làng đã cháy. Muốn tới được hắn, bạn phải qua sông, qua đồn, qua cả một đạo quân.`,
+      ok: [(S, X, a, pc) => `Bạn theo một đoàn buôn muối sang bên kia sông, giả làm người kéo xe. ${pc} Ba lần qua cổng đồn, bạn nhớ được giờ đổi gác, chỗ tường thấp, và cái cửa sổ phòng viên chỉ huy lúc nào cũng sáng tới khuya.`,
+        (S, X, a, pc) => `Bạn tìm được một lính cũ của ${fN(a)}, giờ cụt một tay, sống bằng nghề đan rổ. Ông ta ghét viên tướng hơn cả bạn ghét. ${pc} Ông vẽ cho bạn sơ đồ đồn bằng cái tay còn lại, nét vẽ ngoằn ngoèo mà chỗ nào cũng đúng.`],
+      fail: [(S, X) => { X.add('hl', -12); X.cond('wound'); return 'Bạn lội sông ban đêm, bị lính tuần phát hiện giữa dòng. Mũi tên xé nước quanh người. Bạn trôi theo dòng tới gần sáng mới bò lên được bờ bên này, một mũi tên còn cắm ở vai. Bên kia sông, đồn biên giới thắp thêm đuốc.'; },
+        (S, X, a) => { X.money(-Math.round(med(S, X) * .5)); X.add('h', -6); return `Chuyện bạn dò hỏi về ${fN(a)} tới tai quan bên này. Người ta sợ bạn làm vỡ hòa ước, giữ bạn trong ngục huyện suốt một mùa. Ra tù thì vụ lúa đã hỏng, mái nhà dột mấy chỗ.`; }],
+      cb: (S, X, a) => `Đồn biên giới bên kia sông, đêm sương xuống dày. ${fN(a)} giờ tóc đã muối tiêu, tối nào cũng ra bờ thành nhìn sang phía làng cũ của bạn, không ai biết vì sao. Bạn nằm trong tầm một mũi tên.`,
+      ch: { fight: { label: 'Vượt tường, tìm hắn mà đòi' }, burn: { label: 'Đốt kho lương của đồn', sub: 'Đồn phải rút; hắn sống hay chết thì không biết.' }, spare: { label: 'Hạ cung xuống', sub: 'Bạn không muốn có thêm một làng cháy.' } },
+      win: (S, X, a) => `Bạn vượt tường chỗ thấp, lên tới bờ thành khi hắn còn đứng đó. ${fN(a)} quay lại, nhìn bạn, rồi chậm rãi rút kiếm. Hắn già mà tay vẫn chắc. Trận đấu ngắn. Bạn về tới bờ bên này trước khi trời sáng, sau lưng chuông đồn đổ dồn.`,
+      lose: () => 'Hắn nghe tiếng chân bạn từ xa. Mười tên lính đổ ra bờ thành, bạn chỉ kịp chém ngã một người trước khi bị đẩy rơi xuống hào. Bạn bơi về bên này, nước sông đỏ một vệt dài theo sau.',
+      burn: (S, X, a) => `Bạn đổ dầu lên kho lương, châm một mồi lửa rồi lặn xuống sông. Lửa cháy suốt đêm, soi đỏ cả hai bờ. Một tháng sau đồn phải rút về sau núi. Có người bảo ${fN(a)} bị cách chức, có người bảo hắn chết trong đám cháy. Bạn không biết tin nào thật.`,
+      spare: () => 'Bạn nhìn hắn qua đầu mũi tên rất lâu. Hắn đứng đó, nhìn sang bờ bên này, rồi cởi mũ, cúi đầu, như đang khấn ai. Bạn hạ cung xuống. Có lẽ hắn cũng có một ngôi làng của riêng mình để nhớ.',
+      after: { win: () => 'Bạn về thắp hương ở nền làng cũ, cỏ giờ đã mọc kín. Không ai biết đêm ấy bạn đã qua sông. Hòa ước vẫn giữ, hai bên vẫn buôn bán qua bến đò. Bạn đi đò sang chợ bên kia như mọi người, mua muối, mặc cả, rồi về.',
+        burn: () => 'Bên kia sông giờ là đồng không, đồn cũ chỉ còn mấy bức tường cháy đen. Trẻ con hai bờ lội ra giữa sông tắm chung. Bạn đứng nhìn chúng, nghĩ tới ngôi làng năm ấy, và không biết mình đang thấy nhẹ hay thấy trống.',
+        spare: (S, X, a) => `Mấy năm sau có một người bên kia sông sang làng bạn, mang theo một bao gạo và một cái tên: ${a.d.foeN}. Người ấy bảo viên tướng già trước khi chết dặn mang sang, không nói vì sao. Bạn nhận bao gạo, nấu một nồi cơm, đặt lên bàn thờ ${kn(a)}.`,
+        fail: () => 'Đồn biên giới vẫn sáng đèn bên kia sông. Đêm nào trời lặng, bạn nghe cả tiếng trống đổi gác vọng sang. Vết thương cũ trở trời là buốt. Bạn ra bến đò ngồi, nhìn sang, tới khi người lái đò hỏi có qua không.' },
+      sum: { win: () => 'vượt sông đòi nợ máu với viên tướng giặc đã đốt làng', burn: () => 'đốt đồn giặc, đuổi được quân của viên tướng đã đốt làng', spare: () => 'hạ cung trước viên tướng già, buông mối thù chiến tranh', fail: () => 'không đòi được nợ máu với viên tướng giặc đã đốt làng' },
+      beat: { any: ['Bạn ra bến đò ngồi tới tối, đếm thuyền lính bên kia sông qua lại. Người lái đò đã quen mặt, không hỏi nữa.', 'Bạn tập bắn cung vào một tấm ván vẽ hình mũ trụ của quân bên kia. Tấm ván thủng lỗ chỗ, bạn thay tấm mới.'] } },
+    cult: { nameVi: 'Tà thuật sư', who: a => `tà thuật sư ${fN(a)}`, hate: 'kẻ luyện tà thuật', race: ['human', 'elf', 'human'], kin: ['chú', 'cô', 'người em họ'],
+      alt: { k: 'faith', label: 'Tìm tới đền, xin cách trừ tà', sub: () => 'Có người của đền đi cùng; phải theo luật của đền.',
+        apply: (S, X, a) => { if (S.faith) S.devotion = Math.min(100, S.devotion + 6); G.trajBump(S, { dao: .5 }); return `Bạn đi bộ nửa tháng tới ngôi đền lớn nhất vùng, quỳ giữa sân kể chuyện của ${kn(a)}. Vị tư tế già nghe xong không nói gì, chỉ đưa cho bạn một cái chổi, rồi một cuốn kinh. Ba năm, bạn quét sân, chép kinh, học cách đọc những vòng tròn vẽ bằng máu.`; } },
+      open: (S, X, a) => `${cap(kn(a))} ra giếng lấy nước một đêm trăng tròn và không về. Người ta chỉ tìm thấy một vòng tròn vẽ bằng máu khô trên tảng đá ở ${zoneName(S, X, a)}. Rồi có người kể đã thấy ${kn(a)} đi giữa một hàng xác sống, theo sau một kẻ áo đen tên ${a.d.foeN}. Bạn đã không tin. Giờ thì bạn tin, và bạn đã thôi khóc.`,
+      knot: (S, X, a) => `Tà thuật sư ${fN(a)} ẩn trong một hầm mộ cổ ở ${zoneName(S, X, a)}, quanh hắn là những người đã chết mà không được nằm yên. Gươm thường chém xác sống không chết hẳn. Muốn tới được hắn, bạn cần nhiều hơn một lưỡi gươm.`,
+      ok: [(S, X, a, pc) => `Bạn tìm lại tảng đá có vòng tròn máu, chép từng ký hiệu lên một mảnh vải. ${pc} Những ký hiệu chỉ về một hướng: ngọn đồi có hàng thông chết ở ${zoneName(S, X, a)}. Dưới chân đồi có một cửa hầm, cỏ quanh đó không mọc nổi.`,
+        (S, X, a, pc) => `Một đêm, hàng xác sống đi ngang bìa làng. Bạn nằm úp trong mương, để chúng đi qua cách mặt mình một sải tay. ${pc} Rồi bạn đứng dậy, bám theo, giữ đúng khoảng cách, tới tận cửa hầm mộ.`],
+      fail: [(S, X, a) => { X.add('hl', -10); X.cond('wound'); return `Bạn vào ${zoneName(S, X, a)} lúc trời chưa tối hẳn, vẫn là chậm. Đất dưới chân bỗng lở ra, những bàn tay xương thò lên níu lấy cổ chân. Bạn chém, chạy, ngã, lại chạy. Về tới làng, chân bạn tím bầm từng vệt như dấu ngón tay.`; },
+        (S, X, a) => { X.add('h', -10); return `Bạn gặp lại ${kn(a)} giữa đường rừng. Bạn gọi, ${kn(a)} quay lại nhìn bạn bằng đôi mắt trắng dã, rồi đi tiếp. Bạn đứng chết lặng tới khi hàng xác sống khuất hẳn, quên cả mình vào rừng để làm gì.`; }],
+      cb: (S, X, a) => `Hầm mộ lạnh như đáy giếng. Ở cuối hầm, ${fN(a)} ngồi giữa vòng tròn máu, quanh hắn là những xác sống đứng im như tượng. Trong số đó có ${kn(a)}. Hắn ngẩng lên nhìn bạn, mỉm cười, như đã chờ từ lâu.`,
+      ch: { fight: { label: 'Bước qua vòng máu, đánh hắn' }, burn: { label: 'Phong cửa hầm, đốt bùa trấn', sub: 'Hắn bị nhốt dưới đất; chết hay chưa thì không biết.' }, spare: { label: 'Chỉ đưa người thân về chôn', sub: 'Không đánh hắn; đưa người mình thương về nằm yên.' } },
+      win: (S, X, a) => `Bạn bước qua vạch máu. Hàng xác sống quay lại, chậm chạp, và ${kn(a)} là người đứng chắn trước tiên. Bạn nhắm mắt, đẩy ${kn(a)} sang một bên, lao tới. Khi ${fN(a)} ngã xuống, mọi xác sống trong hầm cùng đổ theo, như dây giật đứt. Bạn bế ${kn(a)} ra khỏi hầm, nhẹ hơn bạn tưởng.`,
+      lose: () => 'Hắn chỉ giơ một ngón tay. Hàng xác sống ùa tới, lạnh và nặng như đá. Bạn chém được mấy đứa rồi bị đè xuống. Không hiểu sao chúng buông bạn ra, có lẽ hắn muốn bạn sống để còn quay lại. Bạn bò ra khỏi hầm, sau lưng vẳng tiếng cười.',
+      burn: () => 'Bạn lùi ra cửa hầm, dán bùa lên từng phiến đá, rồi đốt. Lửa xanh liếm quanh cửa hầm suốt đêm, bên dưới có tiếng cào cấu, rồi im. Bạn lấp đất lên, trồng một hàng gai. Bên dưới hắn còn sống hay đã chết, bạn không biết, và cũng không định đào lên xem.',
+      spare: (S, X, a) => `Bạn không nhìn ${fN(a)} nữa. Bạn chỉ bước tới, nắm tay ${kn(a)}, dắt ra khỏi hàng. Lạ thay, hắn không ngăn. Ra tới ánh nắng, thân xác ${kn(a)} rã xuống trong tay bạn, như đã chờ được về. Bạn chôn ${kn(a)} ở đầu làng, dưới gốc cây ngày nhỏ hai người hay ngồi.`,
+      after: { win: (S, X, a) => `Bạn chôn ${kn(a)} lần thứ hai, lần này đủ hương, đủ lễ. Người làng không còn sợ ra giếng đêm trăng. Bạn giữ lại mảnh vải chép những ký hiệu máu, cất thật kỹ, không cho ai xem, phòng có ngày cần đến.`,
+        burn: () => 'Hàng gai trên cửa hầm năm nào cũng tốt lạ thường. Trẻ con trong làng được dặn đừng tới gần ngọn đồi có hàng thông chết. Đêm trăng tròn, bạn vẫn ra đó ngồi một lúc, áp tai xuống nghe đất. Đất im.',
+        spare: (S, X, a) => `Mộ ${kn(a)} ở đầu làng năm nào cũng có hoa, bạn trồng. Người ta vẫn đồn có kẻ áo đen ở vùng khác, vẫn có người mất tích đêm trăng. Bạn nghe rồi để đó. Có những món nợ không phải mình đòi.`,
+        fail: () => 'Đêm trăng tròn, bạn đóng chặt cửa, ngồi canh tới sáng. Có lần nghe tiếng bước chân ngoài ngõ, đều đều, quen quen. Bạn không dám mở cửa, mà cũng không dám thôi nghe.' },
+      sum: { win: d => `giết tà thuật sư, đưa ${d.kin || 'người thân'} về nằm yên`, burn: () => 'phong tà thuật sư dưới hầm mộ, không biết hắn chết hay chưa', spare: d => `không đánh tà thuật sư, chỉ đưa ${d.kin || 'người thân'} về chôn cất`, fail: d => `không đòi được ${d.kin || 'người thân'} từ tay tà thuật sư` },
+      beat: { any: ['Đêm trăng tròn nào bạn cũng thức, ngồi bên cửa sổ, tay cầm cây đuốc chưa châm. Có tiếng chân ngoài ngõ là bạn đứng dậy.', 'Bạn hỏi khắp các thầy cúng trong vùng về những vòng tròn vẽ bằng máu. Phần nhiều đuổi bạn đi. Có một người không đuổi, chỉ thắp thêm một ngọn đèn.'] } },
+    rival: { nameVi: 'Kẻ phản bội', who: a => fN(a), hate: 'hắn', kin: ['chú', 'bác', 'cậu'],
+      alt: { k: 'spy', label: 'Vào làm thuê dưới mái nhà hắn', sub: () => 'Gần hắn, nghe được hết; phải nhịn được mới làm được.',
+        apply: (S, X, a) => { G.trajBump(S, { am: .4 }); X.add('h', -4); return `Bạn đổi tên, lên thành, xin vào làm khuân vác ở cửa hiệu của ${fN(a)}. Hắn đi qua bạn mỗi ngày, có hôm còn vỗ vai khen chăm. Bạn cúi đầu cảm ơn. Đêm về căn buồng thuê, bạn siết hai bàn tay vào nhau tới khi hết run.`; } },
+      open: (S, X, a) => `${a.d.foeN} từng là bạn chí cốt của ${kn(a)}, ăn cùng mâm, gọi nhau bằng anh em. Một chuyến buôn xa, hắn về một mình, bảo ${kn(a)} trượt chân ở đèo. Mấy năm sau, một người phu cũ say rượu kể khác: hắn đẩy. Giờ ${fN(a)} có cửa hiệu ba gian trong thành, dựng bằng hàng của chuyến ấy.`,
+      knot: (S, X, a) => `${fN(a)} giờ là người có máu mặt trong thành: có tiền, có người quen, có cả lính nhà. Lời một người phu say rượu không đủ để kiện ai. Hắn còn nhớ mặt bạn hay không, bạn không biết.`,
+      ok: [(S, X, a, pc) => `Bạn lần ra người phu năm ấy, giờ đã già, sống nhờ con gái ở một làng ven sông. ${pc} Ông không muốn nhắc chuyện cũ. Nhưng khi bạn đặt lên bàn đôi giày rách của ${kn(a)}, ông khóc, và chịu đi làm chứng.`,
+        (S, X, a, pc) => `Bạn tìm được sổ hàng chuyến buôn năm ấy, nằm lẫn trong đống giấy cũ ở một hiệu cầm đồ. ${pc} Trong sổ có con dấu của ${fN(a)}, ngày tháng, và cả tên ${kn(a)}, bị gạch đi bằng một nét mực khác màu.`],
+      fail: [(S, X, a) => { X.add('hl', -10); X.cond('wound'); X.money(-Math.round(med(S, X) * .3)); return `${fN(a)} nhận ra bạn trước khi bạn kịp làm gì. Hắn mời bạn vào uống trà, hỏi thăm nhà cửa, giọng ngọt như mật. Tối ấy trên đường về, ba gã lạ mặt chặn bạn trong hẻm. Bạn lết được về nhà trọ, mất hai cái răng và sạch túi.`; },
+        (S, X) => { X.add('h', -8); return 'Người phu duy nhất biết chuyện chết trước khi bạn tìm tới, người ta bảo vì bệnh. Con gái ông đóng cửa, không cho ai vào. Bạn đứng ngoài cổng tới tối, nghe trong nhà có tiếng đếm tiền.'; }],
+      cb: (S, X, a) => `${fN(a)} giờ đã già, ngồi sau quầy cửa hiệu ba gian, tay lần chuỗi hạt. Trong tay bạn có đủ chứng cứ, hoặc đủ một con dao. Hắn ngẩng lên, lần này nhìn bạn rất lâu, rồi nói khẽ: "Mày giống ${kn(a)} quá."`,
+      ch: { fight: { label: 'Rút dao, đòi mạng trả mạng' }, burn: { label: 'Vạch mặt hắn giữa chợ', sub: 'Hắn mất danh tiếng, mất cửa hiệu; mạng thì giữ.' }, spare: { label: 'Để hắn sống với những gì đã làm', sub: 'Hắn già rồi; bạn quay đi.' } },
+      win: () => 'Hắn không chạy. Có lẽ hắn cũng đã chờ ngày này lâu như bạn. Bạn bước qua quầy, và mọi chuyện xong nhanh hơn bao năm bạn hình dung. Lúc bạn ra khỏi cửa hiệu, ngoài phố người ta vẫn mua bán như thường, không ai ngoái lại.',
+      lose: (S, X, a) => `Hắn già mà không yếu. Một tiếng huýt, ba gã lính nhà từ gian trong xông ra. Bạn bị đánh ngã giữa đống hàng rồi bị ném ra đường, con dao bẻ gãy quăng theo. ${fN(a)} đứng ở cửa nhìn bạn, lắc đầu, như nhìn một con chó dại.`,
+      burn: (S, X, a) => `Phiên chợ đông nhất năm, bạn đứng lên bậc đá giữa chợ, đọc to từng chứng cứ về ${fN(a)}, người làm chứng đứng ngay bên cạnh. Chợ lặng đi. Mùa sau cửa hiệu ba gian đóng cửa, không ai còn buôn với hắn. Hắn bán nhà, bỏ thành đi đâu không ai biết.`,
+      spare: () => 'Bạn nhìn hắn rất lâu. Ông già sau quầy rót cho bạn một chén trà, tay run làm nước sóng cả ra ngoài. "Đêm nào tao cũng nghe tiếng nó rơi," hắn nói. Bạn không uống, cũng không rút dao. Bạn đặt chén xuống, đi ra, để hắn ngồi lại với tiếng rơi ấy.',
+      after: { win: (S, X, a) => `Bạn về quê, đặt lên mộ ${kn(a)} chuỗi hạt của hắn, rồi lại cầm về, ném xuống sông. Thứ ấy không đáng nằm cạnh ${kn(a)}. Đêm đầu tiên sau bao năm, bạn ngủ mà không mơ thấy con đèo.`,
+        burn: (S, X, a) => `Người trong thành nhắc chuyện ấy rất lâu, mỗi người kể một khác. Có người bảo bạn ác, có người bảo bạn đúng. Bạn chỉ biết từ hôm ấy, người ta nhắc tới ${kn(a)} như một người bị hại, không còn là kẻ trượt chân.`,
+        spare: (S, X, a) => `Mấy năm sau ${fN(a)} chết. Con cháu hắn tìm tới nhà bạn, đưa một cái hộp gỗ, bảo ông dặn trước khi mất. Trong hộp là phần chia hàng của chuyến buôn năm ấy, gói kỹ, chưa tiêu một đồng. Bạn cầm cái hộp, không biết nên giận hay nên thương.`,
+        fail: (S, X, a) => `${fN(a)} vẫn ngồi sau quầy cửa hiệu ba gian, mỗi năm một giàu. Bạn thôi lên thành. Có những đêm bạn mơ thấy con đèo, thấy ${kn(a)} quay lại nhìn mình trước khi rơi, miệng mấp máy một câu bạn không nghe được.` },
+      sum: { win: d => `tự tay đòi mạng kẻ phản bội đã đẩy ${d.kin || 'người nhà'} xuống đèo`, burn: d => `vạch mặt kẻ phản bội đã hại ${d.kin || 'người nhà'} giữa chợ`, spare: () => 'để kẻ phản bội già sống với tội của hắn', fail: d => `không đòi được nợ máu với kẻ phản bội đã hại ${d.kin || 'người nhà'}` },
+      beat: { any: ['Bạn lên thành một chuyến, đứng bên kia đường nhìn cửa hiệu ba gian của {foeN}. Khách ra vào tấp nập. Bạn đứng tới khi người ta đóng cửa.', 'Ngày giỗ {kin}, bạn đặt lên bàn thờ một chén rượu và một con dao. Rượu thì rót, dao thì để nguyên.'] } }
+  };
+  const foeOf = a => AV_FOE[a.d.foe] || AV_FOE.beast;
+  // Câu chen vào thử thách thành công theo lối đã chọn ở hồi chọn đường.
+  const AV_PATH = { train: 'Bao năm tự luyện không phí: bạn đi một mình mà không thấy thiếu ai.', band: 'Cả nhóm thay nhau canh đêm, không ai than một lời.',
+    hire: 'Đám mạo hiểm giả đi trước, bạn bám sát sau lưng, không để họ bỏ cuộc giữa chừng.', guild: 'Mấy năm trong hội đã dạy bạn cách dò tin, cách nghe ngóng mà không để ai biết mình đang hỏi.',
+    rank: 'Cái chức bạn leo lên được mở cho bạn những cánh cửa mà trước kia bạn chỉ đứng ngoài nhìn.', law: 'Bạn chép lại từng điều nghe được vào cuốn sổ giấu dưới đáy rương.',
+    faith: 'Lá bùa vị tư tế buộc vào cổ tay bạn ấm lên mỗi khi tới gần chỗ có tà khí.', spy: 'Bao tháng bưng nước, cúi đầu dưới mái nhà hắn, bạn đã nghe được những điều người ngoài không ai biết.' };
+  const AV_BAND = 'Tụ những người cùng chung mối hận';
+  const AV_BASE = { band: .1, hire: .15, guild: .12, rank: .1, law: .08, faith: .12, spy: .1 };
+  const avOdds = (S, X, a) => odds(S, X, (a.d.ok ? .5 : .3) + pb(a) + (a.d.path === 'guild' || a.d.path === 'rank' ? .05 : 0));
+  const avBy = (o, f) => (S, X, a) => f(foeOf(a))[o](S, X, a);
   saga('m_avenge', {
     nameVi: 'Món nợ máu', pitch: 'Đi đòi lại món nợ máu năm xưa.', axes: { vo: 1, am: .4 }, themes: ['raid', 'war'], aim: null,
     quest: a => `Trả món nợ máu cho ${a.d.kin || 'làng'}`, good: ['win', 'burn', 'spare'],
     marks: { win: 'da_bao_thu', burn: 'da_bao_thu', spare: 'buong_bo', fail: 'thu_chua_tra' },
-    sum: { win: d => `trả được món nợ máu cho ${d.kin || 'làng'}`, burn: d => `đốt sạch tổ của bầy quái đã giết ${d.kin || 'người làng'}`, spare: d => `tha cho lứa quái con, buông được mối thù cho ${d.kin || 'làng'}`, fail: d => `không trả được món nợ máu cho ${d.kin || 'làng'}` },
-    follow: ['Đêm ấy bạn lại mơ thấy ngày làng cháy, tỉnh dậy gối ướt mồ hôi.', 'Về nhà, bạn khắc thêm một vạch lên chuôi vũ khí. Chuôi đã gần kín vạch.', 'Việc gì bạn làm cũng như đưa mình tới gần cái tổ ấy thêm một bước.'],
-    beat: { open: ['Đêm nào bạn cũng ngồi mài lưỡi vũ khí bên bếp, tiếng đá rít đều đều tới khuya. Người nhà đã quen, không ai hỏi nữa.', 'Thợ săn nào đi ngang làng cũng bị bạn giữ lại hỏi chuyện {z}: lối nào, mùa nào, bầy lớn hay nhỏ. Có người cười, bảo bạn hỏi như đi đòi nợ. Bạn không cười.'],
-      knot: ['Bạn tập tới khi tay rớm máu, quấn vải lại rồi tập tiếp. Vết chai cũ chưa lành, vết chai mới đã lên. Ngày giỗ {kin} sắp tới, bạn muốn có thứ gì đó để nói trước mộ.'],
-      trial: ['Bạn vẽ bản đồ {z} lên vách nhà bằng than, chỗ nào thấy dấu chân thì chấm một chấm. Vách giờ chi chít chấm đen, dày nhất ở một góc.', 'Bạn nằm phục cả đêm ở bìa {z}, sương ướt đẫm lưng áo. Gần sáng chúng đi qua, gần tới mức nghe được tiếng thở. Bạn nín thở đếm từng con, rồi lặng lẽ về.'],
-      climax: ['Bạn biết cái tổ ở đâu rồi. Đêm nào cũng ra đầu làng nhìn trời, chờ một ngày khô ráo, gió thổi ngược về phía núi.'] },
-    open: (S, X, a) => `${lead(S, a)}Bạn giữ lại một món đồ của ${a.d.kin || 'người làng đã mất'}, đặt ở đầu giường. Sáng nào trước khi ra bãi tập bạn cũng cầm nó lên, nhìn một lúc rồi mới đi. Món đồ không nói gì. Nhưng bạn biết, sớm muộn mình cũng sẽ đi tìm ${spName(a)}.`,
-    knot: { title: 'Cách đòi nợ máu', body: (S, X, a) => `Ở ${zoneName(S, X, a)}, ${spName(a)} vẫn còn đó, mỗi năm một đông thêm. Một mình bạn chưa đủ sức vào tận tổ. Phải có cách khác, hoặc phải chờ.`,
-      choices: (S, X) => [{ k: 'train', label: 'Luyện tới khi đủ sức', sub: 'Một mình, lâu, nhưng chắc tay.' }, { k: 'band', label: 'Tụ một toán thợ săn', sub: 'Cần người tin bạn.' },
-        { k: 'hire', label: 'Bỏ tiền thuê mạo hiểm giả', sub: `Tốn chừng ${G.coin(Math.round(med(S, X) * 1.5))}.` }],
+    sum: { win: d => foeOf({ d }).sum.win(d), burn: d => foeOf({ d }).sum.burn(d), spare: d => foeOf({ d }).sum.spare(d), fail: d => foeOf({ d }).sum.fail(d) },
+    follow: ['Đêm ấy bạn lại mơ thấy ngày ấy, tỉnh dậy gối ướt mồ hôi.', 'Về nhà, bạn khắc thêm một vạch lên chuôi vũ khí. Chuôi đã gần kín vạch.', 'Việc gì bạn làm cũng như đưa mình tới gần ngày đòi nợ thêm một bước.'],
+    beat: AV_FOE.beast.beat, beatOf: a => (a.d.foe && a.d.foe !== 'beast' ? AV_FOE[a.d.foe].beat.any : null),
+    fill: (S, X, a, t) => t.replace(/{foeN}/g, fN(a)).replace(/{foe}/g, foeOf(a).who(a)),
+    // Trang duyệt: câu chữ của mọi loại kẻ thù (review/story-data.html đọc def.texts, def.variants).
+    variants: Object.values(AV_FOE).map(F => F.nameVi),
+    texts: { open: Object.values(AV_FOE).map(F => F.open), knot: [AV_PATH, { label: AV_BAND }, ...Object.values(AV_FOE).map(F => [F.knot, F.alt, F.band ? { label: F.band } : null])], trial: Object.values(AV_FOE).map(F => [F.ok, F.fail]),
+      climax: Object.values(AV_FOE).map(F => [F.cb, F.ch, F.win, F.lose, F.burn, F.spare]), after: Object.values(AV_FOE).map(F => Object.values(F.after)), beat: Object.values(AV_FOE).map(F => F.beat.any || []) },
+    open: (S, X, a) => `${lead(S, a)}${foeOf(a).open(S, X, a)}`,
+    knot: { title: 'Cách đòi nợ máu', body: (S, X, a) => foeOf(a).knot(S, X, a),
+      choices: (S, X, a) => { const F = foeOf(a); return [{ k: 'train', label: 'Luyện tới khi đủ sức', sub: 'Một mình, lâu, nhưng chắc tay.' }, { k: 'band', label: F.band || AV_BAND, sub: 'Cần người tin bạn.' },
+        { k: 'guild', label: 'Vào hội mạo hiểm, đi đánh thuê', sub: 'Vừa luyện tay, vừa có bạn đồng hành, vừa nghe được tin.' },
+        { k: 'rank', label: 'Leo lên chức cao để có người, có quyền', sub: 'Lâu, phải nhẫn nhịn; tới lúc có thì có cả một đội.' },
+        { k: F.alt.k, label: F.alt.label, sub: F.alt.sub(S, X) }]; },
       apply(S, X, ch, a) {
+        const F = foeOf(a);
         if (ch === 'train') { X.gain(bestSk(S), 6); G.trajBump(S, { vo: .5 }); return 'Bạn dựng một bãi tập sau nhà, cắm cọc, treo bao cát. Ngày nào cũng ra đó trước khi gà gáy, về khi trời đã tối mịt. Bát cơm để phần trên bếp lần nào cũng nguội.'; }
-        if (ch === 'band') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn đi đòi nợ máu', work: 'hunter', bond: 35 }); a.d.mate = p.id; X.add('so', 4); return `${first(p.name)} là người đầu tiên đứng ra, không hỏi công xá bao nhiêu. Rồi thêm ba người nữa, ai cũng có lý do riêng để căm bầy quái. Tối ấy năm người ngồi quanh bếp nhà bạn, uống chung một vò rượu, không ai nói nhiều.`; }
-        X.money(-Math.round(med(S, X) * 1.5)); a.d.hired = true; return 'Bạn đặt túi tiền lên bàn ở hội mạo hiểm. Gã ngồi sau bàn đếm từng đồng, chậm rãi, rồi gật đầu. Số tiền ấy bạn dành dụm mấy năm. Lúc ra về tay nhẹ hẳn, mà lòng thì không.';
+        if (ch === 'band') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn đi đòi nợ máu', work: 'hunter', bond: 35 }); a.d.mate = p.id; X.add('so', 4); return `${first(p.name)} là người đầu tiên đứng ra, không hỏi công xá bao nhiêu. Rồi thêm ba người nữa, ai cũng có lý do riêng để căm ${F.hate}. Tối ấy năm người ngồi quanh bếp nhà bạn, uống chung một vò rượu, không ai nói nhiều.`; }
+        if (ch === 'guild') { const p = G.castAdd(S, X, { role: 'ban', how: 'đồng đội trong hội mạo hiểm', work: 'hunter', bond: 25 }); a.d.mate = p.id; X.gain(bestSk(S), 4); X.money(Math.round(med(S, X) * .6)); S.fame += 2; G.trajBump(S, { vo: .3, du: .3 });
+          return `Bạn ký tên vào sổ của hội mạo hiểm, nhận tấm thẻ đồng còn sáng bóng. Mấy năm liền bạn theo các toán thuê đi khắp nơi: hộ tống đoàn buôn, dọn hang quái, đòi nợ thay người. ${first(p.name)} đỡ cho bạn một nhát dao ở chuyến đầu, từ đó hai người đi đâu cũng có nhau. Tới quán trọ nào, bạn cũng hỏi về ${F.who(a)}.`; }
+        if (ch === 'rank') { G.trajBump(S, { quyen: .6 }); X.add('so', 3); X.add('h', -3); return 'Bạn xin vào làm lính canh ở đồn trấn, rồi làm người giữ sổ cho viên đội trưởng. Bạn cúi đầu với những kẻ mình khinh, cười với những câu mình ghét. Mỗi lần được lên một bậc, bạn lại đếm xem dưới tay mình đã có bao nhiêu người. Chưa đủ. Bạn chờ.'; }
+        return F.alt.apply(S, X, a);
       },
-      auto: (S, X) => S.traits.social > .55 ? 'band' : S.gold > med(S, X) * 2 && S.traits.bold < .5 ? 'hire' : 'train' },
-    trial: { base: (S, X, a) => .45 + (a.d.path === 'band' ? .1 : a.d.path === 'hire' ? .15 : 0),
-      run: (S, X, a, ok) => ok ? (X.gain(bestSk(S), 3), `Suốt một mùa bạn lần theo dấu ${spName(a)} qua ${zoneName(S, X, a)}, ăn lương khô, ngủ dưới gốc cây. ${a.d.path === 'band' ? 'Cả toán thay nhau canh đêm, không ai than một lời.' : a.d.path === 'hire' ? 'Đám mạo hiểm giả đi trước, bạn bám sát sau lưng, không để họ bỏ cuộc giữa chừng.' : 'Bạn đi một mình, quen dần với từng tiếng động của rừng.'} Rồi một chiều, dưới chân một vách đá, gió đưa tới mùi hôi của tổ. Bạn đã tìm ra nó.`)
-        : (X.add('hl', -10), X.cond('wound'), `Bạn lần theo dấu ${spName(a)} tới ${zoneName(S, X, a)} thì trời đổ mưa ba ngày liền, dấu chân trôi sạch. Đêm thứ ba có thứ gì đó lao ra từ bụi rậm. Bạn về làng với một vết cào dài trên lưng. Cái tổ vẫn chưa thấy đâu.`) },
-    climax: { title: 'Trước cửa tổ', body: (S, X, a) => `Tổ của ${spName(a)} nằm dưới vách đá, cửa tổ hôi mùi xương mục. Từ trong bóng tối vọng ra tiếng con non rúc rích. Bạn nghĩ tới ${a.d.kin || 'những người đã mất'}, rồi nghĩ tới lũ con non ấy.`,
-      choices: (S, X, a) => [{ k: 'fight', label: 'Vào tổ, đánh tới cùng', sub: `Khả năng thắng chừng ${Math.round(odds(S, X, (a.d.ok ? .5 : .3) + pb(a)) * 100)}%.` },
-        { k: 'burn', label: 'Đốt tổ từ bên ngoài', sub: 'Chắc ăn hơn; không biết con đầu đàn đã chết chưa.' }, { k: 'spare', label: 'Quay về', sub: 'Tha cho lứa con non.' }],
+      auto: (S, X, a) => S.traits.social > .65 && S.traits.studious > .5 ? 'rank' : S.traits.social > .55 ? 'band' : S.traits.bold > .65 ? 'guild' : (S.gold > med(S, X) * 2 && S.traits.bold < .5) || S.traits.pious > .7 ? foeOf(a).alt.k : 'train' },
+    trial: { base: (S, X, a) => .45 + (AV_BASE[a.d.path] || 0),
+      run: (S, X, a, ok) => { const F = foeOf(a); if (ok) { X.gain(bestSk(S), 3); return X.pick(F.ok)(S, X, a, AV_PATH[a.d.path] || ''); } return X.pick(F.fail)(S, X, a); } },
+    climax: { title: 'Ngày đòi nợ', body: (S, X, a) => foeOf(a).cb(S, X, a),
+      choices: (S, X, a) => { const C = foeOf(a).ch; return [{ k: 'fight', label: C.fight.label, sub: `Khả năng thắng chừng ${Math.round(avOdds(S, X, a) * 100)}%.` }, { k: 'burn', label: C.burn.label, sub: C.burn.sub }, { k: 'spare', label: C.spare.label, sub: C.spare.sub }]; },
       apply(S, X, ch, a) {
-        if (ch === 'fight') { if (X.chance(odds(S, X, (a.d.ok ? .5 : .3) + pb(a)))) { S.fame += 6; return { t: `Bạn đi vào bóng tối với ngọn đuốc và vũ khí. Trong đó sâu hơn bạn tưởng, và tối hơn. Lúc trở ra trời đã xế, áo bạn đẫm máu không phải của mình, trên tay là cái nanh của con đầu đàn.${a.d.path === 'band' ? ' Toán thợ săn đứng chờ ở cửa tổ, thấy bạn thì reo lên.' : ''}`, o: 'win' }; }
-          X.add('hl', -20); X.cond('wound'); return { t: 'Con đầu đàn to hơn mọi lời kể. Nó hất bạn vào vách đá như hất một bó rơm. Bạn bò ra khỏi tổ, máu chảy theo từng bước, sau lưng vẫn vang tiếng gầm.', o: 'fail' }; }
-        if (ch === 'burn') { S.fame += 2; return { t: 'Bạn chất củi khô kín cửa tổ rồi châm lửa. Khói đen bốc lên ba ngày, cả vùng ngửi thấy. Bạn ngồi canh tới khi lửa tàn, mà vẫn không chắc con đầu đàn đã chết hay đã trốn qua một lối khác.', o: 'burn' }; }
-        X.add('h', 4); return { t: 'Bạn đứng lâu ở cửa tổ, đuốc cháy gần tới tay. Lũ con non rúc vào nhau trong góc, mắt sáng lên trong bóng tối. Chúng chưa giết ai cả. Bạn quay đi, và bước chân về nhẹ hơn bước chân đi.', o: 'spare' };
+        const F = foeOf(a);
+        if (ch === 'fight') { if (X.chance(avOdds(S, X, a))) { S.fame += 6; return { t: F.win(S, X, a), o: 'win' }; }
+          X.add('hl', -20); X.cond('wound'); return { t: F.lose(S, X, a), o: 'fail' }; }
+        if (ch === 'burn') { S.fame += 2; return { t: F.burn(S, X, a), o: 'burn' }; }
+        X.add('h', 4); return { t: F.spare(S, X, a), o: 'spare' };
       },
       auto: (S, X, a) => S.traits.bold > .55 ? 'fight' : S.traits.pious > .7 ? 'spare' : 'burn' },
-    after: { win: (S, X, a) => { const m = mateOf(S, a); return `Bạn đặt cái nanh lên mộ ${a.d.kin || 'những người đã mất'}, thắp ba nén hương.${m ? ` ${m} đứng sau bạn, cũng thắp một nén.` : ''} Đêm ấy, lần đầu sau bao năm, bạn ngủ một giấc không mộng. Sáng ra bạn cất vũ khí lên gác, lâu lắm mới lấy xuống.`; },
-      burn: (S, X, a) => `Người làng thôi nhắc tới ${spName(a)}. Mấy mùa sau cỏ đã mọc lại trên vách đá cháy đen. Bạn không đi ngang chỗ ấy nữa, có việc phải qua thì vòng đường khác, xa hơn nửa buổi.`,
-      spare: (S, X, a) => `Mấy năm sau người ta vẫn thấy quái ở ${zoneName(S, X, a)}, nhưng chúng không xuống làng nữa. Có lần đi rừng, bạn gặp một con lớn đứng trên mỏm đá nhìn xuống. Nó nhìn bạn rất lâu rồi bỏ đi. Bạn không hối hận.`,
-      fail: (S, X, a) => `Cái tổ vẫn ở đó. Đêm nào trời trở gió, vết thương cũ trên lưng lại nhức, như có người gõ cửa nhắc nợ. Bạn ngồi dậy nhìn món đồ của ${a.d.kin || 'người đã mất'} ở đầu giường, rồi nằm xuống, không ngủ lại được.` }
+    after: { win: avBy('win', F => F.after), burn: avBy('burn', F => F.after), spare: avBy('spare', F => F.after), fail: avBy('fail', F => F.after) }
   });
 
   // ── Thoát nghèo ──
+  // Người dùng ghi chú 18/10/2026 (trang Duyệt Mạch Truyện): mở đầu cần lý do sâu hơn (sự kiện tuổi nhỏ ri_* ở mục 3: chịu nhục vì nghèo,
+  // gắn bó với người nhà; mở đầu nhắc lại ký ức S.flags.riMem; nút m_rise_kin: cảnh người nhà trong lúc đi đường); thêm lối liều mạng
+  // mạo hiểm (venture); thử thách nhiều kịch bản theo lối (RISE_TRIAL).
+  const kinHome = S => (S.family.parents || []).find(p => p.alive && (p.role === 'mẹ' || p.role === 'cha'));
+  const ppOf = S => { const p = kinHome(S); return p ? p.role : 'bà'; };
+  const RISE_TRIAL = {
+    trade: { ok: ['Chuyến hàng bán hết trước khi tới chợ thứ ba, người ta còn hỏi bao giờ bạn ghé lại',
+        'Năm ấy miền ngược mất mùa, bạn chở gạo dưới xuôi lên bán. Bạn không bán cắt cổ, chỉ lấy lời gấp đôi, người ta nhớ mà mua của bạn cả mùa sau',
+        'Một lão thương lái già ốm nặng, giao lại cho bạn mối hàng vải, chỉ dặn mỗi năm mang cho vợ lão một tấm. Bạn giữ lời, mối hàng cũng giữ bạn'],
+      fail: ['Hàng ướt mưa giữa đường, muối chảy thành nước', 'Bọn cướp chặn xe ở khúc đèo, lấy cả hàng lẫn con lừa, chừa lại cho bạn cái áo mặc trên người',
+        'Bạn mua phải một xe vải mục, bên ngoài phủ một lớp vải tốt. Kẻ bán đã biến khỏi chợ trước khi bạn kịp gỡ tới lớp thứ hai'] },
+    land: { ok: ['Mảnh đất khai hoang cho vụ lúa đầu tiên, hạt nào cũng chắc mẩy', 'Cả nhà ra đồng gặt, đứa nhỏ nhất cũng ôm được một bó. Tối ấy ăn cơm mới ngay trên bờ ruộng, thơm tới mức không ai nói câu nào',
+        'Bạn đào được con mương dẫn nước từ suối về, làng bên cũng xin chia nước, trả bằng thóc, đều đặn mỗi mùa'],
+      fail: ['Lũ về giữa đêm, cuốn sạch vụ đầu', 'Châu chấu kéo tới như một đám mây, ba ngày sau ruộng chỉ còn trơ gốc rạ',
+        'Viên quản đất tới đo lại, bảo mảnh đất khai hoang nằm trong đất của lãnh chúa. Muốn cày tiếp thì nộp tô nửa phần'] },
+    skill: { ok: ['Ông chủ xưởng gọi bạn vào, trả đủ công cả những tháng trước', 'Một khách sộp trên tỉnh đặt hàng đúng tên bạn, không qua tay thợ cả. Thợ cả biết, chỉ gật đầu, rồi giao cho bạn việc khó hơn',
+        'Bạn làm xong món đồ khó nhất xưởng nhận năm ấy, thức trắng mười đêm. Thợ cả cầm lên xem rất lâu, rồi trả lại, bảo từ nay không cần ông xem nữa'],
+      fail: ['Xưởng cháy, ông chủ ôm tiền bỏ đi', 'Bạn làm hỏng món hàng của một nhà quyền thế, phải bồi gấp đôi tiền công cả năm',
+        'Xưởng mới mở ở đầu chợ bán rẻ hơn một nửa, khách bỏ đi hết. Thợ cả cho bớt người, bạn là người mới nhất'] },
+    venture: { ok: ['Toán của bạn hạ được một con quái già ở {z}, tinh hạch to bằng nắm tay. Chia phần xong, bạn ôm túi tiền ngủ ngồi suốt đường về',
+        'Bạn chui vào một khe mỏ bỏ hoang không ai dám vào, mò được một mạch ma tinh nhỏ. Hai tuần đào trong bóng tối, ra tới ánh sáng mắt cay xè, tay phồng rộp, mà túi thì nặng',
+        'Bạn nhận hộ tống một đoàn hàng qua vùng có quái, cả đoàn ai cũng nghĩ sẽ không qua nổi. Đoàn qua được, chủ hàng trả gấp ba như đã hứa'],
+      fail: ['Con quái không chết như người ta bảo. Nó hất bạn văng vào gốc cây, cả toán bỏ chạy, để lại hết đồ nghề',
+        'Hầm mỏ sập sau lưng bạn. Hai ngày sau bạn mới đào được lối ra, mất cả đèn, cả cuốc, lẫn số ma tinh đã đào',
+        'Toán người liều bạn theo cãi nhau chia phần ngay giữa rừng, rút dao với nhau. Bạn chạy về một mình, cánh tay một vết chém, túi trống trơn'] }
+  };
+  const RISE_TAIL = { ok: ['Đêm ấy bạn bỏ tiền vào hũ, nghe tiếng đồng chạm nhau mà không ngủ được.', 'Bạn mua cho {pp} một tấm vải mới, phần còn lại bỏ cả vào hũ.'],
+    fail: ['Bạn ngồi trước cửa nhà cả buổi, không nói với ai câu nào.', 'Tối ấy cả nhà ăn cháo. Không ai trách bạn, mà bạn thấy còn nặng hơn bị trách.'] };
   saga('m_rise', {
     nameVi: 'Thoát nghèo', pitch: 'Đưa cả nhà ra khỏi cảnh nghèo.', axes: { thuong: 1, nghe: .6 }, themes: ['tax', 'hardship', 'gamble'], aim: 'wealth',
     quest: () => 'Đưa cả nhà thoát nghèo', good: ['rich', 'steady'], marks: { rich: 'nha_kha', steady: 'giu_loi', ruined: 'tay_trang', crooked: 'cua_phi_nghia' },
     sum: { rich: () => 'đưa cả nhà thoát nghèo', steady: () => 'giữ cho nhà đủ ăn mà không nợ ai', ruined: () => 'mất trắng một cơ nghiệp gây dựng nửa đời', crooked: () => 'giàu lên bằng những mối làm ăn không ai muốn nhắc' },
     follow: ['Tối ấy bạn lại nghĩ tới cái hũ tiền dưới gầm giường, nhẩm xem còn thiếu bao nhiêu.', 'Về nhà bạn lôi hũ tiền ra đếm lại, lần này đếm chậm hơn.', 'Bạn nhẩm trong đầu: còn bao nhiêu mùa nữa thì đủ.'],
     beat: { any: ['Bạn dậy trước gà gáy, đi ngủ sau chó sủa, quanh năm không nghỉ một ngày rằm. Hũ tiền dưới gầm giường đầy thêm một đốt tay.', 'Ở chợ bạn mặc cả từng đồng, kẻ bán người mua đều ngán. Bà bán cá nhớ mặt bạn, thấy từ xa đã cười, bảo thôi thì bớt cho.', 'Bạn bè rủ đi uống rượu, bạn lắc đầu. Ngồi nhà nhai cơm nguội với muối vừng, nghĩ tới mùa sau, bạn thấy cũng đáng.'] },
-    open: (S, X, a) => `${lead(S, a)}Đêm ấy bạn ngồi bên ngọn đèn dầu, đếm từng đồng trong nhà. Đếm hai lần, vẫn không đủ cho một mùa. Ngoài vách có tiếng ai ho khan. Bạn tự hứa: tới lúc tóc bạc, nhà này sẽ không phải ăn cháo loãng nữa.`,
-    knot: { title: 'Con đường làm ăn', body: () => 'Muốn thoát nghèo phải có một nghề ra tiền, hoặc một mảnh đất của riêng mình. Ai trong làng cũng có lời khuyên, mà không ai cho vay. Đường nào thì cũng phải tự mình đi.',
-      choices: () => [{ k: 'trade', label: 'Buôn chuyến', sub: 'Mua chỗ này, bán chỗ kia.' }, { k: 'land', label: 'Khai hoang đất mới', sub: 'Đất rẻ, việc nặng.' }, { k: 'skill', label: 'Học một nghề giỏi', sub: 'Lâu thấy tiền, nhưng bền.' }],
-      apply(S, X, ch) { if (ch === 'trade') { G.trajBump(S, { thuong: .5 }); return 'Bạn vay một khoản nhỏ, mua một xe muối rồi đẩy nó qua ba làng. Bánh xe sa lầy hai lần, vai bạn tróc da. Lời chẳng được bao nhiêu. Nhưng từ chuyến ấy bạn biết chợ nào cần gì, đường nào ít cướp.'; }
+    texts: { trial: [RISE_TRIAL, RISE_TAIL] },
+    open: (S, X, a) => { const M = S.flags.riMem, mem = M && !(a.d.why && a.d.why.slice(0, 30) === M.w) ? M.m : null;
+      return `${lead(S, a)}Đêm ấy bạn ngồi bên ngọn đèn dầu, đếm từng đồng trong nhà. Đếm hai lần, vẫn không đủ cho một mùa. ${mem ? `Bạn nhớ tới ${mem}, nhớ rõ như mới hôm qua. ` : ''}Ngoài vách có tiếng ai ho khan. Bạn tự hứa: tới lúc tóc bạc, nhà này sẽ không phải ăn cháo loãng nữa.`; },
+    knot: { title: 'Con đường làm ăn', body: () => 'Muốn thoát nghèo phải có một nghề ra tiền, một mảnh đất của riêng mình, hoặc dám đem cả mạng ra đánh cược. Ai trong làng cũng có lời khuyên, mà không ai cho vay. Đường nào thì cũng phải tự mình đi.',
+      choices: () => [{ k: 'trade', label: 'Buôn chuyến', sub: 'Mua chỗ này, bán chỗ kia.' }, { k: 'land', label: 'Khai hoang đất mới', sub: 'Đất rẻ, việc nặng.' }, { k: 'skill', label: 'Học một nghề giỏi', sub: 'Lâu thấy tiền, nhưng bền.' },
+        { k: 'venture', label: 'Liều mạng đi mạo hiểm', sub: 'Vào nơi nguy hiểm kiếm của: giàu nhanh, dễ mất mạng.' }],
+      apply(S, X, ch, a) { if (ch === 'trade') { G.trajBump(S, { thuong: .5 }); return 'Bạn vay một khoản nhỏ, mua một xe muối rồi đẩy nó qua ba làng. Bánh xe sa lầy hai lần, vai bạn tróc da. Lời chẳng được bao nhiêu. Nhưng từ chuyến ấy bạn biết chợ nào cần gì, đường nào ít cướp.'; }
         if (ch === 'land') { X.gain('Body', 4); G.trajBump(S, { gia: .3 }); return 'Bạn xin được một mảnh đất hoang ven rừng, dựng tạm cái lều tranh. Ngày nào cũng nhổ gốc cây, đào đá, tối về hai bàn tay không nắm lại được. Mảnh đất bé tí, cỏ tranh cao quá đầu. Nhưng là đất của bạn.'; }
+        if (ch === 'venture') { X.gain(bestSk(S), 3); G.trajBump(S, { vo: .4, du: .3 }); return `Bạn bán con dao phay, mua một ngọn giáo cũ, theo một toán người liều vào ${zoneName(S, X, a)} săn quái lấy tinh hạch. Đêm đầu nằm trong rừng, bạn không ngủ được, nghe tiếng gì cũng tưởng mình sắp chết. Sáng ra bạn vẫn sống, trong túi có một viên tinh hạch bé bằng đốt tay. Đủ mua gạo cho cả nhà ba tháng, và đủ để bạn quay lại.`; }
         X.gain('Engineering', 4); G.trajBump(S, { nghe: .5 }); return 'Bạn xin vào học việc ở một xưởng, chịu làm không công ba năm đầu. Thợ cả ít lời, chỉ gõ thước vào tay mỗi khi bạn làm sai. Tay sưng mãi rồi cũng quen. Đêm về, bạn tập lại một mình từng đường ông làm ban ngày.'; },
-      auto: S => S.traits.social > .55 ? 'trade' : S.traits.studious > .55 ? 'skill' : 'land' },
-    trial: { base: S => .5 + (S.q >= 3 ? .1 : 0),
-      run: (S, X, a, ok) => { const g = Math.round(med(S, X) * (ok ? 1.5 : -.6)); X.money(g);
-        return ok ? `Mùa ấy được. ${a.d.path === 'trade' ? 'Chuyến hàng bán hết trước khi tới chợ thứ ba, người ta còn hỏi bao giờ bạn ghé lại' : a.d.path === 'land' ? 'Mảnh đất khai hoang cho vụ lúa đầu tiên, hạt nào cũng chắc mẩy' : 'Ông chủ xưởng gọi bạn vào, trả đủ công cả những tháng trước'}. Đêm ấy bạn bỏ tiền vào hũ, nghe tiếng đồng chạm nhau mà không ngủ được. Thu về ${G.coin(g)}.`
-          : `Mùa ấy mất. ${a.d.path === 'trade' ? 'Hàng ướt mưa giữa đường, muối chảy thành nước' : a.d.path === 'land' ? 'Lũ về giữa đêm, cuốn sạch vụ đầu' : 'Xưởng cháy, ông chủ ôm tiền bỏ đi'}. Bạn ngồi trước cửa nhà cả buổi, không nói với ai câu nào. Lỗ ${G.coin(-g)}.`; } },
+      auto: S => S.traits.bold > .7 && S.traits.social < .5 ? 'venture' : S.traits.social > .55 ? 'trade' : S.traits.studious > .55 ? 'skill' : 'land' },
+    trial: { base: (S, X, a) => .5 + (S.q >= 3 ? .1 : 0) - (a.d.path === 'venture' ? .1 : 0),
+      run: (S, X, a, ok) => { const v = a.d.path === 'venture', T = RISE_TRIAL[a.d.path] || RISE_TRIAL.skill, g = Math.round(med(S, X) * (ok ? (v ? 2.5 : 1.5) : (v ? -.3 : -.6))); X.money(g);
+        if (v && !ok) { X.add('hl', -15); X.cond('wound'); }
+        const s = X.pick(ok ? T.ok : T.fail).replace('{z}', zoneName(S, X, a)), tail = X.pick(RISE_TAIL[ok ? 'ok' : 'fail']).replace('{pp}', ppOf(S));
+        return ok ? `Mùa ấy được. ${s}. ${tail} Thu về ${G.coin(g)}.` : `Mùa ấy mất. ${s}. ${tail} Lỗ ${G.coin(-g)}.`; } },
     climax: { title: 'Mối làm ăn lớn', body: (S, X, a) => `Có một mối hàng lớn tìm tới. Được thì cả nhà đổi đời, mất thì mất sạch. ${a.d.ok ? 'Mùa trước làm ăn được, trong tay bạn có chút vốn.' : 'Mùa trước vừa lỗ, vốn trong tay chẳng còn bao nhiêu.'} Cần chừng ${G.coin(Math.round(med(S, X) * 3))}.`,
       choices: (S, X, a) => [{ k: 'risk', label: 'Dồn hết vốn vào', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .1 : 0) + pb(a), .1, .9) * 100)}% được.` },
         { k: 'steady', label: 'Giữ nhịp, chia bớt cho họ hàng', sub: 'Không giàu nhanh, không mất gì.' }, { k: 'crooked', label: 'Làm với kẻ buôn lậu', sub: 'Chắc ăn. Người ta sẽ nhớ.' }],
@@ -271,11 +457,21 @@ window.LifeSim = window.LifeSim || {};
         X.money(Math.round(med(S, X) * 4)); G.trajBump(S, { am: .4 }); return { t: 'Bạn bắt tay kẻ buôn lậu dưới gầm cầu, chỗ không có đèn. Tiền về đều như nước, không cần hỏi từ đâu. Lần đầu tiên nhà bạn có của để dành. Chỉ có điều, đi qua gầm cầu ấy bạn hay ngoái lại.', o: 'crooked' };
       },
       auto: (S, X) => S.traits.bold > .6 ? 'risk' : S.traits.pious < .25 && S.traits.bold > .4 ? 'crooked' : 'steady' },
-    after: { rich: (S, X, a) => `Nhà bạn lợp lại mái ngói đỏ, cả xóm ra xem. ${a.d.path === 'land' ? 'Mảnh đất hoang năm nào giờ là thửa ruộng tốt nhất xóm.' : a.d.path === 'trade' ? 'Cái xe muối cũ bạn vẫn giữ, dựng ở góc sân.' : 'Mấy vết thước gõ trên mu bàn tay năm nào giờ chỉ còn mờ mờ.'} Bữa cơm có thịt mà không cần đợi Tết. Có những đêm bạn vẫn giật mình dậy đếm tiền, rồi nhớ ra là không cần nữa.`,
+    after: { rich: (S, X, a) => `Nhà bạn lợp lại mái ngói đỏ, cả xóm ra xem. ${a.d.path === 'land' ? 'Mảnh đất hoang năm nào giờ là thửa ruộng tốt nhất xóm.' : a.d.path === 'trade' ? 'Cái xe muối cũ bạn vẫn giữ, dựng ở góc sân.' : a.d.path === 'venture' ? 'Vết sẹo trên cánh tay từ những chuyến đi liều giờ chỉ còn một vệt trắng.' : 'Mấy vết thước gõ trên mu bàn tay năm nào giờ chỉ còn mờ mờ.'} Bữa cơm có thịt mà không cần đợi Tết. Có những đêm bạn vẫn giật mình dậy đếm tiền, rồi nhớ ra là không cần nữa.`,
       steady: () => 'Trong họ không ai phải đi vay nữa. Tết nào cũng có người tới nhà bạn trước tiên, mang theo con gà, nải chuối. Nhà bạn không giàu. Nhưng gặp chuyện, người ta biết gõ cửa nào.',
       ruined: () => 'Bạn bán bớt đồ đạc, dọn về căn nhà cũ, lại ngồi đếm từng đồng bên ngọn đèn dầu như năm nào. Lần này đếm nhanh hơn, vì chẳng còn bao nhiêu. Bạn tự nhủ: còn người là còn của. Câu ấy nói thì dễ, tin thì khó hơn.',
       crooked: () => 'Nhà bạn giàu lên trông thấy. Hàng xóm vẫn chào, nhưng chào nhỏ hơn trước, và không ai hỏi bạn làm gì. Đêm Tết, bạn ngồi một mình trong căn nhà rộng, nghe tiếng cười từ nhà bên vọng sang.' }
   });
+  // Cảnh người nhà trong lúc đi đường thoát nghèo (mở đầu tới thử thách; không sang hồi, góp tiến độ): người ta thoát nghèo là vì ai.
+  { const e = { id: 'm_rise_kin', st: TAE, tree: { body: 'living' }, story: { arc: 'm_rise', at: ['open', 'knot', 'trial'], wait: [1, 40] }, w: 1.2,
+    run(S, X, a) {
+      a.d.prog = prog(a) + 1; const F = S.family, p = kinHome(S), sib = (F.sibs || []).find(s => s.alive), kid = (F.kids || []).length, L = [];
+      if (p) L.push(() => { X.money(-Math.round(med(S, X) * .15)); return `${cap(p.role)} dạo này ho nhiều, đêm nào bạn cũng nghe qua vách. Bạn bán con gà mái đẻ, mua mấy thang thuốc, sắc bên bếp tới khuya. Uống xong, ${p.role} cầm tay bạn, dặn đừng vì ${p.role} mà tiêu hết. Bạn gật đầu, rồi sáng mai lại ra chợ bán thêm thứ khác.`; });
+      if (sib) L.push(() => { X.money(-Math.round(med(S, X) * .1)); X.add('so', 2); return `${sib.name} tìm tới, ngập ngừng xin vài đồng đóng tiền thầy cho con. Bạn mở hũ, đếm, rồi đưa gấp đôi số được xin. Hai người ngồi uống chén nước chè, nhắc lại mấy năm đói, cười mà mắt cay.`; });
+      if (kid) L.push(() => `Đứa con nhỏ hỏi bao giờ nhà mình có mái ngói như nhà bên. Bạn bảo sắp rồi, rồi ra hiên ngồi một mình, nhẩm lại hũ tiền.${F.spouse ? ' Người bạn đời mang ra bát nước, ngồi xuống cạnh, không hỏi gì.' : ''} Đêm ấy bạn thức tới khuya, tính lại từng khoản cho mùa tới.`);
+      L.push(() => 'Bạn về thăm nhà cũ, thấy mái tranh lại dột đúng chỗ năm ngoái mới vá. Bạn trèo lên vá lại, ngồi trên mái nhìn xuống cả xóm, thấy nhà nào cũng thấp, cũng cũ như nhà mình. Bạn nghĩ: thoát được thì phải kéo cả xóm theo.');
+      return { t: X.pick(L)(), k: 'info', to: null };
+    } }; sNode(e); e.gap = 4; }
 
   // ── Đỉnh cao võ đạo ──
   saga('m_power', {
@@ -646,10 +842,25 @@ window.LifeSim = window.LifeSim || {};
   // ── Kết theo cả đường đi (người dùng chốt 17/10/2026): ngoài kết của cao trào, mỗi mạch chính có kết chỉ mở ra khi đi đúng
   // lối (a.d.path), thử thách thành (a.d.ok) rồi chọn một kết ở cao trào (o). when(a, o) → kết mới; good: có tính là làm được không.
   const PATH_END = {
-    m_avenge: [{ o: 'band_win', when: (a, o) => o === 'win' && a.d.path === 'band', good: true, mark: 'nguoi_giu_lang',
+    m_avenge: [{ o: 'merc_win', when: (a, o) => o === 'win' && a.d.path === 'guild', good: true, mark: 'cao_thu',
+      sum: d => `trả nợ máu cho ${d.kin || 'người đã mất'} bằng tay nghề luyện ở hội mạo hiểm, rồi thành mạo hiểm giả có tiếng`,
+      after: (S, X, a) => { const m = mateOf(S, a); return `Bạn không trả tấm thẻ đồng cho hội. Tên bạn được khắc lên tấm bảng gỗ trong sảnh, chỗ dành cho những người đã làm xong việc không ai dám nhận.${m ? ` ${m} vẫn đi cùng bạn, tóc đã điểm bạc, tối nào cũng kể lại chuyện năm ấy cho đám mạo hiểm giả trẻ nghe.` : ''} Có người tới hội nhờ đòi một món nợ máu. Bạn nghe hết, rồi nhận, không lấy tiền.`; } },
+      { o: 'rank_win', when: (a, o) => (o === 'win' || o === 'burn') && a.d.path === 'rank', good: true, mark: 'nguoi_dung_dau',
+      sum: d => `leo lên chức cao, dùng quyền trong tay đòi nợ máu cho ${d.kin || 'người đã mất'}`,
+      after: () => 'Bạn ngồi ghế chỉ huy đồn trấn thêm nhiều năm. Ai tới kêu oan, bạn đều cho vào, nghe tới cuối, không để ai phải tự đi đòi nợ máu như bạn năm xưa. Đêm khuya xem sổ, có lúc bạn dừng bút, nghĩ: mình leo lên đây vì một mối thù, mà ngồi lại vì những người này.' },
+      { o: 'law_win', when: (a, o) => o === 'burn' && a.d.path === 'law', good: true, mark: 'duoc_tin',
+      sum: d => `kiện được lãnh chúa đã hại ${d.kin || 'người nhà'}, đòi đất về cho cả vùng bằng giấy tờ và người làm chứng`,
+      after: () => 'Người trong vùng gọi bạn là người đọc được văn tự. Nhà nào có chuyện đất, chuyện nợ, đều mang giấy tới nhờ bạn xem, bạn xem không lấy tiền. Cái ống tre năm xưa bạn vẫn giữ, giờ đựng cả trăm lá đơn của người khác.' },
+      { o: 'cleansed', when: (a, o) => (o === 'win' || o === 'spare') && a.d.path === 'faith', good: true, mark: 'nguoi_moc_dao',
+      sum: d => `cùng người của đền trừ tà, đưa ${d.kin || 'người thân'} về nằm yên`,
+      after: () => 'Bạn ở lại đền thêm nhiều năm, theo vị tư tế già tới những làng có người mất tích đêm trăng. Ông mất, bạn đi một mình. Ở đâu có vòng tròn vẽ bằng máu, người ta lại cho người đi tìm bạn.' },
+      { o: 'band_win', when: (a, o) => o === 'win' && a.d.path === 'band' && (!a.d.foe || a.d.foe === 'beast' || a.d.foe === 'bandit'), good: true, mark: 'nguoi_giu_lang',
       sum: d => `cùng một toán thợ săn trả nợ máu cho ${d.kin || 'làng'}, rồi giữ toán ấy lại làm phường săn giữ làng`,
       after: (S, X, a) => { const m = mateOf(S, a); return `Toán người năm ấy không giải tán. Họ thành phường săn của làng, đứa trai nào lớn lên cũng xin được theo.${m ? ` ${m} giữ cái tù và của phường, sáng nào cũng thổi một hồi.` : ''} Mỗi năm vào đúng ngày ấy, cả phường ra mộ ${a.d.kin || 'những người đã mất'} mài giáo, rồi ngồi uống với nhau tới khuya.`; } }],
-    m_rise: [{ o: 'workshop', when: (a, o) => (o === 'rich' || o === 'steady') && a.d.path === 'skill' && a.d.ok, good: true, mark: 'danh_tho',
+    m_rise: [{ o: 'venture_rich', when: (a, o) => o === 'rich' && a.d.path === 'venture', good: true, mark: 'ke_di_xa',
+      sum: () => 'thoát nghèo nhờ những chuyến liều mạng ở nơi nguy hiểm',
+      after: () => 'Bạn treo ngọn giáo cũ lên vách, mũi đã mẻ, cán đã nứt. Con cháu muốn theo nghề ấy, bạn lắc đầu, rồi kể cho chúng nghe những đêm nằm trong rừng không dám thở. Kể xong, bạn lại lấy ngọn giáo xuống lau, như vẫn còn tiếc.' },
+      { o: 'workshop', when: (a, o) => (o === 'rich' || o === 'steady') && a.d.path === 'skill' && a.d.ok, good: true, mark: 'danh_tho',
       sum: () => 'thoát nghèo nhờ một cái nghề, mở xưởng riêng', after: () => 'Cái xưởng nhỏ của bạn treo tấm biển gỗ, chữ do chính tay bạn khắc. Bạn nhận ba đứa học việc, đứa nào cũng con nhà nghèo, như bạn năm xưa. Bạn không gõ thước vào tay chúng. Có lẽ đó là chỗ duy nhất bạn làm khác thầy mình.' }],
     m_power: [{ o: 'self_made', when: (a, o) => o === 'top' && a.d.path === 'alone' && a.d.ok, good: true, mark: 'vuot_doi_thu',
       sum: () => 'tự luyện một mình, không thầy, mà vươn tới đỉnh', after: () => 'Người ta hỏi thầy bạn là ai. Bạn chỉ lên ngọn núi có túp lều cũ, giờ mái tranh đã sập. Họ tưởng bạn đùa. Bạn không giải thích thêm.' }],
@@ -714,13 +925,56 @@ window.LifeSim = window.LifeSim || {};
   for (const [id, o] of Object.entries({ ch_raid: { m_guard: 1 }, ad_war: { m_guard: .8 }, ad_bandits: { m_guard: .6 }, ad_tide: { m_guard: .6 }, dwf_hold_call: { m_guard: .6 }, elf_loggers: { m_guard: .5 },
     tn_love: { m_love: 1.5 }, ad_suitor: { m_love: 1 }, ad_map: { m_lore: .8 }, ad_map_found: { m_lore: 1 }, ad_trinket: { m_lore: .5 }, ch_letters: { m_lore: .5 }, el_memoir: { m_lore: .3 } }))
     SEED[id] = Object.assign(SEED[id] || {}, o);
+  // Sự kiện tuổi nhỏ gieo đường đời (người dùng ghi chú 18/10/2026): av_* mở các loại kẻ thù của Món nợ máu (mỗi đời nhiều nhất một),
+  // ri_* làm sâu lý do Thoát nghèo (chịu nhục vì nghèo, gắn bó với người nhà; ghi S.flags.riMem để hồi mở đầu nhắc lại).
+  Object.assign(SEED, { av_bandit: { m_avenge: 3, m_guard: .5 }, av_lord: { m_avenge: 3, m_rise: .5, m_lead: .3 }, av_cult: { m_avenge: 3, m_faith: .8, m_lore: .5 }, av_betray: { m_avenge: 3, m_rise: .5 },
+    ri_patch: { m_rise: 1.2, m_power: .3 }, ri_creditor: { m_rise: 1.5 }, ri_meal: { m_rise: 1.2, m_house: .5 }, ri_market: { m_rise: 1.2, m_lead: .3 }, ri_sib: { m_rise: 1, m_house: .5 }, ri_feast: { m_rise: 1 } });
+  {
+    const free = S => !S.dead && !S.undead && !(S.saga && S.saga.k), avFree = S => free(S) && !S.flags.avSeed, sibOf = S => (S.family.sibs || []).find(s => s.alive);
+    const mem = (S, m, t) => { S.flags.riMem = { m, w: t.slice(0, 30) }; return t; };
+    const zoneOf = (S, X) => X.reg(S).zones[1] || X.reg(S).zones[0];
+    const EV = [
+      { id: 'av_bandit', st: ['child', 'teen'], w: .08, tree: { body: 'living', theme: 'robbery' }, c: avFree,
+        run(S, X) { const kin = X.pick(['chú', 'bác', 'cậu']), nick = X.pick(NICK), n = foeName(X, foeRace(S, AV_FOE.bandit.race, X)); S.flags.avSeed = 1; foeQ(S, 'bandit', { foeN: n, kin, nick }); X.add('h', -10);
+          return { t: `${cap(kin)} gánh hàng qua đèo đi chợ phiên, hứa mang về cho bạn một thỏi kẹo mạch nha. Ba ngày sau người ta khiêng ${kin} về trên một tấm cửa, gánh hàng thì không thấy đâu. Người ta bảo đó là toán cướp ${nick}, kẻ cầm đầu tên ${n}. Cái đòn gánh gãy dựng ở góc nhà từ hôm ấy, không ai nỡ đem đốt.`, k: 'bad' }; } },
+      { id: 'av_lord', st: ['child', 'teen'], w: .06, tree: { body: 'living' }, c: S => avFree(S) && S.q <= 3 && !!kinHome(S),
+        run(S, X) { const p = kinHome(S), n = foeName(X, foeRace(S, null, X)); p.alive = false; S.flags.avSeed = 1; foeQ(S, 'lord', { foeN: n, kin: p.role }); X.add('h', -15);
+          return { t: `Lãnh chúa ${first(n)} cho người tới cắm mốc lại đất, mảnh ruộng nhà bạn nằm trọn bên kia hàng mốc. ${cap(p.role)} lên dinh kêu oan, bị đánh ba mươi roi ngay trước cổng. Người ta khiêng ${p.role} về trên tấm phản, nằm chưa hết mùa thì mất. Bạn cất tờ văn tự đất vào một ống tre, giấu dưới chân giường.`, k: 'bad' }; } },
+      { id: 'av_cult', st: ['child', 'teen'], w: .06, tree: { body: 'living', theme: 'dark' }, c: S => avFree(S) && !!sibOf(S),
+        run(S, X) { const s = sibOf(S), n = foeName(X, X.pick(AV_FOE.cult.race)), z = zoneOf(S, X); s.alive = false; S.flags.avSeed = 1; foeQ(S, 'cult', { foeN: n, kin: s.name }); X.add('h', -15);
+          return { t: `Một đêm trăng tròn, ${s.name} ra giếng đầu làng lấy nước, và không về. Cả làng đốt đuốc tìm ba ngày, chỉ thấy một vòng tròn vẽ bằng máu khô trên tảng đá ở ${z.nameVi}. Người lớn thì thầm về một kẻ áo đen tên ${first(n)}, hay lảng vảng quanh các nghĩa địa cũ. Bạn đặt cái gáo của ${s.name} lên bậu cửa, đêm nào cũng nhìn ra giếng.`, k: 'bad' }; } },
+      { id: 'av_betray', st: ['child', 'teen'], w: .06, tree: { body: 'living' }, c: S => avFree(S) && !!kinHome(S),
+        run(S, X) { const p = kinHome(S), n = foeName(X, foeRace(S, null, X)), f = first(n); p.alive = false; S.flags.avSeed = 1; foeQ(S, 'rival', { foeN: n, kin: p.role }); X.add('h', -12);
+          return { t: `${cap(p.role)} đi một chuyến buôn xa cùng ${f}, người bạn chí cốt từ thuở nhỏ. Hai tháng sau chỉ mình ${f} về, mắt đỏ hoe, kể rằng ${p.role} trượt chân ở đèo, cả chuyến hàng rơi xuống vực theo. Ở đám tang, hắn khóc to hơn ai hết. Chẳng bao lâu sau, ${f} lên thành mở một cửa hiệu, không ai hiểu vốn ở đâu ra.`, k: 'bad' }; } },
+      { id: 'ri_patch', st: ['child'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2,
+        run(S, X) { const pp = ppOf(S); X.add('h', -5);
+          return { t: mem(S, 'miếng vá trên vai áo và tiếng cả bọn cười', `Hôm hội làng, bạn mặc cái áo ${pp} vá lại từ áo cũ. Thằng con nhà trưởng thôn chỉ vào miếng vá trên vai, cả bọn cười ồ, có đứa còn gọi bạn là đồ giẻ rách. Bạn đứng im, tay đè lên miếng vá. Về nhà bạn không kể, chỉ hỏi ${pp} có cách nào vá cho khéo hơn không.`), k: 'bad' }; } },
+      { id: 'ri_creditor', st: ['child', 'teen'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2 && !!kinHome(S),
+        run(S, X) { const pp = ppOf(S); X.add('h', -8);
+          return { t: mem(S, 'buổi sáng chủ nợ dắt con bò ra khỏi chuồng', `Chủ nợ tới nhà lúc trời vừa sáng, dẫn theo hai gã lực điền. ${cap(pp)} quỳ xuống xin khất thêm một mùa, hắn không nghe, sai người dắt con bò duy nhất ra khỏi chuồng. Cả xóm đứng ngoài rào xem. Bạn nép sau cánh cửa, nhìn ${pp} vẫn quỳ đó mãi khi con bò đã đi khuất.`), k: 'bad' }; } },
+      { id: 'ri_meal', st: ['child'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2 && !!kinHome(S),
+        run(S, X) { const pp = ppOf(S); X.add('h', -2); X.add('so', 2);
+          return { t: mem(S, `cái đêm thấy ${pp} ngồi cạo cháy nồi`, `Bữa tối chỉ có một nồi cháo, ${pp} múc cho bạn bát đặc nhất, bảo mình đã ăn ngoài đồng rồi. Đêm ấy bạn dậy đi tiểu, thấy ${pp} ngồi một mình bên bếp, cạo cháy dưới đáy nồi bỏ vào miệng. Bạn lặng lẽ nằm lại, mắt mở tới sáng. Từ hôm ấy, bữa nào bạn cũng nói dối là mình no.`), k: 'info' }; } },
+      { id: 'ri_market', st: ['child', 'teen'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2 && !!kinHome(S),
+        run(S, X) { const pp = ppOf(S); X.add('h', -6);
+          return { t: mem(S, 'gánh rau bị hất xuống bùn giữa chợ', `Bạn theo ${pp} gánh rau ra chợ huyện, đi từ lúc gà gáy. Gã thương lái lật từng bó, chê héo, chê nhỏ, rồi trả nửa giá. ${cap(pp)} nài thêm mấy đồng, hắn hất đổ cả gánh xuống bùn. Hai người cúi xuống nhặt từng cọng rau giữa chợ, không ai giúp. Trên đường về ${pp} cứ xin lỗi bạn, mà bạn không hiểu ${pp} có lỗi gì.`), k: 'bad' }; } },
+      { id: 'ri_sib', st: ['child', 'teen'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2 && !!sibOf(S),
+        run(S, X) { const nm = sibOf(S).name; X.add('so', 3);
+          return { t: mem(S, `mấy đồng ${nm} bọc trong lá chuối`, `${nm} xin đi ở cho một nhà giàu trên trấn, để cả nhà qua được mùa giáp hạt. Hôm đi, ${nm} dúi vào tay bạn mấy đồng bọc trong lá chuối, dặn cất đi, đừng cho ai biết. Tết ấy ${nm} không được về. Bạn giữ mấy đồng ấy không tiêu, tới khi lá chuối khô giòn.`), k: 'info' }; } },
+      { id: 'ri_feast', st: ['child'], w: .8, tree: { body: 'living', theme: 'hardship' }, c: S => free(S) && S.q <= 2,
+        run(S, X) { const pp = ppOf(S), s = sibOf(S); X.add('h', -4);
+          return { t: mem(S, 'cái Tết nhà bên mổ lợn, nhà mình không có thịt', `Tết năm ấy nhà hàng xóm mổ lợn, mùi thịt luộc bay sang tận bếp nhà bạn. Nhà bạn chỉ có nồi bánh nhỏ, ${pp} phải đi vay mới đủ gạo. ${s ? `${s.name} hỏi sao nhà mình không có thịt, ${pp} quay mặt đi. Bạn kéo ${s.name} ra sân, chỉ lên trời bảo đếm sao, đếm tới khi ngủ gục.` : `Bạn hỏi sao nhà mình không có thịt, ${pp} quay mặt đi, vai run run. Bạn không hỏi nữa, tới tận bây giờ.`}`), k: 'bad' }; } }
+    ];
+    for (const e of EV) { G.EVENTS.push(e); G.treeWrap.event(e); }
+  }
   // Dấu mới gieo cho mạch chính: lỗi cũ gọi Chuộc lỗi, quyền giành bằng tay bẩn gọi Tham vọng, nợ máu gọi báo thù / giữ làng.
   const MARK_SEED = { tay_mau: { m_atone: 2.5, m_shadow: 1 }, cua_phi_nghia: { m_atone: 2.5, m_shadow: .5 }, ke_tiem_quyen: { m_atone: 1, m_shadow: 2.5 }, tieng_xau: { m_atone: 1 },
     thu_chua_tra: { m_avenge: 1.5 }, no_mau: { m_avenge: 1, m_guard: 1 }, cay_dang: { m_atone: .5, m_road: .5 } };
   // Kết của một mạch chính gieo cho mạch sau (đường đời mới, hoặc ngã rẽ).
   const CHAIN = G.SAGA_CHAIN = {
-    m_avenge: { spare: { m_guard: 2, m_faith: 1 }, fail: { m_guard: 1, m_shadow: 1 }, win: { m_guard: 1.5 }, burn: { m_guard: 1.5 } },
-    m_rise: { crooked: { m_atone: 3, m_shadow: 1.5 }, ruined: { m_road: 1 }, rich: { m_house: 1, m_lead: 1 }, steady: { m_love: 1 } },
+    m_avenge: { spare: { m_guard: 2, m_faith: 1 }, fail: { m_guard: 1, m_shadow: 1 }, win: { m_guard: 1.5 }, burn: { m_guard: 1.5 },
+      merc_win: { m_road: 1.5, m_power: 1 }, rank_win: { m_lead: 1.5 }, law_win: { m_lead: 1, m_guard: .5 }, cleansed: { m_faith: 2 } },
+    m_rise: { crooked: { m_atone: 3, m_shadow: 1.5 }, ruined: { m_road: 1 }, rich: { m_house: 1, m_lead: 1 }, steady: { m_love: 1 }, venture_rich: { m_road: 1, m_power: 1 } },
     m_power: { broken: { m_atone: 1, m_lore: 1.5 }, top: { m_lead: 1, m_guard: 1 }, honor: { m_guard: 1 } },
     m_craft: { fail: { m_lore: 1 }, work: { m_rise: 1 } },
     m_lead: { rule: { m_shadow: 3, m_atone: 1 }, chosen: { m_guard: 1.5 }, step: { m_love: 1, m_lore: 1 } },
@@ -750,8 +1004,23 @@ window.LifeSim = window.LifeSim || {};
     if (e.id === 'cv_test' && S.tal && G.RANK[S.tal.root] >= 3) out.m_power = 3;
     if (e.id === 'aim_sign' && AIM_ARC[S.aim]) out[AIM_ARC[S.aim]] = 1;
     if (e.id === 'st_parent_lost') out.m_avenge = 3;
+    if (out.m_avenge && FOE_SRC[e.id]) { const T = sg(S).foe || (sg(S).foe = {}), f = FOE_SRC[e.id]; T[f] = (T[f] || 0) + out.m_avenge; if (r && r.t) (sg(S).foeWhy || (sg(S).foeWhy = {}))[f] = String(r.t).split(/(?<=[.!?])\s/)[0].slice(0, 110); }   // kẻ thù của Món nợ máu theo chuyện đã gieo
     return Object.keys(out).length ? out : null;
   };
+  // Món nợ máu: id sự kiện gieo → loại kẻ thù (AV_FOE); sự kiện av_* ghi sẵn tên kẻ thù, người đã mất vào S.saga.foeQ[loại].
+  const FOE_SRC = G.SAGA_FOE_SRC = { ch_raid: 'beast', ad_tide: 'beast', tn_first_hunt: 'beast', dwf_hold_call: 'beast', st_parent_lost: 'beast',
+    ad_bandits: 'bandit', ad_bounty_post: 'bandit', av_bandit: 'bandit', ad_war: 'warlord', elf_loggers: 'lord', av_lord: 'lord', av_cult: 'cult', orc_blood: 'rival', av_betray: 'rival' };
+  const NICK = ['Râu Đỏ', 'Một Mắt', 'Rắn Lửa', 'Quạ Đen', 'Dao Cùn', 'Chó Điên'];
+  const foeRace = (S, L, X) => { if (L) return X.pick(L); const r = S.undead || G.RACES[S.race].construct ? 'human' : S.race; return G.RACES[r].undead ? 'human' : r; };
+  const foeName = (X, race) => { const R = G.RACES[race]; return X.name(race, R.sexes.includes('m') ? 'm' : R.sexes[0]); };
+  // Loại kẻ thù lúc mở mạch: loại được gieo nhiều nhất (mặc định bầy quái); tên, người đã mất lấy từ sự kiện av_* nếu có.
+  function foeSetup(S, X, g) {
+    const T = g.foe || {}, k = Object.keys(T).sort((x, y) => T[y] - T[x])[0] || 'beast', F = AV_FOE[k], q = (g.foeQ || {})[k] || {};
+    const z = X.reg(S).zones[1] || X.reg(S).zones[0], d = { foe: k, zone: z.id };
+    if (k === 'beast') { const sp = X.monsterIn(z); return Object.assign(d, { kin: 'những người làng đã mất', sp: sp && sp.id }); }
+    return Object.assign(d, { foeN: q.foeN || foeName(X, foeRace(S, F.race, X)), kin: q.kin || (F.kin ? X.pick(F.kin) : null), nick: k === 'bandit' ? q.nick || X.pick(NICK) : undefined });
+  }
+  const foeQ = (S, k, o) => { const g = sg(S); (g.foeQ || (g.foeQ = {}))[k] = o; };
   // Điểm của từng mạch lúc chọn: điểm gieo + hướng quỹ đạo + chí hướng.
   G.sagaScore = (S, X) => {
     const g = sg(S), out = {};
@@ -775,8 +1044,8 @@ window.LifeSim = window.LifeSim || {};
     const g = sg(S), d = { prog: Math.min(3, (g.seed[k] || 0) / 2), why: (g.why[k] || []).slice(-1)[0] || null, t0: X.ctier(S), fv: S.faith && J.faiths[S.faith] ? J.faiths[S.faith].nameVi : null };
     if (k === 'm_avenge') {
       const v = (S.arcs || []).find(a => a.k === 'vengeance');
-      if (v) { Object.assign(d, { kin: v.d.kin, sp: v.d.sp, zone: v.d.zone }); G.arcEnd(S, X, v, 'merged'); }
-      else { const z = X.reg(S).zones[1] || X.reg(S).zones[0], sp = X.monsterIn(z); Object.assign(d, { kin: 'những người làng đã mất', sp: sp && sp.id, zone: z.id }); }
+      if (v) { Object.assign(d, { foe: 'beast', kin: v.d.kin, sp: v.d.sp, zone: v.d.zone }); G.arcEnd(S, X, v, 'merged'); }
+      else { Object.assign(d, foeSetup(S, X, g)); if (g.foeWhy && g.foeWhy[d.foe]) d.why = g.foeWhy[d.foe]; }   // câu dẫn kể đúng chuyện đã gieo ra kẻ thù này
     }
     if (k === 'm_guard') { const z = X.reg(S).zones[1] || X.reg(S).zones[0], sp = X.monsterIn(z); Object.assign(d, { sp: sp && sp.id, zone: z.id }); }
     if (k === 'm_love') { const p = (S.cast || []).find(c => c.role === 'tinh' && c.alive !== false) || G.castAdd(S, X, { role: 'tinh', how: 'người bạn thương', bond: 50 }); Object.assign(d, { love: p.id, name: first(p.name) }); }

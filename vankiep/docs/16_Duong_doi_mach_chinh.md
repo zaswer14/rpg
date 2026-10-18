@@ -354,3 +354,37 @@ Người trong mạch chết: trước cao trào thì mạch dở dang (`gone`, 
 | Tử trận trước quái | 10,5% | 12,5% (hơi cao: thêm trận săn ở Báo thù, hộ tống ở Ơn cứu mạng) |
 
 200 đời (nửa Tự sống, nửa chọn ngẫu nhiên): không lỗi, không đời nào kẹt; đủ 27 mạch chạy; 9 trong 14 kết mới của mạch chính xuất hiện (Thoát nghèo bằng nghề, Võ đạo tự luyện, Tác phẩm lối mới, Người đứng đầu không ngồi ghế, Bí mật cổ xưa, Chuộc lỗi được tha, Tên nhà liên hôn, Bỏ trốn cùng nhau, Đội dân canh).
+
+## 11. Sửa theo ghi chú trang Duyệt Mạch Truyện (18/10/2026)
+
+Người dùng ghi chú trên trang Duyệt Mạch Truyện: Món nợ máu cần thêm kẻ thù, thêm lối đòi nợ (vào hội mạo hiểm, đi đánh thuê, leo chức để có nguồn lực), thử thách mở rộng theo kẻ thù; Thoát nghèo cần lý do sâu hơn ở hồi mở đầu (gắn bó với người nhà, chịu nhục hồi bé vì nghèo), thêm lối liều mạng mạo hiểm, thêm kịch bản thử thách.
+
+### 11.1 Món nợ máu: sáu loại kẻ thù (`G.AVENGE_FOE`, `js/saga.js`)
+
+| Loại | Kẻ thù | Lối riêng ở hồi chọn đường | Gieo từ |
+|---|---|---|---|
+| `beast` | bầy quái (như cũ) | thuê mạo hiểm giả | `ch_raid`, `st_parent_lost`, `ad_tide`, `tn_first_hunt`, `dwf_hold_call`; mạch Báo thù nhập vào |
+| `bandit` | toán cướp có biệt danh, tên cầm đầu | thuê mạo hiểm giả | `ad_bandits`, `ad_bounty_post`, `av_bandit` |
+| `lord` | lãnh chúa cướp đất, đánh chết người nhà | tìm chứng cứ, kiện lên trên | `elf_loggers`, `av_lord` |
+| `warlord` | tướng giặc đốt làng, giờ giữ đồn biên giới | thuê mạo hiểm giả | `ad_war` |
+| `cult` | tà thuật sư biến người thân thành xác sống | tìm tới đền, xin cách trừ tà | `av_cult` |
+| `rival` | bạn chí cốt phản bội, giờ giàu trong thành | làm thuê dưới mái nhà hắn | `orc_blood`, `av_betray` |
+
+- Chọn lúc mở mạch: loại được gieo nhiều điểm nhất (`S.saga.foe`, bảng `G.SAGA_FOE_SRC`); không có thì bầy quái. Câu dẫn hồi mở đầu lấy đúng chuyện đã gieo ra loại ấy (`S.saga.foeWhy`).
+- Mỗi loại có mở đầu, thân hồi chọn đường, 2–3 kịch bản thử thách thành và 2 kịch bản bại (mỗi kịch bản tự lo tác dụng: bị thương, mất tiền, tâm trạng), cao trào ba lựa chọn (đánh tới cùng / cách chắc ăn mà không trọn / buông), bốn kết, tóm tắt, nhịp lặp. Mã kết giữ `win` / `burn` / `spare` / `fail` nên dấu, chuỗi gieo mạch sau không đổi.
+- Hồi chọn đường có năm lối: luyện, tụ người, **vào hội mạo hiểm / đánh thuê** (`guild`: có bạn đồng đội, tiền công, danh vọng), **leo chức cao** (`rank`), và lối riêng của kẻ thù. Thử thách thành thì chen một câu theo lối đã chọn (`AV_PATH`).
+- Kết theo lối mới: `merc_win` (thắng bằng lối hội mạo hiểm → Cao thủ có tiếng), `rank_win` (thắng hoặc cách chắc ăn bằng lối leo chức → Người đứng đầu), `law_win` (đưa lãnh chúa ra công đường bằng lối kiện → Được tin cậy), `cleansed` (lối đền trừ tà, thắng hoặc đưa người thân về chôn → Người mộ đạo); `band_win` chỉ còn cho bầy quái, toán cướp.
+- Bốn sự kiện tuổi nhỏ mới mở kẻ thù (`av_bandit`, `av_lord`, `av_cult`, `av_betray`; gieo 3, mỗi đời nhiều nhất một; ba cái sau làm chết cha mẹ hay anh chị em thật trong gia đình). Đo 194 đời: 14% đời gặp một chuyện av_*.
+
+### 11.2 Thoát nghèo
+
+- Sáu sự kiện tuổi nhỏ nhà nghèo (`ri_patch` áo vá bị cười, `ri_creditor` chủ nợ dắt bò, `ri_meal` cha mẹ nhịn ăn, `ri_market` gánh rau bị hất xuống bùn, `ri_sib` anh chị em đi ở, `ri_feast` Tết không có thịt), mỗi cái gieo Thoát nghèo 1–1,5, ghi `S.flags.riMem`; hồi mở đầu nhắc lại ký ức ấy (bỏ khi câu dẫn đã kể chính chuyện đó).
+- Nút `m_rise_kin` (mở đầu tới thử thách, không sang hồi, góp tiến độ, cách 4 lượt): người nhà ốm phải bán đồ mua thuốc, anh chị em tìm tới xin tiền, con hỏi bao giờ có mái ngói, về vá mái nhà cũ.
+- Lối thứ tư **Liều mạng đi mạo hiểm** (`venture`): thử thách −0,1; thành thì lời × 2,5, bại thì mất ít tiền mà bị thương; kết riêng `venture_rich` (dấu Người từng đi xa).
+- Thử thách mỗi lối 3 kịch bản thành, 3 bại (`RISE_TRIAL`), câu kết đổi lượt (`RISE_TAIL`).
+
+### 11.3 Đo (18/10/2026, sim.html, thế giới `can-bang`)
+
+- 114 đời ép Món nợ máu (19 mỗi loại): không lỗi, không câu sót `undefined` / `{…}`; đủ sáu loại, ra đủ các kết mới.
+- 194 đời tự nhiên so với bản trước (120 đời): Thoát nghèo 42% đời (trước 41%), Món nợ máu 2% (trước 0,8%). Sự kiện ri_* không kéo lệch đường đời.
+- Trang Duyệt Mạch Truyện: thẻ mạch hiện danh sách kẻ thù; nút hiện câu chữ của mọi loại (trang đọc `def.texts`, `def.variants`); nút thêm ngoài khuôn 5 hồi (như `m_rise_kin`) cũng hiện; ghi chú đã sửa hiện dòng "Đã sửa".
