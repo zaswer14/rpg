@@ -326,6 +326,7 @@ window.LifeSim = window.LifeSim || {};
     return fx;
   }
   const KEEP = new Set(["no", "stay", "keep", "skip", "silent", "free", "0", "refuse", "pass", "wait", "ignore", "leave_it"]);
+  G.fxSnap = snap; G.fxDiff = diff;   // cho trang Cây Cốt Truyện ghi tác động của cả sự kiện thường (Lịch sử tổng)
   G.fxText = (fx, k) => (fx.length ? "→ Tác động: " + fx.map(f => f.t).join(" · ") + "." : KEEP.has(String(k)) ? "→ Giữ nguyên như cũ." : "→ Chưa thấy đổi gì ngay; hệ quả, nếu có, đến sau.");
   { const ch0 = P.choose;
     P.choose = function (k) {

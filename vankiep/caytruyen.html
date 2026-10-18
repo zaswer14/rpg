@@ -54,6 +54,14 @@ h2{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0;text-
 .hist button:hover,.hist button:focus-visible{border-color:var(--accent);outline:none}
 .hist button.cur{border-color:var(--accent);font-weight:600}
 .hist button.marked::after{content:' ✎';color:var(--fix)}
+.hist .chip{display:inline-flex;align-items:stretch}
+.hist .chip > button:first-child{border-top-right-radius:0;border-bottom-right-radius:0}
+.hist .chip > button.x{border-top-left-radius:0;border-bottom-left-radius:0;padding:1px 6px;color:var(--muted);border-left:1px solid var(--line)}
+.hist .chip > button.x:hover,.hist .chip > button.x:focus-visible{color:var(--drop);border-color:var(--drop)}
+.hist button.clr{background:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.hist button.clr.arm{color:var(--drop);border-color:var(--drop);text-decoration:none}
+.hist.ask{background:var(--chip);border-radius:6px;padding:5px 8px}
+.hist.ask button.danger{color:var(--drop);border-color:var(--drop)}
 .who{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
 .who .nm{font-family:var(--font-display);font-size:22px;font-weight:600}
 .who .sub{color:var(--muted)}
@@ -119,6 +127,26 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;min-width:0}
 .stat ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted)}
 .review{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px}
 .review .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.card.s-done{border-left:4px solid var(--accent)} .chrow.s-done .y{color:var(--accent)}
+.star{font:inherit;font-size:17px;line-height:1;background:none;border:0;padding:2px 1px;color:var(--line);cursor:pointer}
+.star.on{color:var(--star)} .star:hover,.star:focus-visible{color:var(--star);outline:none} .star:disabled{cursor:default}
+.stars.ro .star{font-size:13px;cursor:default;padding:0}
+.donebox{background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.donebox p{margin:0}
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+.notes summary{cursor:pointer;font-weight:600;padding:2px 0}
+.notes .nt-h{font-family:var(--font-display);font-size:16px}
+.notes[open] summary{margin-bottom:6px}
+.ntabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.ntabs .btn[aria-pressed="true"]{border-color:var(--accent);font-weight:600}
+.ntabs .btn.danger{color:var(--drop);border-color:var(--drop)}
+.nlist{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto}
+.nt{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:13px;min-width:0}
+.nt.s-fix{border-left-color:var(--fix)} .nt.s-drop{border-left-color:var(--drop)} .nt.s-ok{border-left-color:var(--ok)} .nt.s-done{border-left-color:var(--accent)}
+.nt .top{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline} .nt .ic{font-weight:700}
+.nt.s-fix .ic{color:var(--fix)} .nt.s-drop .ic{color:var(--drop)} .nt.s-ok .ic{color:var(--ok)} .nt.s-done .ic{color:var(--accent)}
+.nt p{margin:0;overflow-wrap:anywhere} .nt .nnote{white-space:pre-wrap} .nt .ctx{color:var(--muted);font-size:12px} .nt .donep{color:var(--accent)}
+.nt .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 textarea{width:100%;min-height:56px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);resize:vertical}
 .save{color:var(--muted);font-size:12px}
 .progress{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -177,6 +205,15 @@ code{font-family:var(--font-mono);font-size:12px}
 .glog .e.choice{border-color:var(--accent)} .glog .e.death{border-color:var(--drop);color:var(--drop);font-weight:600}
 .glog .e.chapter{border-color:var(--star);font-style:italic} .glog .e.ach{border-color:var(--star)} .glog .e.ach::before{content:'★ ';color:var(--star)}
 .glog .e.fx{margin:-2px 0 6px 10px;padding:1px 0 1px 10px;border-left:1px dashed var(--accent);font-size:12.5px;color:var(--muted)}
+.glog .e.imp{margin:-2px 0 8px 10px;padding:2px 0 2px 10px;border-left:1px dashed var(--accent);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}
+.glog .e.imp .fxs .good{color:var(--ok)} .glog .e.imp .fxs .bad{color:var(--drop)}
+.tg{display:inline-block;font-size:11.5px;line-height:1.45;padding:0 7px;border-radius:8px;border:1px solid var(--line);color:var(--muted)}
+.tg.open{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,var(--line));font-weight:600}
+.tg.step{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.tg.turn{color:var(--fix);border-color:color-mix(in srgb,var(--fix) 55%,var(--line));font-weight:600}
+.tg.end{color:var(--star);border-color:color-mix(in srgb,var(--star) 55%,var(--line));font-weight:600}
+.tg.seed{border-style:dashed}
+.tg.beat,.tg.none{opacity:.85}
 .glog .arc{display:inline-block;font-size:10.5px;line-height:1.4;padding:0 6px;margin-right:6px;border-radius:8px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));vertical-align:1px}
 .glog .f{display:block;font-size:11.5px;color:var(--muted);font-style:italic}
 .glog mark{background:color-mix(in srgb,var(--star) 35%,transparent);color:inherit;border-radius:2px}
@@ -211,7 +248,15 @@ code{font-family:var(--font-mono);font-size:12px}
     <div class="status" id="status" aria-live="polite">Đang nạp mã game…</div>
     <div class="hist" id="hist"></div>
     <div class="hist" id="rebHist"></div>
+    <div class="hist ask" id="histAsk" hidden aria-live="polite"></div>
   </section>
+
+  <details class="notes" id="notesBox">
+    <summary><span class="nt-h">Ghi chú duyệt cốt truyện</span> <span class="status" id="notesN"></span></summary>
+    <p class="lede">Mọi ghi chú, đánh giá đã lưu, của mọi nhân vật. Đánh dấu ✎ cần sửa hoặc ✕ bỏ kèm ghi chú muốn sửa thế nào; khi bạn bảo Claude <b>"sửa cốt truyện theo ghi chú"</b>, Claude đọc các mục chờ sửa, sửa mã game, rồi đánh dấu <b>✔ đã sửa</b> kèm ghi chú đã đổi gì. Xem lại thấy ổn thì xóa ghi chú; chưa ổn thì mở lại.</p>
+    <div class="row ntabs" role="group" aria-label="Lọc ghi chú" id="notesTabs"></div>
+    <div class="nlist" id="notesList"></div>
+  </details>
 
   <section class="play" id="play" hidden aria-live="polite" aria-label="Chơi lại: chọn phương án"></section>
   <section class="ends" id="ends" hidden aria-label="Mọi kết cục"></section>
@@ -243,9 +288,9 @@ code{font-family:var(--font-mono);font-size:12px}
     </div>
     <section class="glog-box" aria-label="Lịch sử tổng">
       <h2>Lịch sử tổng</h2>
-      <p class="lede">Cả đời theo thứ tự năm, không chia mạch, như nhật ký lúc chơi bình thường (gồm cả kiếp Bộ Xương nếu đã xem).</p>
+      <p class="lede">Cả đời theo thứ tự năm, không chia mạch, như nhật ký lúc chơi bình thường (gồm cả kiếp Bộ Xương nếu đã xem). Dưới mỗi sự kiện, quyết định là ghi chú tác động: <span class="tg open">mở cốt truyện</span> <span class="tg step">đẩy mạch sang hồi mới</span> <span class="tg turn">đổi nhánh</span> <span class="tg end">khép mạch</span> <span class="tg seed">gieo mầm đường đời</span> <span class="tg beat">nhịp mạch, không đổi nhánh</span> <span class="tg none">lẻ</span>, rồi chỉ số, tiền, dấu… thay đổi ngay.</p>
       <div class="logtools"><input id="logQ" type="search" placeholder="Tìm trong nhật ký…" autocomplete="off" spellcheck="false" aria-label="Tìm trong nhật ký">
-        <label class="chk"><input type="checkbox" id="logArc" checked> Nhãn mạch</label><label class="chk"><input type="checkbox" id="logFx" checked> Dòng tác động</label><span class="status" id="logN"></span></div>
+        <label class="chk"><input type="checkbox" id="logArc" checked> Nhãn mạch</label><label class="chk"><input type="checkbox" id="logFx" checked> Ghi chú tác động</label><label class="chk"><input type="checkbox" id="logBig"> Chỉ chỗ đổi cốt truyện</label><span class="status" id="logN"></span></div>
       <div class="glog" id="glog"></div>
     </section>
   </div>
@@ -320,6 +365,60 @@ code{font-family:var(--font-mono);font-size:12px}
   const reviews = {}, drafts = {};
   let db = null, sel = null, T = null, busy = false, cur = null, lastSim = null, lastLog = null, curCtx = null, trail = [], playAsk = null;
   let hist = store.get(HIST) || [], rebHist = store.get(REB) || [], playPref = !!store.get(PLAY);
+
+  // ═════════ Ghi chú tác động cho Lịch sử tổng ═════════
+  // Chỉ sim của trang có cờ _imp (không đụng nhật ký game, không chạy trong Mọi kết cục): chụp trước / sau mỗi sự kiện, quyết định,
+  // ghi một dòng kind 'imp' qua hook: mở mạch, đẩy hồi, đổi nhánh (lối, đứng ngoài, đường đời, ngã rẽ), khép mạch, gieo đường đời, tác động.
+  const STEP = { open: 'mở đầu', knot: 'chọn đường', trial: 'thử thách', climax: 'cao trào', after: 'kết' };
+  const fst = n => String(n || '').split(' ')[0];
+  const arcNm = (S, k, who) => { const A = G.ARCS[k], p = G.castGet ? G.castGet(S, who) : null; return (A ? A.nameVi : k) + (p ? ' · ' + fst(p.name) : ''); };
+  const sagaNm = k => (G.SAGA && G.SAGA[k] ? G.SAGA[k].nameVi : k);
+  const storySnap = S => { const m = {}, g = S.saga || {}; for (const a of S.arcs || []) m[a.k + ':' + a.who] = { k: a.k, who: a.who, at: a.at, path: a.d && a.d.path || null, bg: !!(a.d && a.d.bg != null) };
+    return { m, done: (S.arcDone || []).length, saga: g.k || null, seed: { ...(g.seed || {}) }, turn: g.turn ? g.turn.k : null }; };
+  // c: open mở cốt truyện · step đẩy mạch · turn đổi nhánh · end khép mạch · seed gieo mầm · beat nhịp mạch · none lẻ
+  function storyTags(S, a, b, label) {
+    const t = [], add = (c, s) => t.push({ c, t: s });
+    for (const [key, x] of Object.entries(b.m)) {
+      const y = a.m[key], nm = arcNm(S, x.k, x.who);
+      if (!y) { add('open', `Mở mạch ${nm}`); continue; }
+      if (x.path !== y.path && x.path) add('turn', x.path === 'away' ? `${nm}: bạn đứng ngoài, mạch chạy nền tới kết riêng` : `${nm}: rẽ lối «${label || x.path}»`);
+      else if (x.bg && !y.bg) add('turn', `${nm}: bạn đứng ngoài, mạch chạy nền tới kết riêng`);
+      if (x.at !== y.at) add('step', `${nm}: ${STEP[y.at] || y.at} → ${STEP[x.at] || x.at}`);
+    }
+    for (const d of (S.arcDone || []).slice(a.done)) { const D = G.ARCS[d.k], s = D && D.sum ? D.sum(d.o, G.castGet(S, d.who) || { name: d.name || '?' }, d) : null; add('end', `Khép mạch ${arcNm(S, d.k, d.who)}${s ? ': ' + s : ''}`); }
+    if (b.saga !== a.saga && b.saga) add('turn', a.saga ? `Đổi đường đời: ${sagaNm(a.saga)} → ${sagaNm(b.saga)}` : `Chọn đường đời: ${sagaNm(b.saga)}`);
+    if (b.turn && b.turn !== a.turn) add('turn', `Mở ngã rẽ sang đường đời ${sagaNm(b.turn)}`);
+    const sd = Object.keys(b.seed).map(k => [k, b.seed[k] - (a.seed[k] || 0)]).filter(([, v]) => v >= .3).sort((x, y) => y[1] - x[1]).slice(0, 2);
+    for (const [k] of sd) add('seed', k === b.saga ? `Đi theo đường đời ${sagaNm(k)}` : `Gieo mầm đường đời ${sagaNm(k)}`);
+    return t;
+  }
+  // Mục tác động thấy trong dòng → Tác động của quyết định đã có ở fame.js; với sự kiện thường lấy G.fxDiff, bỏ phần mạch đã nằm trong nhãn.
+  const SKIP_FX = /^(Mở mạch|Khép mạch|Đường đời):/;
+  function impLog(X, a, s0, got, kind, label) {
+    const S = X.S, tags = storyTags(S, s0, storySnap(S), label), arc = (got.find(e => e.arc) || {}).arc || null;
+    const fx = a ? G.fxDiff(a, G.fxSnap(S, X), S, X).filter(f => !SKIP_FX.test(f.t)) : [];
+    if (!got.length && !tags.length && !fx.length) return;
+    if (!tags.some(x => x.c !== 'seed')) tags.unshift(arc ? { c: 'beat', t: `Một nhịp của mạch ${arc}: chưa sang hồi mới, không đổi nhánh` } : { c: 'none', t: `${kind} lẻ, không thuộc mạch nào` });
+    const text = tags.map(x => x.t).concat(fx.map(f => f.t)).join(' · ');
+    X.hook.log({ age: S.age, yrs: X.years(S), wy: S.world.year, kiep: S.kiep, text, kind: 'imp', fact: null, arc: null, ev: (got[0] || {}).ev || null, n: got.length, imp: { tags, fx } });   // n: số dòng ngay trước thuộc sự kiện này
+  }
+  { const re0 = G.runEvent;
+    G.runEvent = function (X, ev) {
+      if (!X._imp) return re0(X, ev);
+      const S = X.S, a = G.fxSnap(S, X), s0 = storySnap(S), h0 = X.hook.log, got = [];
+      X.hook.log = e => { got.push(e); h0(e); };
+      try { re0(X, ev); } finally { X.hook.log = h0; }
+      impLog(X, a, s0, got, 'Sự kiện');
+    }; }
+  { const P = G.Sim.prototype, ch0 = P.choose;
+    P.choose = function (k) {
+      const S = this.S, P0 = S && S.pending; if (!this._imp || !P0) return ch0.call(this, k);
+      const c = P0.choices.find(x => x.k === k) || P0.choices[0], s0 = storySnap(S), h0 = this.hook.log, got = [];
+      this.hook.log = e => { got.push(e); h0(e); };
+      let out; try { out = ch0.call(this, k); } finally { this.hook.log = h0; }
+      impLog(this, null, s0, got, 'Quyết định', c.label);
+      return out;
+    }; }
 
   // ═════════ Mẫu thử: seed + lựa chọn → một đời ═════════
   // Mã mẫu (dùng cho db, lịch sử, #liên kết): seed~giống loài~vùng~xuất thân~cách chọn~thế giới~phương án tự chọn, bỏ phần mặc định ở cuối.
@@ -426,7 +525,7 @@ code{font-family:var(--font-mono);font-size:12px}
       $('status').className = 'status'; $('status').textContent = `Đang dựng thế giới ${o.world}…`; await pause();
       ensureWorld(o.world);
       if (o.region && !G.realm.settlements.some(s => s.tier !== 'ruin' && s.region === o.region)) o.region = '';
-      const all = [], sim = makeSim(o, all);
+      const all = [], sim = makeSim(o, all); sim._imp = true;   // ghi chú tác động cho Lịch sử tổng
       const ctx = { o, trail: [], picks: new Map(o.picks), play: !!o.play, cut: o.cut ?? -1, log: all, seen: 0 };
       birth(sim, o);
       const lb = from ? `Trùng sinh ${o.seed}: tua lại tới mốc ${o.cut + 1}` : `Đang sống đời ${o.seed}`;
@@ -491,17 +590,87 @@ code{font-family:var(--font-mono);font-size:12px}
   const optsNow = seed => ({ picks: [], seed: seed || newSeed(), race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: ($('inWorld').value.trim() || DEF_WORLD) });
   function savePref() { store.set(PREF, { race: $('selRace').value, region: $('selRegion').value, origin: $('selOrigin').value, policy: $('selPolicy').value, world: $('inWorld').value.trim() }); }
   function applyOpts(o) { $('selRace').value = o.race || ''; if (G.realm) fillRegions(); $('selRegion').value = o.region || ''; $('selOrigin').value = o.origin || ''; $('selPolicy').value = o.policy || 'auto'; $('inWorld').value = o.world || DEF_WORLD; $('inSeed').value = o.seed || ''; }
+  // Nút một nhân vật trong danh sách: bấm tên để mở, × để xóa (data-del: hist / reb / mark).
+  const chip = (sid, cls, label, from, nm) => `<span class="chip"><button data-sid="${esc(sid)}" class="${cls}" title="${esc(sid)}">${label}</button><button class="x" data-del="${from}" data-del-sid="${esc(sid)}" title="Xóa ${esc(nm)} khỏi danh sách" aria-label="Xóa ${esc(nm)}">×</button></span>`;
+  const clrBtn = w => `<button class="clr" data-clr="${w}" title="Xóa cả danh sách khỏi trình duyệt này (đánh dấu lưu chung vẫn giữ)">Xóa hết</button>`;
   function renderHist() {
     const marked = new Set(Object.values(reviews).map(r => r.sid).filter(Boolean));
-    const L = hist.map(h => `<button data-sid="${esc(h.sid)}" class="${T && T.sid === h.sid ? 'cur' : ''}${marked.has(h.sid) ? ' marked' : ''}" title="${esc(h.sid)}">${esc(h.name)} · ${esc(h.race)} ${h.years}${h.reb ? ' · ↺' + h.reb : ''}</button>`);
-    const extra = [...marked].filter(s => !hist.some(h => h.sid === s)).slice(0, 10).map(s => `<button data-sid="${esc(s)}" class="marked" title="${esc(s)}">${esc(s.split('~')[0])}</button>`);
-    $('hist').innerHTML = L.length || extra.length ? `<span class="lbl">Đã xem:</span>${L.join('')}${extra.length ? `<span class="lbl" style="margin-left:8px">Có đánh dấu:</span>${extra.join('')}` : ''}` : '';
+    const L = hist.map(h => chip(h.sid, `${T && T.sid === h.sid ? 'cur' : ''}${marked.has(h.sid) ? ' marked' : ''}`, `${esc(h.name)} · ${esc(h.race)} ${h.years}${h.reb ? ' · ↺' + h.reb : ''}`, 'hist', h.name));
+    const extra = [...marked].filter(s => !hist.some(h => h.sid === s)).slice(0, 10).map(s => chip(s, 'marked', esc(s.split('~')[0]), 'mark', s.split('~')[0]));
+    $('hist').innerHTML = (L.length ? `<span class="lbl">Đã xem:</span>${L.join('')}${clrBtn('hist')}` : '') + (extra.length ? `<span class="lbl" style="margin-left:8px">Có đánh dấu:</span>${extra.join('')}` : '');
+  }
+  // Xóa nhân vật: bỏ khỏi Đã xem và Đã trùng sinh (lưu trong trình duyệt). Nhân vật có đánh dấu lưu chung (db) thì hỏi ngay trên trang
+  // có xóa luôn đánh dấu không; không xóa thì nó còn ở mục Có đánh dấu.
+  const marksOf = sid => Object.keys(reviews).filter(id => reviews[id].sid === sid);
+  function dropLocal(sid) {
+    hist = hist.filter(h => h.sid !== sid); rebHist = rebHist.filter(r => r.sid !== sid);
+    store.set(HIST, hist); store.set(REB, rebHist); renderHist(); renderReb();
+  }
+  async function dropMarks(sid) {
+    const ids = marksOf(sid); if (!db || !ids.length) return;
+    $('saveState').textContent = `Đang xóa ${ids.length} đánh dấu…`;
+    try { for (const id of ids) await db.collection('reviews').doc(id).delete(); $('saveState').textContent = `Đã xóa ${ids.length} đánh dấu.`; }
+    catch (e) { $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền xóa đánh dấu ở trang này.' : 'Xóa đánh dấu không thành công, thử lại.'; }
+  }
+  function askDel(sid, from) {
+    const n = marksOf(sid).length, nm = (hist.find(h => h.sid === sid) || rebHist.find(r => r.sid === sid) || { name: sid.split('~')[0] }).name;
+    if (!n || !db) { if (from !== 'mark') dropLocal(sid); return; }
+    $('histAsk').innerHTML = from === 'mark'
+      ? `<span><b>${esc(nm)}</b> có ${n} đánh dấu lưu chung (ai mở trang cũng thấy). Xóa hết đánh dấu này?</span><button class="danger" data-ask="marks" data-ask-sid="${esc(sid)}">Xóa ${n} đánh dấu</button><button data-ask="no">Thôi</button>`
+      : `<span><b>${esc(nm)}</b> có ${n} đánh dấu lưu chung (ai mở trang cũng thấy).</span><button class="danger" data-ask="all" data-ask-sid="${esc(sid)}">Xóa cả đánh dấu</button><button data-ask="local" data-ask-sid="${esc(sid)}">Chỉ bỏ khỏi danh sách</button><button data-ask="no">Thôi</button>`;
+    $('histAsk').hidden = false; $('histAsk').querySelector('button').focus();
+  }
+  let clrArm = null;
+  function clearList(w, btn) {   // bấm hai lần (trong 4 giây) mới xóa cả danh sách
+    if (clrArm !== w) { clrArm = w; btn.classList.add('arm'); btn.textContent = 'Bấm lần nữa để xóa hết'; setTimeout(() => { if (clrArm === w) { clrArm = null; renderHist(); renderReb(); } }, 4000); return; }
+    clrArm = null;
+    if (w === 'hist') { hist = []; rebHist = []; } else rebHist = [];
+    store.set(HIST, hist); store.set(REB, rebHist); renderHist(); renderReb();
   }
   function openSid(sid) {
     const k = /~k(\d+)$/.exec(sid), o = parseSid(sid.replace(/~k\d+$/, ''));
     applyOpts(o); savePref();
-    o.kiep = k ? +k[1] : 1; run(o);
+    o.kiep = k ? +k[1] : 1; return run(o);
   }
+
+  // ═════════ Ghi chú duyệt cốt truyện: mọi đánh dấu trong db, lọc chờ sửa / đã sửa / tất cả ═════════
+  // Chờ sửa: ✎ hoặc ✕ chưa có done. Claude sửa xong thì ghi done, doneAt, doneNote (ArtifactData, review/README.md mục 2).
+  let nFilter = 'wait', nClrArm = false;
+  const isWait = r => (r.status === 'fix' || r.status === 'drop') && !r.done;
+  function renderNotes() {
+    if (!db) { $('notesN').textContent = '· chỉ dùng được khi mở trang trên claude.ai'; $('notesTabs').innerHTML = ''; $('notesList').innerHTML = ''; return; }
+    const R = Object.entries(reviews).map(([id, r]) => ({ ...r, _id: id })), wait = R.filter(isWait), done = R.filter(r => r.done);
+    $('notesN').textContent = `· ${wait.length} chờ sửa · ${done.length} đã sửa · ${R.length} tất cả`;
+    $('notesTabs').innerHTML = [['wait', `✎ Chờ sửa (${wait.length})`], ['done', `✔ Đã sửa (${done.length})`], ['all', `Tất cả (${R.length})`]]
+      .map(([f, t]) => `<button class="btn" data-nfilter="${f}" aria-pressed="${nFilter === f}">${t}</button>`).join('')
+      + (nFilter === 'done' && done.length ? `<button class="btn${nClrArm ? ' danger' : ''}" data-nclr>${nClrArm ? 'Bấm lần nữa để xóa ' + done.length + ' ghi chú' : 'Xóa mọi ghi chú đã sửa'}</button>` : '');
+    const L = (nFilter === 'wait' ? wait : nFilter === 'done' ? done : R).sort((a, b) => String(b.doneAt || b.updatedAt || '').localeCompare(String(a.doneAt || a.updatedAt || '')));
+    $('notesList').innerHTML = L.map(r => { const s = r.done ? 'done' : r.status;
+      return `<div class="nt s-${s}"><div class="top"><span class="ic">${ICON[s]}</span><b>${esc(r.name || r.id)}</b><span class="muted">${esc(r.who || '')}${r.race ? ' · ' + esc(r.race) : ''}${r.updatedAt ? ' · ' + esc(dday(r.updatedAt)) : ''}</span>${r.score ? `<span class="stars ro">${stars(r.score)}</span>` : ''}</div>
+        ${r.note ? `<p class="nnote">${esc(r.note)}</p>` : '<p class="muted">(không có ghi chú)</p>'}
+        ${r.ctx ? `<p class="ctx">Lúc ghi: ${esc(r.ctx)}</p>` : ''}
+        ${r.done ? `<p class="donep"><b>✔ Claude đã sửa${r.doneAt ? ' ngày ' + esc(dday(r.doneAt)) : ''}</b>${r.doneNote ? ': ' + esc(r.doneNote) : ''}</p>` : ''}
+        <div class="row"><button class="btn" data-nopen="${esc(r._id)}">Mở trên cây</button>${r.done ? `<button class="btn" data-nreopen="${esc(r._id)}">Chưa ổn, mở lại</button>` : ''}<button class="btn" data-ndel="${esc(r._id)}">Xóa ghi chú</button>${r.code ? `<code>${esc(r.code)}</code>` : ''}</div></div>`; }).join('')
+      || `<p class="muted">${nFilter === 'wait' ? 'Không có mục nào chờ sửa.' : nFilter === 'done' ? 'Chưa có mục nào Claude đã sửa.' : 'Chưa có ghi chú nào.'}</p>`;
+  }
+  async function openNote(id) {
+    const r = reviews[id]; if (!r) return;
+    if (!T || T.sid !== r.sid) await openSid(r.sid);
+    if (!T || T.sid !== r.sid) return;
+    const it = all[r.id];
+    if (!it) { $('status').textContent = `Mục "${r.name}" không còn trong đời này (mã game đã đổi sau lúc ghi chú).`; return; }
+    pick(r.id);
+    if (it.name !== r.name) $('status').textContent = `Đời này đã đổi so với lúc ghi chú: mục cũ là "${r.name}", giờ là "${it.name}".`;
+    $('detail').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  async function noteDo(fn, ok) {
+    $('saveState').textContent = 'Đang lưu…';
+    try { await fn(); $('saveState').textContent = ok; }
+    catch (e) { $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền sửa ghi chú ở trang này.' : 'Không thành công, thử lại.'; }
+  }
+  const noteDel = id => noteDo(() => db.collection('reviews').doc(id).delete(), 'Đã xóa ghi chú.');
+  const noteReopen = id => { const { done, doneAt, doneNote, doneCommit, _id, ...rest } = reviews[id] || {}; if (!rest.status) return;
+    return noteDo(() => db.collection('reviews').doc(id).set({ ...rest, updatedAt: new Date().toISOString() }), 'Đã mở lại: mục này chờ sửa tiếp.'); };
   // ═════════ Mọi kết cục: ở mỗi mốc của kiếp đang xem, thử từng phương án chưa chọn, phần còn lại để Tự sống / xúc xắc sống tiếp ═════════
   // Mỗi ngả rẽ chạy từ ảnh chụp đầu năm gần mốc nhất (một lần sống lại có chụp ảnh), không sống lại từ lúc sinh; gom theo đường đời + kết mạch chính.
   const endsCache = new Map(); let exp = null;
@@ -584,8 +753,8 @@ code{font-family:var(--font-mono);font-size:12px}
     $('rebRow').hidden = !trail.length;
     $('selMoc').innerHTML = trail.map(e => `<option value="${e.n}">Mốc ${e.n + 1} · ${e.y} ${esc(e.unit)} · ${esc(short(e.title, 34))}: ${esc(short(e.ch[e.i].label, 36))}${e.by === 'me' ? ' ✋' : ''}</option>`).join('');
     const s = choices.find(c => c.key === sel); if (s && s.n != null) $('selMoc').value = s.n;
-    const L = rebHist.slice(0, 10).map(r => `<button data-sid="${esc(r.sid)}" class="${T && T.sid === r.sid ? 'cur' : ''}" title="${esc(r.sid)}">${esc(r.name)} · mốc ${r.n + 1} (${r.y} ${esc(r.unit === 'tuổi' ? 't' : 'n')}): ${r.old === r.neu ? '= ' + esc(short(r.neu, 24)) : esc(short(r.old, 18)) + ' → ' + esc(short(r.neu, 22))}${r.same ? ' · đúng hướng cũ' : ''}</button>`);
-    $('rebHist').innerHTML = L.length ? `<span class="lbl">Đã trùng sinh:</span>${L.join('')}` : '';
+    const L = rebHist.slice(0, 10).map(r => chip(r.sid, T && T.sid === r.sid ? 'cur' : '', `${esc(r.name)} · mốc ${r.n + 1} (${r.y} ${esc(r.unit === 'tuổi' ? 't' : 'n')}): ${r.old === r.neu ? '= ' + esc(short(r.neu, 24)) : esc(short(r.old, 18)) + ' → ' + esc(short(r.neu, 22))}${r.same ? ' · đúng hướng cũ' : ''}`, 'reb', r.name));
+    $('rebHist').innerHTML = L.length ? `<span class="lbl">Đã trùng sinh:</span>${L.join('')}${clrBtn('reb')}` : '';
   }
 
   // ═════════ Gom dữ liệu của một đời: nhánh, sự kiện theo nhánh, quyết định ═════════
@@ -723,11 +892,19 @@ code{font-family:var(--font-mono);font-size:12px}
   const sidKey = s => s.length > 80 ? s.slice(0, 48) + '_h' + G.hash(s).toString(36) : s;   // mã mẫu dài (nhiều phương án tự chọn): rút gọn bằng băm để id không bị cắt mất mục
   const dbKey = k => 'lt_' + (sidKey(T.sid) + '_' + k).replace(/[^A-Za-z0-9_]/g, '_').slice(0, 190);
   const rv = k => reviews[dbKey(k)] || {};
+  // Trạng thái hiển thị của một mục: done (Claude đã sửa theo ghi chú) đè lên ✓ / ✎ / ✕.
+  const sOf = k => { const r = rv(k); return r.done ? 'done' : r.status; };
+  const ICON = { ok: '✓', fix: '✎', drop: '✕', done: '✔' };
+  const stars = (n, attr) => [1, 2, 3, 4, 5].map(i => `<button class="star${i <= (n || 0) ? ' on' : ''}" ${attr ? `data-score="${i}" aria-label="${i} sao" aria-pressed="${i === n}"` : 'tabindex="-1" aria-hidden="true"'} ${attr || ''}>★</button>`).join('');
+  const dday = s => (s ? new Date(s).toLocaleDateString('vi-VN') : '');
   function reviewBlock(k) {
     const r = rv(k), note = drafts[dbKey(k)] != null ? drafts[dbKey(k)] : (r.note || ''), off = db ? '' : 'disabled';
-    return `<div class="review" data-k="${esc(k)}"><div class="row" role="group" aria-label="Đánh dấu">${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}</div>
-      <textarea id="note-${esc(dbKey(k))}" data-note placeholder="Ghi chú: câu chữ, nhịp mạch, kết, tác động của lựa chọn…" ${off}>${esc(note)}</textarea>
-      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div></div>`;
+    const done = r.done ? `<div class="donebox"><b>✔ Claude đã sửa${r.doneAt ? ' ngày ' + esc(dday(r.doneAt)) : ''}</b>${r.doneNote ? `<p>${esc(r.doneNote)}</p>` : ''}
+      <div class="row"><button class="btn" data-clear ${off}>Xóa ghi chú này</button><button class="btn" data-reopen ${off}>Chưa ổn, mở lại</button></div></div>` : '';
+    return `<div class="review" data-k="${esc(k)}">${done}<div class="row" role="group" aria-label="Đánh dấu">${Object.entries(STATUS).map(([s, v]) => `<button class="btn ${s}" data-status="${s}" aria-pressed="${r.status === s}" ${off}>${v.t} ${v.vi}</button>`).join('')}</div>
+      <div class="row stars" role="group" aria-label="Đánh giá độ hay"><span class="muted">Độ hay</span>${stars(r.score, off || ' ')}${r.score ? `<span class="muted">${r.score}/5</span>` : ''}</div>
+      <textarea id="note-${esc(dbKey(k))}" data-note placeholder="Ghi chú: chỗ nào dở, muốn sửa thế nào (câu chữ, nhịp mạch, kết, tác động của lựa chọn…)" ${off}>${esc(note)}</textarea>
+      <div class="row"><button class="btn" data-savenote ${off}>Lưu ghi chú</button>${r.status && !r.done ? `<button class="btn" data-clear ${off}>Xóa đánh dấu</button>` : ''}</div></div>`;
   }
   const fxChips = fx => fx.length ? `<div class="chips">${fx.map(f => `<span class="chip ${f.tone === 'good' ? 'good' : f.tone === 'bad' ? 'bad' : ''}">${esc(f.t)}</span>`).join('')}</div>` : '<p class="muted">Không đổi gì thấy ngay.</p>';
   const evLi = e => `<li class="${e.k === 'big' ? 'big' : e.k === 'bad' ? 'bad' : e.k === 'good' ? 'good' : ''}"><span class="y">${e.y}</span>${esc(e.t)}</li>`;
@@ -776,7 +953,7 @@ code{font-family:var(--font-mono);font-size:12px}
   }
   function renderArcs() {
     $('arcs').innerHTML = arcs.slice().sort((a, b) => a.y0 - b.y0).map(a => {
-      const s = rv(a.key).status;
+      const s = sOf(a.key);
       return `<button class="card${s ? ' s-' + s : ''}" data-pick="${a.key}"><div class="top"><span class="tier ${a.tier}">${TIER_VI[a.tier]}</span><span class="muted">${a.y0}–${a.y1}</span></div>
         <h4>${esc(a.tag)}</h4><span class="end ${a.good ? 'good' : ''}">${esc(tailOf(a))}</span><span class="muted">${a.ev.length} sự kiện · ${a.dec} quyết định</span></button>`;
     }).join('') || '<p class="muted">Đời này không mở mạch nào.</p>';
@@ -786,9 +963,9 @@ code{font-family:var(--font-mono);font-size:12px}
     for (const c of choices) {
       const p = c.ph || '';
       if (p !== ph) { ph = p; const C = chapters.find(x => x.ph === p); o.push(`<div class="phase">${esc(C ? C.phVi + ': ' + C.q : p || 'Thơ ấu')}</div>`); }
-      const s = rv(c.key).status, e = trail[c.n], cut = cur.cut === c.n;
+      const s = sOf(c.key), e = trail[c.n], cut = cur.cut === c.n;
       const tags = e ? `${e.by === 'me' ? ' <span class="chip me">✋ bạn chọn</span>' : ''}${cut ? ' <span class="chip cut">↺ trùng sinh ở đây</span>' : ''}` : '';
-      o.push(`<div class="chline"><button class="chrow${s ? ' s-' + s : ''}" data-pick="${c.key}"><span class="y">${c.n != null ? '#' + (c.n + 1) + ' · ' : ''}${c.y} ${s ? STATUS[s].t : ''}</span><span><span class="t">${esc(c.title)}:</span> ${esc(c.label)}${tags}${c.lane ? ` <span class="muted">· ${esc(c.lane.tag)}</span>` : ''}
+      o.push(`<div class="chline"><button class="chrow${s ? ' s-' + s : ''}" data-pick="${c.key}"><span class="y">${c.n != null ? '#' + (c.n + 1) + ' · ' : ''}${c.y} ${s ? ICON[s] : ''}</span><span><span class="t">${esc(c.title)}:</span> ${esc(c.label)}${tags}${c.lane ? ` <span class="muted">· ${esc(c.lane.tag)}</span>` : ''}
         <span class="s">${c.fx.length ? esc(c.fx.map(f => f.t).join(' · ')) : 'không đổi gì ngay'}${c.alts.length ? ' · bỏ qua: ' + esc(c.alts.join(' / ')) : ''}</span></span></button>${e ? `<button class="btn reb-open" data-reb-open="${c.n}" title="Trùng sinh ở mốc ${c.n + 1}" aria-label="Trùng sinh ở mốc ${c.n + 1}">↺</button>` : ''}</div>`);
     }
     $('choices').innerHTML = o.join('') || '<p class="muted" style="padding:8px 12px;margin:0">Đời này chưa kịp quyết định gì.</p>';
@@ -798,38 +975,59 @@ code{font-family:var(--font-mono);font-size:12px}
   }
   function renderProgress() {
     const ks = Object.keys(all), n = ks.filter(k => rv(k).status).length, c = s => ks.filter(k => rv(k).status === s).length;
-    $('progress').innerHTML = `Mẫu này: đã đánh dấu <b>${n}</b> mục · ✓ ${c('ok')} · ✎ ${c('fix')} · ✕ ${c('drop')}`;
+    const d = ks.filter(k => rv(k).done).length;
+    $('progress').innerHTML = `Mẫu này: đã đánh dấu <b>${n}</b> mục · ✓ ${c('ok')} · ✎ ${c('fix')} · ✕ ${c('drop')}${d ? ` · ✔ đã sửa ${d}` : ''}`;
   }
   function render() { if (!T) return; renderHead(); drawTree(); renderDetail(); renderArcs(); renderChoices(); renderProgress(); renderLog(); }
   function pick(k) { sel = k === 'whole' ? null : k; drawTree(); renderDetail(); if (window.innerWidth < 1100) $('detail').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
 
-  // Lịch sử tổng: mọi dòng nhật ký của lần chạy theo thứ tự, tiêu đề năm như ui.js appendLog; lọc theo chữ, ẩn nhãn mạch / dòng tác động.
+  // Lịch sử tổng: mọi dòng nhật ký của lần chạy theo thứ tự, tiêu đề năm như ui.js appendLog; lọc theo chữ, ẩn nhãn mạch / ghi chú tác động,
+  // hoặc chỉ giữ sự kiện, quyết định làm đổi cốt truyện (dòng imp có nhãn mở / đẩy / đổi nhánh / khép, cùng n dòng ngay trước nó).
+  const BIG = new Set(['open', 'step', 'turn', 'end']);
+  const impHtml = (e, hl) => `<div class="e imp">${e.imp.tags.map(x => `<span class="tg ${x.c}">${hl(x.t)}</span>`).join('')}${e.imp.fx.length ? `<span class="fxs">${e.imp.fx.map(f => `<span class="${f.tone}">${hl(f.t)}</span>`).join(' · ')}</span>` : ''}</div>`;
   function renderLog() {
-    const q = $('logQ').value.trim().toLowerCase(), fx = $('logFx').checked, L = lastLog || [], o = [];
+    const q = $('logQ').value.trim().toLowerCase(), fx = $('logFx').checked, big = $('logBig').checked, L = lastLog || [], o = [];
     const hl = t => { const h = esc(t); if (!q) return h; const i = t.toLowerCase().indexOf(q); return i < 0 ? h : esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + q.length)) + '</mark>' + esc(t.slice(i + q.length)); };
+    let keep = null;
+    if (big) { keep = new Set(); L.forEach((e, i) => { if (e.kind === 'imp' && e.imp.tags.some(x => BIG.has(x.c))) for (let j = Math.max(0, i - e.n); j <= i; j++) keep.add(j); }); }
     let hd = null, kp = null, n = 0;
-    for (const e of L) {
-      if (!fx && e.kind === 'fx') continue;
+    for (const [i, e] of L.entries()) {
+      if (keep && !keep.has(i)) continue;
+      if (!fx && (e.kind === 'fx' || e.kind === 'imp')) continue;
       if (q && !(e.text + ' ' + (e.arc || '') + ' ' + (e.fact || '')).toLowerCase().includes(q)) continue;
       if (e.kiep !== kp) { if (kp !== null || e.kiep > 1) o.push(`<div class="kp">Kiếp ${e.kiep}${e.kiep > 1 ? ' · Bộ Xương trỗi dậy' : ''}</div>`); kp = e.kiep; }
       const key = e.kiep + ':' + e.age;
       if (key !== hd) { hd = key; o.push(`<div class="yr">Năm ${e.wy} · ${e.kiep > 1 ? `năm thứ ${e.yrs} sau khi trỗi dậy` : `${e.yrs} tuổi`}</div>`); }
+      if (e.kind === 'imp') { o.push(impHtml(e, hl)); continue; }
       o.push(`<div class="e ${esc(e.kind)}">${e.arc ? `<span class="arc">${esc(e.arc)}</span>` : ''}${hl(e.text)}${e.fact ? `<span class="f">${hl(e.fact)}</span>` : ''}</div>`); n++;
     }
     $('glog').innerHTML = o.join('') || '<p class="muted">Không có dòng nào khớp.</p>';
     $('glog').classList.toggle('noarc', !$('logArc').checked);
-    $('logN').textContent = `${n} dòng${q || !fx ? ' / ' + L.length : ''}`;
+    const tot = L.filter(e => e.kind !== 'imp').length;
+    $('logN').textContent = `${n} dòng${q || !fx || big ? ' / ' + tot : ''}`;
   }
 
   // ═════════ Lưu (db, collection reviews; cùng kiểu các trang Duyệt) ═════════
-  async function write(k, status, note) {
+  // Ngữ cảnh lưu kèm ghi chú: câu chữ lúc ghi (đời có thể đổi sau khi sửa mã) và mã để Claude tìm chỗ sửa (sự kiện / quyết định / mạch).
+  function ctxOf(it) {
+    const o = it.obj;
+    if (it.kind === 'ev') return { code: o.ev || null, ctx: `${o.y} ${yu}: ${o.t}` };
+    if (it.kind === 'dec') return { code: o.id || null, ctx: `${o.title}: chọn «${o.label}»${o.alts.length ? '; không chọn: ' + o.alts.join(' / ') : ''}${o.out ? '. ' + o.out : ''}` };
+    if (it.kind === 'arc') return { code: o.k ? 'arc:' + o.k : null, ctx: `${o.tag} (${o.y0}–${o.y1}): ${tailOf(o)}` };
+    if (it.kind === 'chap') return { code: 'chap:' + o.ph, ctx: `${o.phVi}: ${o.q}` };
+    if (it.kind === 'ach') return { code: 'ach:' + o.id, ctx: `${o.nameVi}: ${o.d}` };
+    return { code: null, ctx: `${nm}, ${T.race}, ${T.years} ${yu}${T.cause ? ', ' + T.cause : ''}` };
+  }
+  // Ghi lại (set) thì bỏ trạng thái đã sửa: người dùng sửa đánh dấu / ghi chú / sao sau khi Claude sửa là mở lại mục đó.
+  async function write(k, status, note, score) {
     if (!db || !T) return;
     const it = all[k] || all.whole, id = dbKey(k);
+    if (score === undefined) score = rv(k).score || 0;
     $('saveState').textContent = 'Đang lưu…';
     try {
       const ref = db.collection('reviews').doc(id);
       if (status === null) await ref.delete();
-      else await ref.set({ kind: it.kind, id: k, sid: T.sid, seed: T.seed, world: T.world, who: T.name, race: T.race, name: it.name, status, note: note || '', updatedAt: new Date().toISOString() });
+      else await ref.set({ kind: it.kind, id: k, sid: T.sid, seed: T.seed, world: T.world, who: T.name, race: T.race, name: it.name, status, note: note || '', score: score || 0, ...ctxOf(it), updatedAt: new Date().toISOString() });
       delete drafts[id];
       $('saveState').textContent = 'Đã lưu';
     } catch (e) { $('saveState').textContent = e && e.code === 'invalid_argument' ? 'Bạn không có quyền lưu ở trang này.' : 'Lưu không thành công, thử lại.'; }
@@ -847,7 +1045,7 @@ code{font-family:var(--font-mono);font-size:12px}
   $('btnReb').onclick = () => { if (trail.length) openReb(+$('selMoc').value); };
   $('btnEnds').onclick = explore;
   $('logQ').addEventListener('input', () => { if (T) renderLog(); });
-  for (const id of ['logArc', 'logFx']) $(id).onchange = () => { if (T) renderLog(); };
+  for (const id of ['logArc', 'logFx', 'logBig']) $(id).onchange = () => { if (T) renderLog(); };
   document.addEventListener('keydown', e => {
     if (playAsk && /^[1-9]$/.test(e.key) && !e.target.closest('input,textarea,select')) { const b = $('play').querySelector(`[data-play="${+e.key - 1}"]`); if (b) { e.preventDefault(); b.click(); } return; }
     if ((e.key === 'n' || e.key === 'N') && !e.target.closest('input,textarea,select')) { e.preventDefault(); $('btnNext').click(); return; }
@@ -855,6 +1053,19 @@ code{font-family:var(--font-mono);font-size:12px}
   });
   document.addEventListener('click', e => {
     const pl = e.target.closest('[data-play]'); if (pl) { if (playAsk) playAsk(+pl.dataset.play); return; }
+    const nf = e.target.closest('[data-nfilter]'); if (nf) { nFilter = nf.dataset.nfilter; nClrArm = false; renderNotes(); return; }
+    const no = e.target.closest('[data-nopen]'); if (no) { openNote(no.dataset.nopen); return; }
+    const nd = e.target.closest('[data-ndel]'); if (nd) { noteDel(nd.dataset.ndel); return; }
+    const nr = e.target.closest('[data-nreopen]'); if (nr) { noteReopen(nr.dataset.nreopen); return; }
+    if (e.target.closest('[data-nclr]')) {   // bấm hai lần mới xóa mọi ghi chú đã sửa
+      if (!nClrArm) { nClrArm = true; renderNotes(); setTimeout(() => { if (nClrArm) { nClrArm = false; renderNotes(); } }, 4000); return; }
+      nClrArm = false; const ids = Object.keys(reviews).filter(id => reviews[id].done);
+      noteDo(async () => { for (const id of ids) await db.collection('reviews').doc(id).delete(); }, `Đã xóa ${ids.length} ghi chú đã sửa.`); return;
+    }
+    const dl = e.target.closest('[data-del]'); if (dl) { askDel(dl.dataset.delSid, dl.dataset.del); return; }
+    const cl = e.target.closest('[data-clr]'); if (cl) { clearList(cl.dataset.clr, cl); return; }
+    const ak = e.target.closest('[data-ask]'); if (ak) { const a = ak.dataset.ask, sid = ak.dataset.askSid; $('histAsk').hidden = true; $('histAsk').innerHTML = '';
+      if (a === 'local' || a === 'all') dropLocal(sid); if (a === 'all' || a === 'marks') dropMarks(sid); return; }
     const en = e.target.closest('[data-ends]'); if (en) { const a = en.dataset.ends; if (a === 'stop' && exp) exp.stop = true; else if (a === 'go') explore(); else if (a === 'close') $('ends').hidden = true; return; }
     const er = e.target.closest('[data-endreb]'); if (er) { const [n, i] = er.dataset.endreb.split(':').map(Number); reborn(n, i, false); return; }
     const rb = e.target.closest('[data-reb]'); if (rb) { const [n, i] = rb.dataset.reb.split(':').map(Number); reborn(n, i); return; }
@@ -866,6 +1077,9 @@ code{font-family:var(--font-mono);font-size:12px}
     const k = box.dataset.k, note = box.querySelector('[data-note]').value, curS = rv(k).status, st = e.target.closest('[data-status]');
     if (st) { write(k, curS === st.dataset.status ? null : st.dataset.status, note); return; }
     if (e.target.closest('[data-clear]')) { write(k, null); return; }
+    const sc = e.target.closest('[data-score]');   // sao: bấm lại đúng số sao đang chọn thì bỏ; chưa đánh dấu thì ≤ 2 sao là cần sửa, ≥ 3 là giữ
+    if (sc) { const i = +sc.dataset.score, s0 = rv(k).score || 0; write(k, curS || (i <= 2 ? 'fix' : 'ok'), note, s0 === i ? 0 : i); return; }
+    if (e.target.closest('[data-reopen]')) { write(k, curS || 'fix', note); return; }
     if (e.target.closest('[data-savenote]')) write(k, curS || 'fix', note);
   });
   document.addEventListener('change', e => { if (e.target.id === 'chkPlay') { playPref = e.target.checked; store.set(PLAY, playPref); } });
@@ -880,13 +1094,13 @@ code{font-family:var(--font-mono);font-size:12px}
   $('saveState').textContent = 'Đang kết nối nơi lưu đánh dấu…';
   (async () => {
     try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
-    if (!db) { $('saveState').textContent = 'Đánh dấu chỉ lưu được khi mở trang trên claude.ai (đã đăng nhập, có quyền chỉnh sửa). Ở đây vẫn xem và đổi nhân vật được.'; if (T) renderDetail(); return; }
+    if (!db) { $('saveState').textContent = 'Đánh dấu chỉ lưu được khi mở trang trên claude.ai (đã đăng nhập, có quyền chỉnh sửa). Ở đây vẫn xem và đổi nhân vật được.'; renderNotes(); if (T) renderDetail(); return; }
     $('saveState').textContent = 'Đánh dấu được lưu chung cho trang này, theo từng mẫu; Claude đọc lại được.'; if (T) renderDetail();
     db.collection('reviews').onSnapshot(snap => {
       for (const k of Object.keys(reviews)) delete reviews[k];
       for (const d of snap.docs) { const b = d.data(); if (b && STATUS[b.status]) reviews[d.id] = b; }
       const act = document.activeElement, fid = act && act.matches && act.matches('[data-note]') ? act.id : null, pos = fid ? act.selectionStart : 0;
-      renderHist(); if (T) { renderDetail(); renderArcs(); renderChoices(); renderProgress(); }
+      renderHist(); renderNotes(); if (T) { renderDetail(); renderArcs(); renderChoices(); renderProgress(); }
       if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} } }
     }, () => { if (T) renderDetail(); });
   })();
