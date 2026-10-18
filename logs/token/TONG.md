@@ -6,7 +6,8 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày | Phiên | Việc | Ra | Quy đổi |
 |---|---:|---:|---:|---:|
-| 2026-10-17 | 7 | 34 | 1.245.834 | 45.218.647 |
+| 2026-10-18 | 1 | 4 | 56.430 | 2.588.698 |
+| 2026-10-17 | 7 | 36 | 1.256.943 | 47.215.080 |
 | 2026-10-16 | 4 | 6 | 405.949 | 15.122.787 |
 | 2026-10-14 | 7 | 16 | 274.401 | 6.047.613 |
 
@@ -14,6 +15,12 @@ Mỗi dòng là một lời nhắn của người dùng và mọi lượt gọi 
 
 | Ngày giờ | Phiên | Việc | Lượt | Ra | Quy đổi |
 |---|---|---|---:|---:|---:|
+| 2026-10-18 10:00 | [Ghi chú tác động sự kiện cốt truyện](2026-10-18_51e15172.md) | thêm việc ghi chú, đánh giá cốt truyện trong cây cốt truyện luôn, để khi nào mình bảo bạn… | 22 | 23.309 | 561.555 |
+| 2026-10-18 09:54 | [Ghi chú tác động sự kiện cốt truyện](2026-10-18_51e15172.md) | thêm tính năng xóa nhân vật đã tạo ra ở trang cây cốt truyện | 10 | 8.930 | 215.672 |
+| 2026-10-18 09:44 | [Ghi chú tác động sự kiện cốt truyện](2026-10-18_51e15172.md) | ở trang cây cốt truyện vạn kiếp, phần lịch sử tổng, ghi chú rõ hơn tác động của mỗi sự ki… | 33 | 23.422 | 632.884 |
+| 2026-10-18 09:42 | [Sync pull](2026-10-18_61c11e6f.md) | khi bắt đầu chat mới thì cần làm gì đầu tiên | 1 | 769 | 1.178.587 |
+| 2026-10-17 23:05 | [Sync pull](2026-10-17_61c11e6f.md) | ok push đi | 2 | 386 | 128.374 |
+| 2026-10-17 22:57 | [Sync pull](2026-10-17_61c11e6f.md) | ok, đăng lại cả 3 rồi commit | 28 | 10.723 | 1.868.059 |
 | 2026-10-17 22:11 | [Sync pull](2026-10-17_61c11e6f.md) | làm tiếp | 132 | 224.248 | 6.293.111 |
 | 2026-10-17 22:06 | [Sync pull](2026-10-17_61c11e6f.md) | bash tools/sync.sh pull | 11 | 3.596 | 171.225 |
 | 2026-10-17 21:51 | [15f58cef](2026-10-17_15f58cef.md) | bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh… | 4 | 1.656 | 230.625 |

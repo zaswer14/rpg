@@ -1,4 +1,10 @@
 phien	tieu_de	viec	bat_dau	noi_dung	luot	vao	ghi_cache	doc_cache	ra	quy_doi
+51e15172-5ff2-4d9d-b767-7a6b4ff85a23	Ghi chú tác động sự kiện cốt truyện	3	1792292410	thêm việc ghi chú, đánh giá cốt truyện trong cây cốt truyện luôn, để khi nào mình bảo bạn…	22	44	35493	3739804	23309	561555
+51e15172-5ff2-4d9d-b767-7a6b4ff85a23	Ghi chú tác động sự kiện cốt truyện	2	1792292044	thêm tính năng xóa nhân vật đã tạo ra ở trang cây cốt truyện	10	20	14701	1415995	8930	215672
+51e15172-5ff2-4d9d-b767-7a6b4ff85a23	Ghi chú tác động sự kiện cốt truyện	1	1792291469	ở trang cây cốt truyện vạn kiếp, phần lịch sử tổng, ghi chú rõ hơn tác động của mỗi sự ki…	33	66	86602	3425043	23422	632884
+61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	5	1792291369	khi bắt đầu chat mới thì cần làm gì đầu tiên	1	2	585213	43136	769	1178587
+61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	4	1792253111	ok push đi	2	4	478	1254843	386	128374
+61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	3	1792252628	ok, đăng lại cả 3 rồi commit	28	56	148599	15171899	10723	1868059
 61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	2	1792249890	làm tiếp	132	264	394954	43816992	224248	6293111
 61c11e6f-13fe-4a2e-9d21-745dbfa10631	Sync pull	1	1792249566	bash tools/sync.sh pull	11	22	36799	796252	3596	171225
 15f58cef-8791-5012-84aa-e2e65d9d3527		8	1792248696	bổ sung thêm tính mở rộng của mạch truyện, ko còn mạch nào là mạch phụ cả, mạch phụ là kh…	4	10	13015	1963046	1656	230625
