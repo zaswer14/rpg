@@ -33,7 +33,7 @@ window.LifeSim = window.LifeSim || {};
     // Mật độ quái theo tỉnh × tầng, biển; thú triều (js/dynamic.js).
     G.monsterYear(W, X, S);
     const here = W.regions[S.loc];
-    if (here.plagueNew && !S.undead && !G.RACES[S.race].construct) X.log(`Dịch hạch lan tới ${G.REGION[S.loc].nameVi}.`, 'bad');
+    if (here.plagueNew && !S.undead && !G.RACES[S.race].construct) X.log(`Dịch hạch lan tới ${G.REGION[S.loc].nameVi}. Nhà nhà đóng cửa từ chiều, ngoài đường chỉ còn mùi vôi bột và tiếng xe chở xác lộc cộc lúc chạng vạng. Ai ho một tiếng là cả nhà ngồi lặng đi.`, 'bad');
     for (const r of G.REGIONS) W.regions[r.id].plagueNew = false;
   };
 
@@ -46,20 +46,20 @@ window.LifeSim = window.LifeSim || {};
       if (ageDie(p.age, 1.1)) {
         p.alive = false;
         X.add('h', -12);
-        let txt = `${p.role[0].toUpperCase() + p.role.slice(1)} bạn, ${p.name}, qua đời ở tuổi ${p.age}.`;
-        if (S.q >= 3 && X.stage(S) !== 'child') { const inh = Math.round(G.median(reg) * (S.q - 2) * .8); X.money(inh); txt += ` Bạn được thừa kế ${G.coin(inh)}.`; }
+        let txt = `${p.role[0].toUpperCase() + p.role.slice(1)} bạn, ${p.name}, qua đời ở tuổi ${p.age}.` + (p.role === 'mẹ' ? ' Chiếc khăn mẹ hay quàng vẫn treo trên móc cửa, mấy tháng liền không ai nỡ cất.' : p.role === 'cha' ? ' Đôi dép cũ của cha vẫn nằm ở bậc cửa, mấy tháng liền không ai nỡ dọn.' : ' Lò đúc nguội dần, tiếng búa quen thuộc không còn vang lên nữa.');
+        if (S.q >= 3 && X.stage(S) !== 'child') { const inh = Math.round(G.median(reg) * (S.q - 2) * .8); X.money(inh); txt += ` Phần của để lại tới tay bạn: ${G.coin(inh)}.`; }
         X.log(txt, 'bad');
       }
     }
-    for (const s of fam.sibs) if (s.alive) { s.age += R.ypt; if (ageDie(s.age, .8)) { s.alive = false; X.add('h', -8); X.log(`${s.sex === 'm' ? 'Anh' : 'Chị'} ${s.name} của bạn mất.`, 'bad'); } }
+    for (const s of fam.sibs) if (s.alive) { s.age += R.ypt; if (ageDie(s.age, .8)) { s.alive = false; X.add('h', -8); X.log(`${s.sex === 'm' ? 'Anh' : 'Chị'} ${s.name} của bạn mất. Mâm cơm nhà từ đó thừa ra một cái bát, mãi mới có người nhớ ra mà cất đi.`, 'bad'); } }
     const sp = fam.spouse;
     if (sp && sp.alive) {
       sp.age += R.ypt;
-      if (ageDie(sp.age)) { sp.alive = false; X.add('h', -20); X.log(`${sp.name}, người bạn đời, qua đời.`, 'bad'); }
+      if (ageDie(sp.age)) { sp.alive = false; X.add('h', -20); X.log(`${sp.name}, người bạn đời, qua đời. Nửa giường bên kia lạnh đi. Suốt một thời gian dài, tối nào bạn cũng quen tay chừa chỗ cho người ấy.`, 'bad'); }
     }
     for (const k of fam.kids) if (k.alive) {
       k.age += R.ypt;
-      if (k.age <= R.adult && X.rnd() < R.im * .25) { k.alive = false; X.add('h', -22); X.log(`Con bạn, ${k.name}, mất khi mới ${k.age} tuổi.`, 'bad'); }
+      if (k.age <= R.adult && X.rnd() < R.im * .25) { k.alive = false; X.add('h', -22); X.log(`Con bạn, ${k.name}, mất khi mới ${k.age} tuổi. Bạn giữ lại một món đồ chơi nhỏ của con, đặt ở đầu giường, không cho ai đụng vào.`, 'bad'); }
     }
     // Con cái.
     const st = X.stage(S), lt2 = X.lt(S);
@@ -70,7 +70,7 @@ window.LifeSim = window.LifeSim || {};
         const sx = X.chance(.5) ? 'm' : 'f', nm = X.name(S.race, sx).split(' ')[0];
         fam.kids.push({ name: nm, sex: sx, age: 0, alive: true });
         X.add('h', 8); X.add('so', 4);
-        X.log(`${sx === 'm' ? 'Con trai' : 'Con gái'} ${nm} chào đời.`, 'good');
+        X.log(`${sx === 'm' ? 'Con trai' : 'Con gái'} ${nm} chào đời, đỏ hỏn, khóc to. ${alive ? 'Nhà thêm một tiếng khóc, thêm một miệng ăn, và thêm một lý do để sáng mai dậy sớm.' : 'Đứa con đầu lòng. Đêm ấy bạn thức gần sáng, chỉ để nghe nhịp thở nhỏ xíu bên cạnh.'}`, 'good');
       }
     }
   };
@@ -82,13 +82,24 @@ window.LifeSim = window.LifeSim || {};
       const C = G.CONDS[c.id];
       if (C.heal && X.rnd() < C.heal * G.tfx(S).heal * (1 + share * 1.2) * (S.q >= 4 ? 1.3 : 1) * (G.healerMult(S) < 1 ? 1.2 : 1)) {
         S.conds.splice(S.conds.indexOf(c), 1);
-        X.log(`Khỏi ${C.nameVi.toLowerCase()}.`, 'good');
+        // Câu khỏi bệnh theo từng loại (docs/18): một nét cơ thể rồi tên bệnh.
+        X.log(`${({
+          wound: 'Chỗ thương cũ đã kéo da non, giơ tay lên không còn nhói. ',
+          fever: 'Cơn sốt lui dần, lần đầu sau bao lâu bát cháo mới thấy có vị. ',
+          cough: 'Tiếng ho thưa dần rồi tắt hẳn, đêm ngủ được một mạch tới sáng. ',
+          curse: 'Một đêm bạn choàng tỉnh, lồng ngực nhẹ bẫng như vừa có sợi dây nào đứt. ',
+          poison: 'Môi hết thâm, tay chân hết run, chất độc đã ra khỏi người. ',
+          frail: 'Một sáng bạn dậy mà người không còn nặng như đeo đá. ',
+          crack: 'Chỗ xương nứt đã liền, gõ vào nghe chắc như cũ. ',
+          rust: 'Các khớp được lau dầu kỹ, cử động trơn tru, không còn kêu ken két. ',
+          hunted: 'Lệnh truy lùng nguội dần, tu sĩ thôi lảng vảng quanh chỗ bạn ở. '
+        })[c.id] || ''}${c.id === 'hunted' ? 'Bạn thoát cảnh bị truy lùng.' : `Khỏi ${C.nameVi.toLowerCase()}.`}`, 'good');
       } else if (c.id === 'fever' && c.years >= 2) { S.conds.splice(S.conds.indexOf(c), 1); X.cond('frail'); }
     }
     const st = X.stage(S), R = X.R(S);
     if (st === 'elder') {
       if (R.construct) { if (X.chance(.08)) X.cond('rust'); }
-      else if (!R.undead && X.chance(.05)) { X.cond('cough'); X.log('Cơn ho mùa đông không dứt.', 'bad'); }
+      else if (!R.undead && X.chance(.05)) { X.cond('cough'); X.log('Mùa đông năm ấy bạn ho từ đầu mùa tới cuối mùa, đêm nào cũng phải ngồi dậy mấy lần. Xuân sang rồi mà cơn ho vẫn không dứt.', 'bad'); }
     }
     if (S.work === 'miner' && !R.construct && X.chance(.04)) X.cond('cough');
     if (S.hl < 15 && !X.hasCond('frail')) X.cond('frail');
@@ -98,7 +109,7 @@ window.LifeSim = window.LifeSim || {};
     // Hồn phai: chỉ số mài mòn chậm; ở gần đền Quang Minh lâu thì bị truy lùng.
     S.sm = Math.max(0, S.sm - .4);
     const reg = X.reg(S), light = reg.faiths.light || 0, tot = Object.values(reg.faiths).reduce((a, b) => a + b, 0);
-    if (S.flags.revealed && X.rnd() < light / tot * .5 && !X.hasCond('hunted')) { X.cond('hunted'); X.log(`Tu sĩ Quang Minh ở ${reg.nameVi} treo thưởng cho đầu lâu của bạn.`, 'bad'); }
+    if (S.flags.revealed && X.rnd() < light / tot * .5 && !X.hasCond('hunted')) { X.cond('hunted'); X.log(`Tu sĩ Quang Minh ở ${reg.nameVi} treo thưởng cho đầu lâu của bạn. Tờ cáo thị dán khắp cổng chợ, vẽ một cái sọ chẳng giống bạn mấy. Từ nay đi đâu bạn cũng chọn đường vắng.`, 'bad'); }
     if (S.faith === 'dark') S.devotion = Math.min(100, S.devotion + 2);
   };
 
@@ -122,7 +133,7 @@ window.LifeSim = window.LifeSim || {};
     (S.peers || []).forEach((p, i) => {
       if (S.peerSeen[i] || S.world.year < p.diedYear) return;
       S.peerSeen[i] = true;
-      X.log(`Đồng niên: ${p.name} (${J.races[p.race].nameVi}, sinh cùng năm ở ${p.settlement || p.regionName}) đã mất ở tuổi ${p.years}: ${p.cause}.` + (p.rose ? ' Rồi xương cốt đứng dậy.' : ''), 'peer');
+      X.log(`Đồng niên: ${p.name} (${J.races[p.race].nameVi}, sinh cùng năm ở ${p.settlement || p.regionName}) đã mất ở tuổi ${p.years}: ${p.cause}. Hai người cùng một năm chào đời, giờ một người đã đi trước.` + (p.rose ? ' Rồi xương cốt người ấy đứng dậy, bước sang một kiếp khác.' : ''), 'peer');
     });
   };
 
@@ -157,11 +168,11 @@ window.LifeSim = window.LifeSim || {};
   // Rương báu khi phiêu lưu.
   G.treasure = function (X, zone) {
     const S = X.S, r = X.rnd();
-    if (r < .4) { const g = X.int(20, 60) * (1 + zone.tier[0]); X.money(g); X.log(`Tìm được rương cũ ở ${zone.nameVi}: ${G.coin(g)}.`, 'good'); }
-    else if (r < .75) { S.gear = Math.min(10, S.gear + 1); X.log(`Nhặt được món trang bị tốt hơn ở ${zone.nameVi}. Trang bị ${S.gear}/10.`, 'good'); }
+    if (r < .4) { const g = X.int(20, 60) * (1 + zone.tier[0]); X.money(g); X.log(`Ở ${zone.nameVi}, bạn bẩy được một chiếc rương cũ, bản lề gỉ kêu ken két. Bên trong: ${G.coin(g)}.`, 'good'); }
+    else if (r < .75) { S.gear = Math.min(10, S.gear + 1); X.log(`Ở ${zone.nameVi}, bạn nhặt được một món trang bị còn tốt hơn đồ đang dùng, lau sạch bụi là sáng lên. Trang bị ${S.gear}/10.`, 'good'); }
     else {
       const school = X.pick(Object.keys(J.schools)), m = X.pick(J.schools[school].masteries);
-      X.gain(m, 8); X.log(`Một cuộn bí kíp trong hốc đá dạy bạn về ${G.mv(m).toLowerCase()}.`, 'good');
+      X.gain(m, 8); X.log(`Trong một hốc đá có cuộn bí kíp bọc da, chữ đã nhòe mất một nửa. Đọc đi đọc lại mấy đêm, bạn hiểu thêm được về ${G.mv(m).toLowerCase()}.`, 'good');
     }
   };
 })(window.LifeSim);

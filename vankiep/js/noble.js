@@ -42,7 +42,7 @@ window.LifeSim = window.LifeSim || {};
     royalYear(S, X, W, R, D, r, med);
     if (S.dead) return;
     // Con thứ nhà quý tộc thành người thừa kế khi mọi anh chị đã mất.
-    if (F.house && !F.house.heir && !F.house.done && !F.house.lost && S.family.sibs.length && S.family.sibs.every(s => !s.alive)) { F.house.heir = true; X.log(`Anh chị bạn đều đã mất. Tước ${G.NOBLE_VI[F.house.rank]} của nhà giờ sẽ về bạn.`, 'bad'); }
+    if (F.house && !F.house.heir && !F.house.done && !F.house.lost && S.family.sibs.length && S.family.sibs.every(s => !s.alive)) { F.house.heir = true; X.log(`Người anh chị cuối cùng của bạn cũng đã nằm xuống. Trong căn nhà lớn, ghế đầu bàn giờ chỉ chờ một người. Tước ${G.NOBLE_VI[F.house.rank]} của nhà rồi sẽ về tay bạn, theo cái cách chẳng ai mong.`, 'bad'); }
     // Kế tước khi người giữ tước (cha, không có cha thì mẹ) mất.
     if (F.house && F.house.heir && !r.noble && !F.house.done) {
       const holder = S.family.parents[1] || S.family.parents[0];
@@ -51,15 +51,15 @@ window.LifeSim = window.LifeSim || {};
         if (G.grantsTitles(F.house.k)) {
           r.noble = { k: F.house.k, rank: F.house.rank, since: W.year, fief: null }; flag(S, 'nobleInherit'); F.nobleMax = Math.max(F.nobleMax || 0, F.house.rank);
           reg(W, F.house.k, S, F.house.rank);
-          X.log(`Bạn kế tước ${G.NOBLE_VI[F.house.rank]} của ${R.nations[F.house.k].name}.`, 'big');
+          X.log(`Đám tang chưa xong, người của triều đình đã mang ấn tín tới. Bạn kế tước ${G.NOBLE_VI[F.house.rank]} của ${R.nations[F.house.k].name}. Chiếc nhẫn khắc gia huy đeo vào tay còn rộng, phải quấn thêm sợi chỉ cho khỏi tuột.`, 'big');
           // Tước cần Tier tối thiểu (js/status.js G.TITLE_TIER): chưa đủ thì giữ tạm, có hạn G.TITLE_GRACE năm tính từ lúc trưởng thành.
           const need = G.TITLE_TIER ? G.TITLE_TIER[F.house.rank] : 0, T = G.tierOf(S);
           if (T < need) {
             const ypt = X.R(S).ypt, from = Math.max(S.age, X.R(S).adult / ypt);
             r.noble.due = { t: need, by: from + G.TITLE_GRACE / ypt }; flag(S, 'titleDue');
-            X.log(`Theo lệ, ${G.NOBLE_VI[F.house.rank]} phải là ${G.tierName(need)}. Bạn còn ${G.TITLE_GRACE} năm${S.age < from ? ' kể từ lúc trưởng thành' : ''} để đạt tới, không thì bị giáng tước.`, 'bad');
+            X.log(`Viên quan giữ sổ tước nhắc khẽ: theo lệ, ${G.NOBLE_VI[F.house.rank]} phải là ${G.tierName(need)}. Bạn còn ${G.TITLE_GRACE} năm${S.age < from ? ' kể từ lúc trưởng thành' : ''} để đạt tới, không thì bị giáng tước. Ông ta nói xong thì cúi chào, mắt chẳng có vẻ gì tin.`, 'bad');
           }
-        } else X.log('Tước của nhà bạn không còn: nước ban tước đã mất hoặc đổi chính thể.', 'bad');
+        } else X.log('Tới lúc kế tước thì chẳng còn gì để kế: nước ban tước đã mất hoặc đổi chính thể. Tấm gia huy treo trong sảnh giờ chỉ là miếng gỗ chạm. Bạn để nó lại trên tường, không gỡ xuống.', 'bad');
       }
     }
     // Công trạng với nước mình mỗi lượt (theo các bộ đếm và chức đang giữ).
@@ -82,10 +82,10 @@ window.LifeSim = window.LifeSim || {};
     if (nb) {
       const n = R.nations[nb.k];
       if (!D.nat[nb.k] || !D.nat[nb.k].alive || !G.grantsTitles(nb.k)) {
-        X.log(`Tước ${G.NOBLE_VI[nb.rank]} của bạn mất nghĩa: ${n.name} ${D.nat[nb.k] && D.nat[nb.k].alive ? 'không còn ban tước' : 'đã mất'}.`, 'bad');
+        X.log(`Tước ${G.NOBLE_VI[nb.rank]} của bạn mất nghĩa: ${n.name} ${D.nat[nb.k] && D.nat[nb.k].alive ? 'không còn ban tước' : 'đã mất'}. Ấn tín vẫn nằm trong hộp gỗ, chỉ là chẳng còn ai nhìn thấy nó mà cúi chào.`, 'bad');
         dropFief(S, W); r.noble = null; flag(S, 'nobleLost'); return;
       }
-      if (S.nation !== nb.k) { if (!F.nobleAbroad) { F.nobleAbroad = true; X.log(`Bạn sống ngoài ${n.name}; bổng lộc tước ${G.NOBLE_VI[nb.rank]} tạm dừng.`, 'info'); } return; }
+      if (S.nation !== nb.k) { if (!F.nobleAbroad) { F.nobleAbroad = true; X.log(`Xa ${n.name}, tước ${G.NOBLE_VI[nb.rank]} chỉ còn là mấy chữ trên giấy; bổng lộc tạm dừng tới khi bạn về.`, 'info'); } return; }
       F.nobleAbroad = false;
       X.money(Math.round(med * G.NOBLE.stipend[nb.rank]));
       S.q = Math.max(S.q, nb.rank >= 3 ? 5 : 4);
@@ -105,7 +105,7 @@ window.LifeSim = window.LifeSim || {};
     const near = h ? cand.sort((a, b) => Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y))[0] : X.pick(cand);
     Dn().setField(D, near, 'fief', { name: S.name, rank: nb.rank, player: true });
     nb.fief = near.id;
-    X.log(`Bạn được ban thái ấp ${near.name}.`, 'good');
+    X.log(`Chiếu ban xuống: ${near.name} từ nay là thái ấp của bạn. Lần đầu bạn đi qua cổng, dân ở đó đứng dạt hai bên đường, chẳng biết nên cúi đầu hay nên nhìn.`, 'good');
   }
   G.dropFief = S => dropFief(S, S.world);   // js/status.js giáng tước dưới Bá thì mất thái ấp
   function dropFief(S, W) {
@@ -127,13 +127,13 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const k = S.nation, n = G.realm.nations[k], r = nextRank(S), ru = S.world.dyn.nat[k].ruler;
-      return { title: 'Sắc phong', body: `${ru ? ru.title + ' ' + ru.name : 'Triều đình'} ghi nhận công lao của bạn với ${n.name} (công trạng ${Math.round(S.merit[k])}).`,
+      return { title: 'Sắc phong', body: `Sứ giả mang chiếu tới tận nhà, dấu son trên giấy còn thơm mùi mực. ${ru ? ru.title + ' ' + ru.name : 'Triều đình'} ghi nhận công lao của bạn với ${n.name} (công trạng ${Math.round(S.merit[k])}). Hàng xóm kéo nhau ra đứng ngoài ngõ xem.`,
         choices: [{ k: 'yes', label: `Nhận tước ${G.NOBLE_VI[r]}`, sub: `Bổng lộc ${G.NOBLE.stipend[r]} lần thu nhập trung bình mỗi năm${r >= 3 ? ', thái ấp' : ''}; tầng lớp Quý tộc.` }, { k: 'no', label: 'Từ chối', sub: 'Giữ mình là thường dân.' }] };
     },
     apply(S, X, k) {
-      if (k !== 'yes') { S.flags.nobleRefused = (S.flags.nobleRefused || 0) + 1; S.merit[S.nation] -= 5; return null; }
+      if (k !== 'yes') { S.flags.nobleRefused = (S.flags.nobleRefused || 0) + 1; S.merit[S.nation] -= 5; return 'Bạn cúi đầu tạ ơn rồi trao chiếu lại cho sứ giả. Mấy hôm liền người ta bàn tán, kẻ bảo bạn dại, người bảo bạn cao. Sáng hôm sau bạn vẫn đi làm như mọi ngày.'; }
       grant(S, X, S.nation, nextRank(S), 'merit');
-      return `Bạn là ${G.NOBLE_VI[roles(S).noble.rank]} của ${G.realm.nations[S.nation].name}.`;
+      return `Ngày nhận sắc, bạn mặc bộ áo tốt nhất, quỳ nghe đọc chiếu tới tê cả chân. Từ hôm ấy bạn là ${G.NOBLE_VI[roles(S).noble.rank]} của ${G.realm.nations[S.nation].name}. Người quen cũ gặp ngoài đường cứ ngập ngừng, không biết nên gọi bạn thế nào.`;
     },
     auto: (S) => S.flags.nobleRefused ? 'no' : (S.traits.social > .25 || S.traits.bold > .5 ? 'yes' : 'no')
   };
@@ -146,13 +146,13 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const r = nextRank(S), cost = Math.round(G.NOBLE.buy[r] * G.median(X.reg(S))), n = G.realm.nations[S.nation];
-      return { title: 'Quyên góp quốc khố', body: `Quan thu ngân của ${n.name} ngỏ ý: ai góp ${G.coin(cost)} vào quốc khố sẽ được phong ${G.NOBLE_VI[r]}.`,
+      return { title: 'Quyên góp quốc khố', body: `Quan thu ngân của ${n.name} ghé nhà, uống cạn một ấm trà mới chịu nói vào chuyện: ai góp ${G.coin(cost)} vào quốc khố sẽ được phong ${G.NOBLE_VI[r]}. Ông ta hạ giọng, như người đang chào một món hàng hiếm.`,
         choices: [{ k: 'yes', label: `Góp ${G.coin(cost)}`, sub: `Thành ${G.NOBLE_VI[r]}. Quý tộc cũ sẽ gọi bạn là "tước mua".`, cost }, { k: 'no', label: 'Giữ tiền', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k !== 'yes') return null;
+      if (k !== 'yes') return 'Bạn rót thêm trà, nói sang chuyện mùa màng. Quan thu ngân về rồi, túi tiền bên hông vẫn nặng nguyên.';
       X.money(-c.cost); grant(S, X, S.nation, nextRank(S), 'buy'); X.add('so', -3);
-      return `Bạn là ${G.NOBLE_VI[roles(S).noble.rank]} của ${G.realm.nations[S.nation].name}.`;
+      return `Tiền vào quốc khố chưa được mười hôm thì sắc phong đã tới. Bạn là ${G.NOBLE_VI[roles(S).noble.rank]} của ${G.realm.nations[S.nation].name}. Ở các buổi tiệc, quý tộc lâu đời vẫn cười với bạn, quay lưng đi mới thì thầm hai chữ "tước mua".`;
     },
     auto: (S, X, d) => S.traits.social > .55 && S.gold > d.choices[0].cost * 1.6 ? 'yes' : 'no'
   };
@@ -173,7 +173,7 @@ window.LifeSim = window.LifeSim || {};
     return t;
   };
   // Tự từ bỏ tước (nút ở giao diện, qua G.leaveRole).
-  G.renounceTitle = S => { const r = roles(S); if (!r.noble) return null; const t = G.NOBLE_VI[r.noble.rank], k = r.noble.k; dropFief(S, S.world); unreg(S.world, k, S); r.noble = null; return `Bạn trả lại tước ${t}.`; };
+  G.renounceTitle = S => { const r = roles(S); if (!r.noble) return null; const t = G.NOBLE_VI[r.noble.rank], k = r.noble.k; dropFief(S, S.world); unreg(S.world, k, S); r.noble = null; return `Bạn gói ấn tín trong một tấm khăn sạch, gửi về triều, trả lại tước ${t}. Đêm ấy bạn ngủ một giấc dài, lâu lắm rồi mới được thế.`; };
   // Kế tước khi chết: con trưởng thành nối tước, giữ thái ấp.
   G.nobleDeath = (S, X) => {
     const r = S.roles, nb = r && r.noble; if (!nb) return;
@@ -229,13 +229,13 @@ window.LifeSim = window.LifeSim || {};
       }
       F.royal = { k, line: main ? 'main' : 'side', pos: main ? older + 1 : X.int(4, 9) + older, ruler: ruler.name, since: S.world.year };
       flag(S, main ? 'royalMain' : 'royalSide');
-      return main ? `Bạn là con của ${ruler.title} ${ruler.name}, hoàng tộc ${n.name}. ${F.royal.pos === 1 ? 'Bạn là người kế vị.' : `Bạn đứng thứ ${F.royal.pos} trong hàng kế vị.`}`
-        : `Bạn thuộc dòng phụ của hoàng tộc ${n.name}: cha mẹ bạn là họ hàng của ${ruler.title} ${ruler.name}. Ngai vàng còn xa (thứ ${F.royal.pos}), nhưng cái họ mở mọi cánh cửa.`;
+      return main ? `Chuông trong cung ${n.name} gióng liền mấy hồi khi bạn cất tiếng khóc đầu tiên. Bạn là con của ${ruler.title} ${ruler.name}. ${F.royal.pos === 1 ? 'Người ta bế bạn ra cho quần thần xem mặt: đây là người kế vị.' : `Trong hàng kế vị, bạn đứng thứ ${F.royal.pos}, đủ gần để được chiều chuộng, đủ xa để chẳng ai sợ.`}`
+        : `Bạn thuộc dòng phụ của hoàng tộc ${n.name}: cha mẹ bạn là họ hàng của ${ruler.title} ${ruler.name}. Ngai vàng còn xa lắm (thứ ${F.royal.pos}). Nhưng cái họ ấy đi tới đâu, cửa mở tới đó.`;
     } else {
       const rank = +X.wkey({ 1: 4, 2: 3, 3: 2, 4: 1 }), heir = older === 0;
       F.house = { k, rank, heir };
       flag(S, 'nobleBorn'); if (heir) flag(S, 'nobleHeirBorn');
-      return `Nhà bạn là một nhà ${G.NOBLE_VI[rank]} của ${n.name}. ${heir ? 'Bạn là con trưởng: tước sẽ về bạn.' : `Bạn là con thứ ${older + 1}; tước về anh chị cả. Bạn có họ, có tiền đi học, nhưng phải tự lập thân.`}`;
+      return `Nhà bạn là một nhà ${G.NOBLE_VI[rank]} của ${n.name}, trên cổng treo gia huy sơn son. ${heir ? 'Bạn là con trưởng, nên từ khi còn nằm nôi, gia nhân đã gọi bạn là người thừa kế: tước rồi sẽ về bạn.' : `Bạn là con thứ ${older + 1}; tước về anh chị cả. Bạn có họ, có tiền đi học, nhưng muốn có chỗ đứng thì phải tự lập thân.`}`;
     }
   };
   // Mỗi lượt: hoàng tộc nhận trợ cấp, người trước mình trong hàng kế vị có thể mất, vua cha mất thì kế vị, nước mất thì lưu vong;
@@ -243,7 +243,7 @@ window.LifeSim = window.LifeSim || {};
   function royalYear(S, X, W, R, D, r, med) {
     const RY = S.flags.royal; if (!RY) return;
     const d = D.nat[RY.k], n = R.nations[RY.k];
-    if (!d || !d.alive) { if (!RY.exile) { RY.exile = true; flag(S, 'royalExile'); X.log(`${n.name} mất nước. Hoàng tộc lưu vong; cái họ của bạn giờ là gánh nặng.`, 'bad'); } return; }
+    if (!d || !d.alive) { if (!RY.exile) { RY.exile = true; flag(S, 'royalExile'); X.log(`${n.name} mất nước. Hoàng tộc bỏ kinh thành trong đêm, xe ngựa chạy không thắp đèn. Từ nay cái họ của bạn là thứ phải giấu, nói ra ở quán trọ là có người ngoái nhìn.`, 'bad'); } return; }
     if (RY.exile) return;
     // Vua cha (dòng chính) mất trong nhà trước khi triều kịp báo: kế vị ngay.
     if (RY.line === 'main' && d.ruler && !d.ruler.player && d.ruler.name === RY.ruler) {
@@ -255,7 +255,7 @@ window.LifeSim = window.LifeSim || {};
       }
     }
     if (d.ruler && !d.ruler.player && d.ruler.name !== RY.ruler) RY.ruler = d.ruler.name;
-    if (RY.line === 'main' && RY.pos > 1 && r.ruler !== RY.k && X.chance(.012 * (RY.pos - 1))) { RY.pos--; X.log(`Một người anh chị của bạn mất; bạn lên thứ ${RY.pos} trong hàng kế vị.`, 'bad'); }
+    if (RY.line === 'main' && RY.pos > 1 && r.ruler !== RY.k && X.chance(.012 * (RY.pos - 1))) { RY.pos--; X.log(`Trong cung để tang một người anh chị của bạn. Đứng trước linh cữu, bạn biết ai cũng đang nghĩ cùng một điều: bạn đã lên thứ ${RY.pos} trong hàng kế vị.`, 'bad'); }
     if (S.nation === RY.k && r.ruler !== RY.k) X.money(Math.round(med * (RY.line === 'main' ? 4 : 2)));
     if (!RY.titled && G.grantsTitles(RY.k) && X.stage(S) === 'adult' && r.ruler !== RY.k && !r.noble) { RY.titled = true; grant(S, X, RY.k, RY.line === 'main' ? 5 : 4, 'royal'); }
   }
@@ -268,11 +268,11 @@ window.LifeSim = window.LifeSim || {};
     if (RY.line !== 'main') return null;
     const P = S.family.parents.find(x => x.name === RY.ruler); if (P) P.alive = false;
     // Anh chị cả lên ngôi: mình thành em vua, con của vua mới đứng trước mình trong hàng kế vị.
-    if (RY.pos > 1) { const kids = X.int(0, 3); RY.pos = RY.pos - 1 + kids; X.log(`${RY.ruler} băng hà. Anh chị cả của bạn lên ngôi${kids ? '; con của vua mới đứng trước bạn trong hàng kế vị' : ''} (bạn thứ ${RY.pos}).`, 'big'); return null; }
+    if (RY.pos > 1) { const kids = X.int(0, 3); RY.pos = RY.pos - 1 + kids; X.log(`Chuông tang gióng suốt đêm: ${RY.ruler} băng hà. Anh chị cả của bạn lên ngôi${kids ? '; con của vua mới đứng trước bạn trong hàng kế vị' : ''} (bạn thứ ${RY.pos}). Lễ đăng quang, bạn đứng hàng thứ hai, nhìn chiếc vương miện đặt lên một mái đầu không phải của mình.`, 'big'); return null; }
     const n = G.realm.nations[k], t = G.NAMES.nation.ruler[n.gov] || ['Thủ Lĩnh'], young = ['infant', 'child', 'teen'].includes(X.stage(S));
     if (roles(S).noble && roles(S).noble.k === k) G.renounceTitle(S);
     roles(S).ruler = k; RY.crowned = W.year; S.nation = k; flag(S, 'royalCrown');
-    X.log(`${RY.ruler} băng hà. Bạn lên ngôi ${n.name}${young ? '; một hội đồng nhiếp chính cầm quyền tới khi bạn trưởng thành' : ''}.`, 'big');
+    X.log(`Chuông tang gióng suốt đêm: ${RY.ruler} băng hà. Sáng ra, quần thần quỳ kín sân điện, và bạn lên ngôi ${n.name}${young ? '; một hội đồng nhiếp chính cầm quyền tới khi bạn trưởng thành. Vương miện quá to, người ta đặt nó trên chiếc gối nhung bên cạnh bạn' : '. Vương miện đội lên đầu nặng hơn bạn tưởng'}.`, 'big');
     return { title: t.length > 1 && S.sex === 'f' ? t[1] : t[0], name: S.name, sex: S.sex, age: X.years(S), player: true };
   };
   // ── Tranh ngôi: hoàng tộc chưa phải người kế vị số 1, lúc triều rối (vừa tranh ngôi, hoặc ổn định < .35)
@@ -286,23 +286,23 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const RY = S.flags.royal, d = S.world.dyn.nat[RY.k], n = G.realm.nations[RY.k];
-      return { title: 'Tranh ngôi', body: `Triều ${n.name} đang rối (ổn định ${Math.round(d.stab * 100)}). Một phe quần thần muốn đưa bạn lên thay ${d.ruler.title} ${d.ruler.name}. Ước chừng ${Math.round(G.claimChance(S) * 100)}% thành công.`,
+      return { title: 'Tranh ngôi', body: `Triều ${n.name} đang rối (ổn định ${Math.round(d.stab * 100)}). Nửa đêm có người gõ cửa sau, đưa cho bạn một lá thư không ký tên: một phe quần thần muốn đưa bạn lên thay ${d.ruler.title} ${d.ruler.name}. Ước chừng ${Math.round(G.claimChance(S) * 100)}% thành công. Đọc xong, bạn hơ lá thư lên ngọn nến.`,
         choices: [{ k: 'go', label: 'Giành ngôi', sub: 'Thua thì mất đầu hoặc phải trốn chạy.' }, { k: 'no', label: 'Đứng ngoài', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k !== 'go') return null;
+      if (k !== 'go') return 'Bạn không trả lời lá thư nào nữa. Những người từng gõ cửa sau dần thôi lui tới. Ngai vàng vẫn ở đó, và bạn vẫn ở chỗ của mình.';
       const W = S.world, D = W.dyn, RY = S.flags.royal, d = D.nat[RY.k], n = G.realm.nations[RY.k], old = d.ruler;
       if (!X.chance(G.claimChance(S))) {
         flag(S, 'claimFail'); Dn().hist(D, W.year, 'riot', `${S.name} mưu giành ngôi ${n.name}, thất bại.`);
         if (X.chance(.5)) { X.die({ id: 'hanged', text: `bị ${old.title} ${old.name} xử tử vì mưu đoạt ngôi` }); return null; }
         RY.exile = true; (S.flags.wanted = S.flags.wanted || {})[RY.k] = true;
-        return 'Phe bạn tan rã. Bạn trốn khỏi kinh thành, tên bị xóa khỏi gia phả.';
+        return 'Có kẻ trong phe bạn trở mặt, và chỉ trong một đêm mọi thứ tan rã. Bạn trốn khỏi kinh thành trong xe chở rơm, nghe tiếng vó ngựa lính đuổi ngay bên kia vách gỗ. Tên bạn bị gạch khỏi gia phả bằng một nét mực đen.';
       }
       const t = G.NAMES.nation.ruler[n.gov] || ['Thủ Lĩnh'], nr = { title: t.length > 1 && S.sex === 'f' ? t[1] : t[0], name: S.name, sex: S.sex, age: X.years(S), player: true };
       d.ruler = nr; n.ruler = nr; d.stab = Math.max(0, d.stab - .12); roles(S).ruler = RY.k; flag(S, 'claimWin');
       if (roles(S).noble && roles(S).noble.k === RY.k) G.renounceTitle(S);
       Dn().hist(D, W.year, 'king', `${S.name} giành ngôi ${n.name} từ tay ${old.title} ${old.name}.`);
-      return `Bạn ngồi lên ngai ${n.name}. ${old.name} bị giam ở tháp phía bắc.`;
+      return `Cổng cung mở lúc canh tư, không một tiếng trống. Sáng ra, bạn ngồi lên ngai ${n.name}, mặt ghế còn hơi ấm. ${old.name} bị giam ở tháp phía bắc, đêm đêm vẫn thắp một ngọn đèn nơi khung cửa sổ.`;
     },
     auto: (S) => S.traits.bold > .75 && G.claimChance(S) > .4 ? 'go' : 'no'
   };
@@ -336,16 +336,16 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const o = promoOf(S), rk = roles(S).rank, cur = rk && rk.k === o.k && rk.gov === o.n.gov ? rk.r : 0, nm = o.P.names[cur];
-      return { title: G.GOVS[o.n.gov].nameVi, body: `${o.n.name} mời bạn lên bậc ${nm} (${G.GOVS[o.n.gov].promo.toLowerCase()}; xét theo ${o.P.unit}${G.PROMO_TW && G.PROMO_TW[o.n.gov] && G.tierOf(S) ? `, nhân ${String(+(1 + G.PROMO_TW[o.n.gov] * G.tierOf(S)).toFixed(2)).replace('.', ',')} vì bạn là ${G.tierName(G.tierOf(S))}` : ''}).`,
+      return { title: G.GOVS[o.n.gov].nameVi, body: `Thư mời đóng dấu tới vào một buổi sáng: ${o.n.name} mời bạn lên bậc ${nm} (${G.GOVS[o.n.gov].promo.toLowerCase()}; xét theo ${o.P.unit}${G.PROMO_TW && G.PROMO_TW[o.n.gov] && G.tierOf(S) ? `, nhân ${String(+(1 + G.PROMO_TW[o.n.gov] * G.tierOf(S)).toFixed(2)).replace('.', ',')} vì bạn là ${G.tierName(G.tierOf(S))}` : ''}).`,
         choices: [{ k: 'yes', label: `Nhận bậc ${nm}`, sub: `Bổng lộc, danh vọng; bậc ${cur + 1}/${o.P.names.length}.` }, { k: 'no', label: 'Không nhận', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k !== 'yes') { flag(S, 'promoNo'); return null; }
+      if (k !== 'yes') { flag(S, 'promoNo'); return 'Bạn viết thư từ chối, lời lẽ cẩn thận. Bậc ấy rồi sẽ về tay người khác, còn bạn giữ được những buổi chiều của mình.'; }
       const o = promoOf(S), rk = roles(S).rank, cur = rk && rk.k === o.k && rk.gov === o.n.gov ? rk.r : 0;
       roles(S).rank = { k: o.k, gov: o.n.gov, r: cur + 1, since: S.world.year };
       flag(S, 'promo'); S.flags.promoMax = Math.max(S.flags.promoMax || 0, cur + 1);
       if (cur + 1 === o.P.names.length) G.histAdd(S.world, 'office', `${S.name} lên ${o.P.names[cur]} của ${o.n.name}.`);
-      return `Bạn là ${o.P.names[cur]} của ${o.n.name}.`;
+      return `Bạn là ${o.P.names[cur]} của ${o.n.name}. Hôm nhận bậc, áo mới may còn cứng nếp, cổ áo cọ vào gáy cả ngày. Tối về, bạn treo nó lên vách, đứng ngắm một hồi lâu.`;
     },
     auto: (S) => S.traits.social > .35 || S.traits.bold > .6 ? 'yes' : 'no'
   };
@@ -358,23 +358,23 @@ window.LifeSim = window.LifeSim || {};
     when(S, X) { const o = duelNation(S); return !!o && X.stage(S) === 'adult' && roles(S).ruler == null && S.fame >= 45 && ((roles(S).rank && roles(S).rank.r >= 2) || S.fame >= 65); },
     build(S, X) {
       const o = duelNation(S), thr = G.duelThreat(o.n), pw = X.power(S);
-      return { title: 'Thách đấu', body: `Luật của ${o.n.name}: ai thắng ${o.d.ruler.title} ${o.d.ruler.name} trong quyết đấu thì làm ${o.d.ruler.title.toLowerCase()}. Đe dọa ~${thr.toFixed(1)} Tier, sức bạn ${pw.toFixed(1)}.`,
+      return { title: 'Thách đấu', body: `Lửa trại cháy giữa vòng người, ai cũng chờ xem bạn có bước ra không. Luật của ${o.n.name}: ai thắng ${o.d.ruler.title} ${o.d.ruler.name} trong quyết đấu thì làm ${o.d.ruler.title.toLowerCase()}. Đe dọa ~${thr.toFixed(1)} Tier, sức bạn ${pw.toFixed(1)}.`,
         choices: [{ k: 'go', label: 'Thách đấu', sub: 'Thắng thì lên ngôi; thua thì có thể chết.' }, { k: 'no', label: 'Chưa phải lúc', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k !== 'go') return null;
+      if (k !== 'go') return 'Bạn lùi lại một bước, để vòng người khép lại trước mặt. Có tiếng cười khẩy ở đâu đó sau lưng. Bạn nhớ giọng cười ấy.';
       const o = duelNation(S), W = S.world, D = W.dyn, old = o.d.ruler, pWin = 1 / (1 + Math.exp(-3.2 * (X.power(S) - G.duelThreat(o.n))));
       flag(S, 'duel');
       if (!X.chance(pWin)) {
         X.add('hl', -X.int(15, 35));
         if (X.chance(.4)) { X.die({ id: 'war', text: `chết trong quyết đấu với ${old.title} ${old.name}` }); return null; }
-        S.fame = Math.max(0, S.fame - 8); return `${old.name} hạ bạn trước toàn bộ tộc. Bạn sống, nhưng không ai còn nhắc tên bạn cho ngai.`;
+        S.fame = Math.max(0, S.fame - 8); return `${old.name} hạ bạn trước mặt cả tộc, đầu gối bạn chạm đất trước khi lửa trại kịp tàn. Bạn sống. Nhưng từ hôm ấy, chẳng ai còn nhắc tên bạn mỗi khi bàn chuyện ngai.`;
       }
       const t = G.NAMES.nation.ruler[o.n.gov] || ['Thủ Lĩnh'], nr = { title: t.length > 1 && S.sex === 'f' ? t[1] : t[0], name: S.name, sex: S.sex, age: X.years(S), player: true };
       o.d.ruler = nr; o.n.ruler = nr; o.d.stab = Math.max(0, o.d.stab - .05); roles(S).ruler = o.k; flag(S, 'duelWin');
       S.fame = Math.min(100, S.fame + 10);
       Dn().hist(D, W.year, 'king', `${S.name} thắng ${old.title} ${old.name} trong quyết đấu, lên làm ${nr.title.toLowerCase()} ${o.n.name}.`);
-      return `Bạn đứng trên xác ${old.name}. Cả tộc cúi đầu.`;
+      return `Trận đấu kéo dài tới khi lửa trại chỉ còn than đỏ. Bạn đứng trên xác ${old.name}, máu chảy xuống tay, thở không ra hơi. Cả tộc cúi đầu.`;
     },
     auto: (S, X) => { const o = duelNation(S); return S.traits.bold > .6 && X.power(S) >= G.duelThreat(o.n) + .2 ? 'go' : 'no'; }
   };

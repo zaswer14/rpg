@@ -53,7 +53,7 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const C = G.CUSTOMS[S.race], keep = !lax(S), r = n => String(+n.toFixed(2)).replace('.', ',');
       const kRate = G.RACES[S.race].ypt * C.pace * (1 - C.share), lRate = G.RACES[S.race].ypt * C.pace * (1 - C.laxShare);
-      return { title: `Tập tục: ${C.nameVi}`, body: `${C.d} ${keep ? 'Bạn vẫn giữ tập tục. Có người trong tộc bỏ đi tu luyện như loài người, mạnh lên nhanh rồi già đi trước mắt mọi người.' : 'Bạn đã bỏ tập tục mấy năm nay. Tộc trưởng gửi lời gọi bạn về.'}`,
+      return { title: `Tập tục: ${C.nameVi}`, body: `${C.d} ${keep ? 'Bạn vẫn giữ tập tục. Năm nay có người cùng tộc bỏ đi tu luyện như loài người: mạnh lên nhanh thấy rõ, rồi già đi cũng nhanh thấy rõ, ngay trước mắt mọi người. Đêm ấy bạn trằn trọc mãi.' : 'Bạn đã bỏ tập tục mấy năm nay. Một hôm có người tìm tới, mang theo lời nhắn của tộc trưởng, ngắn gọn: về đi. Người đưa tin đứng đợi ở cửa, không chịu ngồi.'}`,
         choices: [{ k: 'keep', label: keep ? 'Giữ tập tục' : 'Quay về với tộc', sub: `Rèn × ${r(kRate)} mỗi lượt so với người; đủ tuổi thọ của tộc.` },
           { k: 'lax', label: keep ? 'Bỏ tập tục, dồn sức tu luyện' : 'Không về', sub: `Rèn × ${r(lRate)}; tuổi thọ × ${r(C.laxLife)}; mỗi lượt mất Tâm trạng, Quan hệ; có thể bị tộc ruồng bỏ.` }] };
     },
@@ -61,8 +61,8 @@ window.LifeSim = window.LifeSim || {};
       const F = S.flags, was = F.custom, C = G.CUSTOMS[S.race]; F.custom = k; F.customY = S.world.year;
       if (k === was) return null;
       cnt(S, 'custom_' + k);
-      if (k === 'lax') return `Bạn rời ${C.nameVi.toLowerCase()}. Thời gian bỗng nhiều ra, và cũng trôi nhanh hơn.`;
-      if (was === 'lax') { F.outcast = false; X.add('so', 6); return 'Bạn quay về. Không ai nhắc chuyện cũ, nhưng ai cũng nhớ.'; }
+      if (k === 'lax') return `Bạn rời ${C.nameVi.toLowerCase()}. Thời gian bỗng nhiều ra, ngày nào cũng dài, việc nào cũng kịp. Chỉ có điều nó cũng trôi nhanh hơn, và bạn bắt đầu đếm.`;
+      if (was === 'lax') { F.outcast = false; X.add('so', 6); return 'Bạn quay về. Người trong tộc vẫn chừa cho bạn một chỗ, vẫn chia phần như xưa, không ai nhắc chuyện cũ. Nhưng ai cũng nhớ, và bạn biết họ nhớ.'; }
       return null;
     },
     auto: S => (S.aim === 'power' && S.traits.bold > .55 && S.traits.pious < .5) || (S.traits.social < .2 && S.traits.bold > .7) ? 'lax' : 'keep'
@@ -75,7 +75,7 @@ window.LifeSim = window.LifeSim || {};
     X.add('h', L.h); X.add('so', L.so);
     if (!S.flags.outcast && X.chance(L.outcast)) {
       S.flags.outcast = true; cnt(S, 'outcast'); X.add('so', -10);
-      X.log(`Tộc ${J.races[S.race].nameVi} gạch tên bạn khỏi ${C.nameVi.toLowerCase()}. Về quê, không ai mở cửa cho bạn.`, 'bad');
+      X.log(`Tộc ${J.races[S.race].nameVi} gạch tên bạn khỏi ${C.nameVi.toLowerCase()}. Tin tới bằng một lá thư không ký, nét chữ thì bạn nhận ra ngay. Lần về quê sau đó, đi hết dãy nhà, không cửa nào mở cho bạn.`, 'bad');
     }
   };
   { const k = G.SYSTEMS.findIndex(s => s.id === 'fate'); G.SYSTEMS.splice(k + 1, 0, { id: 'custom', when: S => !S.dead, run: (S, X) => G.customYear(S, X) }); }

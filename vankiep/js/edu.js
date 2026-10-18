@@ -72,16 +72,16 @@ window.LifeSim = window.LifeSim || {};
       if (payer && lv < 3) ch.push({ k: 'go', label: `Vào ${L.nameVi.toLowerCase()} ở ${where}`, sub: `${L.need} năm; ${how}.${L.exam ? ` Phải thi đầu vào, khả năng đỗ ~${Math.round(ex * 100)}%.` : ''}`, payer, fee, school: sc.s.id });
       if (payer && lv === 3) for (const [t, T] of Object.entries(G.TRACKS).slice(0, 5)) ch.push({ k: 'go:' + t, label: `Học viện ${where}, ngành ${T.nameVi}`, sub: `${L.need} năm; ${how}. Thi đầu vào ~${Math.round(ex * 100)}%.`, payer, fee, school: sc.s.id, track: t });
       if (!ch.length) { flag(S, 'eduPoor'); S.recentDec.school = S.age + 1; return null; }
-      return { title: lv === 1 ? 'Đi học' : `Lên ${L.nameVi.toLowerCase()}`, body: lv === 1 ? `Trường ở ${sc.s.name} nhận học trò mới.` : `Bạn đã xong ${G.EDU_VI[E.lv]}. ${sc.s.name} có ${lv === 3 ? 'Học viện' : 'trường'} dạy ${L.nameVi.toLowerCase()}.`,
+      return { title: lv === 1 ? 'Đi học' : `Lên ${L.nameVi.toLowerCase()}`, body: lv === 1 ? `Trường ở ${sc.s.name} treo bảng nhận học trò mới. Sáng nào đi ngang cổng cũng nghe tiếng đọc bài vọng ra qua khung cửa, đều đều như tiếng mưa.` : `Bạn đã xong ${G.EDU_VI[E.lv]}, mà chữ nghĩa trong đầu cứ thấy còn thiếu. Ở ${sc.s.name} có ${lv === 3 ? 'Học viện' : 'trường'} dạy ${L.nameVi.toLowerCase()}, nghe đồn sách ở đó chất cao tới xà nhà.`,
         choices: [...ch, { k: 'no', label: lv === 1 ? 'Ở nhà phụ việc' : 'Thôi học', sub: lv === 1 ? 'Nhiều đứa trẻ không bao giờ tới trường.' : '' }] };
     },
     apply(S, X, k, c) {
       const E = edu(S), lv = E.lv + 1, L = G.EDU[lv];
-      if (k === 'no') { flag(S, 'eduNo' + lv); return null; }
-      if (L.exam && !X.chance(G.examChance(S, lv))) { flag(S, 'eduFail' + lv); flag(S, 'eduNo' + lv); X.add('h', -6); return `Bạn trượt kỳ thi ${L.nameVi.toLowerCase()}.`; }
+      if (k === 'no') { flag(S, 'eduNo' + lv); return lv === 1 ? 'Lũ trẻ trong xóm ôm vở tới trường, còn bạn ở nhà nhóm bếp, gánh nước. Có hôm tiếng đọc bài vẳng tới tận ngõ, bạn đứng nghe một lúc rồi mới đi tiếp.' : 'Bạn gấp sách lại, cất xuống đáy rương. Chữ đã học thì vẫn còn đó. Phần đời còn lại nằm ở ngoài cổng trường.'; }
+      if (L.exam && !X.chance(G.examChance(S, lv))) { flag(S, 'eduFail' + lv); flag(S, 'eduNo' + lv); X.add('h', -6); return `Ngày yết bảng, bạn dò tên mình từ đầu tới cuối, rồi dò lại lần nữa. Không có. Bạn trượt kỳ thi ${L.nameVi.toLowerCase()}, và con đường về nhà hôm ấy dài hơn mọi khi.`; }
       E.cur = { lv, school: c.school, y: 0, need: L.need, payer: c.payer, fee: c.fee, track: c.track || null };
       flag(S, 'edu' + lv); if (c.payer === 'grant') flag(S, 'eduGrant');
-      return `Bạn vào ${L.nameVi.toLowerCase()} ở ${G.SET[c.school].name}${c.track ? ', ngành ' + G.TRACKS[c.track].nameVi : ''}.`;
+      return `Buổi đầu tiên, bạn ngồi bàn cuối, ôm khư khư cuốn vở mới còn thơm mùi giấy. Từ nay bạn là học trò ${L.nameVi.toLowerCase()} ở ${G.SET[c.school].name}${c.track ? ', ngành ' + G.TRACKS[c.track].nameVi : ''}. Thầy gọi tên, bạn đứng bật dậy, xô cả ghế.`;
     },
     auto(S, X, d) {
       const T = S.traits, c = d.choices.find(x => x.k !== 'no');
@@ -111,7 +111,7 @@ window.LifeSim = window.LifeSim || {};
         else if (S.gold >= cur.fee) { X.money(-cur.fee); cur.payer = 'self'; }
         else stop = 'không còn tiền đóng học phí';
       }
-      if (stop) { E.cur = null; flag(S, 'eduDrop'); X.log(`Bạn bỏ dở ${G.EDU[cur.lv].nameVi.toLowerCase()}: ${stop}.`, 'bad'); }
+      if (stop) { E.cur = null; flag(S, 'eduDrop'); X.log(`Bạn bỏ dở ${G.EDU[cur.lv].nameVi.toLowerCase()}: ${stop}. Cuốn vở viết dở còn nằm trong tay nải, mấy trang cuối bỏ trắng.`, 'bad'); }
       else {
         const sh = share(S, 'study'), L = G.EDU[cur.lv];
         cur.y += sh >= .25 ? 1 : .5;
@@ -125,7 +125,7 @@ window.LifeSim = window.LifeSim || {};
           if (cur.lv >= 3 && E.capital && (cur.track === 'vo' || cur.track === 'phap')) { E.top = X.rnd() < G.topP(S); if (E.top) flag(S, 'eduTop'); }
           flag(S, 'grad' + E.lv);
           S.fame = Math.min(100, S.fame + [0, 0, 1, 3][E.lv]);
-          X.log(`Bạn tốt nghiệp ${G.EDU[E.lv].nameVi.toLowerCase()} ở ${sc.name}${cur.track ? ', ngành ' + G.TRACKS[cur.track].nameVi : ''}.`, E.lv >= 2 ? 'big' : 'good');
+          X.log(`Ngày ra trường, bạn đứng giữa đám bạn học mà thấy sân trường bỗng nhỏ lại. Bạn tốt nghiệp ${G.EDU[E.lv].nameVi.toLowerCase()} ở ${sc.name}${cur.track ? ', ngành ' + G.TRACKS[cur.track].nameVi : ''}. Tờ giấy chứng nhận được gấp làm tư, cất kỹ dưới đáy rương.`, E.lv >= 2 ? 'big' : 'good');
         }
       }
     }
@@ -136,11 +136,11 @@ window.LifeSim = window.LifeSim || {};
       M.y += 1;
       if (M.kind === 'craft') { const W = G.WORKS[M.work]; for (const [m, v] of Object.entries(W.trains)) X.gain(m, v * (1.5 + sh * 2)); if (S.work === M.work) S.pct = Math.min(.99, S.pct + .02 * (1 + sh)); X.add('sm', .5); }
       else { for (const m of J.schools[M.school].masteries) X.gain(m, 2.2 * (1 + sh)); X.addXp(30 * (1 + M.tier) * (.5 + sh)); }
-      if (X.chance(.025)) { M.done = true; M.dead = true; X.add('h', -10); X.log(`Sư phụ ${M.name} qua đời khi bạn chưa xuất sư.`, 'bad'); }
+      if (X.chance(.025)) { M.done = true; M.dead = true; X.add('h', -10); X.log(`Sư phụ ${M.name} mất vào một đêm trở gió, khi bạn còn chưa xuất sư. ${M.kind === 'craft' ? 'Đồ nghề của thầy vẫn treo nguyên trên vách' : 'Cây gậy tập của thầy vẫn dựng ở góc sân'}, chẳng ai nỡ động tới. Những điều thầy định dạy nốt, giờ không còn ai để hỏi.`, 'bad'); }
       else if (M.y >= M.need) {
         M.done = true; flag(S, 'mentorDone');
-        if (M.kind === 'craft') { S.pct = Math.min(.99, S.pct + .05); X.log(`Bạn xuất sư. ${M.name} tặng bạn bộ đồ nghề của mình.`, 'big'); }
-        else { const m = X.pick(J.schools[M.school].masteries); X.gain(m, 8); S.fame = Math.min(100, S.fame + 2 + M.tier); X.log(`Bạn xuất sư. ${M.name} truyền cho bạn tuyệt kỹ ${G.mv(m).toLowerCase()}.`, 'big'); }
+        if (M.kind === 'craft') { S.pct = Math.min(.99, S.pct + .05); X.log(`Hôm bạn xuất sư, ${M.name} lấy bộ đồ nghề trên vách xuống, lau sạch rồi đặt vào tay bạn. Cán gỗ đã mòn nhẵn theo nắm tay thầy. Thầy không nói gì nhiều, chỉ dặn một câu: đừng làm ẩu.`, 'big'); }
+        else { const m = X.pick(J.schools[M.school].masteries); X.gain(m, 8); S.fame = Math.min(100, S.fame + 2 + M.tier); X.log(`Đêm cuối, ${M.name} gọi bạn ra sân sau, chỗ không ai nhìn thấy. Thầy diễn thật chậm tuyệt kỹ ${G.mv(m).toLowerCase()}, một lần duy nhất, rồi bắt bạn làm lại tới khi gà gáy. Sáng ra, bạn xuất sư.`, 'big'); }
       }
     }
     // Sư đồ: làm sư phụ. Đệ tử học vài lượt rồi xuất sư; đôi khi thành danh, hiếm khi phản sư môn.
@@ -150,9 +150,9 @@ window.LifeSim = window.LifeSim || {};
       X.money(Math.round(med * .15)); S.fame = Math.min(100, S.fame + .3); X.add('so', 1);
       if (d.y >= 5) {
         d.done = true; flag(S, 'discipleDone');
-        if (X.chance(.15)) { S.fame = Math.min(100, S.fame + 4); G.histAdd(S.world, 'master', `${d.name}, đệ tử của ${S.name}, thành danh với ${G.mv(d.skill).toLowerCase()}.`); X.log(`Đệ tử ${d.name} thành danh. Người ta nhắc tên thầy.`, 'big'); }
-        else if (X.chance(.05)) { X.add('h', -10); S.fame = Math.max(0, S.fame - 2); X.log(`Đệ tử ${d.name} bỏ đi, mang theo bí kíp của bạn.`, 'bad'); }
-        else X.log(`Đệ tử ${d.name} xuất sư.`, 'good');
+        if (X.chance(.15)) { S.fame = Math.min(100, S.fame + 4); G.histAdd(S.world, 'master', `${d.name}, đệ tử của ${S.name}, thành danh với ${G.mv(d.skill).toLowerCase()}.`); X.log(`Tin về ${d.name} truyền tới tận chợ: người đệ tử ngày nào quỳ trước cửa nhà bạn nay đã thành danh. Người ta kể chuyện trò, rồi hỏi nhau thầy nó là ai. Bạn nghe, làm như không biết, mà khóe miệng cứ nhếch lên.`, 'big'); }
+        else if (X.chance(.05)) { X.add('h', -10); S.fame = Math.max(0, S.fame - 2); X.log(`Một sáng, chỗ nằm của ${d.name} lạnh tanh, cuốn bí kíp trong rương cũng mất theo. Bạn đứng ở cửa nhìn con đường mòn còn ướt sương. Giận thì có, mà thương cũng có.`, 'bad'); }
+        else X.log(`${d.name} lạy bạn ba lạy rồi khoác tay nải ra đi. Đệ tử xuất sư, sân tập bỗng rộng ra một khoảng.`, 'good');
       }
     }
   };
@@ -193,25 +193,25 @@ window.LifeSim = window.LifeSim || {};
         ch.push({ k: 'martial', label: `Bái ${nm} làm thầy`, sub: `Cao thủ ${J.schools[school].nameVi.toLowerCase()}, một ${G.tierName(tier)} (Tier ${tier}), để ý tới bạn. Phải qua một trận thử tay; theo thầy 5 năm.`, kind: 'martial', school, tier, name: nm, need: 5 });
       }
       if (!ch.length) { S.recentDec.mentor = S.age; return null; }
-      return { title: 'Sư phụ', body: 'Có người muốn nhận bạn làm đệ tử.', choices: [...ch, { k: 'no', label: 'Tự học', sub: '' }] };
+      return { title: 'Sư phụ', body: 'Có người để mắt tới bạn đã lâu. Hôm nay họ tìm tới tận nhà, nói muốn nhận bạn làm đệ tử.', choices: [...ch, { k: 'no', label: 'Tự học', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn cảm ơn rồi từ chối. Người ấy đi khuất đầu ngõ mà bạn còn đứng lại một lúc. Có những thứ bạn muốn tự mình mò ra.';
       if (c.kind === 'craft') {
         if (c.fee) X.money(-c.fee); else X.add('h', -4);
         S.mentor = { kind: 'craft', work: c.work, name: c.name, y: 0, need: c.need, done: false };
         S.flags.mentorTaken = true; flag(S, 'mentorCraft');
-        return `Bạn vào lò của thầy, sáng quét xưởng, tối học nghề.`;
+        return `Bạn dọn tới ở nhờ nhà thầy. Sáng quét xưởng, khuân vác, tối mới được đứng bên xem thầy làm. Tuần đầu tay phồng rộp, sang tuần thứ hai thì đã chai.`;
       }
       // Thử tay: một trận ở khu gợi ý (vẫn qua luật Tier).
       const z = X.recommendedZone(S), enc = z ? X.rollEncounter(z.zone, { grade: 'elite' }) : null;
       const rec = enc ? X.fight(enc, false) : { win: true };
       if (S.dead) return null;
-      if (!rec.win) { S.flags.mentorTaken = true; return `${c.name} lắc đầu: "Chưa đủ."`; }
+      if (!rec.win) { S.flags.mentorTaken = true; return `Trận thử tay chưa được bao lâu thì bạn đã nằm dưới đất. ${c.name} phủi tay, lắc đầu: "Chưa đủ." Rồi quay đi, không ngoái lại.`; }
       S.mentor = { kind: 'martial', school: c.school, tier: c.tier, name: c.name, y: 0, need: c.need, done: false };
       S.flags.mentorTaken = true; flag(S, 'mentorMartial');
       G.histAdd(S.world, 'master', `${c.name} nhận ${S.name} làm đệ tử.`);
-      return `${c.name} nhận bạn làm đệ tử.`;
+      return `Trận thử tay xong, ${c.name} nhìn bạn một lúc lâu rồi gật đầu. Bạn quỳ xuống dâng chén trà. Từ mai, sáng nào bạn cũng phải dậy trước thầy.`;
     },
     auto(S, X, d) {
       const T = S.traits, m = d.choices.find(c => c.k === 'martial'), cr = d.choices.find(c => c.k === 'craft');
@@ -230,15 +230,15 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const d = X.dominant(S), nm = X.name(S.race === 'skeleton' ? 'human' : S.race, X.chance(.5) ? 'm' : 'f');
-      return { title: 'Đệ tử', body: `${nm} quỳ trước cửa xin học ${G.mv(d.skill).toLowerCase()} của bạn (${Math.round(d.value)}).`,
+      return { title: 'Đệ tử', body: `Sáng sớm, một người trẻ tên ${nm} quỳ trước cửa nhà bạn, sương còn đọng trên tóc. Người ấy xin học ${G.mv(d.skill).toLowerCase()} của bạn (${Math.round(d.value)}), nói đã quỳ ở đó từ lúc trời chưa sáng.`,
         choices: [{ k: 'yes', label: 'Nhận làm đệ tử', sub: 'Có lễ nhập môn hằng năm, danh tiếng tăng; mất thời gian dạy.', name: nm, skill: d.skill }, { k: 'no', label: 'Từ chối', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k !== 'yes') return null;
+      if (k !== 'yes') return 'Bạn bảo người ấy về đi. Tới trưa ngó ra, trước cửa đã trống, chỉ còn hai vết đầu gối hằn trên đất.';
       (S.disciples = S.disciples || []).push({ name: c.name, skill: c.skill, y: 0, done: false });
       X.add('h', 6); X.add('so', 6); flag(S, 'discipleTake');
       if (!S.flags.apprentice) S.flags.apprentice = c.name;   // giữ tương thích bản lưu cũ, tóm tắt đời
-      return `Bạn nhận ${c.name} làm đệ tử.`;
+      return `Bạn đỡ ${c.name} dậy, dắt vào nhà, rót cho bát nước nóng. Thế là bạn có đệ tử. Mâm cơm từ hôm ấy thêm một đôi đũa, sân tập thêm một tiếng hô.`;
     },
     auto: (S) => S.traits.social > .55 ? 'yes' : 'no'
   };

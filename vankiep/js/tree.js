@@ -352,10 +352,10 @@ window.LifeSim = window.LifeSim || {};
 
   // ── Hồn mới trỗi dậy: lượt đầu của Bộ Xương đi theo kỹ năng kiếp trước còn trong xương ──
   const WAKE = G.SK_WAKE = {
-    vo:   'Bàn tay xương tự nắm lại như đang cầm chuôi vũ khí. Thân xác quên hết, chỉ đôi tay còn nhớ cách đánh.',
-    phap: 'Không khí quanh huyệt lạnh đi. Những chữ phép bạn không nhớ đã học vẫn lấp lánh sau hốc mắt.',
-    am:   'Bạn nghe tiếng thì thầm từ các nấm mồ bên cạnh. Chúng gọi bạn là anh em.',
-    nghe: 'Bạn ngồi dậy, việc đầu tiên là nắn lại cái khớp gối lệch. Tay thợ vẫn là tay thợ.'
+    vo:   'Đất trên mặt huyệt nứt ra, một bàn tay xương thò lên giữa đám cỏ. Nó tự nắm lại, đúng cái thế cầm chuôi vũ khí. Tên mình, mặt người thân, bạn quên sạch. Chỉ đôi tay là còn nhớ cách đánh.',
+    phap: 'Gió đêm qua nghĩa địa bỗng lạnh hẳn, sương đọng thành băng trên mặt bia. Bạn ngồi dậy trong huyệt, không nhớ mình từng học những gì. Vậy mà sau hốc mắt vẫn lấp lánh những chữ phép, xếp hàng như đang chờ được gọi.',
+    am:   'Bạn tỉnh dậy trong bóng tối, đất đè nặng trên ngực. Từ những nấm mồ bên cạnh có tiếng thì thầm vọng sang, khàn và chậm. Chúng gọi bạn là anh em. Bạn không thấy sợ, chỉ thấy như vừa về tới nhà.',
+    nghe: 'Ngồi dậy khỏi huyệt, việc đầu tiên bạn làm là nắn lại cái khớp gối bị lệch. Rắc một tiếng, khớp vào chỗ. Kiếp trước mình là ai, bạn chẳng còn nhớ. Nhưng tay thợ thì vẫn là tay thợ.'
   };
   G.EVENTS.push(
     { id: 'sk_wake', st: ['adult', 'elder'], undead: true, w: 60, tree: { fresh: true },
@@ -368,31 +368,31 @@ window.LifeSim = window.LifeSim || {};
     { id: 'sk_wake_robber', st: ['adult', 'elder'], undead: true, w: 8, tree: { fresh: true, from: ['sk_wake:vo'], wait: [0, 1] },
       run(S, X) {
         const g = X.int(2, 6); X.money(g); if (S.inherited) X.gain(S.inherited.skill, 2);
-        return { t: `Hai kẻ đào trộm mộ cạy tới huyệt bên cạnh thì thấy bạn đứng dậy. Bạn vung tay theo thói quen; chúng bỏ chạy, để lại xẻng, đèn và ${G.coin(g)}.`, k: 'good' };
+        return { t: `Đêm ấy có hai kẻ đào trộm mộ cạy tới huyệt bên cạnh. Ánh đèn của chúng vừa rọi sang thì bạn đứng dậy khỏi đất. Bạn vung tay theo thói quen, chẳng kịp nghĩ gì. Hai gã vứt cả xẻng lẫn đèn mà chạy, bỏ lại ${G.coin(g)} lăn lóc trên nắp quan tài.`, k: 'good' };
       } },
     { id: 'sk_wake_whisper', st: ['adult', 'elder'], undead: true, w: 8, tree: { fresh: true, from: ['sk_wake:am', 'sk_wake:phap'], wait: [0, 1] },
       run(S, X) {
         X.gain('Necromancy', 3); X.gain('Soul', 2);
-        return { t: 'Tiếng thì thầm dạy bạn tên thật của từng nấm mồ quanh đây. Gọi đúng tên thì đất động.', k: 'big', f: J.races.skeleton.lore };
+        return { t: 'Đêm nào tiếng thì thầm cũng trở lại, kiên nhẫn như một ông thầy già. Nó dạy bạn tên thật của từng nấm mồ quanh đây, từng cái một. Gọi đúng tên, đất dưới chân khẽ động. Gọi sai, chỉ có gió.', k: 'big', f: J.races.skeleton.lore };
       } },
     { id: 'sk_wake_tinker', st: ['adult', 'elder'], undead: true, w: 8, tree: { fresh: true, from: ['sk_wake:nghe'], wait: [0, 1] },
       run(S, X) {
         X.add('hl', 6); X.gain('Engineering', 2);
-        return { t: 'Bạn lấy ván quan tài cũ ghép thành mái che trong hầm mộ, chèn đá cho khỏi dột. Chỗ ở đầu tiên của kiếp này.', k: 'good' };
+        return { t: 'Bạn gỡ mấy tấm ván quan tài cũ, ghép thành mái che ở góc hầm mộ, lấy rễ cây làm dây buộc, chèn đá vào chỗ dột. Trận mưa đêm đầu tiên rỉ rả trên mái mà dưới hầm vẫn khô. Chỗ ở đầu tiên của kiếp này.', k: 'good' };
       } },
     // Bộ Xương chưa ai biết mặt không vào được tiệm rèn; đồ đến từ chiến trường cũ, mộ lính.
     { id: 'sk_scavenge', st: ['adult', 'elder'], undead: true, w: 2.5, rep: true, gap: 3, tree: { minAge: 1 },
       c: (S, X) => S.gear < Math.min(10, 2 + 2 * X.ctier(S)) && G.standing(S, X).soc < 1,
       run(S, X) {
         S.gear++;
-        return { t: X.pick(['Bạn lột được bộ giáp còn tốt trên xác một kỵ sĩ ở chiến trường cũ.', 'Mộ lính bị lở sau mưa. Thanh kiếm trong đó chưa gỉ hết.', 'Bạn nhặt lại vũ khí của một toán thợ săn quái không về.']) + ` Trang bị ${S.gear}/10.`, k: 'good' };
+        return { t: X.pick(['Ở chiến trường cũ, cỏ đã mọc trùm lên những đống giáp gỉ. Trên xác một kỵ sĩ còn bộ giáp tốt, chỉ thủng một lỗ trước ngực. Bạn lột ra mặc vào, vừa như may đo.', 'Mưa lớn mấy ngày liền làm lở cả một dãy mộ lính. Trong đó có thanh kiếm chưa gỉ hết, chuôi còn quấn dây da. Người chủ cũ của nó chắc không phiền.', 'Toán thợ săn quái vào rừng từ mùa trước, không ai trở về. Bạn tìm thấy chỗ họ nằm, vũ khí vẫn còn trong tay. Bạn gỡ từng ngón tay ra mà lấy, thầm nghĩ ít ra chúng còn được dùng tiếp.']) + ` Trang bị ${S.gear}/10.`, k: 'good' };
       } },
     // ── Ông bà kể chuyện: Bộ Xương không có ông bà, nghe lỏm lữ khách ──
     { id: 'sk_history', st: ['adult', 'elder'], undead: true, w: 1.5, rep: true, gap: 8, tree: { minAge: 2 },
       c: S => ((S.world.dyn && S.world.dyn.hist) || []).some(h => h.y < S.birthYear),
       run(S, X) {
         const H = S.world.dyn.hist.filter(h => h.y < S.birthYear), h = H[(S.age * 7919 + S.birthYear) % H.length]; X.add('sm', 1);
-        return { t: `Nấp sau bụi cây, bạn nghe lữ khách bên đống lửa kể chuyện năm ${h.y}: ${h.t}`, k: 'info' };
+        return { t: `Đêm ấy có đám lữ khách đốt lửa ngủ bên đường. Nấp sau bụi cây, bạn nghe họ kể chuyện năm ${h.y}: ${h.t}`, k: 'info' };
       } }
   );
 
@@ -402,13 +402,13 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !S.dead && S.undead && !S.flags.acolyte && (deathBest(S) >= 30 || S.faith === 'dark'),
     build(S, X) {
       const nm = X.name('human', X.chance(.5) ? 'm' : 'f'), sk = deathBest(S) >= 30 ? ['Necromancy', 'Soul', 'Curse'].sort((a, b) => S.mastery[b] - S.mastery[a])[0] : 'Necromancy';
-      return { title: 'Kẻ học hắc thuật', body: `${nm} bị đuổi khỏi học viện vì đào mộ thử phép. Hắn lần theo lời đồn tới hầm của bạn, quỳ xuống xin học ${G.mv(sk).toLowerCase()}.`,
+      return { title: 'Kẻ học hắc thuật', body: `${nm} bị đuổi khỏi học viện vì đào mộ thử phép. Hắn lần theo lời đồn suốt mấy tháng, tới được cửa hầm của bạn thì áo đã rách, giày đã thủng. Hắn quỳ xuống nền đất lạnh, xin học ${G.mv(sk).toLowerCase()}. Mắt hắn nhìn những bộ xương trong hầm không chớp: không sợ, chỉ thèm.`,
         choices: [{ k: 'yes', label: 'Nhận làm hắc đồ', sub: 'Có người sống chạy việc, mang tin; giới hắc ám biết tên bạn. Hắn có thể trung thành, cũng có thể bán bạn.', name: nm, skill: sk }, { k: 'no', label: 'Đuổi đi', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k !== 'yes') return 'Hắn đi rồi, nhưng biết chỗ của bạn.';
+      if (k !== 'yes') return 'Hắn đứng dậy, phủi đầu gối, đi không nói một lời. Bạn nhìn theo tới khi bóng hắn khuất sau rặng bia. Hắn đi rồi, nhưng hắn biết chỗ của bạn.';
       S.flags.acolyte = { name: c.name, skill: c.skill }; cnt(S, 'acolyteTake'); X.add('so', 6); X.add('h', 4); G.trajBump(S, { am: .4 });
-      return `${c.name} dọn vào góc hầm, ngủ cạnh những bộ xương chưa đứng dậy.`;
+      return `${c.name} dọn vào góc hầm, ngủ cạnh những bộ xương chưa đứng dậy. Đêm đầu hắn thắp một mẩu nến, ngồi chép lại từng lời bạn dạy. Lâu lắm rồi trong hầm mới có tiếng thở của người sống.`;
     },
     auto: S => S.traits.social > .35 || S.faith === 'dark' ? 'yes' : 'no'
   };
@@ -417,19 +417,19 @@ window.LifeSim = window.LifeSim || {};
       c: S => !!S.flags.acolyte, w: S => 2 + 4 * S.traits.social + (S.faith === 'dark' ? 2 : 0),
       run(S, X) {
         const a = S.flags.acolyte; a.loyal = true; X.add('so', 8); X.add('h', 8); X.money(10); S.fame += 2; cnt(S, 'acolyteLoyal');
-        return { t: `${name1(a.name)} dựng một am thờ nhỏ ở cửa hầm. Mỗi tuần hắn mang dầu, vải và tin tức về; dân quanh vùng thôi bén mảng tới.`, k: 'good' };
+        return { t: `${name1(a.name)} dựng một am thờ nhỏ ở cửa hầm, sáng nào cũng quét lá. Mỗi tuần hắn xuống chợ một lần, mang về dầu đèn, vải bọc và đủ thứ tin tức. Dân quanh vùng thì thầm với nhau về cái am ấy, rồi thôi bén mảng tới. Có lần hắn hỏi ngày xưa bạn là người thế nào. Bạn không trả lời được.`, k: 'good' };
       } },
     { id: 'sk_acolyte_betray', st: ['adult', 'elder'], undead: true, tree: { from: ['sk_acolyte:yes'], wait: [2, 6] },
       c: S => !!S.flags.acolyte, w: S => 1 + 3 * (1 - S.traits.social) + (G.lawHere(S, 'hunt_undead') ? 3 : 0) + ((G.REGION[S.loc].faiths || {}).light || 0) / 25,
       run(S, X) {
         const a = S.flags.acolyte; S.flags.acolyte = null; S.flags.revealed = true; X.cond('hunted'); X.add('h', -10); X.add('so', -6); cnt(S, 'acolyteBetray');
-        return { t: `${name1(a.name)} bán chỗ trú của bạn cho Giáo hội Quang Minh lấy một tờ ân xá. Đêm đó đuốc vây kín nghĩa địa.`, k: 'bad', f: J.faiths.light.tenet };
+        return { t: `${name1(a.name)} xuống chợ rồi không về đúng hẹn. Đêm đó đuốc vây kín nghĩa địa: hắn đã bán chỗ trú của bạn cho Giáo hội Quang Minh, đổi lấy một tờ ân xá. Giữa đám áo trắng, bạn thấy hắn đứng xa nhất, cúi gằm mặt.`, k: 'bad', f: J.faiths.light.tenet };
       } },
     { id: 'sk_acolyte_lich', st: ['adult', 'elder'], undead: true, w: 3, tree: { from: ['sk_acolyte:yes'], wait: [2, 6], dirMin: { am: .3 } },
       c: S => !!S.flags.acolyte && (S.mastery.Necromancy || 0) >= 45,
       run(S, X) {
         const a = S.flags.acolyte; a.undead = true; X.gain('Necromancy', 4); X.add('so', 5); cnt(S, 'acolyteLich');
-        return { t: `${name1(a.name)} xin được chết để đứng dậy như bạn. Bạn làm phép. Từ đêm đó trong hầm có hai bộ xương.`, k: 'big' };
+        return { t: `${name1(a.name)} tới ngồi trước mặt bạn, xin được chết để đứng dậy như bạn. Bạn hỏi lại ba lần, lần nào hắn cũng gật. Bạn làm phép lúc nửa đêm, khi ngọn nến trong hầm cháy tới chân. Từ đêm đó trong hầm có hai bộ xương.`, k: 'big' };
       } }
   );
 
@@ -439,19 +439,19 @@ window.LifeSim = window.LifeSim || {};
       c: S => !!lastDisciple(S), w: S => 3 + 2 * S.traits.social,
       run(S, X) {
         const d = lastDisciple(S); S.fame = Math.min(100, S.fame + 3); X.add('h', 8); cnt(S, 'dtProud');
-        return { t: `${name1(d.name)} mở lớp dạy ${G.mv(d.skill).toLowerCase()}. Ai hỏi thầy là ai, ${name1(d.name)} cũng nói tên bạn trước.`, k: 'good' };
+        return { t: `${name1(d.name)} mở lớp dạy ${G.mv(d.skill).toLowerCase()}, học trò ngồi kín sân. Ai hỏi thầy là ai, ${name1(d.name)} cũng nói tên bạn trước. Có người kể lại chuyện ấy, bạn chỉ ừ một tiếng. Tối đó bạn ngồi ngoài hiên rất lâu.`, k: 'good' };
       } },
     { id: 'dt_rival', st: ['adult', 'elder'], tree: { body: 'living', from: ['disciple:yes'], wait: [3, 9] },
       c: S => !!lastDisciple(S), w: S => 1 + 6 * G.trajShare(S, 'am') + 1.5 * (1 - S.traits.social),
       run(S, X) {
         const d = lastDisciple(S); X.add('so', -5); X.add('h', -8); cnt(S, 'dtRival');
-        return { t: `${name1(d.name)} mang bút ký của bạn sang nhà khác, sửa vài chữ rồi dựng môn hộ riêng. Người ta khen thế ${G.mv(d.skill).toLowerCase()} mới lạ.`, k: 'bad' };
+        return { t: `${name1(d.name)} mang bút ký của bạn sang nhà khác, sửa vài chữ rồi dựng môn hộ riêng. Người ta khen thế ${G.mv(d.skill).toLowerCase()} mới lạ, không ai biết nó từ đâu ra. Bạn thì nhận ra từng nét, cả chỗ mình viết sai năm nào mà nó chưa kịp sửa.`, k: 'bad' };
       } },
     { id: 'dt_fallen', st: ['adult', 'elder'], tree: { body: 'living', from: ['disciple:yes'], wait: [3, 9], dirMin: { vo: .2 } },
       c: S => !!lastDisciple(S), w: S => 1 + 4 * G.trajShare(S, 'vo'),
       run(S, X) {
         const d = lastDisciple(S); X.add('h', -12); cnt(S, 'dtFallen');
-        return { t: `${name1(d.name)} theo bạn vào khu săn sâu hơn sức mình và không trở ra. Bạn chôn thanh kiếm gỗ đầu tiên đã tặng nó.`, k: 'bad' };
+        return { t: `${name1(d.name)} theo bạn vào khu săn sâu hơn sức mình, và không trở ra. Bạn tìm suốt ba ngày, chỉ thấy vết máu khô trên đá. Bạn chôn thanh kiếm gỗ đầu tiên đã tặng nó, đắp đất bằng tay.`, k: 'bad' };
       } }
   );
 
@@ -461,13 +461,13 @@ window.LifeSim = window.LifeSim || {};
       c: S => !!S.flags.companion, w: S => 1 + 4 * G.trajShare(S, 'vo'),
       run(S, X) {
         const c = S.flags.companion; X.add('hl', 8); X.add('so', 6); cnt(S, 'cpSave');
-        return { t: `${name1(c.name)} kéo bạn ra khỏi móng vuốt một con quái giữa trận. Bạn nợ người đó một mạng.`, k: 'good' };
+        return { t: `Giữa trận, một con quái hất bạn ngã ngửa, móng vuốt đã kề tới cổ. ${name1(c.name)} lao vào, túm áo lôi bạn ra chỉ trong một hơi thở. Tối ấy bên đống lửa, không ai nhắc lại chuyện đó. Nhưng bạn biết mình nợ người kia một mạng.`, k: 'good' };
       } },
     { id: 'cp_betray', st: ['adult', 'elder'], tree: { theme: 'companion', from: ['ad_companion'], wait: [1, 6] },
       c: S => !!S.flags.companion, w: S => .5 + 4 * G.trajShare(S, 'am') + 2 * G.trajShare(S, 'thuong') + (S.traits.social < .3 ? 1 : 0),
       run(S, X) {
         const c = S.flags.companion, g = Math.round(Math.max(0, S.gold) * .3); S.flags.companion = null; X.money(-g); X.add('h', -8); X.add('so', -6); cnt(S, 'cpBetray');
-        return { t: `Sáng ra, chỗ ${name1(c.name)} nằm trống trơn, túi chung cũng nhẹ đi ${G.coin(g)}. Bạn không đuổi theo.`, k: 'bad' };
+        return { t: `Sáng ra, chỗ ${name1(c.name)} nằm trống trơn, đống lửa đã nguội từ lúc nào. Túi chung nhẹ đi ${G.coin(g)}. Bạn đứng nhìn con đường mòn một lúc lâu rồi quay vào thu dọn. Bạn không đuổi theo.`, k: 'bad' };
       } },
     { id: 'cp_wed', st: ['adult'], tree: { theme: 'companion', body: 'flesh', from: ['ad_companion'], wait: [1, 6] },
       c: S => !!S.flags.companion && !(S.family.spouse && S.family.spouse.alive) && !G.RACES[S.flags.companion.race].construct,
@@ -475,14 +475,14 @@ window.LifeSim = window.LifeSim || {};
       run(S, X) {
         const c = S.flags.companion; S.flags.companion = null;
         S.family.spouse = { name: c.name, race: c.race, age: X.years(S) + X.int(-3, 3), alive: true }; X.add('h', 12); X.add('so', 8); cnt(S, 'cpWed');
-        return { t: `Sau ngần ấy chuyến đi chung, ${name1(c.name)} hỏi bạn có muốn dừng lại ở một nơi nào đó không. Hai người làm đám cưới nhỏ ở quán trọ quen.`, k: 'big' };
+        return { t: `Sau ngần ấy chuyến đi chung, một tối ${name1(c.name)} hỏi bạn có muốn dừng lại ở một nơi nào đó không. Câu hỏi rơi vào giữa bữa cơm, nhẹ như hỏi mai trời có mưa. Hai người làm đám cưới nhỏ ở quán trọ quen, chủ quán mở một vò rượu đãi cả nhà trọ.`, k: 'big' };
       } },
     { id: 'cp_part', st: ['adult', 'elder'], tree: { theme: 'companion', from: ['ad_companion'], wait: [1, 6] },
       c: S => !!S.flags.companion,
       w: S => 3 * (G.trajShare(S, 'tri') + G.trajShare(S, 'nghe') + G.trajShare(S, 'quyen') + G.trajShare(S, 'thuong') + G.trajShare(S, 'gia') * .5),
       run(S, X) {
         const c = S.flags.companion; S.flags.companion = null; X.add('so', -2); cnt(S, 'cpPart');
-        return { t: `Bạn ở lại với việc của mình, ${name1(c.name)} đi tiếp về phía biên giới. Hai người hẹn gặp lại, cả hai đều biết khó.`, k: 'info' };
+        return { t: `Bạn ở lại với việc của mình, ${name1(c.name)} đi tiếp về phía biên giới. Hôm chia tay trời nhiều sương, hai người đứng ở ngã ba khá lâu mà chẳng nói được bao nhiêu. Hẹn ngày gặp lại, cả hai đều biết là khó.`, k: 'info' };
       } }
   );
 
@@ -490,10 +490,10 @@ window.LifeSim = window.LifeSim || {};
   G.EVENTS.push(
     { id: 'map_sell', st: ['adult', 'elder'], w: 2, tree: { theme: 'treasure', from: ['ad_map'], wait: [1, 8], dir: { thuong: 2 } },
       c: S => S.flags.map === true,
-      run(S, X) { const g = X.int(20, 60); S.flags.map = 'sold'; X.money(g); return { t: `Một thương nhân đồ cổ trả ${G.coin(g)} cho tấm bản đồ. Bạn không hỏi ông ta định làm gì với nó.`, k: 'good' }; } },
+      run(S, X) { const g = X.int(20, 60); S.flags.map = 'sold'; X.money(g); return { t: `Một thương nhân đồ cổ soi tấm bản đồ dưới ngọn đèn rất lâu, rồi đếm ra ${G.coin(g)}. Ông ta cuộn nó lại, cất vào ống tre, tay hơi run. Bạn không hỏi ông định làm gì với nó.`, k: 'good' }; } },
     { id: 'map_fake', st: ['adult', 'elder'], w: 2, tree: { theme: 'treasure', from: ['ad_map'], wait: [1, 8], dir: { tri: 2 } },
       c: S => S.flags.map === true,
-      run(S, X) { S.flags.map = 'used'; X.add('sm', 4); return { t: 'Bạn đối chiếu tấm bản đồ với sách địa chí: con sông trên đó chảy ngược. Đồ giả, vẽ chưa tới mười năm.', k: 'info' }; } }
+      run(S, X) { S.flags.map = 'used'; X.add('sm', 4); return { t: 'Bạn trải tấm bản đồ cạnh cuốn sách địa chí, dò theo từng khúc sông. Con sông trên đó chảy ngược. Mực còn tươi, giấy được làm cũ bằng nước chè: đồ giả, vẽ chưa tới mười năm. Bạn bật cười, rồi tiếc mấy đêm đã thức vì nó.', k: 'info' }; } }
   );
 
   // ── Sau khi theo đạo ──
@@ -501,13 +501,13 @@ window.LifeSim = window.LifeSim || {};
   G.EVENTS.push(
     { id: 'fa_pilgrim', st: ['teen', 'adult', 'elder'], w: 2, tree: { theme: 'faith', body: 'living', from: ['faith_join:!no'], wait: [2, 8], dir: { dao: 2 } },
       c: S => !!S.faith,
-      run(S, X) { S.devotion = Math.min(100, S.devotion + 10); X.add('h', 5); return { t: `Bạn đi hành hương tới đền tổ của ${faithVi(S)}, ngủ ngoài hiên đền cùng trăm người lạ.`, k: 'good' }; } },
+      run(S, X) { S.devotion = Math.min(100, S.devotion + 10); X.add('h', 5); return { t: `Bạn đi hành hương tới đền tổ của ${faithVi(S)}, tới nơi thì chân đã phồng rộp. Đêm ấy bạn ngủ ngoài hiên đền cùng trăm người lạ, kẻ ho, người khấn, tiếng chuông vọng xuống tới sáng. Lúc về, trong túi áo có thêm một nhúm tro hương gói giấy.`, k: 'good' }; } },
     { id: 'fa_doubt', st: ['teen', 'adult', 'elder'], tree: { theme: 'faith', body: 'living', from: ['faith_join:!no'], wait: [2, 8], dir: { tri: 1, am: 1 } },
       c: S => !!S.faith, w: S => 1 + 2 * (1 - S.traits.pious),
-      run(S, X) { S.devotion = Math.max(0, S.devotion - 10); X.add('sm', 3); return { t: `Bạn đọc kinh của một đạo khác và mất ngủ cả tháng. Lời giảng của ${faithVi(S)} nghe không còn chắc như trước.`, k: 'info' }; } },
+      run(S, X) { S.devotion = Math.max(0, S.devotion - 10); X.add('sm', 3); return { t: `Bạn mượn được cuốn kinh của một đạo khác, định đọc cho biết. Đọc xong thì mất ngủ cả tháng. Lời giảng của ${faithVi(S)} giờ nghe vẫn quen, nhưng không còn chắc như trước. Bạn vẫn đi lễ, chỉ là đứng lùi về hàng sau.`, k: 'info' }; } },
     { id: 'fa_mission', st: ['adult', 'elder'], w: 1.5, tree: { theme: 'faith', body: 'living', soc: 1, from: ['faith_join:!no'], wait: [2, 8], dir: { du: 1, dao: 1 } },
       c: S => !!S.faith,
-      run(S, X) { S.fame = Math.min(100, S.fame + 2); X.add('h', 3); S.devotion = Math.min(100, S.devotion + 4); return { t: `Đền ${faithVi(S)} giao bạn mang thư tới giáo đoàn ở vùng bên. Đường xa, nhưng đi đâu cũng có người cùng đạo cho ngủ nhờ.`, k: 'good' }; } }
+      run(S, X) { S.fame = Math.min(100, S.fame + 2); X.add('h', 3); S.devotion = Math.min(100, S.devotion + 4); return { t: `Đền ${faithVi(S)} giao bạn mang thư tới giáo đoàn ở vùng bên, thư niêm sáp, dặn không được để ướt. Đường xa, mưa nắng thất thường. Nhưng tới đâu cũng có người cùng đạo mở cửa cho ngủ nhờ, dọn cho bát cơm nóng.`, k: 'good' }; } }
   );
 
   // ═════════ 7. Bọc, hệ con, kiếp sau ═════════

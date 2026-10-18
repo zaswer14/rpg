@@ -97,7 +97,7 @@ window.LifeSim = window.LifeSim || {};
     // Cung phụng: bổng khi còn ở nước đó; mất chỗ khi rời nước, nước mất; thỉnh thoảng phải ra tay.
     const R = r.retainer;
     if (R) {
-      if (R.k !== S.nation || !aliveN(S, R.k)) { X.log(`Bạn thôi làm cung phụng cho ${R.name}: ${R.k !== S.nation ? 'bạn đã rời nước' : 'nước đã mất'}.`, 'info'); r.retainer = null; }
+      if (R.k !== S.nation || !aliveN(S, R.k)) { X.log(`Bạn thôi làm cung phụng cho ${R.name}: ${R.k !== S.nation ? 'bạn đã rời nước' : 'nước đã mất'}. Gian phòng cũ trong phủ chắc đã có người khác dọn vào.`, 'info'); r.retainer = null; }
       else {
         X.money(Math.round(med * G.RET_PAY[Math.max(2, T)] * ypt));
         if (st !== 'elder' && X.chance(.1 * ypt)) duty(S, X, R, T);
@@ -106,14 +106,14 @@ window.LifeSim = window.LifeSim || {};
     // Hẹn ước ba năm (cv_scorn): tới hạn thì xét.
     if (F.vow && S.age >= F.vow.by) {
       const ok = F.vow.lv != null ? S.level >= F.vow.lv : T >= F.vow.t; cnt(S, ok ? 'vowOk' : 'vowFail');
-      if (ok) { S.fame = Math.min(100, S.fame + 8); X.add('h', 10); X.add('so', 8); X.log(`Ba năm hẹn ước đã tới. Bạn đứng trước cả họ, level ${S.level}, ${G.tierName(T)}. Không ai còn nhắc chuyện cũ.`, 'big'); }
-      else { S.fame = Math.max(0, S.fame - 5); X.add('h', -10); X.log('Ba năm hẹn ước đã tới mà bạn vẫn chưa lên được. Người ta không nói gì, chỉ nhìn.', 'bad'); if (F.vow.heir) dropHeir(S, X); }
+      if (ok) { S.fame = Math.min(100, S.fame + 8); X.add('h', 10); X.add('so', 8); X.log(`Ba năm hẹn ước đã tới. Bạn đứng giữa sân trước mặt cả họ: level ${S.level}, ${G.tierName(T)}. Những người từng nói ra nói vào giờ cúi đầu chào trước. Từ đó không ai còn nhắc chuyện cũ.`, 'big'); }
+      else { S.fame = Math.max(0, S.fame - 5); X.add('h', -10); X.log('Ba năm hẹn ước đã tới mà bạn vẫn chưa lên được. Trong bữa cơm họ, không ai nhắc tới lời hứa năm nào. Người ta không nói gì, chỉ nhìn, và cái nhìn ấy còn khó chịu hơn lời chê.', 'bad'); if (F.vow.heir) dropHeir(S, X); }
       F.vow = null;
     }
     // Tước giữ tạm (kế tước khi chưa đủ Tier, js/noble.js): đủ Tier thì triều đình xác nhận, quá hạn thì giáng.
     const nb = r.noble;
     if (nb && nb.due) {
-      if (T >= nb.due.t) { X.log(`Bạn đã là ${G.tierName(T)}. Triều đình xác nhận tước ${G.NOBLE_VI[nb.rank]} của bạn.`, 'good'); nb.due = null; cnt(S, 'titleOk'); }
+      if (T >= nb.due.t) { X.log(`Bạn đã là ${G.tierName(T)}. Sứ giả triều đình mang chiếu tới tận cửa: tước ${G.NOBLE_VI[nb.rank]} của bạn từ nay không còn là tước tạm. Tối ấy bạn đặt tờ chiếu lên bàn thờ, thắp một nén hương.`, 'good'); nb.due = null; cnt(S, 'titleOk'); }
       else if (S.age >= nb.due.by) G.demoteTitle(S, X, T);
     }
   };
@@ -140,13 +140,13 @@ window.LifeSim = window.LifeSim || {};
   // Việc của cung phụng: hộ tống, giữ nhà khi có kẻ tới, đấu thay chủ.
   function duty(S, X, R, T) {
     const th = T - .6 + X.rnd() * .9, p = 1 / (1 + Math.exp(-3.2 * (X.power(S) - th)));
-    if (X.rnd() < p) { S.fame = Math.min(100, S.fame + 1); G.addMerit && G.addMerit(S, R.k, 2); X.money(Math.round(G.median(X.reg(S)) * .5 * T)); X.log(`Bạn ra tay cho ${R.name}: ${X.pick(['đẩy lui toán thích khách đột nhập', 'hộ tống chuyến hàng qua đèo', 'đấu thay chủ trong một cuộc thách đấu danh dự'])}. Được thưởng thêm.`, 'good'); cnt(S, 'dutyWin'); }
-    else { X.add('hl', -X.int(8, 20)); X.cond('wound'); X.log(`Bạn ra tay cho ${R.name} và bị thương nặng. Chủ nhà cho người chữa.`, 'bad'); cnt(S, 'dutyLoss'); }
+    if (X.rnd() < p) { S.fame = Math.min(100, S.fame + 1); G.addMerit && G.addMerit(S, R.k, 2); X.money(Math.round(G.median(X.reg(S)) * .5 * T)); X.log(`Chủ nhà cho gọi, bạn ra tay cho ${R.name}: ${X.pick(['đẩy lui toán thích khách đột nhập lúc nửa đêm', 'hộ tống chuyến hàng qua đèo giữa mưa tuyết', 'đấu thay chủ trong một cuộc thách đấu danh dự trước sân phủ'])}. Xong việc, người hầu mang tới một túi thưởng, kèm lời cảm ơn của chủ.`, 'good'); cnt(S, 'dutyWin'); }
+    else { X.add('hl', -X.int(8, 20)); X.cond('wound'); X.log(`Bạn ra tay cho ${R.name}, lần này đối thủ mạnh hơn bạn tưởng. Bạn được khiêng về phủ, người bê bết máu. Chủ nhà cho thầy thuốc ngồi bên giường suốt mấy đêm.`, 'bad'); cnt(S, 'dutyLoss'); }
   }
   // Mất quyền kế tước: tước về em kế (em không có trong danh sách anh chị; lost chặn js/noble.js trao lại khi anh chị đều mất).
   function dropHeir(S, X) {
     const H = S.flags.house; if (!H || !H.heir || H.done) return;
-    H.heir = false; H.lost = true; cnt(S, 'heirLost'); X.log(`Gia tộc chọn người khác kế tước ${G.NOBLE_VI[H.rank]}.`, 'bad');
+    H.heir = false; H.lost = true; cnt(S, 'heirLost'); X.log(`Gia tộc họp kín một buổi chiều, không ai gọi bạn vào. Tối đó người ta báo tin: tước ${G.NOBLE_VI[H.rank]} sẽ về tay người khác.`, 'bad');
   }
   // Giáng tước khi quá hạn: xuống bậc cao nhất mà Tier hiện tại giữ được; Phàm Nhân thì mất tước.
   G.demoteTitle = function (S, X, T) {
@@ -154,12 +154,12 @@ window.LifeSim = window.LifeSim || {};
     let r = nb.rank - 1; while (r > 0 && G.TITLE_TIER[r] > T) r--;
     const old = G.NOBLE_VI[nb.rank], need = G.TITLE_TIER[nb.rank], k = nb.k;
     cnt(S, 'titleDemote');
-    if (r <= 0) { G.stripTitle(S, k, `không người kế tước nào đạt nổi ${G.tierName(G.TITLE_TIER[1])}`); X.log(`Hết hạn mà bạn vẫn là ${G.tierName(T)}. Triều đình thu lại tước ${old}.`, 'bad'); return; }
+    if (r <= 0) { G.stripTitle(S, k, `không người kế tước nào đạt nổi ${G.tierName(G.TITLE_TIER[1])}`); X.log(`Hết hạn mà bạn vẫn là ${G.tierName(T)}. Sứ giả tới thu lại ấn tín, đọc chiếu xong là đi, không ngồi uống chén trà nào. Triều đình thu lại tước ${old}.`, 'bad'); return; }
     nb.rank = r; nb.due = null;
     if (r < 3 && nb.fief && G.dropFief) G.dropFief(S);
     const L = (S.world.dyn.nobles || {})[k], me = L && L.find(x => x.player && x.name === S.name); if (me) me.rank = r;
     G.histAdd(S.world, 'noble', `${S.name} bị giáng từ ${old} xuống ${G.NOBLE_VI[r]} của ${G.realm.nations[k].name}: chưa đạt ${G.tierName(need)}.`);
-    X.log(`Hết hạn mà bạn chưa đủ sức giữ tước ${old}. Triều đình giáng bạn xuống ${G.NOBLE_VI[r]}.`, 'bad');
+    X.log(`Hết hạn mà bạn chưa đủ sức giữ tước ${old}. Sứ giả đứng giữa sân đọc chiếu: triều đình giáng bạn xuống ${G.NOBLE_VI[r]}. Từ hôm ấy, mấy nhà quen thôi mời bạn ngồi mâm trên.`, 'bad');
   };
 
   // ═════════ Quyết định: cung phụng, dược tề ═════════
@@ -168,14 +168,14 @@ window.LifeSim = window.LifeSim || {};
     when: S => !S.dead && !!S.flags.retOffer && !roles(S).retainer,
     build(S, X) {
       const o = S.flags.retOffer, T = G.sTier(S), pay = Math.round(G.median(X.reg(S)) * G.RET_PAY[T]);
-      return { title: 'Lời mời cung phụng', body: `${o.name[0].toUpperCase() + o.name.slice(1)} muốn mời một ${G.tierName(T)} về làm cung phụng: ăn ở trong phủ, bổng ${G.coin(pay)} mỗi năm, khi có việc thì ra tay.`,
+      return { title: 'Lời mời cung phụng', body: `${o.name[0].toUpperCase() + o.name.slice(1)} cho người tới gõ cửa, áo gấm, nói năng nhỏ nhẹ. Họ muốn mời một ${G.tierName(T)} về làm cung phụng: ăn ở trong phủ, bổng ${G.coin(pay)} mỗi năm, khi có việc thì ra tay. Người đưa tin nói sẽ đợi câu trả lời ở quán đầu phố.`,
         choices: [{ k: 'yes', label: 'Nhận lời', sub: `Bổng ${G.coin(pay)}/năm khi còn ở ${G.realm.nations[o.k].name}; đôi khi phải đánh thay chủ.` }, { k: 'no', label: 'Từ chối', sub: 'Giữ tự do.' }] };
     },
     apply(S, X, k) {
       const o = S.flags.retOffer; S.flags.retOffer = null;
       if (k !== 'yes') { cnt(S, 'retNo'); return null; }
       roles(S).retainer = { k: o.k, kind: o.kind, name: o.name, since: S.world.year }; cnt(S, 'retainer');
-      return `Bạn làm cung phụng cho ${o.name}.`;
+      return `Bạn nhận lời làm cung phụng cho ${o.name}. Gian phòng họ dành cho bạn có cửa sổ nhìn ra vườn, sáng nào cũng có người mang nước rửa mặt tới. Mấy đêm đầu bạn trằn trọc, chưa quen ngủ trong chăn gấm.`;
     },
     auto: S => S.traits.social > .35 || S.traits.bold < .5 || S.gold < 50 ? 'yes' : 'no'
   };
@@ -184,10 +184,10 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !S.dead && !S.undead && ['adult', 'elder'].includes(X.stage(S)) && S.flags.elixirAsk !== G.sTier(S) && S.gold >= G.elixirCost(S, X, 1) * 3,
     build(S, X) {
       const T = G.sTier(S);
-      return { title: 'Dược tề', body: `Tiệm dược ở chợ bày dược tề cho ${G.tierName(T)}: uống đều thì luyện nhanh hơn. Giá theo bậc của người dùng. Bạn có ${G.coin(S.gold)}.`,
+      return { title: 'Dược tề', body: `Tiệm dược ở chợ bày dược tề cho ${G.tierName(T)}, lọ nào cũng niêm sáp, xếp thành hàng trên kệ gỗ. Ông chủ tiệm nói uống đều thì luyện nhanh hơn, giá theo bậc của người dùng. Bạn có ${G.coin(S.gold)}.`,
         choices: G.ELIXIR.map((e, l) => ({ k: String(l), label: e.nameVi, sub: l ? `${G.coin(Math.round(G.elixirCost(S, X, l)))}/năm · điểm rèn ×${num(e.mult)}${S.gold < G.elixirCost(S, X, l) * 3 ? ' · tiền chỉ đủ vài năm' : ''}` : 'Giữ tiền.' })) };
     },
-    apply(S, X, k) { S.flags.elixirAsk = G.sTier(S); S.elixir = +k; return +k ? `Mỗi năm bạn mua ${G.ELIXIR[+k].nameVi.toLowerCase()}. Thiếu tiền năm nào thì hạ xuống loại rẻ hơn.` : null; },
+    apply(S, X, k) { S.flags.elixirAsk = G.sTier(S); S.elixir = +k; return +k ? `Từ đó mỗi năm bạn mua ${G.ELIXIR[+k].nameVi.toLowerCase()}, uống đều như cơm bữa. Năm nào túi nhẹ thì hạ xuống loại rẻ hơn.` : null; },
     auto: (S, X) => String(autoElixir(S, X))
   };
 
@@ -200,7 +200,7 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const n = nationOf(S), T = G.sTier(S), fee = Math.round(G.median(X.reg(S)) * .5 * T), p = examP(S, X);
-      return { title: 'Sổ người có cấp', body: `${n.name} ghi tên mọi ${G.tierName(1)} trở lên vào sổ: được miễn thuế đầu người, giảm thuế (×${num(G.STATUS[T].tax)}), đổi lại phải ra trận khi có lệnh. Lệ phí ${G.coin(fee)}.`,
+      return { title: 'Sổ người có cấp', body: `Quan giữ sổ dựng bàn ở cổng chợ, trước mặt là một cuốn sổ dày bìa đen. Theo lệnh, ${n.name} ghi tên mọi ${G.tierName(1)} trở lên vào sổ: được miễn thuế đầu người, giảm thuế (×${num(G.STATUS[T].tax)}), đổi lại phải ra trận khi có lệnh. Lệ phí ${G.coin(fee)}.`,
         choices: [{ k: 'reg', label: 'Đăng ký', sub: `Nộp ${G.coin(fee)}; thuộc diện triệu tập khi chiến tranh.`, fee },
           { k: 'exam', label: 'Thi chứng chỉ', sub: `Nộp ${G.coin(fee * 2)}; đậu (~${Math.round(p * 100)}%) thì có chứng chỉ: thu nhập ×1,08, có tiếng. Trượt vẫn được ghi tên.`, fee: fee * 2 },
           { k: 'hide', label: 'Không đăng ký', sub: 'Không được giảm thuế; lính bắt được thì bị phạt như phạm luật.' }] };
@@ -210,17 +210,17 @@ window.LifeSim = window.LifeSim || {};
       if (k === 'hide') { F.regHide = (F.regHide || 0) + 1; R[n.idx] = 0; return null; }
       X.money(-Math.min(Math.max(0, S.gold), c.fee));
       if (k === 'exam') {
-        if (X.chance(examP(S, X))) { R[n.idx] = 2; cnt(S, 'regCert'); S.fame = Math.min(100, S.fame + 2 * G.sTier(S)); return `Bạn đậu. Chứng chỉ ${G.tierName(G.sTier(S))} của ${n.name} mang dấu ấn triện đỏ.`; }
-        R[n.idx] = 1; cnt(S, 'regYes'); return 'Bạn trượt kỳ thi, nhưng tên vẫn được ghi vào sổ.';
+        if (X.chance(examP(S, X))) { R[n.idx] = 2; cnt(S, 'regCert'); S.fame = Math.min(100, S.fame + 2 * G.sTier(S)); return `Ba ngày thi, giám khảo ngồi một dãy dài, mặt ai cũng như tạc bằng đá. Bạn đậu. Chứng chỉ ${G.tierName(G.sTier(S))} của ${n.name} mang dấu triện đỏ, bạn bọc nó trong khăn, cất kỹ dưới đáy rương.`; }
+        R[n.idx] = 1; cnt(S, 'regYes'); return 'Bạn trượt. Ra khỏi trường thi, bạn đứng dò bảng tên một lúc lâu, không thấy tên mình. Dù sao tên bạn vẫn được ghi vào sổ.';
       }
-      R[n.idx] = 1; cnt(S, 'regYes'); return `Tên bạn nằm trong sổ người có cấp của ${n.name}.`;
+      R[n.idx] = 1; cnt(S, 'regYes'); return `Quan giữ sổ chấm bút vào nghiên, viết tên bạn bằng nét chữ nắn nót. Từ nay tên bạn nằm trong sổ người có cấp của ${n.name}. Khi có chiến tranh, lệnh gọi sẽ biết đường tìm tới.`;
     },
     auto: S => S.traits.bold > .8 && S.traits.social < .3 ? 'hide' : S.traits.studious > .55 ? 'exam' : 'reg'
   };
   const examP = (S, X) => G.clamp(.35 + .2 * (X.power(S) - G.sTier(S) - .5) + S.sm / 300, .1, .9);
   // Không đăng ký ở nước quản chặt: mỗi năm có lúc bị bắt (js/state.js G.caught).
   G.EVENTS.push({ id: 'cv_unreg', st: ['adult', 'elder'], c: S => G.sTier(S) >= 1 && G.sTier(S) < 5 && G.strictNation(nationOf(S)) && S.flags.reg && S.flags.reg[S.nation] === 0, w: 1, rep: true, gap: 3,
-    run(S, X) { const n = nationOf(S); if (X.chance(.5)) { G.caught(X, n, 'hành nghề có cấp mà không đăng ký'); return null; } return { t: `Lính ${n.name} hỏi giấy của người có cấp ở cổng chợ. Bạn vòng đường khác.`, k: 'info' }; } });
+    run(S, X) { const n = nationOf(S); if (X.chance(.5)) { G.caught(X, n, 'hành nghề có cấp mà không đăng ký'); return null; } return { t: `Ở cổng chợ, lính ${n.name} chặn từng người hỏi giấy của người có cấp. Bạn kéo vành nón xuống, vòng sang đường khác. Đi một quãng xa rồi tim vẫn còn đập thình thịch.`, k: 'info' }; } });
 
   // ═════════ Lệnh triệu tập khi chiến tranh ═════════
   const warOf = S => { const k = S.nation; if (k == null || k < 0) return null; return (S.world.dyn.wars || []).find(w => w.a === k || w.b === k) || null; };
@@ -236,19 +236,19 @@ window.LifeSim = window.LifeSim || {};
       const ch = [{ k: 'go', label: 'Ra trận', sub: `Một năm trong quân ngũ${T >= 3 ? ', dẫn một cánh quân' : ''}; công trạng, danh vọng; có thể chết.` }];
       if (S.gold >= cost) ch.push({ k: 'pay', label: `Nộp ${G.coin(cost)} miễn`, sub: 'Theo lệ, người có cấp được nộp tiền thay.', cost });
       ch.push({ k: 'flee', label: 'Trốn lệnh', sub: `Bị truy nã ở ${n.name}.` });
-      return { title: 'Lệnh triệu tập', body: `${n.name} đang đánh ${foe.name}. Sổ ghi bạn là ${G.tierName(T)}: lệnh gọi tới tận nhà.`, choices: ch };
+      return { title: 'Lệnh triệu tập', body: `${n.name} đang đánh ${foe.name}. Một sáng tiếng vó ngựa dừng trước cửa, người lính trạm đưa tờ lệnh còn dính bùn. Sổ ghi bạn là ${G.tierName(T)}: lệnh gọi tới tận nhà.`, choices: ch };
     },
     apply(S, X, k, c) {
       const n = nationOf(S), w = warOf(S), T = G.sTier(S); S.flags.levyWar = w.start;
-      if (k === 'pay') { X.money(-c.cost); cnt(S, 'levyPay'); return 'Bạn nộp tiền, ở lại hậu phương.'; }
-      if (k === 'flee') { cnt(S, 'levyFlee'); (S.flags.wanted = S.flags.wanted || {})[n.idx] = true; S.fame = Math.max(0, S.fame - 3); S.flags.migrateQ = `Bạn trốn lệnh triệu tập. Ở lại ${n.name} là có ngày bị bắt.`; return 'Bạn trốn khỏi lệnh triệu tập.'; }
+      if (k === 'pay') { X.money(-c.cost); cnt(S, 'levyPay'); return 'Bạn nộp tiền, ở lại hậu phương. Mấy tháng sau, đoàn xe chở thương binh đi ngang qua cổng, bạn đứng bên đường nhìn theo rất lâu.'; }
+      if (k === 'flee') { cnt(S, 'levyFlee'); (S.flags.wanted = S.flags.wanted || {})[n.idx] = true; S.fame = Math.max(0, S.fame - 3); S.flags.migrateQ = `Bạn trốn lệnh triệu tập. Ở lại ${n.name} là có ngày bị bắt.`; return 'Đêm ấy bạn gói ghém vài thứ, đi lối sau, tránh cả đường cái. Bạn trốn khỏi lệnh triệu tập. Mấy hôm sau, cáo thị có tên bạn đã dán ở cổng chợ.'; }
       // Ra trận: một năm tại ngũ (js/state.js, dynamic.js tính sức chiến tranh của người Tier ≥ 3), thêm một trận mở màn.
       cnt(S, 'levyGo'); S.flags.soldier = Math.max(S.flags.soldier || 0, 1); S.flags.served = true;
       const th = T - .3 + X.rnd() * .8, p = 1 / (1 + Math.exp(-3.2 * (X.power(S) - th)));
-      if (X.rnd() < p) { G.addMerit && G.addMerit(S, n.idx, 5 * T); S.fame = Math.min(100, S.fame + 2 * T); X.money(Math.round(G.median(X.reg(S)) * T)); return `Trận mở màn: bạn ${T >= 3 ? 'dẫn cánh quân phá vỡ phòng tuyến' : 'đứng vững ở tiền tuyến'}. Tên bạn được đọc trước hàng quân.`; }
+      if (X.rnd() < p) { G.addMerit && G.addMerit(S, n.idx, 5 * T); S.fame = Math.min(100, S.fame + 2 * T); X.money(Math.round(G.median(X.reg(S)) * T)); return `Trận mở màn nổ ra lúc trời còn mờ sương. Giữa tiếng tù và và mưa tên, bạn ${T >= 3 ? 'dẫn cánh quân phá vỡ phòng tuyến' : 'đứng vững ở tiền tuyến'}. Chiều hôm ấy, tên bạn được đọc trước hàng quân.`; }
       X.add('hl', -X.int(12, 30));
       if (X.chance(.12 / T)) { cnt(S, 'levyDie'); X.die({ id: 'war', text: `tử trận khi ra trận theo lệnh triệu tập của ${n.name}` }); return null; }
-      return 'Trận mở màn thua. Bạn được khiêng về doanh trại.';
+      return 'Trận mở màn thua. Bạn ngã xuống giữa bùn và giáo gãy, tỉnh lại đã thấy mình nằm trên cáng. Người khiêng bạn về doanh trại vừa đi vừa chửi thề, nhưng không bỏ bạn lại.';
     },
     auto: (S, X, d) => S.traits.bold > .4 || ['martial', 'adventure', 'power'].includes(S.aim) ? 'go' : d.choices.some(c => c.k === 'pay') && S.traits.bold < .25 ? 'pay' : S.traits.bold < .15 ? 'flee' : 'go'
   };
@@ -259,9 +259,9 @@ window.LifeSim = window.LifeSim || {};
       const k = G.RANK[S.tal.root], F = S.flags, s = G.SET && G.SET[S.home.settlement];
       const where = F.royal ? 'trong điện thờ hoàng tộc' : F.house ? 'trước bàn thờ dòng họ' : s && (s.bld || []).includes('temple') ? 'ở đền' : s && (s.bld || []).includes('school') ? 'ở trường' : 'ở nhà thầy cúng đầu làng';
       cnt(S, 'tested');
-      let t = `Lễ thử thiên phú ${where}: bạn đặt tay lên viên đá thử. Nó sáng màu ${G.RARITY[k].nameVi.toLowerCase()}. ${G.ROOT_VI[k]}.`;
-      if (k >= 3) { F.gifted = true; F.grantTry2 = 1; if (k >= 4) F.grantTry3 = 1; S.fame = Math.min(100, S.fame + 3); t += ' Người của học viện ghi tên bạn vào sổ, hứa sẽ có học bổng.'; return { t, k: 'big' }; }
-      if (k === 0) { X.add('h', -3); t += ' Người lớn thở dài.'; }
+      let t = `Năm ấy bạn được dẫn đi làm lễ thử thiên phú ${where}. Viên đá thử lạnh ngắt dưới bàn tay nhỏ, người lớn đứng quanh nín thở. Đá sáng lên màu ${G.RARITY[k].nameVi.toLowerCase()}. ${G.ROOT_VI[k]}.`;
+      if (k >= 3) { F.gifted = true; F.grantTry2 = 1; if (k >= 4) F.grantTry3 = 1; S.fame = Math.min(100, S.fame + 3); t += ' Người của học viện có mặt hôm ấy ghi tên bạn vào sổ, hứa sẽ có học bổng. Suốt đường về, ai gặp cũng xoa đầu bạn.'; return { t, k: 'big' }; }
+      if (k === 0) { X.add('h', -3); t += ' Người lớn thở dài. Đường về không ai nói gì, chỉ có bàn tay ai đó siết tay bạn chặt hơn thường lệ.'; }
       if ((F.house || F.royal) && k <= 1) F.scornQ = true;
       return { t, k: k ? 'info' : 'bad' };
     } });
@@ -276,8 +276,8 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const H = S.flags.house, heir = H && H.heir && !H.done;
-      return { title: heir ? 'Bàn chuyện kế tước' : 'Thư từ hôn', body: heir ? `Họ hàng nói ra nói vào: con trưởng mà ${G.sTier(S) ? 'căn cốt tầm thường' : `chưa vào nổi ${G.tierName(1)}`}, giữ sao nổi tước ${G.NOBLE_VI[H.rank]}? Có người đề nghị để em bạn kế tước.`
-        : `Nhà bên kia gửi thư từ hôn: không ai gả con cho người ${G.sTier(S) ? 'căn cốt tầm thường' : `chưa vào nổi ${G.tierName(1)}`}.`,
+      return { title: heir ? 'Bàn chuyện kế tước' : 'Thư từ hôn', body: heir ? `Bữa cơm họ nào cũng có người nói ra nói vào: con trưởng mà ${G.sTier(S) ? 'căn cốt tầm thường' : `chưa vào nổi ${G.tierName(1)}`}, giữ sao nổi tước ${G.NOBLE_VI[H.rank]}? Hôm qua có người nói thẳng: để em bạn kế tước. Cả mâm im lặng, không ai cãi.`
+        : `Thư từ hôn tới vào một buổi sáng, chữ viết lịch sự, lời lẽ khéo léo. Ý thì chỉ có một: nhà bên kia không gả con cho người ${G.sTier(S) ? 'căn cốt tầm thường' : `chưa vào nổi ${G.tierName(1)}`}. Người trong nhà đọc xong, gấp thư lại, không nói câu nào.`,
         choices: [{ k: 'bear', label: 'Nhẫn nhịn', sub: heir ? 'Có thể mất quyền kế tước.' : 'Nuốt cục tức.' },
           { k: 'vow', label: 'Hẹn ước ba năm', sub: `Ba năm nữa phải lên level ${vowLv(S)} (giờ ${S.level}): luyện ngày đêm, có dược tề thì tốt. Được thì rửa nhục; không được thì mất mặt${heir ? ', mất cả quyền kế tước' : ''}.` },
           { k: 'leave', label: 'Bỏ nhà đi', sub: 'Tự lập thân; mất người dạy của gia tộc.' }] };
@@ -285,10 +285,10 @@ window.LifeSim = window.LifeSim || {};
     apply(S, X, k) {
       const F = S.flags, H = F.house; F.scornDone = true; F.scornQ = false; cnt(S, 'scorn_' + k);
       if (k === 'bear') { X.add('h', -8); X.add('so', -4); if (H && H.heir && !H.done) dropHeir(S, X); return null; }
-      if (k === 'vow') { F.vow = { by: S.age + 3 / X.R(S).ypt, lv: vowLv(S), heir: !!(H && H.heir && !H.done) }; if (S.auto) G.setAim(S, 'martial'); return 'Bạn nói trước cả họ: ba năm nữa hẵng nói chuyện.'; }
+      if (k === 'vow') { F.vow = { by: S.age + 3 / X.R(S).ypt, lv: vowLv(S), heir: !!(H && H.heir && !H.done) }; if (S.auto) G.setAim(S, 'martial'); return 'Bạn đứng dậy giữa bữa cơm họ, nói rõ từng chữ: ba năm nữa hẵng nói chuyện. Cả nhà im phăng phắc. Đêm đó bạn ra sân luyện tới khi gà gáy.'; }
       if (H) { F.houseLeft = H; F.house = null; }
       X.add('h', 4); S.flags.migrateQ = 'Bạn rời nhà, không mang theo cái họ.';
-      return 'Bạn xếp vài bộ quần áo và ra đi trước khi trời sáng.';
+      return 'Bạn xếp vài bộ quần áo vào tay nải, ra đi trước khi trời sáng. Tới đầu ngõ bạn dừng lại, nhìn mái nhà một lần, rồi không ngoái lại nữa.';
     },
     auto: S => S.traits.bold > .55 ? 'vow' : S.traits.social > .6 || S.traits.bold < .25 ? 'bear' : 'leave'
   };
@@ -304,9 +304,9 @@ window.LifeSim = window.LifeSim || {};
     when: S => !S.dead && !!S.flags.bullyQ,
     build(S, X) {
       const b = S.flags.bullyQ, T = G.sTier(S), pw = X.power(S).toFixed(1);
-      if (!T) return { title: 'Kẻ có cấp', body: `Một ${G.tierName(b.t)} say rượu đạp đổ hàng của bạn ở chợ rồi đòi bồi thường. Quan ở đây không can. Sức bạn ${pw}, hắn cỡ ${b.t + .3}.`,
+      if (!T) return { title: 'Kẻ có cấp', body: `Giữa phiên chợ, một ${G.tierName(b.t)} say rượu loạng choạng đi qua, đạp đổ cả sạp hàng của bạn. Đồ đạc lăn lóc dưới chân người qua lại, vậy mà hắn còn túm áo bạn đòi bồi thường. Quan ở đây không can. Sức bạn ${pw}, hắn cỡ ${b.t + .3}.`,
         choices: [{ k: 'bear', label: 'Nhịn', sub: 'Mất ít tiền và chút tự trọng.' }, { k: 'resist', label: 'Chống lại', sub: 'Thắng thì nổi tiếng cả vùng; thua thì gãy xương, có khi mất mạng.' }] };
-      return { title: 'Chuyện ở chợ', body: `Một ${G.tierName(b.t)} đang đánh một ông lão bán rau vì va phải áo hắn. Dân chợ đứng nhìn. Sức bạn ${pw}, hắn cỡ ${b.t + .3}.`,
+      return { title: 'Chuyện ở chợ', body: `Ở góc chợ, một ${G.tierName(b.t)} đang đánh một ông lão bán rau, chỉ vì ông lỡ va phải áo hắn. Thúng rau đổ tung, ông lão ôm đầu co ro dưới đất. Dân chợ đứng nhìn, không ai dám bước ra. Sức bạn ${pw}, hắn cỡ ${b.t + .3}.`,
         choices: [{ k: 'stop', label: 'Ra tay can', sub: 'Có tiếng tốt; thua thì bị thương.' }, { k: 'ignore', label: 'Đi qua', sub: '' }] };
     },
     apply(S, X, k) {
@@ -314,10 +314,10 @@ window.LifeSim = window.LifeSim || {};
       if (k === 'bear') { X.money(-Math.min(Math.max(0, S.gold), X.int(3, 15))); X.add('h', -6); return null; }
       if (k === 'ignore') { if (S.traits.pious > .5 || S.traits.social > .6) X.add('h', -3); return null; }
       const p = 1 / (1 + Math.exp(-3.2 * (X.power(S) - b.t - .3)));
-      if (X.rnd() < p) { cnt(S, 'bullyWin'); S.fame = Math.min(100, S.fame + 3 + G.sTier(S)); X.add('so', 6); X.add('h', 5); return k === 'resist' ? `Bạn hạ được một ${G.tierName(b.t)}. Từ hôm đó cả chợ gọi bạn bằng anh.` : 'Bạn bẻ quặt tay hắn. Ông lão cúi đầu cảm ơn mãi.'; }
+      if (X.rnd() < p) { cnt(S, 'bullyWin'); S.fame = Math.min(100, S.fame + 3 + G.sTier(S)); X.add('so', 6); X.add('h', 5); return k === 'resist' ? `Không ai nghĩ bạn dám đánh lại, kể cả hắn. Bạn hạ được một ${G.tierName(b.t)} ngay giữa chợ, hắn lồm cồm bò dậy rồi lủi mất. Từ hôm đó cả chợ gọi bạn bằng anh.` : 'Bạn bước tới, chụp lấy cổ tay hắn, bẻ quặt ra sau. Hắn rống lên rồi bỏ đi, vừa đi vừa chửi. Ông lão cúi đầu cảm ơn mãi, cứ nắm tay bạn không chịu buông.'; }
       X.add('hl', -X.int(10, 28)); X.cond('wound');
       if (k === 'resist' && X.chance(.04)) { X.die({ id: 'bandit', text: `bị một ${G.tierName(b.t)} đánh chết giữa chợ` }); return null; }
-      return 'Bạn thua. Mấy người quen dìu bạn về.';
+      return 'Bạn thua. Mấy cú đòn sau cùng bạn không còn đếm được. Lúc tỉnh, mấy người quen đang dìu bạn về, có người lấy khăn chấm máu trên mặt bạn.';
     },
     auto: (S, X) => { const b = S.flags.bullyQ, T = G.sTier(S); if (!T) return S.traits.bold > .75 && X.power(S) > b.t + .1 ? 'resist' : 'bear'; return S.traits.bold + S.traits.social > .9 && X.power(S) > b.t + .6 ? 'stop' : 'ignore'; }
   };
@@ -335,13 +335,13 @@ window.LifeSim = window.LifeSim || {};
       const ch = [{ k: 'stay', label: 'Ở bên', sub: 'Gác việc tu luyện, ở bên người ấy những năm cuối.' }];
       if (S.gold >= cost) ch.push({ k: 'elixir', label: 'Tìm thuốc trường thọ', sub: `${G.coin(cost)}: kéo dài thêm vài năm.`, cost });
       ch.push({ k: 'cult', label: 'Bế quan', sub: 'Tu luyện để quên; người ấy sẽ hiểu.' });
-      return { title: 'Tóc bạc', body: `${sp.name} đã ${sp.age} tuổi, tóc bạc trắng. Bạn là ${G.tierName(G.sTier(S))}, vẫn như ngày cưới.`, choices: ch };
+      return { title: 'Tóc bạc', body: `${sp.name} đã ${sp.age} tuổi, tóc bạc trắng, mỗi sáng phải vịn tường mới đứng dậy được. Còn bạn là ${G.tierName(G.sTier(S))}, soi gương vẫn thấy gương mặt ngày cưới. Có hôm người ấy nhìn bạn rất lâu, rồi lặng lẽ quay đi.`, choices: ch };
     },
     apply(S, X, k, c) {
       const sp = S.family.spouse; S.flags.kinFor = sp.name; cnt(S, 'kin_' + k);
-      if (k === 'stay') { X.add('so', 8); X.add('h', 4); return 'Những buổi chiều dài, hai người ngồi trước hiên.'; }
-      if (k === 'elixir') { X.money(-c.cost); sp.age -= Math.round(G.RACES[sp.race || S.race].le * .1); X.add('h', 4); return `${sp.name} uống thuốc, sáng hôm sau đi lại nhanh nhẹn hơn.`; }
-      X.add('h', -10); X.add('so', -6); X.addXp(80); return 'Bạn đóng cửa luyện công. Tiếng ho ở phòng bên vọng sang mỗi đêm.';
+      if (k === 'stay') { X.add('so', 8); X.add('h', 4); return 'Bạn gác việc tu luyện sang một bên. Những buổi chiều dài, hai người ngồi trước hiên kể lại chuyện năm nào, có chuyện kể tới lần thứ mười. Lần nào bạn cũng nghe như lần đầu.'; }
+      if (k === 'elixir') { X.money(-c.cost); sp.age -= Math.round(G.RACES[sp.race || S.race].le * .1); X.add('h', 4); return `Bạn hỏi khắp nơi mới mua được thang thuốc trường thọ. ${sp.name} uống xong, sáng hôm sau đi lại nhanh nhẹn hơn, còn ra vườn tưới cây. Chỉ thêm vài năm thôi, nhưng vài năm cũng là nhiều.`; }
+      X.add('h', -10); X.add('so', -6); X.addXp(80); return 'Bạn đóng cửa luyện công, tự nhủ người ấy sẽ hiểu. Tiếng ho ở phòng bên vọng sang mỗi đêm. Bạn ngồi yên, mắt nhắm, không biết mình đang luyện hay đang nghe.';
     },
     auto: (S, X, d) => S.traits.social > .5 ? 'stay' : d.choices.some(c => c.k === 'elixir') ? 'elixir' : 'cult'
   };
@@ -358,16 +358,16 @@ window.LifeSim = window.LifeSim || {};
       const ch = [{ k: 'push', label: 'Liều đột phá', sub: `~${Math.round(p * 100)}% ngộ ra cửa lên ${G.tierName(T + 1)}; hỏng thì tổn thương nặng, có thể chết.` }];
       if (kids) ch.push({ k: 'pass', label: 'Truyền nghề', sub: 'Dạy con cháu, đệ tử những gì mình biết.' });
       ch.push({ k: 'rest', label: 'An phận', sub: 'Sống nốt những năm còn lại.' });
-      return { title: 'Thọ nguyên sắp cạn', body: `Bạn đã ở đỉnh ${G.tierName(T)} mà cánh cửa phía trên vẫn đóng. Tóc bạc, khí huyết suy, thời gian không còn nhiều.`, choices: ch };
+      return { title: 'Thọ nguyên sắp cạn', body: `Bạn đã đứng ở đỉnh ${G.tierName(T)} bao năm mà cánh cửa phía trên vẫn đóng. Sáng nào ngồi thiền, khí huyết cũng chậm hơn hôm trước một chút. Tóc đã bạc. Thời gian không còn nhiều.`, choices: ch };
     },
     apply(S, X, k) {
       const T = G.sTier(S); S.flags.lastPush = k; cnt(S, 'life_' + k);
       if (k === 'rest') { X.add('h', 10); return null; }
-      if (k === 'pass') { X.add('h', 8); X.add('so', 6); S.fame = Math.min(100, S.fame + 5); return 'Bạn mở lớp ở sân sau. Lũ trẻ học nhanh hơn bạn hồi ấy.'; }
-      if (X.chance(pushP(S))) { S.flags.pushT = T + 1; cnt(S, 'pushOk'); return `Ba ngày ba đêm ngồi bất động, bạn thấy cánh cửa lên ${G.tierName(T + 1)} hé mở.`; }
+      if (k === 'pass') { X.add('h', 8); X.add('so', 6); S.fame = Math.min(100, S.fame + 5); return 'Bạn mở lớp ở sân sau, ngày nào cũng có tiếng hô tập vọng ra tới đường. Lũ trẻ học nhanh hơn bạn hồi ấy. Có đứa vấp đúng cái lỗi bạn từng vấp, bạn bật cười, cầm tay chỉ cho nó sửa.'; }
+      if (X.chance(pushP(S))) { S.flags.pushT = T + 1; cnt(S, 'pushOk'); return `Ba ngày ba đêm ngồi bất động, không ăn, không ngủ. Tới đêm thứ ba, bạn thấy cánh cửa lên ${G.tierName(T + 1)} hé mở, một khe sáng mỏng như sợi chỉ. Bạn mở mắt, tay run, mà miệng thì cười.`; }
       X.add('hl', -X.int(20, 40));
       if (X.chance(.1)) { cnt(S, 'pushDie'); X.die({ id: 'heart', text: 'kiệt sức khi liều đột phá lúc tuổi già' }); return null; }
-      return 'Khí huyết đảo lộn, bạn nôn ra máu. Cánh cửa vẫn đóng.';
+      return 'Tới ngày thứ hai thì khí huyết đảo lộn, bạn nôn ra máu, ngã vật khỏi bồ đoàn. Cánh cửa vẫn đóng. Lần này bạn biết nó sẽ không mở nữa.';
     },
     auto: (S, X, d) => S.traits.bold > .75 ? 'push' : d.choices.some(c => c.k === 'pass') && S.traits.social > .4 ? 'pass' : 'rest'
   };
@@ -375,7 +375,7 @@ window.LifeSim = window.LifeSim || {};
 
   // ═════════ Vai trò: cung phụng (bảng nhân vật, nút rời) ═════════
   { const base = G.roleList; G.roleList = S => { const out = base(S), R = S.roles && S.roles.retainer; if (R) out.push({ what: 'retainer', text: `Cung phụng của ${R.name}`, mgr: false }); return out; }; }
-  { const base = G.leaveRole; G.leaveRole = (S, X, what, id) => { if (what === 'retainer') { const R = roles(S).retainer; roles(S).retainer = null; return R ? `Bạn từ biệt ${R.name}.` : null; } return base(S, X, what, id); }; }
+  { const base = G.leaveRole; G.leaveRole = (S, X, what, id) => { if (what === 'retainer') { const R = roles(S).retainer; roles(S).retainer = null; return R ? `Bạn từ biệt ${R.name}, trả lại gian phòng trong phủ.` : null; } return base(S, X, what, id); }; }
 
   // ═════════ Chữ cho giao diện ═════════
   G.statusText = S => {

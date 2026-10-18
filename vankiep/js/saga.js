@@ -43,31 +43,31 @@ window.LifeSim = window.LifeSim || {};
   // on: tác dụng lúc nhận dấu; fade: số lượt dấu còn (null = cả đời); tone: good / bad / info.
   G.MARKS = {
     duoc_tin:     { nameVi: 'Được tin cậy', tone: 'good', fade: 20, d: 'Người ta biết bạn làm ăn đàng hoàng.', w: { ad_bounty_post: 1.4, cm_help: 1.6, cm_visit: 1.3 },
-      echo: { ad_bounty_post: 'Người treo bảng gọi đích danh bạn: nghe nói bạn làm ăn đàng hoàng.', cm_help: 'Người ta tới giúp vì năm ấy bạn đã không bỏ ai.' }, yr: (S, X) => X.add('so', .5) },
+      echo: { ad_bounty_post: 'Người treo bảng gọi đích danh bạn, bảo nghe nói bạn làm ăn đàng hoàng. Việc này họ không giao cho người lạ.', cm_help: 'Không cần ai đi gọi, người ta tự tới. Năm ấy bạn đã không bỏ ai, giờ họ cũng không bỏ bạn.' }, yr: (S, X) => X.add('so', .5) },
     giu_loi:      { nameVi: 'Người giữ lời', tone: 'good', fade: null, d: 'Bạn từng giữ một lời hứa khó giữ.', w: { cm_help: 1.3, ad_suitor: 1.2 }, yr: (S, X) => X.add('so', .3) },
     tieng_xau:    { nameVi: 'Tiếng xấu', tone: 'bad', fade: 15, d: 'Chuyện cũ của bạn đi trước bạn một bước.', w: { ad_suitor: .6, cm_glare: 1.6, cm_help: .6 },
-      echo: { ad_suitor: 'Người ta đã nghe chuyện cũ của bạn; mối này chậm hơn mọi khi.', cm_glare: 'Ai cũng nhớ chuyện năm ấy.' }, yr: (S, X) => X.add('so', -.5) },
+      echo: { ad_suitor: 'Bên ấy đã nghe chuyện cũ của bạn. Mối này đi chậm hơn mọi khi, bà mối nói năng cũng dè dặt hẳn.', cm_glare: 'Ai cũng nhớ chuyện năm ấy, chỉ là không ai nói ra.' }, yr: (S, X) => X.add('so', -.5) },
     ke_thu:       { nameVi: 'Có kẻ thù ngoài kia', tone: 'bad', fade: 20, d: 'Có người vẫn chờ dịp trả lại bạn.', w: { ad_bandits: 1.5, cm_glare: 1.8 },
-      echo: { ad_bandits: 'Trong toán cướp có một gương mặt bạn nhận ra: người của kẻ thù cũ.' } },
+      echo: { ad_bandits: 'Trong toán cướp có một gương mặt bạn nhận ra: người của kẻ thù cũ. Hắn cũng nhận ra bạn, và nhếch mép cười.' } },
     tay_mau:      { nameVi: 'Tay dính máu', tone: 'bad', fade: 30, d: 'Bạn từng lấy mạng người, hay thứ gì đó đáng được tha.', w: { tn_brawl: 1.3, ad_bandits: 1.2 },
-      echo: { tn_brawl: 'Người ta lùi lại khi thấy ánh mắt bạn.' }, yr: (S, X) => X.add('h', -.3) },
+      echo: { tn_brawl: 'Người ta lùi lại khi thấy ánh mắt bạn. Có người kéo tay bạn mình đi, thì thầm gì đó.' }, yr: (S, X) => X.add('h', -.3) },
     no_on:        { nameVi: 'Mang ơn', tone: 'info', fade: 20, d: 'Bạn còn nợ một người một món ơn.', w: { cm_visit: 1.5, cm_help: 1.3 } },
     no_mau:       { nameVi: 'Nợ máu đồng đội', tone: 'bad', fade: 15, d: 'Một người đã đỡ đòn thay bạn.', w: { ad_old_friend: 1.3 },
-      echo: { ad_old_friend: 'Bạn rót thêm một chén cho người đồng đội đã đỡ đòn thay mình.' }, yr: (S, X) => X.add('h', -.5) },
+      echo: { ad_old_friend: 'Bạn rót thêm một chén, đặt ở chỗ trống bên cạnh, cho người đồng đội đã đỡ đòn thay mình năm ấy.' }, yr: (S, X) => X.add('h', -.5) },
     ban_cua_thu:  { nameVi: 'Bạn của loài thú', tone: 'good', fade: null, d: 'Bạn từng nuôi một con thú lẽ ra phải giết.', w: { ch_pup: 2, tn_first_hunt: .6 },
-      echo: { ch_pup: 'Con vật không sợ bạn; nó tự tìm tới.' }, yr: (S, X) => X.add('h', .2) },
+      echo: { ch_pup: 'Con vật không hề sợ bạn. Nó tự tìm tới, như đã quen bạn từ kiếp nào.' }, yr: (S, X) => X.add('h', .2) },
     cua_phi_nghia: { nameVi: 'Của phi nghĩa', tone: 'bad', fade: 15, d: 'Có một khoản tiền bạn không muốn ai hỏi tới.', w: { cm_glare: 1.3, ad_tax: 1.3 },
-      echo: { ad_tax: 'Người thu thuế nhìn sổ của bạn lâu hơn mọi nhà.' },
-      yr: (S, X) => { if (S.gold > 0 && X.chance(.04)) { const g = Math.round(S.gold * .15); X.money(-g); X.log(`Một khoản phi nghĩa năm nào bị đòi lại: mất ${G.coin(g)}.`, 'bad'); } } },
+      echo: { ad_tax: 'Người thu thuế lật sổ của bạn lâu hơn mọi nhà, ngón tay dừng lại ở mấy dòng. Bạn đứng chờ, mồ hôi rịn sau gáy.' },
+      yr: (S, X) => { if (S.gold > 0 && X.chance(.04)) { const g = Math.round(S.gold * .15); X.money(-g); X.log(`Một khoản phi nghĩa năm nào bị người ta lần ra, tới tận cửa đòi lại. Bạn trả mà không cãi được câu nào: mất ${G.coin(g)}.`, 'bad'); } } },
     nguoi_lap_lang: { nameVi: 'Người lập làng', tone: 'good', fade: null, d: 'Có một ngôi làng mang dấu tay bạn.', yr: (S, X) => X.add('so', .5) },
-    que_moi:      { nameVi: 'Đã quen đất mới', tone: 'good', fade: 10, d: 'Đất mới đã thành quê.', w: { ad_restless: .6 }, echo: { ad_restless: 'Nhưng nơi này đã thành quê; bạn ở lại.' } },
+    que_moi:      { nameVi: 'Đã quen đất mới', tone: 'good', fade: 10, d: 'Đất mới đã thành quê.', w: { ad_restless: .6 }, echo: { ad_restless: 'Nhưng nơi này đã thành quê. Bạn nhìn con đường thêm một lúc, rồi quay vào nhà.' } },
     nguoi_la:     { nameVi: 'Người mới tới', tone: 'bad', fade: 4, d: 'Ở đây chưa ai biết bạn là ai.', w: { cm_visit: .6 }, yr: (S, X) => X.add('so', -.5) },
     da_bao_thu:   { nameVi: 'Đã trả nợ máu', tone: 'good', fade: null, d: 'Món nợ máu năm xưa đã trả.', yr: (S, X) => X.add('h', .3) },
     buong_bo:     { nameVi: 'Đã buông', tone: 'good', fade: 20, d: 'Bạn đã đặt xuống một chuyện từng đè nặng.', yr: (S, X) => X.add('h', .4) },
     thu_chua_tra: { nameVi: 'Mối thù chưa trả', tone: 'bad', fade: null, d: 'Món nợ máu vẫn còn đó.', w: { ch_raid: 1.2, ad_tide: 1.3 },
-      echo: { ch_raid: 'Lại là bầy quái ấy. Bạn siết chặt cán vũ khí.', ad_tide: 'Bạn đứng đầu hàng, như chờ đúng ngày này.' }, yr: (S, X) => X.add('h', -.4) },
+      echo: { ch_raid: 'Lại là bầy quái ấy, bạn nhận ra ngay từ tiếng kêu đầu tiên. Tay bạn siết lấy cán vũ khí, tới sáng vẫn chưa chịu buông.', ad_tide: 'Bạn đứng đầu hàng, như đã chờ đúng ngày này từ lâu. Tay bạn không run.' }, yr: (S, X) => X.add('h', -.4) },
     cao_thu:      { nameVi: 'Cao thủ có tiếng', tone: 'good', fade: null, d: 'Tên bạn được nhắc ở các bãi tập.', w: { ad_tourney: 2, ad_bounty_post: 1.5 },
-      echo: { ad_tourney: 'Đám đông nhận ra bạn từ xa; tên bạn đứng đầu bảng.', ad_bounty_post: 'Người ta để dành việc khó nhất cho bạn.' } },
+      echo: { ad_tourney: 'Đám đông nhận ra bạn từ xa, xì xào gọi tên. Trên bảng đấu, tên bạn đứng đầu.', ad_bounty_post: 'Việc khó nhất người ta để dành cho bạn, không ai dám tranh.' } },
     chan_truyen:  { nameVi: 'Chân truyền', tone: 'good', fade: null, d: 'Bạn giữ một sở học được truyền lại trọn vẹn.', on: (S, X) => { const d = X.dominant(S); if (d) X.gain(d.skill, 5); } },
     danh_tho:     { nameVi: 'Thợ có dấu riêng', tone: 'good', fade: null, d: 'Đồ bạn làm được đóng dấu riêng, có người đặt trước.', yr: (S, X) => X.money(Math.round(med(S, X) * .08)) },
     nha_kha:      { nameVi: 'Nhà đã khá', tone: 'good', fade: null, d: 'Nhà bạn đã thoát nghèo.', on: S => { S.q = Math.min(5, S.q + 1); S.pct = Math.min(.95, S.pct + .15); } },
@@ -77,7 +77,7 @@ window.LifeSim = window.LifeSim || {};
     nguoi_moc_dao: { nameVi: 'Người mộ đạo', tone: 'good', fade: null, d: 'Đức tin đã thành chỗ dựa.', yr: S => { if (S.faith) S.devotion = Math.min(100, S.devotion + 2); } },
     bo_dao:       { nameVi: 'Kẻ bỏ đạo', tone: 'bad', fade: 10, d: 'Bạn đã quay lưng với đạo cũ.', yr: (S, X) => X.add('h', -.2) },
     ke_di_xa:     { nameVi: 'Người từng đi xa', tone: 'good', fade: null, d: 'Bạn đã thấy những nơi người làng chỉ nghe kể.', w: { ad_restless: .5, ad_old_friend: 1.3 },
-      echo: { ad_old_friend: 'Bạn kể chuyện những vùng đã qua tới khi đèn cạn dầu.' }, yr: (S, X) => X.add('sm', .3) },
+      echo: { ad_old_friend: 'Bạn kể chuyện những vùng đã qua tới khi đèn cạn dầu, bạn cũ nghe mà quên cả rượu.' }, yr: (S, X) => X.add('sm', .3) },
     ten_nha:      { nameVi: 'Tên nhà được nhận', tone: 'good', fade: null, d: 'Họ tộc đã nhận lại bạn.', on: S => { S.fame = Math.min(100, S.fame + 5); }, yr: (S, X) => X.add('so', .3) },
     dong_moi:     { nameVi: 'Người mở dòng mới', tone: 'good', fade: null, d: 'Con cháu bạn sẽ đọc tên bạn đầu tiên.' },
     ban_cu:       { nameVi: 'Có bạn cũ', tone: 'good', fade: 25, d: 'Có người nhớ bạn từ hồi còn trẻ.', w: { cm_visit: 1.4, cm_help: 1.4 } },
@@ -85,13 +85,13 @@ window.LifeSim = window.LifeSim || {};
     cay_dang:     { nameVi: 'Nỗi cay đắng', tone: 'bad', fade: 10, d: 'Một lần thua còn nhức.', yr: (S, X) => X.add('h', -.3) },
     tinh_than:    { nameVi: 'Tình ruột thịt', tone: 'good', fade: 25, d: 'Họ hàng biết có thể tìm tới bạn.', w: { cm_help: 1.3 } },
     nguoi_giu_lang: { nameVi: 'Người giữ làng', tone: 'good', fade: null, d: 'Làng nhớ bạn đã đứng ở cổng.', w: { ch_raid: 1.2 },
-      echo: { ch_raid: 'Người làng chạy về phía bạn trước khi chạy về nhà.' } },
+      echo: { ch_raid: 'Tiếng mõ vừa nổi, người làng đã chạy về phía bạn, trước cả khi chạy về nhà mình.' } },
     tinh_mot_doi: { nameVi: 'Một mối tình trọn', tone: 'good', fade: null, d: 'Có một người ở bên bạn tới cuối.', yr: (S, X) => X.add('h', 1) },
     biet_bi_mat:  { nameVi: 'Người biết bí mật', tone: 'good', fade: null, d: 'Bạn biết một điều cổ xưa mà ít ai biết.', w: { ad_map: 1.3 },
-      echo: { ad_map: 'Ký tự trên tấm bản đồ này bạn đọc được.' } },
+      echo: { ad_map: 'Ký tự trên tấm bản đồ này bạn đọc được. Bạn đọc thầm, và tim đập nhanh hơn.' } },
     da_chuoc:     { nameVi: 'Đã chuộc lỗi', tone: 'good', fade: null, d: 'Món nợ cũ với đời bạn đã trả bằng việc làm.', yr: (S, X) => X.add('h', .5) },
     ba_chu:       { nameVi: 'Kẻ đứng trên đầu người', tone: 'bad', fade: null, d: 'Người ta sợ bạn hơn là nể.', w: { ad_bandits: .6 },
-      echo: { ad_bandits: 'Bọn cướp nhận ra bạn và dạt sang hai bên đường.' } },
+      echo: { ad_bandits: 'Bọn cướp nhận ra bạn, dạt sang hai bên đường. Tên cầm đầu còn cúi đầu chào.' } },
     cat_dut:      { nameVi: 'Đã cắt đứt', tone: 'bad', fade: 15, d: 'Có một người cùng máu bạn không còn nhìn mặt.', yr: (S, X) => X.add('h', -.2) }
   };
   const markOf = (S, id) => (S.marks || []).find(m => m.id === id);
@@ -194,6 +194,14 @@ window.LifeSim = window.LifeSim || {};
   const spName = a => (a.d.sp && G.B.byId[a.d.sp] ? G.B.byId[a.d.sp].nameVi : 'bầy quái');
   const bestSk = S => { let b = null; for (const [m, v] of Object.entries(S.mastery)) if (!b || v > S.mastery[b]) b = m; return b || 'Body'; };
   const tierUp = (S, X, k) => G.tierName(Math.min(5, X.ctier(S) + k));
+  // Câu dẫn của hồi mở đầu mạch chính (chỉ là chữ, không rút ngẫu nhiên): nhắc đường vừa bỏ / vừa khép (S.saga.past) và chuyện đã gieo mạch (a.d.why).
+  const lead = (S, a) => {
+    const P = (S.saga && S.saga.past) || [], x = P[P.length - 1], w0 = a && a.d.why, w = w0 ? (/[.!?…]$/.test(w0) ? w0 : w0 + '…') : '';
+    if (x && SAGA[x.k]) return x.o === 'turned' ? `Đường ${SAGA[x.k].nameVi} đã ở lại phía sau. ${w ? w + ' Chuyện ấy kéo bạn sang một ngả khác. ' : ''}`
+      : `Đường ${SAGA[x.k].nameVi} đã đi tới cuối, mà đời thì còn dài. ${w ? w + ' Chuyện ấy cứ nằm trong lòng, không chịu yên. ' : ''}`;
+    return w ? `${w} Từ hôm ấy, có một điều cứ lớn dần trong lòng bạn. ` : '';
+  };
+  const mateOf = (S, a) => { const m = a && a.d.mate != null ? G.castGet(S, a.d.mate) : null; return m && m.alive !== false ? first(m.name) : null; };   // người cùng đi (lối có thêm người quen), còn sống
 
   // ── Món nợ máu ──
   saga('m_avenge', {
@@ -201,36 +209,38 @@ window.LifeSim = window.LifeSim || {};
     quest: a => `Trả món nợ máu cho ${a.d.kin || 'làng'}`, good: ['win', 'burn', 'spare'],
     marks: { win: 'da_bao_thu', burn: 'da_bao_thu', spare: 'buong_bo', fail: 'thu_chua_tra' },
     sum: { win: d => `trả được món nợ máu cho ${d.kin || 'làng'}`, burn: d => `đốt sạch tổ của bầy quái đã giết ${d.kin || 'người làng'}`, spare: d => `tha cho lứa quái con, buông được mối thù cho ${d.kin || 'làng'}`, fail: d => `không trả được món nợ máu cho ${d.kin || 'làng'}` },
-    follow: ['Đêm ấy bạn lại mơ thấy ngày làng cháy.', 'Bạn ghi thêm một vạch lên chuôi vũ khí, như mọi lần.', 'Mỗi việc bạn làm đều như một bước tới gần cái tổ ấy.'],
-    beat: { open: ['Bạn mài lại lưỡi vũ khí, đêm nào cũng mài.', 'Bạn hỏi mọi thợ săn đi ngang làng về {z}.'], knot: ['Bạn tập tới khi tay rớm máu, rồi tập tiếp.'],
-      trial: ['Bạn vẽ lại bản đồ {z} lên vách nhà, đánh dấu từng chỗ có dấu chân.', 'Bạn nằm phục cả đêm ở bìa {z}, chỉ để nghe tiếng chúng đi qua.'], climax: ['Bạn biết cái tổ ở đâu rồi. Chỉ còn chờ một ngày.'] },
-    open: (S, X, a) => `Bạn giữ lại một món đồ của ${a.d.kin || 'người làng đã mất'}, đặt ở đầu giường. Sáng nào trước khi đi tập bạn cũng nhìn nó một lúc. Bạn biết mình sẽ đi tìm ${spName(a)}.`,
-    knot: { title: 'Cách đòi nợ máu', body: (S, X, a) => `${spName(a)} vẫn còn ở ${zoneName(S, X, a)}. Một mình bạn chưa đủ sức.`,
+    follow: ['Đêm ấy bạn lại mơ thấy ngày làng cháy, tỉnh dậy gối ướt mồ hôi.', 'Về nhà, bạn khắc thêm một vạch lên chuôi vũ khí. Chuôi đã gần kín vạch.', 'Việc gì bạn làm cũng như đưa mình tới gần cái tổ ấy thêm một bước.'],
+    beat: { open: ['Đêm nào bạn cũng ngồi mài lưỡi vũ khí bên bếp, tiếng đá rít đều đều tới khuya. Người nhà đã quen, không ai hỏi nữa.', 'Thợ săn nào đi ngang làng cũng bị bạn giữ lại hỏi chuyện {z}: lối nào, mùa nào, bầy lớn hay nhỏ. Có người cười, bảo bạn hỏi như đi đòi nợ. Bạn không cười.'],
+      knot: ['Bạn tập tới khi tay rớm máu, quấn vải lại rồi tập tiếp. Vết chai cũ chưa lành, vết chai mới đã lên. Ngày giỗ {kin} sắp tới, bạn muốn có thứ gì đó để nói trước mộ.'],
+      trial: ['Bạn vẽ bản đồ {z} lên vách nhà bằng than, chỗ nào thấy dấu chân thì chấm một chấm. Vách giờ chi chít chấm đen, dày nhất ở một góc.', 'Bạn nằm phục cả đêm ở bìa {z}, sương ướt đẫm lưng áo. Gần sáng chúng đi qua, gần tới mức nghe được tiếng thở. Bạn nín thở đếm từng con, rồi lặng lẽ về.'],
+      climax: ['Bạn biết cái tổ ở đâu rồi. Đêm nào cũng ra đầu làng nhìn trời, chờ một ngày khô ráo, gió thổi ngược về phía núi.'] },
+    open: (S, X, a) => `${lead(S, a)}Bạn giữ lại một món đồ của ${a.d.kin || 'người làng đã mất'}, đặt ở đầu giường. Sáng nào trước khi ra bãi tập bạn cũng cầm nó lên, nhìn một lúc rồi mới đi. Món đồ không nói gì. Nhưng bạn biết, sớm muộn mình cũng sẽ đi tìm ${spName(a)}.`,
+    knot: { title: 'Cách đòi nợ máu', body: (S, X, a) => `Ở ${zoneName(S, X, a)}, ${spName(a)} vẫn còn đó, mỗi năm một đông thêm. Một mình bạn chưa đủ sức vào tận tổ. Phải có cách khác, hoặc phải chờ.`,
       choices: (S, X) => [{ k: 'train', label: 'Luyện tới khi đủ sức', sub: 'Một mình, lâu, nhưng chắc tay.' }, { k: 'band', label: 'Tụ một toán thợ săn', sub: 'Cần người tin bạn.' },
         { k: 'hire', label: 'Bỏ tiền thuê mạo hiểm giả', sub: `Tốn chừng ${G.coin(Math.round(med(S, X) * 1.5))}.` }],
       apply(S, X, ch, a) {
-        if (ch === 'train') { X.gain(bestSk(S), 6); G.trajBump(S, { vo: .5 }); return 'Bạn dựng một bãi tập sau nhà, ngày nào cũng ra đó trước khi gà gáy.'; }
-        if (ch === 'band') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn đi đòi nợ máu', work: 'hunter', bond: 35 }); a.d.mate = p.id; X.add('so', 4); return `${first(p.name)} là người đầu tiên đứng ra. Rồi thêm ba người nữa.`; }
-        X.money(-Math.round(med(S, X) * 1.5)); a.d.hired = true; return 'Bạn đặt túi tiền lên bàn ở hội mạo hiểm. Người ta đếm, rồi gật đầu.';
+        if (ch === 'train') { X.gain(bestSk(S), 6); G.trajBump(S, { vo: .5 }); return 'Bạn dựng một bãi tập sau nhà, cắm cọc, treo bao cát. Ngày nào cũng ra đó trước khi gà gáy, về khi trời đã tối mịt. Bát cơm để phần trên bếp lần nào cũng nguội.'; }
+        if (ch === 'band') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn đi đòi nợ máu', work: 'hunter', bond: 35 }); a.d.mate = p.id; X.add('so', 4); return `${first(p.name)} là người đầu tiên đứng ra, không hỏi công xá bao nhiêu. Rồi thêm ba người nữa, ai cũng có lý do riêng để căm bầy quái. Tối ấy năm người ngồi quanh bếp nhà bạn, uống chung một vò rượu, không ai nói nhiều.`; }
+        X.money(-Math.round(med(S, X) * 1.5)); a.d.hired = true; return 'Bạn đặt túi tiền lên bàn ở hội mạo hiểm. Gã ngồi sau bàn đếm từng đồng, chậm rãi, rồi gật đầu. Số tiền ấy bạn dành dụm mấy năm. Lúc ra về tay nhẹ hẳn, mà lòng thì không.';
       },
       auto: (S, X) => S.traits.social > .55 ? 'band' : S.gold > med(S, X) * 2 && S.traits.bold < .5 ? 'hire' : 'train' },
     trial: { base: (S, X, a) => .45 + (a.d.path === 'band' ? .1 : a.d.path === 'hire' ? .15 : 0),
-      run: (S, X, a, ok) => ok ? (X.gain(bestSk(S), 3), `Bạn lần theo dấu ${spName(a)} qua ${zoneName(S, X, a)} suốt một mùa, và tìm ra cái tổ dưới một vách đá.`)
-        : (X.add('hl', -10), X.cond('wound'), `Bạn lần theo dấu ${spName(a)} tới ${zoneName(S, X, a)} rồi mất dấu giữa trận mưa. Bạn về với một vết cào dài trên lưng.`) },
-    climax: { title: 'Trước cửa tổ', body: (S, X, a) => `Tổ của ${spName(a)} nằm dưới vách đá. Từ trong tổ vọng ra tiếng con non.`,
+      run: (S, X, a, ok) => ok ? (X.gain(bestSk(S), 3), `Suốt một mùa bạn lần theo dấu ${spName(a)} qua ${zoneName(S, X, a)}, ăn lương khô, ngủ dưới gốc cây. ${a.d.path === 'band' ? 'Cả toán thay nhau canh đêm, không ai than một lời.' : a.d.path === 'hire' ? 'Đám mạo hiểm giả đi trước, bạn bám sát sau lưng, không để họ bỏ cuộc giữa chừng.' : 'Bạn đi một mình, quen dần với từng tiếng động của rừng.'} Rồi một chiều, dưới chân một vách đá, gió đưa tới mùi hôi của tổ. Bạn đã tìm ra nó.`)
+        : (X.add('hl', -10), X.cond('wound'), `Bạn lần theo dấu ${spName(a)} tới ${zoneName(S, X, a)} thì trời đổ mưa ba ngày liền, dấu chân trôi sạch. Đêm thứ ba có thứ gì đó lao ra từ bụi rậm. Bạn về làng với một vết cào dài trên lưng. Cái tổ vẫn chưa thấy đâu.`) },
+    climax: { title: 'Trước cửa tổ', body: (S, X, a) => `Tổ của ${spName(a)} nằm dưới vách đá, cửa tổ hôi mùi xương mục. Từ trong bóng tối vọng ra tiếng con non rúc rích. Bạn nghĩ tới ${a.d.kin || 'những người đã mất'}, rồi nghĩ tới lũ con non ấy.`,
       choices: (S, X, a) => [{ k: 'fight', label: 'Vào tổ, đánh tới cùng', sub: `Khả năng thắng chừng ${Math.round(odds(S, X, (a.d.ok ? .5 : .3) + pb(a)) * 100)}%.` },
         { k: 'burn', label: 'Đốt tổ từ bên ngoài', sub: 'Chắc ăn hơn; không biết con đầu đàn đã chết chưa.' }, { k: 'spare', label: 'Quay về', sub: 'Tha cho lứa con non.' }],
       apply(S, X, ch, a) {
-        if (ch === 'fight') { if (X.chance(odds(S, X, (a.d.ok ? .5 : .3) + pb(a)))) { S.fame += 6; return { t: 'Bạn đi vào bóng tối với ngọn đuốc và vũ khí. Lúc trở ra, trên tay bạn là cái nanh của con đầu đàn.', o: 'win' }; }
-          X.add('hl', -20); X.cond('wound'); return { t: 'Con đầu đàn to hơn mọi lời kể. Bạn bò ra khỏi tổ, máu chảy theo từng bước.', o: 'fail' }; }
-        if (ch === 'burn') { S.fame += 2; return { t: 'Bạn chất củi khô kín cửa tổ rồi châm lửa. Khói đen bốc lên ba ngày.', o: 'burn' }; }
-        X.add('h', 4); return { t: 'Bạn đứng lâu ở cửa tổ, rồi quay đi. Bọn con non không giết ai cả.', o: 'spare' };
+        if (ch === 'fight') { if (X.chance(odds(S, X, (a.d.ok ? .5 : .3) + pb(a)))) { S.fame += 6; return { t: `Bạn đi vào bóng tối với ngọn đuốc và vũ khí. Trong đó sâu hơn bạn tưởng, và tối hơn. Lúc trở ra trời đã xế, áo bạn đẫm máu không phải của mình, trên tay là cái nanh của con đầu đàn.${a.d.path === 'band' ? ' Toán thợ săn đứng chờ ở cửa tổ, thấy bạn thì reo lên.' : ''}`, o: 'win' }; }
+          X.add('hl', -20); X.cond('wound'); return { t: 'Con đầu đàn to hơn mọi lời kể. Nó hất bạn vào vách đá như hất một bó rơm. Bạn bò ra khỏi tổ, máu chảy theo từng bước, sau lưng vẫn vang tiếng gầm.', o: 'fail' }; }
+        if (ch === 'burn') { S.fame += 2; return { t: 'Bạn chất củi khô kín cửa tổ rồi châm lửa. Khói đen bốc lên ba ngày, cả vùng ngửi thấy. Bạn ngồi canh tới khi lửa tàn, mà vẫn không chắc con đầu đàn đã chết hay đã trốn qua một lối khác.', o: 'burn' }; }
+        X.add('h', 4); return { t: 'Bạn đứng lâu ở cửa tổ, đuốc cháy gần tới tay. Lũ con non rúc vào nhau trong góc, mắt sáng lên trong bóng tối. Chúng chưa giết ai cả. Bạn quay đi, và bước chân về nhẹ hơn bước chân đi.', o: 'spare' };
       },
       auto: (S, X, a) => S.traits.bold > .55 ? 'fight' : S.traits.pious > .7 ? 'spare' : 'burn' },
-    after: { win: (S, X, a) => `Bạn đặt cái nanh lên mộ ${a.d.kin || 'những người đã mất'}. Lần đầu sau bao năm bạn ngủ một giấc không mộng.`,
-      burn: (S, X, a) => `Người làng thôi nói về ${spName(a)}. Bạn không đi ngang chỗ vách đá ấy nữa.`,
-      spare: (S, X, a) => `Mấy năm sau người ta vẫn thấy quái ở ${zoneName(S, X, a)}, nhưng chúng không xuống làng. Bạn không hối hận.`,
-      fail: (S, X, a) => `Cái tổ vẫn ở đó. Đêm nào trời trở, vết thương cũ nhắc bạn món nợ chưa trả.` }
+    after: { win: (S, X, a) => { const m = mateOf(S, a); return `Bạn đặt cái nanh lên mộ ${a.d.kin || 'những người đã mất'}, thắp ba nén hương.${m ? ` ${m} đứng sau bạn, cũng thắp một nén.` : ''} Đêm ấy, lần đầu sau bao năm, bạn ngủ một giấc không mộng. Sáng ra bạn cất vũ khí lên gác, lâu lắm mới lấy xuống.`; },
+      burn: (S, X, a) => `Người làng thôi nhắc tới ${spName(a)}. Mấy mùa sau cỏ đã mọc lại trên vách đá cháy đen. Bạn không đi ngang chỗ ấy nữa, có việc phải qua thì vòng đường khác, xa hơn nửa buổi.`,
+      spare: (S, X, a) => `Mấy năm sau người ta vẫn thấy quái ở ${zoneName(S, X, a)}, nhưng chúng không xuống làng nữa. Có lần đi rừng, bạn gặp một con lớn đứng trên mỏm đá nhìn xuống. Nó nhìn bạn rất lâu rồi bỏ đi. Bạn không hối hận.`,
+      fail: (S, X, a) => `Cái tổ vẫn ở đó. Đêm nào trời trở gió, vết thương cũ trên lưng lại nhức, như có người gõ cửa nhắc nợ. Bạn ngồi dậy nhìn món đồ của ${a.d.kin || 'người đã mất'} ở đầu giường, rồi nằm xuống, không ngủ lại được.` }
   });
 
   // ── Thoát nghèo ──
@@ -238,31 +248,33 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Thoát nghèo', pitch: 'Đưa cả nhà ra khỏi cảnh nghèo.', axes: { thuong: 1, nghe: .6 }, themes: ['tax', 'hardship', 'gamble'], aim: 'wealth',
     quest: () => 'Đưa cả nhà thoát nghèo', good: ['rich', 'steady'], marks: { rich: 'nha_kha', steady: 'giu_loi', ruined: 'tay_trang', crooked: 'cua_phi_nghia' },
     sum: { rich: () => 'đưa cả nhà thoát nghèo', steady: () => 'giữ cho nhà đủ ăn mà không nợ ai', ruined: () => 'mất trắng một cơ nghiệp gây dựng nửa đời', crooked: () => 'giàu lên bằng những mối làm ăn không ai muốn nhắc' },
-    follow: ['Tối ấy bạn lại nghĩ tới cái hũ tiền dưới gầm giường.', 'Mẹ bạn đếm lại hũ tiền dưới gầm giường, lần này lâu hơn.', 'Bạn tính trong đầu: còn bao nhiêu mùa nữa.'],
-    beat: { any: ['Bạn dậy trước gà gáy, đi ngủ sau chó sủa. Hũ tiền đầy thêm một đốt tay.', 'Bạn mặc cả từng đồng ở chợ; người bán nhớ mặt bạn.', 'Bạn từ chối một bữa rượu để giữ tiền cho mùa sau.'] },
-    open: (S, X) => `Đêm ấy bạn ngồi đếm từng đồng trong nhà. Không đủ. Bạn tự hứa: tới lúc tóc bạc, nhà này sẽ không phải ăn cháo loãng nữa.`,
-    knot: { title: 'Con đường làm ăn', body: () => 'Muốn thoát nghèo phải có một nghề kiếm ra tiền, hoặc một mảnh đất của riêng mình.',
+    follow: ['Tối ấy bạn lại nghĩ tới cái hũ tiền dưới gầm giường, nhẩm xem còn thiếu bao nhiêu.', 'Về nhà bạn lôi hũ tiền ra đếm lại, lần này đếm chậm hơn.', 'Bạn nhẩm trong đầu: còn bao nhiêu mùa nữa thì đủ.'],
+    beat: { any: ['Bạn dậy trước gà gáy, đi ngủ sau chó sủa, quanh năm không nghỉ một ngày rằm. Hũ tiền dưới gầm giường đầy thêm một đốt tay.', 'Ở chợ bạn mặc cả từng đồng, kẻ bán người mua đều ngán. Bà bán cá nhớ mặt bạn, thấy từ xa đã cười, bảo thôi thì bớt cho.', 'Bạn bè rủ đi uống rượu, bạn lắc đầu. Ngồi nhà nhai cơm nguội với muối vừng, nghĩ tới mùa sau, bạn thấy cũng đáng.'] },
+    open: (S, X, a) => `${lead(S, a)}Đêm ấy bạn ngồi bên ngọn đèn dầu, đếm từng đồng trong nhà. Đếm hai lần, vẫn không đủ cho một mùa. Ngoài vách có tiếng ai ho khan. Bạn tự hứa: tới lúc tóc bạc, nhà này sẽ không phải ăn cháo loãng nữa.`,
+    knot: { title: 'Con đường làm ăn', body: () => 'Muốn thoát nghèo phải có một nghề ra tiền, hoặc một mảnh đất của riêng mình. Ai trong làng cũng có lời khuyên, mà không ai cho vay. Đường nào thì cũng phải tự mình đi.',
       choices: () => [{ k: 'trade', label: 'Buôn chuyến', sub: 'Mua chỗ này, bán chỗ kia.' }, { k: 'land', label: 'Khai hoang đất mới', sub: 'Đất rẻ, việc nặng.' }, { k: 'skill', label: 'Học một nghề giỏi', sub: 'Lâu thấy tiền, nhưng bền.' }],
-      apply(S, X, ch) { if (ch === 'trade') { G.trajBump(S, { thuong: .5 }); return 'Bạn vay một khoản nhỏ, mua một xe muối, rồi đẩy nó qua ba làng.'; }
-        if (ch === 'land') { X.gain('Body', 4); G.trajBump(S, { gia: .3 }); return 'Bạn xin được một mảnh đất hoang ven rừng, dựng tạm cái lều, bắt đầu nhổ gốc cây.'; }
-        X.gain('Engineering', 4); G.trajBump(S, { nghe: .5 }); return 'Bạn xin vào học việc ở một xưởng, làm không công ba năm đầu.'; },
+      apply(S, X, ch) { if (ch === 'trade') { G.trajBump(S, { thuong: .5 }); return 'Bạn vay một khoản nhỏ, mua một xe muối rồi đẩy nó qua ba làng. Bánh xe sa lầy hai lần, vai bạn tróc da. Lời chẳng được bao nhiêu. Nhưng từ chuyến ấy bạn biết chợ nào cần gì, đường nào ít cướp.'; }
+        if (ch === 'land') { X.gain('Body', 4); G.trajBump(S, { gia: .3 }); return 'Bạn xin được một mảnh đất hoang ven rừng, dựng tạm cái lều tranh. Ngày nào cũng nhổ gốc cây, đào đá, tối về hai bàn tay không nắm lại được. Mảnh đất bé tí, cỏ tranh cao quá đầu. Nhưng là đất của bạn.'; }
+        X.gain('Engineering', 4); G.trajBump(S, { nghe: .5 }); return 'Bạn xin vào học việc ở một xưởng, chịu làm không công ba năm đầu. Thợ cả ít lời, chỉ gõ thước vào tay mỗi khi bạn làm sai. Tay sưng mãi rồi cũng quen. Đêm về, bạn tập lại một mình từng đường ông làm ban ngày.'; },
       auto: S => S.traits.social > .55 ? 'trade' : S.traits.studious > .55 ? 'skill' : 'land' },
     trial: { base: S => .5 + (S.q >= 3 ? .1 : 0),
       run: (S, X, a, ok) => { const g = Math.round(med(S, X) * (ok ? 1.5 : -.6)); X.money(g);
-        return ok ? `Mùa ấy được. ${a.d.path === 'trade' ? 'Chuyến hàng bán hết trước khi tới chợ thứ ba' : a.d.path === 'land' ? 'Mảnh đất khai hoang cho vụ lúa đầu tiên' : 'Ông chủ xưởng trả công đủ'}: ${G.coin(g)}.`
-          : `Mùa ấy mất. ${a.d.path === 'trade' ? 'Hàng ướt mưa giữa đường' : a.d.path === 'land' ? 'Lũ cuốn hết vụ đầu' : 'Xưởng cháy, ông chủ bỏ đi'}; bạn lỗ ${G.coin(-g)}.`; } },
-    climax: { title: 'Mối làm ăn lớn', body: (S, X) => `Có một mối hàng lớn: nếu được, cả nhà đổi đời; nếu mất, mất hết. Cần chừng ${G.coin(Math.round(med(S, X) * 3))}.`,
+        return ok ? `Mùa ấy được. ${a.d.path === 'trade' ? 'Chuyến hàng bán hết trước khi tới chợ thứ ba, người ta còn hỏi bao giờ bạn ghé lại' : a.d.path === 'land' ? 'Mảnh đất khai hoang cho vụ lúa đầu tiên, hạt nào cũng chắc mẩy' : 'Ông chủ xưởng gọi bạn vào, trả đủ công cả những tháng trước'}. Đêm ấy bạn bỏ tiền vào hũ, nghe tiếng đồng chạm nhau mà không ngủ được. Thu về ${G.coin(g)}.`
+          : `Mùa ấy mất. ${a.d.path === 'trade' ? 'Hàng ướt mưa giữa đường, muối chảy thành nước' : a.d.path === 'land' ? 'Lũ về giữa đêm, cuốn sạch vụ đầu' : 'Xưởng cháy, ông chủ ôm tiền bỏ đi'}. Bạn ngồi trước cửa nhà cả buổi, không nói với ai câu nào. Lỗ ${G.coin(-g)}.`; } },
+    climax: { title: 'Mối làm ăn lớn', body: (S, X, a) => `Có một mối hàng lớn tìm tới. Được thì cả nhà đổi đời, mất thì mất sạch. ${a.d.ok ? 'Mùa trước làm ăn được, trong tay bạn có chút vốn.' : 'Mùa trước vừa lỗ, vốn trong tay chẳng còn bao nhiêu.'} Cần chừng ${G.coin(Math.round(med(S, X) * 3))}.`,
       choices: (S, X, a) => [{ k: 'risk', label: 'Dồn hết vốn vào', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .1 : 0) + pb(a), .1, .9) * 100)}% được.` },
         { k: 'steady', label: 'Giữ nhịp, chia bớt cho họ hàng', sub: 'Không giàu nhanh, không mất gì.' }, { k: 'crooked', label: 'Làm với kẻ buôn lậu', sub: 'Chắc ăn. Người ta sẽ nhớ.' }],
       apply(S, X, ch, a) {
-        if (ch === 'risk') { if (X.chance(G.clamp(.45 + (a.d.ok ? .1 : 0) + pb(a), .1, .9))) { X.money(Math.round(med(S, X) * 4)); return { t: 'Bạn dồn hết vốn. Ba tháng sau, chuyến hàng về đủ, lãi gấp bốn.', o: 'rich' }; }
-          return { t: 'Bạn dồn hết vốn. Chuyến hàng không về.', o: 'ruined' }; }
-        if (ch === 'steady') { X.money(Math.round(med(S, X) * 1.2)); X.add('so', 5); return { t: 'Bạn lắc đầu với mối lớn, đem phần dư chia cho mấy nhà họ hàng nghèo.', o: 'steady' }; }
-        X.money(Math.round(med(S, X) * 4)); G.trajBump(S, { am: .4 }); return { t: 'Bạn bắt tay kẻ buôn lậu dưới gầm cầu. Tiền về đều như nước.', o: 'crooked' };
+        if (ch === 'risk') { if (X.chance(G.clamp(.45 + (a.d.ok ? .1 : 0) + pb(a), .1, .9))) { X.money(Math.round(med(S, X) * 4)); return { t: 'Bạn dồn hết vốn, điểm chỉ bằng ngón tay còn run. Ba tháng sau, chuyến hàng về đủ, lãi gấp bốn. Bạn đếm tiền tới nửa đêm, đếm xong lại đếm. Rồi ngồi một mình ngoài hiên, mắt cay cay, không hiểu vì sao.', o: 'rich' }; }
+          return { t: 'Bạn dồn hết vốn. Ngày nào cũng ra đầu đường ngóng, một tháng, hai tháng. Chuyến hàng không về. Người bảo thuyền đắm ở khúc sông dữ, người bảo bị cướp, mà biết thế thì cũng chẳng để làm gì.', o: 'ruined' }; }
+        if (ch === 'steady') { X.money(Math.round(med(S, X) * 1.2)); X.add('so', 5); return { t: 'Bạn lắc đầu với mối lớn. Phần dư năm ấy bạn chia ra từng gói, đem tới mấy nhà họ hàng nghèo. Có bà cụ trong họ nắm tay bạn mãi không buông. Không giàu nhanh được, nhưng tối ấy bạn ăn cơm thấy ngon.', o: 'steady' }; }
+        X.money(Math.round(med(S, X) * 4)); G.trajBump(S, { am: .4 }); return { t: 'Bạn bắt tay kẻ buôn lậu dưới gầm cầu, chỗ không có đèn. Tiền về đều như nước, không cần hỏi từ đâu. Lần đầu tiên nhà bạn có của để dành. Chỉ có điều, đi qua gầm cầu ấy bạn hay ngoái lại.', o: 'crooked' };
       },
       auto: (S, X) => S.traits.bold > .6 ? 'risk' : S.traits.pious < .25 && S.traits.bold > .4 ? 'crooked' : 'steady' },
-    after: { rich: () => 'Nhà bạn lợp lại mái ngói. Bữa cơm có thịt mà không cần đợi Tết.', steady: () => 'Không ai trong họ phải đi vay nữa. Tết nào cũng có người tới nhà bạn trước tiên.',
-      ruined: () => 'Bạn bán bớt đồ đạc, dọn về căn nhà cũ. Mẹ bạn bảo: còn người là còn của.', crooked: () => 'Nhà bạn giàu lên. Hàng xóm chào bạn, nhưng chào nhỏ hơn trước.' }
+    after: { rich: (S, X, a) => `Nhà bạn lợp lại mái ngói đỏ, cả xóm ra xem. ${a.d.path === 'land' ? 'Mảnh đất hoang năm nào giờ là thửa ruộng tốt nhất xóm.' : a.d.path === 'trade' ? 'Cái xe muối cũ bạn vẫn giữ, dựng ở góc sân.' : 'Mấy vết thước gõ trên mu bàn tay năm nào giờ chỉ còn mờ mờ.'} Bữa cơm có thịt mà không cần đợi Tết. Có những đêm bạn vẫn giật mình dậy đếm tiền, rồi nhớ ra là không cần nữa.`,
+      steady: () => 'Trong họ không ai phải đi vay nữa. Tết nào cũng có người tới nhà bạn trước tiên, mang theo con gà, nải chuối. Nhà bạn không giàu. Nhưng gặp chuyện, người ta biết gõ cửa nào.',
+      ruined: () => 'Bạn bán bớt đồ đạc, dọn về căn nhà cũ, lại ngồi đếm từng đồng bên ngọn đèn dầu như năm nào. Lần này đếm nhanh hơn, vì chẳng còn bao nhiêu. Bạn tự nhủ: còn người là còn của. Câu ấy nói thì dễ, tin thì khó hơn.',
+      crooked: () => 'Nhà bạn giàu lên trông thấy. Hàng xóm vẫn chào, nhưng chào nhỏ hơn trước, và không ai hỏi bạn làm gì. Đêm Tết, bạn ngồi một mình trong căn nhà rộng, nghe tiếng cười từ nhà bên vọng sang.' }
   });
 
   // ── Đỉnh cao võ đạo ──
@@ -270,29 +282,31 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Đỉnh cao võ đạo', pitch: 'Vươn tới bậc chưa ai trong làng đạt.', axes: { vo: .7, phap: .6 }, themes: ['tourney', 'learn', 'teach'], aim: 'martial',
     quest: a => `Vươn tới ${G.tierName(Math.min(5, (a.d.t0 || 0) + 2))}`, good: ['top', 'honor'], marks: { top: 'cao_thu', honor: 'duoc_tin', broken: 'cay_dang' },
     sum: { top: () => 'thắng cao thủ số một một vùng', honor: () => 'thua cao thủ số một mà vẫn được kính trọng', broken: () => 'gãy con đường võ đạo giữa chừng' },
-    follow: ['Bạn tập thêm một canh giờ sau khi mọi người đã nghỉ.', 'Rồi bạn lại ra bãi tập như mọi chiều.', 'Bạn nghĩ: với người muốn mạnh, việc gì cũng là bài tập.'],
-    beat: { any: ['Bạn tập ở bãi đất sau làng tới khi trời tối hẳn.', 'Bạn đứng tấn dưới mưa, đếm từng hơi thở.', 'Bạn xin đấu tập với mọi người cầm vũ khí đi ngang làng.'] },
-    open: (S, X, a) => { a.d.t0 = X.ctier(S); return `Bạn khắc lên cột nhà một vạch ngang tầm mắt và tự hứa: một ngày sẽ đứng ở chỗ những ${tierUp(S, X, 2)} đứng.`; },
-    knot: { title: 'Đường tu luyện', body: () => 'Muốn lên cao phải chọn một con đường; không ai đi được cả ba.',
+    follow: ['Mọi người nghỉ cả rồi, bạn còn tập thêm một canh giờ.', 'Chiều ấy bạn lại ra bãi tập, như mọi chiều.', 'Bạn nghĩ: với người muốn mạnh, việc gì cũng là bài tập, kể cả việc này.'],
+    beat: { any: ['Bạn tập ở bãi đất sau làng tới khi trời tối hẳn, chỉ còn nghe tiếng mình thở. Cái cọc gỗ trước mặt đã mòn một khoảng bằng nắm tay.', 'Mưa như trút, bạn vẫn đứng tấn giữa sân, đếm từng hơi thở. Nước chảy vào mắt, bạn không chớp. Tới hơi thở thứ một nghìn, bạn mới cho mình hạ tay.', 'Ai cầm vũ khí đi ngang làng cũng bị bạn xin đấu tập một trận. Phần nhiều bạn thua. Mỗi trận thua, bạn nhớ thêm được một thế.'] },
+    open: (S, X, a) => { a.d.t0 = X.ctier(S); return `${lead(S, a)}Bạn khắc lên cột nhà một vạch ngang tầm mắt. Bạn tự hứa: một ngày mình sẽ đứng ở chỗ những ${tierUp(S, X, 2)} đứng. Sáng nào ra khỏi nhà, bạn cũng chạm tay vào vạch ấy một cái.`; },
+    knot: { title: 'Đường tu luyện', body: () => 'Muốn lên cao phải chọn một con đường; không ai đi được cả ba. Thầy giỏi thì tốn tiền. Đường tỉ thí thì tốn máu. Tự luyện thì tốn cả đời.',
       choices: (S, X) => [{ k: 'master', label: 'Tìm thầy cao tay', sub: `Tốn chừng ${G.coin(Math.round(med(S, X)))}; học chắc.` }, { k: 'roam', label: 'Đi khắp nơi tỉ thí', sub: 'Nổi tiếng nhanh, dễ bị thương.' }, { k: 'alone', label: 'Tự luyện một mình', sub: 'Chậm, nhưng là đường của riêng bạn.' }],
-      apply(S, X, ch) { if (ch === 'master') { X.money(-Math.round(med(S, X))); X.gain(bestSk(S), 6); return 'Bạn đi ba ngày đường tới nhà một cao thủ về hưu, quỳ ngoài cổng tới khi ông cho vào.'; }
-        if (ch === 'roam') { S.fame += 3; X.add('hl', -5); G.trajBump(S, { du: .4 }); return 'Bạn vác vũ khí lên vai, đi từ bãi tập làng này sang bãi tập làng khác.'; }
-        X.add('sm', 4); X.gain(bestSk(S), 4); return 'Bạn dựng một túp lều trên núi, mỗi ngày chỉ xuống chợ một lần.'; },
+      apply(S, X, ch) { if (ch === 'master') { X.money(-Math.round(med(S, X))); X.gain(bestSk(S), 6); return 'Bạn đi ba ngày đường tới nhà một cao thủ về hưu, quỳ ngoài cổng từ sáng tới tối. Hôm thứ hai trời mưa, bạn vẫn quỳ. Tối ấy cổng mở, ông lão ném ra một cái chổi, bảo quét sân trước đã.'; }
+        if (ch === 'roam') { S.fame += 3; X.add('hl', -5); G.trajBump(S, { du: .4 }); return 'Bạn vác vũ khí lên vai, đi từ bãi tập làng này sang bãi tập làng khác. Thắng thì được bữa cơm, thua thì được vài vết bầm. Tới đâu người ta cũng bắt đầu hỏi tên bạn.'; }
+        X.add('sm', 4); X.gain(bestSk(S), 4); return 'Bạn dựng một túp lều trên núi, mỗi ngày chỉ xuống chợ một lần mua muối gạo. Không ai sửa thế đánh cho bạn, bạn nhìn bóng mình trên vách đá mà tự sửa. Đêm trên núi lạnh và dài. Bạn quen dần với chuyện chỉ có mình mình.'; },
       auto: (S, X) => S.gold > med(S, X) * 1.5 ? 'master' : S.traits.bold > .6 ? 'roam' : 'alone' },
     trial: { base: (S, X, a) => .4 + (X.ctier(S) > (a.d.t0 || 0) ? .3 : 0),
-      run: (S, X, a, ok) => ok ? (S.fame += 3, `Ở đại hội võ của vùng, bạn vào tới trận cuối. Người ta bắt đầu nhắc tên bạn.`) : (X.add('hl', -8), `Ở đại hội võ của vùng, bạn bị loại từ vòng đầu bởi một đứa trẻ hơn bạn mười tuổi.`) },
-    climax: { title: 'Cao thủ số một', body: () => 'Cao thủ số một của vùng nhận lời thách đấu. Thắng thì cả vùng biết tên bạn; thua thì cũng cả vùng biết.',
+      run: (S, X, a, ok) => ok ? (S.fame += 3, `Ở đại hội võ của vùng, bạn vào tới trận cuối. ${a.d.path === 'master' ? 'Thầy bạn ngồi hàng ghế đầu, không nói gì, chỉ gật đầu một cái.' : a.d.path === 'roam' ? 'Mấy người từng đấu với bạn ở các làng kéo nhau tới cổ vũ, hò hét khản cả cổ.' : 'Không ai biết bạn từ đâu tới; bạn xuống núi chỉ cho mấy trận này.'} Trận cuối thắng thua ra sao, về sau ít ai nhớ. Người ta chỉ nhớ cái tên, và bắt đầu nhắc nó.`)
+        : (X.add('hl', -8), `Ở đại hội võ của vùng, bạn bị loại ngay vòng đầu bởi một đứa trẻ hơn bạn mười tuổi. Nó cúi chào lễ phép, rồi đánh bạn ngã trong ba chiêu. Đám đông cười ồ. Đêm ấy bạn ngồi một mình ở bãi tập, tới sáng vẫn chưa về.`) },
+    climax: { title: 'Cao thủ số một', body: (S, X, a) => `Cao thủ số một của vùng nhận lời thách đấu. Thắng thì cả vùng biết tên bạn; thua thì cả vùng cũng biết. ${a.d.ok ? 'Năm đại hội ấy ông ta có mặt, đã thấy bạn đánh.' : 'Ông ta chưa từng nghe tên bạn, và nói thẳng như thế.'}`,
       choices: (S, X, a) => [{ k: 'duel', label: 'Ra đấu', sub: `Chừng ${Math.round(odds(S, X, .35 + (a.d.ok ? .15 : 0) + pb(a)) * 100)}% thắng.` },
         { k: 'teach', label: 'Thôi tranh, đem sở học dạy lại', sub: 'Không ai thua.' }, { k: 'secret', label: 'Luyện cấm pháp để thắng chắc', sub: 'Thắng, nhưng khí huyết có thể loạn.' }],
       apply(S, X, ch, a) {
-        if (ch === 'duel') { if (X.chance(odds(S, X, .35 + (a.d.ok ? .15 : 0) + pb(a)))) { S.fame += 8; X.gain(bestSk(S), 8); return { t: 'Trận đấu kéo dài tới khi mặt trời lặn. Người ngã xuống không phải bạn.', o: 'top' }; }
-          X.add('hl', -15); return prog(a) >= 6 ? { t: 'Bạn thua sau một trận dài. Cao thủ đỡ bạn dậy, cúi đầu trước bạn trước cả đám đông.', o: 'honor' } : { t: 'Bạn thua sau ba hiệp. Tay cầm vũ khí của bạn không bao giờ thẳng lại được nữa.', o: 'broken' }; }
-        if (ch === 'teach') { X.add('so', 6); return { t: 'Bạn gác vũ khí, mở một bãi tập cho bọn trẻ trong làng.', o: 'honor' }; }
-        X.cond('qi'); S.fame += 6; return { t: 'Bạn luyện cấm pháp ba tháng, rồi thắng trận đấu trong ba chiêu. Đêm nào khí huyết cũng sôi lên trong ngực.', o: 'top' };
+        if (ch === 'duel') { if (X.chance(odds(S, X, .35 + (a.d.ok ? .15 : 0) + pb(a)))) { S.fame += 8; X.gain(bestSk(S), 8); return { t: 'Trận đấu kéo dài từ trưa tới khi mặt trời lặn, quanh sân không ai chịu bỏ về. Tới hiệp cuối, hai người đều thở như kéo bễ. Người ngã xuống không phải bạn. Bạn đứng đó, vũ khí trĩu xuống, mãi mới nghe ra tiếng hò reo.', o: 'top' }; }
+          X.add('hl', -15); return prog(a) >= 6 ? { t: 'Bạn thua sau một trận dài, thua từng chút một, không chịu lùi. Cao thủ đỡ bạn dậy. Rồi trước cả đám đông, ông cúi đầu chào bạn, thật thấp.', o: 'honor' } : { t: 'Bạn thua sau ba hiệp. Đòn cuối đánh trúng cổ tay, nghe một tiếng rắc khô. Thầy thuốc nắn mấy tuần, mà tay cầm vũ khí của bạn không bao giờ thẳng lại được nữa.', o: 'broken' }; }
+        if (ch === 'teach') { X.add('so', 6); return { t: 'Bạn gác vũ khí, mở một bãi tập cho bọn trẻ trong làng. Sáng sáng chúng xếp hàng, đứa cao đứa thấp, hét theo từng thế bạn hô. Trận đấu với cao thủ số một không bao giờ diễn ra. Bạn thấy không cần nữa.', o: 'honor' }; }
+        X.cond('qi'); S.fame += 6; return { t: 'Bạn luyện cấm pháp ba tháng trong hang, không cho ai lại gần. Hôm đấu, bạn thắng trong ba chiêu, nhanh tới mức đám đông chưa kịp hò. Nhưng từ đó đêm nào khí huyết cũng sôi lên trong ngực, như có con thú bị nhốt trong ấy.', o: 'top' };
       },
       auto: (S, X) => S.traits.bold > .5 ? 'duel' : S.traits.social > .55 ? 'teach' : 'duel' },
-    after: { top: () => 'Tên bạn được khắc lên cột đá ở bãi tập lớn. Trẻ con trong vùng tập theo thế đánh của bạn.', honor: () => 'Người ta gọi bạn là thầy, dù bạn chưa nhận ai làm học trò.',
-      broken: () => 'Bạn treo vũ khí lên vách. Có những đêm bạn vẫn lấy xuống, lau, rồi treo lại.' }
+    after: { top: () => 'Tên bạn được khắc lên cột đá ở bãi tập lớn, ngay dưới tên những người đời trước. Trẻ con trong vùng tập theo thế đánh của bạn, sai cả những chỗ bạn hay đánh sai. Về nhà, bạn đứng trước cột, nhìn vạch khắc năm xưa. Nó thấp hơn bạn tưởng.',
+      honor: () => 'Người ta gọi bạn là thầy, dù bạn chưa nhận ai làm học trò. Đi đâu cũng có người xin chỉ cho một thế. Bạn chỉ, rồi dặn: tập đi, tập tới khi tay rớm máu thì tập tiếp.',
+      broken: () => 'Bạn treo vũ khí lên vách. Có những đêm bạn vẫn lấy xuống, lau thật kỹ, rồi treo lại chỗ cũ. Ngoài bãi tập bọn trẻ vẫn hò hét. Bạn đóng cửa sổ.' }
   });
 
   // ── Tác phẩm đời người ──
@@ -300,29 +314,31 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Tác phẩm đời người', pitch: 'Làm ra một tác phẩm mang tên mình.', axes: { nghe: 1, tri: .5 }, themes: ['learn', 'teach'], aim: 'scholar',
     quest: () => 'Làm ra một tác phẩm mang tên mình', good: ['work', 'school'], marks: { work: 'danh_tho', school: 'chan_truyen', fail: 'cay_dang' },
     sum: { work: () => 'làm ra một tác phẩm người ta còn nhắc', school: () => 'truyền trọn tay nghề cho lớp sau', fail: () => 'dồn nửa đời vào một tác phẩm không thành' },
-    follow: ['Đêm ấy bạn lại ngồi bên bàn thợ tới khuya.', 'Đôi tay bạn khéo thêm một chút.', 'Bạn nghĩ tới tác phẩm của mình cả lúc ăn.'],
-    beat: { any: ['Bạn làm hỏng cái thứ mười, rồi làm cái thứ mười một.', 'Bạn ngồi cả buổi chỉ để nhìn thợ cả làm một mối nối.', 'Bạn thức tới khuya sửa một chi tiết không ai nhìn thấy.'] },
-    open: () => 'Bạn nhìn món đồ đẹp nhất trong làng và nghĩ: mình làm được đẹp hơn. Từ hôm ấy bạn không để tay rảnh.',
-    knot: { title: 'Lối làm nghề', body: () => 'Mỗi thợ lớn đều phải chọn: theo lối thầy, tìm lối mới, hay đi tìm thứ vật liệu chưa ai dùng.',
+    follow: ['Đêm ấy bạn lại ngồi bên bàn thợ tới khuya, đèn tắt lúc nào không hay.', 'Đôi tay bạn khéo thêm một chút, chỉ mình bạn biết.', 'Cả lúc ăn bạn cũng nghĩ tới tác phẩm của mình, đũa dừng giữa chừng.'],
+    beat: { any: ['Bạn làm hỏng cái thứ mười, ném vào góc, rồi ngồi làm cái thứ mười một. Góc xưởng chất đống đồ hỏng, mỗi năm cao thêm một chút.', 'Bạn ngồi cả buổi chỉ để nhìn thợ cả làm một mối nối. Ông làm nhanh như không cần nghĩ. Bạn biết mình còn xa.', 'Bạn thức tới khuya sửa một chi tiết ở mặt trong, chỗ không ai nhìn thấy. Bạn biết nó ở đó. Thế là đủ.'] },
+    open: (S, X, a) => `${lead(S, a)}Bạn đứng rất lâu trước món đồ đẹp nhất làng, ngắm từng đường nét. Rồi bạn nghĩ: mình làm được đẹp hơn. Ý nghĩ ấy làm bạn sợ, mà cũng làm bạn vui. Từ hôm ấy tay bạn không chịu để rảnh.`,
+    knot: { title: 'Lối làm nghề', body: () => 'Thợ lớn nào cũng tới lúc phải chọn: theo lối thầy, tìm lối mới, hay đi tìm thứ vật liệu chưa ai dùng. Lối nào cũng có người đi rồi bỏ dở. Bạn cầm cái đục trong tay, nghĩ suốt một đêm.',
       choices: () => [{ k: 'old', label: 'Theo lối thầy', sub: 'Chắc tay, ít bất ngờ.' }, { k: 'new', label: 'Tìm lối mới', sub: 'Có thể hỏng nhiều.' }, { k: 'rare', label: 'Đi tìm vật liệu hiếm', sub: 'Đường xa, có quái.' }],
-      apply(S, X, ch) { if (ch === 'old') { X.gain('Engineering', 5); return 'Bạn chép lại từng bản vẽ của thầy, làm theo không sai một nét.'; }
-        if (ch === 'new') { X.add('sm', 5); return 'Bạn đốt hết bản vẽ cũ, bắt đầu từ một tờ giấy trắng.'; }
-        X.add('hl', -6); G.trajBump(S, { du: .3 }); return 'Bạn vào núi tìm loại đá người ta chỉ còn nhắc trong chuyện kể.'; },
+      apply(S, X, ch) { if (ch === 'old') { X.gain('Engineering', 5); return 'Bạn chép lại từng bản vẽ của thầy, làm theo không sai một nét. Có hôm thầy đứng sau lưng xem, lâu thật lâu, rồi đi mà không nói gì. Với thầy, thế đã là khen.'; }
+        if (ch === 'new') { X.add('sm', 5); return 'Bạn đốt hết bản vẽ cũ, ngồi trước một tờ giấy trắng. Tờ giấy để trắng cả tuần. Rồi một đêm bạn vẽ một nét, xóa đi, vẽ lại, tới sáng đã kín cả mặt giấy.'; }
+        X.add('hl', -6); G.trajBump(S, { du: .3 }); return 'Bạn vào núi tìm loại đá người ta chỉ còn nhắc trong chuyện kể. Dốc đá trơn, đêm có tiếng thú gầm. Lần đầu về tay trắng, lần thứ hai cũng thế, nhưng lần nào bạn cũng biết thêm một khe núi.'; },
       auto: S => S.traits.studious > .6 ? 'new' : S.traits.bold > .6 ? 'rare' : 'old' },
     trial: { base: S => .45 + Math.min(.25, (S.mastery.Engineering || 0) / 200),
-      run: (S, X, a, ok) => ok ? (X.gain('Engineering', 3), 'Mẻ thử đầu tiên ra lò. Thợ cả cầm lên xem, rồi lặng lẽ đặt nó vào chỗ trưng bày.') : 'Mẻ thử đầu tiên nứt làm đôi trước mặt cả xưởng.' },
-    climax: { title: 'Tác phẩm', body: () => 'Bạn đã sẵn sàng làm tác phẩm của đời mình. Nhưng tiền, thời gian, và người học nghề đều đang chờ.',
+      run: (S, X, a, ok) => ok ? (X.gain('Engineering', 3), `Mẻ thử đầu tiên ra lò còn nóng hổi. ${a.d.path === 'new' ? 'Chưa ai trong xưởng thấy kiểu này bao giờ. ' : a.d.path === 'rare' ? 'Thứ đá mang từ núi về ánh lên như có nước bên trong. ' : ''}Thợ cả cầm lên xem, xoay đi xoay lại dưới nắng. Rồi ông lặng lẽ đặt nó vào chỗ trưng bày, cạnh đồ của chính ông. Cả buổi chiều bạn không dám đi ngang chỗ ấy, sợ nhìn lại sẽ thấy nó xấu đi.`)
+        : 'Mẻ thử đầu tiên vừa ra lò đã nứt làm đôi, ngay trước mặt cả xưởng. Tiếng nứt nhỏ thôi mà ai cũng nghe. Không ai cười, thế còn khó chịu hơn. Bạn nhặt hai mảnh vỡ, cất vào hộc bàn.' },
+    climax: { title: 'Tác phẩm', body: () => 'Bạn đã sẵn sàng làm tác phẩm của đời mình. Nhưng tiền thì không đủ, thời gian không chờ ai, mấy đứa học nghề vẫn đứng ngoài cửa xưởng chờ được dạy. Một đời người có lẽ chỉ đủ cho một trong ba thứ.',
       choices: (S, X, a) => [{ k: 'masterpiece', label: 'Dồn hết vào một tác phẩm', sub: `Chừng ${Math.round(G.clamp(.4 + (a.d.ok ? .15 : 0) + pb(a), .1, .9) * 100)}% thành.` },
         { k: 'patron', label: 'Làm theo đơn của nhà quyền thế', sub: 'Chắc tiền, tác phẩm mang tên người đặt.' }, { k: 'teach', label: 'Dạy lại cho lớp sau', sub: 'Tác phẩm là những người thợ bạn để lại.' }],
       apply(S, X, ch, a) {
-        if (ch === 'masterpiece') { if (X.chance(G.clamp(.4 + (a.d.ok ? .15 : 0) + pb(a), .1, .9))) { S.fame += 8; S.gear = Math.min(10, S.gear + 2); return { t: 'Bạn khóa cửa xưởng một mùa. Ngày mở cửa, người ta xếp hàng tới đầu ngõ để xem.', o: 'work' }; }
-          X.add('h', -10); return { t: 'Bạn khóa cửa xưởng một mùa. Ngày mở cửa, bạn đập vỡ nó trước khi ai kịp thấy.', o: 'fail' }; }
-        if (ch === 'patron') { X.money(Math.round(med(S, X) * 3)); S.fame += 3; return { t: 'Tác phẩm được đặt ở sảnh chính nhà quyền thế. Dưới chân nó khắc tên người đặt, nhỏ hơn bên cạnh là tên bạn.', o: 'work' }; }
-        X.add('so', 6); return { t: 'Bạn nhận ba người học việc, dạy họ mọi thứ bạn biết, không giấu một mẹo nào.', o: 'school' };
+        if (ch === 'masterpiece') { if (X.chance(G.clamp(.4 + (a.d.ok ? .15 : 0) + pb(a), .1, .9))) { S.fame += 8; S.gear = Math.min(10, S.gear + 2); return { t: 'Bạn khóa cửa xưởng một mùa, ăn ngủ cạnh bàn thợ. Ngày mở cửa, người ta xếp hàng tới đầu ngõ để xem. Có ông lão đứng trước tác phẩm rất lâu, rồi đưa tay áo lên lau mắt. Bạn đứng trong góc, tay vẫn còn vết chai mới.', o: 'work' }; }
+          X.add('h', -10); return { t: `Bạn khóa cửa xưởng một mùa, ăn ngủ cạnh bàn thợ. Ngày mở cửa, bạn nhìn nó lần cuối, rồi đập vỡ trước khi ai kịp thấy. Người ngoài chỉ nghe một tiếng choang. Bạn quét mảnh vỡ, cất vào hộc bàn${a.d.ok ? '' : ', cạnh hai mảnh vỡ năm nào'}.`, o: 'fail' }; }
+        if (ch === 'patron') { X.money(Math.round(med(S, X) * 3)); S.fame += 3; return { t: 'Tác phẩm được đặt giữa sảnh chính nhà quyền thế. Dưới chân nó khắc tên người đặt, chữ to, mạ vàng. Tên bạn khắc nhỏ hơn, bên cạnh, phải cúi xuống mới đọc được. Tiền công thì đủ cho cả nhà sống mấy năm.', o: 'work' }; }
+        X.add('so', 6); return { t: 'Bạn nhận ba người học việc. Mọi thứ bạn biết, bạn dạy hết, không giấu một mẹo nào. Tối tối xưởng sáng đèn, tiếng đục gõ đều. Tác phẩm của đời bạn, có lẽ, là ba người này.', o: 'school' };
       },
       auto: S => S.traits.social > .6 ? 'teach' : S.traits.bold > .5 ? 'masterpiece' : 'patron' },
-    after: { work: () => 'Mấy chục năm sau, người ta vẫn chỉ vào tác phẩm ấy và nói: của thợ này đấy.', school: () => 'Ba người học việc của bạn giờ đều có xưởng riêng. Đồ họ làm có một mối nối giống hệt của bạn.',
-      fail: () => 'Bạn vẫn làm nghề, nhưng không bao giờ nhắc tới mùa khóa cửa ấy.' }
+    after: { work: () => 'Mấy chục năm sau, người ta vẫn chỉ vào tác phẩm ấy và nói: của thợ này đấy. Người nói chưa chắc đã biết mặt bạn. Bạn đi ngang, nghe, không nhận. Về nhà, bạn ngồi bên bàn thợ thêm một lúc rồi mới đi ngủ.',
+      school: () => 'Ba người học việc năm nào giờ đều có xưởng riêng. Đồ họ làm có một mối nối giống hệt của bạn, nhìn là biết. Tết nào ba người cũng về, ngồi quanh bàn thợ cũ của bạn mà uống rượu.',
+      fail: () => 'Bạn vẫn làm nghề, làm đều tay, đồ bán được. Nhưng không bao giờ bạn nhắc tới mùa khóa cửa ấy. Mấy mảnh vỡ trong hộc bàn, bạn chưa vứt.' }
   });
 
   // ── Người đứng đầu ──
@@ -330,29 +346,31 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Người đứng đầu', pitch: 'Đứng ra gánh việc chung cho làng, cho tộc.', axes: { quyen: 1, gia: .5 }, themes: ['tax', 'war'], aim: 'power',
     quest: () => 'Đứng ra gánh việc chung', good: ['chosen', 'step'], marks: { chosen: 'nguoi_dung_dau', rule: 'ke_tiem_quyen', step: 'duoc_tin' },
     sum: { chosen: () => 'được dân bầu làm người đứng đầu', rule: () => 'giành lấy ghế đứng đầu bằng sức', step: () => 'nhường ghế cho người trẻ khi đang được tin' },
-    follow: ['Người ta bắt đầu hỏi ý bạn trước khi làm.', 'Bạn ghi nhớ ai đã giúp, ai đã đứng ngoài.', 'Chuyện chung của làng giờ cũng là chuyện của bạn.'],
-    beat: { any: ['Bạn đứng ra phân xử một vụ tranh nước giữa hai nhà.', 'Bạn đi từng nhà hỏi chuyện mùa màng.', 'Bạn ngồi nghe các bô lão bàn việc tới khuya.'] },
-    open: () => 'Năm ấy làng gặp chuyện mà không ai đứng ra. Bạn đứng ra. Từ đó người ta nhìn bạn khác.',
-    knot: { title: 'Cách gây dựng', body: () => 'Muốn đứng đầu phải có người theo. Có ba cách để người ta theo mình.',
+    follow: ['Người ta bắt đầu hỏi ý bạn trước khi làm. Bạn chưa quen, nhưng không từ chối.', 'Ai giúp, ai đứng ngoài, bạn đều nhớ cả.', 'Chuyện chung của làng giờ cũng thành chuyện của bạn, đêm nằm vẫn nghĩ.'],
+    beat: { any: ['Hai nhà tranh nhau con mương, cãi tới mức vác cuốc ra đầu ngõ. Bạn đứng giữa, nghe cả hai nói hết, rồi chia nước theo ngày chẵn ngày lẻ. Không ai vui hẳn, nhưng cũng không ai về tay trắng.', 'Bạn đi từng nhà hỏi chuyện mùa màng, ngồi xuống chõng tre uống bát nước chè. Nhà thì kể chuyện con ốm, nhà kể chuyện nợ. Bạn nhớ hết.', 'Bạn ngồi nghe các bô lão bàn việc tới khuya, ít khi mở miệng. Lúc về, cụ già nhất làng vỗ vai bạn một cái.'] },
+    open: (S, X, a) => `${lead(S, a)}Năm ấy làng gặp chuyện mà không ai đứng ra, người nọ nhìn người kia. Bạn đứng ra. Chính bạn cũng không biết mình lấy can đảm từ đâu. Từ hôm đó, người ta nhìn bạn khác đi.`,
+    knot: { title: 'Cách gây dựng', body: () => 'Muốn đứng đầu phải có người theo. Có người theo vì thương, có người theo vì tiền, có người theo vì sợ. Bạn muốn người ta theo mình vì lẽ nào?',
       choices: () => [{ k: 'serve', label: 'Lo việc nhỏ cho làng', sub: 'Chậm mà chắc.' }, { k: 'ally', label: 'Kết thân với nhà giàu', sub: 'Có tiền, mất lòng dân nghèo.' }, { k: 'fear', label: 'Dựa vào sức, dẹp kẻ cản', sub: 'Nhanh, để lại thù.' }],
-      apply(S, X, ch) { if (ch === 'serve') { X.add('so', 5); return 'Bạn sửa đường, đắp đê, đi nhờ từng nhà góp một ngày công.'; }
-        if (ch === 'ally') { X.money(Math.round(med(S, X) * .8)); X.add('so', -2); return 'Bạn ngồi chung mâm với các nhà giàu nhất vùng. Họ hứa sẽ đứng sau bạn.'; }
-        G.trajBump(S, { am: .3, vo: .3 }); X.add('so', -3); return 'Bạn cho đám thanh niên khỏe nhất làng theo mình. Ai cản đường thì gặp họ.'; },
+      apply(S, X, ch) { if (ch === 'serve') { X.add('so', 5); return 'Bạn sửa đường, đắp đê, đi nhờ từng nhà góp một ngày công. Nhà nào không có người thì bạn làm thay phần. Hết mùa, con đê mới chạy dài ra tới bãi sông, và người ta bắt đầu hỏi bạn việc tiếp theo là gì.'; }
+        if (ch === 'ally') { X.money(Math.round(med(S, X) * .8)); X.add('so', -2); return 'Bạn ngồi chung mâm với các nhà giàu nhất vùng, rượu ngon, thịt béo. Họ vỗ vai bạn, hứa sẽ đứng sau. Lúc về đi ngang xóm nghèo, có người nhìn bạn rồi quay mặt đi.'; }
+        G.trajBump(S, { am: .3, vo: .3 }); X.add('so', -3); return 'Bạn gom đám thanh niên khỏe nhất làng theo mình, cho ăn, cho tiền rượu. Ai cản đường thì gặp họ ở ngõ tối. Chuyện ấy chỉ cần xảy ra hai lần, cả làng đã hiểu.'; },
       auto: S => S.traits.social > .5 ? 'serve' : S.traits.bold > .65 ? 'fear' : 'ally' },
     trial: { base: (S, X, a) => .45 + (a.d.path === 'serve' ? .15 : 0) + G.clamp((S.so - 50) / 200, -.1, .15),
-      run: (S, X, a, ok) => ok ? (X.add('so', 6), 'Năm đói, bạn mở kho chung, chia lúa theo đầu người. Không nhà nào chết đói.') : (X.add('so', -6), 'Năm đói, kho chung bị phá trong một đêm. Người ta hỏi bạn ở đâu lúc ấy.') },
-    climax: { title: 'Ghế đứng đầu', body: () => 'Người đứng đầu cũ đã già. Cả làng đang chờ xem ai thay.',
+      run: (S, X, a, ok) => ok ? (X.add('so', 6), 'Năm ấy đói, cả vùng ăn cháo rau. Bạn mở kho chung, chia lúa theo đầu người, nhà nào cũng như nhà nào. Ngày nào bạn cũng đứng ở cửa kho tới tối. Qua mùa giáp hạt, không nhà nào chết đói.')
+        : (X.add('so', -6), `Năm ấy đói. Kho chung bị phá trong một đêm, lúa mất gần sạch. Sáng ra người làng đứng kín sân đình, hỏi bạn ở đâu lúc ấy.${a.d.path === 'ally' ? ' Có người nói to: chắc đang ăn cỗ ở nhà giàu.' : ''} Bạn không trả lời được.`) },
+    climax: { title: 'Ghế đứng đầu', body: () => 'Người đứng đầu cũ đã già, đi phải chống gậy. Cả làng đang chờ xem ai thay. Lúc bạn đi qua chợ, có người dừng tay nhìn theo.',
       choices: (S, X, a) => [{ k: 'ballot', label: 'Để dân bầu', sub: `Chừng ${Math.round(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a) + (S.so - 50) / 150, .1, .9) * 100)}% được chọn.` },
         { k: 'take', label: 'Giành lấy', sub: 'Chắc được ghế. Người ta sẽ nhớ cách bạn ngồi lên.' }, { k: 'step', label: 'Nhường cho người trẻ', sub: 'Ở lại làm người được hỏi ý.' }],
       apply(S, X, ch, a) {
-        if (ch === 'ballot') { if (X.chance(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a) + (S.so - 50) / 150, .1, .9))) { S.fame += 6; return { t: 'Người ta bỏ phiếu bằng hạt đậu. Hũ của bạn đầy tràn.', o: 'chosen' }; }
-          X.add('h', -6); return { t: 'Hũ đậu của bạn vơi hơn hũ bên kia một nắm. Bạn bắt tay người thắng trước cả làng.', o: 'step' }; }
-        if (ch === 'take') { S.fame += 4; return { t: 'Sáng hôm bầu, đám thanh niên của bạn đứng kín cửa đình. Không ai dám bỏ hạt đậu nào khác.', o: 'rule' }; }
-        X.add('so', 6); return { t: 'Bạn đứng lên giữa đình, chỉ vào một người trẻ và nói: người này làm tốt hơn tôi.', o: 'step' };
+        if (ch === 'ballot') { if (X.chance(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a) + (S.so - 50) / 150, .1, .9))) { S.fame += 6; return { t: 'Người ta bỏ phiếu bằng hạt đậu, mỗi người một hạt, thả vào hũ của người mình chọn. Hũ của bạn đầy tràn, hạt rơi cả ra chiếu. Bà cụ bán nước cuối chợ cũng chống gậy tới bỏ một hạt. Bạn nhặt hạt rơi ấy, giữ trong túi áo nhiều năm.', o: 'chosen' }; }
+          X.add('h', -6); return { t: 'Hũ đậu của bạn vơi hơn hũ bên kia một nắm. Chỉ một nắm. Bạn đứng dậy bắt tay người thắng trước cả làng, giọng không run. Tối về, bạn ngồi nhớ lại những gương mặt đã không chọn mình, rồi thôi.', o: 'step' }; }
+        if (ch === 'take') { S.fame += 4; return { t: 'Sáng hôm bầu, đám thanh niên của bạn đứng kín cửa đình, tay khoanh trước ngực. Người làng đi vào, cúi đầu, bỏ hạt đậu vào đúng một hũ. Không ai nói gì. Bạn ngồi lên ghế, nghe nó kêu cót két, như cũng không bằng lòng.', o: 'rule' }; }
+        X.add('so', 6); return { t: 'Bạn đứng lên giữa đình, chỉ vào một người trẻ và nói: người này làm tốt hơn tôi. Cả đình im lặng một lúc, rồi có tiếng vỗ tay. Người trẻ đỏ mặt. Bạn ngồi xuống, thấy vai mình nhẹ hẳn.', o: 'step' };
       },
       auto: S => S.traits.bold > .7 && S.traits.social < .35 ? 'take' : S.traits.social > .7 ? 'step' : 'ballot' },
-    after: { chosen: () => 'Bạn ngồi ghế đứng đầu nhiều năm. Có những việc làm sai, nhưng không ai nói bạn bỏ làng.', rule: () => 'Bạn giữ ghế tới khi già. Người ta nghe lời bạn, nhưng không ai mời bạn ăn cỗ.',
-      step: () => 'Người trẻ làm tốt. Năm nào có chuyện lớn, họ vẫn tới hỏi bạn trước.' }
+    after: { chosen: () => 'Bạn ngồi ghế đứng đầu nhiều năm. Có những việc làm sai, có những mùa người ta trách. Nhưng không ai nói bạn bỏ làng. Lúc tóc đã bạc, bạn vẫn đi từng nhà hỏi chuyện mùa màng như hồi còn trẻ.',
+      rule: () => 'Bạn giữ ghế tới khi già. Người ta nghe lời bạn, làm đúng từng chữ. Nhưng không ai mời bạn ăn cỗ. Đám thanh niên năm nào giờ cũng chỉ còn một hai người lui tới.',
+      step: () => 'Người trẻ làm tốt, có phần tốt hơn bạn nghĩ. Năm nào có chuyện lớn, họ vẫn tới hỏi bạn trước, ngồi ở hiên nhà, rót nước cho bạn. Bạn nói ít, nghe nhiều.' }
   });
 
   // ── Con đường đức tin ──
@@ -360,28 +378,29 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Con đường đức tin', pitch: 'Đi tới cùng con đường của đạo mình theo.', axes: { dao: 1 }, themes: ['faith'], aim: 'faith', need: S => !!S.faith,
     quest: a => `Đi tới cùng ${a.d.fv || 'đạo của mình'}`, good: ['saint', 'teacher'], marks: { saint: 'nguoi_moc_dao', teacher: 'nguoi_moc_dao', left: 'bo_dao' },
     sum: { saint: d => `đứng ra che chở tín đồ ${d.fv || ''} giữa lúc nguy`.trim(), teacher: d => `đi giảng ${d.fv || 'đạo'} tới những nơi chưa ai nghe`, left: d => `bỏ ${d.fv || 'đạo cũ'} sau nửa đời tin theo` },
-    follow: ['Bạn đọc thêm một đoạn kinh trước khi ngủ.', 'Bạn thấy đạo của mình trong cả chuyện nhỏ nhất.', 'Bạn cầu nguyện cho những người gặp hôm ấy.'],
-    beat: { any: ['Bạn quỳ trong đền tới khi chân tê dại.', 'Bạn chép kinh dưới ánh đèn dầu.', 'Bạn đi thăm người ốm trong làng, mang theo nước thánh.'] },
-    open: (S, X, a) => { a.d.fv = S.faith && J.faiths[S.faith] ? J.faiths[S.faith].nameVi : 'đạo của mình'; return `Một đêm bạn tỉnh dậy, lòng yên như mặt hồ. Bạn biết từ nay đời mình sẽ đi theo ${a.d.fv}.`; },
-    knot: { title: 'Cách hành đạo', body: (S, X, a) => `${a.d.fv} có nhiều đường để đi. Bạn chọn đường nào?`,
+    follow: ['Tối ấy bạn đọc thêm một đoạn kinh rồi mới đi ngủ.', 'Bạn thấy đạo của mình cả trong chuyện nhỏ nhất.', 'Trước khi ngủ, bạn cầu cho những người đã gặp hôm ấy, từng người một.'],
+    beat: { any: ['Bạn quỳ trong đền tới khi chân tê dại, đứng dậy phải vịn cột. Ngoài sân, chim sẻ nhặt mấy hạt gạo người ta cúng.', 'Bạn chép kinh dưới ánh đèn dầu, chữ nhỏ, đều, không sai một nét. Chép xong một quyển, bạn đem tặng nhà nghèo nhất xóm.', 'Bạn đi thăm người ốm trong làng, mang theo bình nước thánh và mấy củ gừng. Có người khỏi, có người không. Bạn cầu cho cả hai.'] },
+    open: (S, X, a) => { a.d.fv = S.faith && J.faiths[S.faith] ? J.faiths[S.faith].nameVi : 'đạo của mình'; return `${lead(S, a)}Một đêm bạn tỉnh dậy giữa canh ba, lòng yên như mặt hồ không gió. Không có tiếng nói nào, cũng không có ánh sáng nào. Chỉ là bạn biết: từ nay đời mình sẽ đi theo ${a.d.fv}.`; },
+    knot: { title: 'Cách hành đạo', body: (S, X, a) => `Theo ${a.d.fv}, có nhiều đường để đi. Người thì đi xa tìm đền tổ, người ở lại phục dịch, người đọc cả kinh của đạo khác. Bạn chọn đường nào?`,
       choices: () => [{ k: 'pilgrim', label: 'Đi hành hương', sub: 'Tới đền tổ, đường xa.' }, { k: 'temple', label: 'Vào đền phục dịch', sub: 'Đời giản đơn, gần người tu.' }, { k: 'seek', label: 'Tự tìm lời giải', sub: 'Đọc cả kinh của đạo khác.' }],
-      apply(S, X, ch) { if (ch === 'pilgrim') { S.devotion = Math.min(100, S.devotion + 10); G.trajBump(S, { du: .3 }); return 'Bạn đi bộ ba tháng tới đền tổ, ngủ ngoài hiên cùng trăm người lạ.'; }
-        if (ch === 'temple') { S.devotion = Math.min(100, S.devotion + 8); X.add('so', 3); return 'Bạn quét sân đền mỗi sáng, thắp đèn mỗi tối.'; }
-        X.add('sm', 6); return 'Bạn đi khắp các đền trong vùng, nghe mọi đạo giảng.'; },
+      apply(S, X, ch) { if (ch === 'pilgrim') { S.devotion = Math.min(100, S.devotion + 10); G.trajBump(S, { du: .3 }); return 'Bạn đi bộ ba tháng tới đền tổ, ngủ ngoài hiên cùng trăm người lạ. Đôi dép rách ở tháng thứ hai, bạn đi chân đất. Tới nơi, đứng trước bậc đá mòn vẹt vì bao nhiêu bàn chân, bạn quỳ xuống, không nói được câu nào.'; }
+        if (ch === 'temple') { S.devotion = Math.min(100, S.devotion + 8); X.add('so', 3); return 'Bạn vào đền phục dịch. Sáng quét sân, tối thắp đèn, giữa trưa ngồi nghe các thầy giảng. Đời giản đơn tới mức có lúc bạn quên hôm nay là ngày gì. Bạn chưa bao giờ ngủ ngon như thế.'; }
+        X.add('sm', 6); return 'Bạn đi khắp các đền trong vùng, nghe mọi đạo giảng, đọc cả những cuốn kinh người ta bảo đừng đọc. Có thầy đuổi bạn ra. Có thầy giữ bạn lại ăn cơm. Câu hỏi trong lòng bạn không nhỏ đi, chỉ rõ hơn.'; },
       auto: S => S.traits.bold > .6 ? 'pilgrim' : S.traits.studious > .6 ? 'seek' : 'temple' },
     trial: { base: S => .3 + S.devotion / 200,
-      run: (S, X, a, ok) => ok ? (S.devotion = Math.min(100, S.devotion + 8), 'Năm dịch, bạn ở lại chăm người bệnh khi những người khác bỏ đi. Bạn không nhiễm bệnh; người ta bảo đó là phép của đạo.')
-        : (S.devotion = Math.max(0, S.devotion - 10), 'Năm dịch, bạn cầu nguyện ngày đêm mà người bệnh vẫn chết. Lần đầu tiên bạn nghi ngờ.') },
-    climax: { title: 'Thử thách của đức tin', body: (S, X, a) => `Kẻ có quyền trong vùng ra lệnh cấm ${a.d.fv}. Tín đồ đang chờ xem người như bạn làm gì.`,
+      run: (S, X, a, ok) => ok ? (S.devotion = Math.min(100, S.devotion + 8), 'Năm ấy dịch về làng. Người khỏe bỏ đi, nhà nhà đóng cửa. Bạn ở lại chăm người bệnh, đút cháo, lau mình, đêm ngủ cạnh giường bệnh. Bạn không nhiễm bệnh. Người ta bảo đó là phép của đạo; bạn chỉ biết mình đã không bỏ đi.')
+        : (S.devotion = Math.max(0, S.devotion - 10), 'Năm ấy dịch về làng. Bạn cầu nguyện ngày đêm, quỳ tới sờn cả gối quần, mà người bệnh vẫn chết, từng người một. Đêm chôn người cuối cùng, bạn ngồi trước bàn thờ rất lâu. Lần đầu tiên, bạn nghi ngờ.') },
+    climax: { title: 'Thử thách của đức tin', body: (S, X, a) => `Kẻ có quyền trong vùng ra lệnh cấm ${a.d.fv}. Lính đi từng nhà, gỡ biểu tượng của đạo trên vách xuống. Tín đồ đang chờ xem người như bạn làm gì.`,
       choices: () => [{ k: 'stand', label: 'Đứng ra che chở tín đồ', sub: 'Có thể bị đánh, bị giam.' }, { k: 'preach', label: 'Đi giảng ở nơi khác', sub: 'Mang đạo tới chỗ chưa ai nghe.' }, { k: 'leave', label: 'Bỏ đạo', sub: 'Giữ mạng, mất chỗ dựa.' }],
       apply(S, X, ch, a) {
-        if (ch === 'stand') { X.add('hl', -12); S.devotion = Math.min(100, S.devotion + 15); S.fame += 5; return { t: 'Bạn đứng chắn trước cửa đền. Lính đánh bạn gãy hai xương sườn, rồi bỏ đi trước đám đông đang hát kinh.', o: 'saint' }; }
-        if (ch === 'preach') { S.devotion = Math.min(100, S.devotion + 8); G.trajBump(S, { du: .3 }); return { t: 'Bạn khoác áo đi đường, mang theo cuốn kinh và một túi bánh khô.', o: 'teacher' }; }
-        S.devotion = 0; X.add('h', -8); return { t: 'Bạn cởi bỏ biểu tượng của đạo, đặt nó lên bậc đền rồi đi.', o: 'left' };
+        if (ch === 'stand') { X.add('hl', -12); S.devotion = Math.min(100, S.devotion + 15); S.fame += 5; return { t: 'Bạn đứng chắn trước cửa đền, hai tay dang ra. Lính đánh bạn gãy hai xương sườn, bạn ngã xuống rồi lại đứng lên. Sau lưng bạn, đám đông bắt đầu hát kinh, mỗi lúc một to. Cuối cùng lính bỏ đi.', o: 'saint' }; }
+        if (ch === 'preach') { S.devotion = Math.min(100, S.devotion + 8); G.trajBump(S, { du: .3 }); return { t: 'Bạn khoác áo đi đường, mang theo cuốn kinh và một túi bánh khô. Lúc ra khỏi làng trời còn tối. Mấy tín đồ ra tiễn, dúi vào tay bạn nắm gạo. Bạn đi về phía những nơi chưa ai nghe tới tên đạo mình.', o: 'teacher' }; }
+        S.devotion = 0; X.add('h', -8); return { t: 'Bạn cởi bỏ biểu tượng của đạo, đặt nó lên bậc đền rồi đi, không ngoái lại. Đi được một quãng, bạn mới thấy tay mình run. Đêm ấy là đêm đầu tiên trong nhiều năm bạn không cầu nguyện trước khi ngủ.', o: 'left' };
       },
       auto: S => S.traits.pious > .6 && S.traits.bold > .4 ? 'stand' : S.traits.pious < .3 ? 'leave' : 'preach' },
-    after: { saint: (S, X, a) => `Lệnh cấm được bỏ sau hai mùa. Ở đền bây giờ có một chỗ ngồi người ta để dành cho bạn.`, teacher: (S, X, a) => `Ở ba làng xa, giờ có người theo ${a.d.fv} vì đã nghe bạn giảng.`,
-      left: () => 'Bạn sống tiếp như mọi người. Có những sáng bạn vẫn quay về phía đền, rồi sực nhớ ra.' }
+    after: { saint: (S, X, a) => `Lệnh cấm được bỏ sau hai mùa. Ở đền bây giờ có một chỗ ngồi người ta để dành cho bạn, không ai ngồi vào. Mỗi lần trời trở, chỗ xương sườn gãy năm xưa lại nhói lên. Bạn coi đó như một lời nhắc.`,
+      teacher: (S, X, a) => `Ở ba làng xa, giờ có người theo ${a.d.fv} vì đã nghe bạn giảng. Thỉnh thoảng có thư từ đó gửi về, chữ xiêu vẹo, kể chuyện mùa màng, chuyện con cái. Bạn đọc từng lá, rồi kẹp vào trong cuốn kinh.`,
+      left: () => 'Bạn sống tiếp như mọi người, làm lụng, đi chợ, cười nói. Có những sáng bạn vẫn quay về phía đền, tay chực chắp lại, rồi sực nhớ ra. Bạn buông tay xuống, đi tiếp.' }
   });
 
   // ── Chân trời ──
@@ -389,29 +408,32 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Chân trời', pitch: 'Đi tới nơi xa nhất từng nghe kể.', axes: { du: 1 }, themes: ['treasure', 'companion'], aim: 'adventure',
     quest: () => 'Đi tới nơi xa nhất từng nghe kể', good: ['beyond', 'settle', 'home'], marks: { beyond: 'ke_di_xa', settle: 'que_moi', home: 'ke_di_xa', lost: 'cay_dang' },
     sum: { beyond: () => 'đi tới tận bên kia vùng đất chết', settle: () => 'tìm được một vùng đất để gọi là quê', home: () => 'đi xa rồi về kể chuyện cho cả làng nghe', lost: () => 'lạc giữa đường đi tìm chân trời' },
-    follow: ['Bạn đánh dấu thêm một chỗ trên tấm bản đồ tự vẽ.', 'Bạn hỏi người lạ về con đường phía trước.', 'Chuyện này bạn sẽ kể khi về.'],
-    beat: { any: ['Bạn ngồi ở ngã ba đường nhìn đoàn buôn đi qua.', 'Bạn vẽ lại bản đồ từ lời một lữ khách.', 'Bạn gói sẵn một túi đồ để cạnh cửa.'] },
-    open: () => 'Một lữ khách kể về một vùng đất ở cuối đường, nơi chưa ai trong làng tới. Từ đêm đó bạn ngủ không yên.',
-    knot: { title: 'Lên đường', body: () => 'Có ba cách để đi xa.',
+    follow: ['Tối ấy bạn đánh dấu thêm một chỗ lên tấm bản đồ tự vẽ.', 'Bạn hỏi người lạ về con đường phía trước, nghe xong thì gật gù.', 'Bạn nghĩ: chuyện này để dành, khi về sẽ kể.'],
+    beat: { any: ['Bạn ngồi ở ngã ba đường nhìn đoàn buôn đi qua, đếm từng cỗ xe. Bụi đường bám đầy tóc. Đoàn khuất hẳn rồi bạn vẫn ngồi đó.', 'Một lữ khách ghé nghỉ chân, bạn mời bát nước rồi ngồi nghe kể. Đêm ấy bạn vẽ lại bản đồ theo lời ông, thêm một con sông, bớt một ngọn núi.', 'Cái túi đồ gói sẵn vẫn để cạnh cửa, lâu tới mức đã bám bụi. Mỗi lần đi qua bạn lại phủi nó một cái.'] },
+    open: (S, X, a) => `${lead(S, a)}Một lữ khách ghé làng, kể về một vùng đất ở cuối đường, nơi chưa ai trong làng đặt chân tới. Ông kể chuyện biển, chuyện những thành phố có tường bằng đá trắng. Sáng hôm sau ông đi. Còn bạn thì từ đêm ấy ngủ không yên.`,
+    knot: { title: 'Lên đường', body: () => 'Muốn đi xa thì có ba cách. Theo đoàn buôn thì chậm, đi biển thì nhanh mà dữ, còn tấm bản đồ cũ ở chợ phiên thì chưa biết thật hay giả. Cái túi đồ cạnh cửa đã sẵn.',
       choices: () => [{ k: 'map', label: 'Theo tấm bản đồ cũ', sub: 'Có thể là đồ giả.' }, { k: 'sea', label: 'Xin lên một con tàu', sub: 'Biển không thương ai.' }, { k: 'caravan', label: 'Theo đoàn buôn', sub: 'Chậm, an toàn hơn.' }],
-      apply(S, X, ch) { cnt(S, 'trips'); if (ch === 'map') { X.add('sm', 3); return 'Bạn đổi một tháng công lấy tấm bản đồ vẽ trên da dê.'; }
-        if (ch === 'sea') { X.gain('Spear', 2); return 'Bạn làm thủy thủ không công để đổi lấy chỗ nằm dưới khoang.'; }
-        X.money(Math.round(med(S, X) * .3)); return 'Bạn theo đoàn buôn làm người khuân vác, ngủ dưới gầm xe.'; },
+      apply(S, X, ch) { cnt(S, 'trips'); if (ch === 'map') { X.add('sm', 3); return 'Bạn đổi một tháng công lấy tấm bản đồ vẽ trên da dê, mép đã sờn, mực đã phai. Người bán thề nó là thật. Bạn không tin hẳn, nhưng đêm nào cũng trải nó ra dưới đèn mà nhìn.'; }
+        if (ch === 'sea') { X.gain('Spear', 2); return 'Bạn xin làm thủy thủ không công, đổi lấy một chỗ nằm dưới khoang. Ba ngày đầu bạn nôn tới mật xanh. Sang ngày thứ tư, đứng trên boong nhìn bờ khuất dần, bạn bỗng thấy người nhẹ hẫng.'; }
+        X.money(Math.round(med(S, X) * .3)); return 'Bạn theo đoàn buôn làm người khuân vác, ngủ dưới gầm xe, ăn cơm sau cùng. Lão chủ đoàn khó tính nhưng trả công sòng phẳng. Tiếng lục lạc lừa đưa bạn qua hết làng này tới làng khác.'; },
       auto: S => S.traits.bold > .65 ? 'sea' : S.traits.studious > .55 ? 'map' : 'caravan' },
     trial: { base: S => .45 + S.traits.bold * .2,
-      run: (S, X, a, ok) => { cnt(S, 'trips'); return ok ? (X.add('sm', 5), 'Bạn qua ba vùng, mỗi vùng một thứ tiếng. Bạn học được cách chào hỏi bằng cả ba.') : (X.add('hl', -10), 'Giữa đường bạn ốm một trận nặng, nằm ba tuần ở một quán trọ không ai biết tên bạn.'); } },
-    climax: { title: 'Cuối đường', body: () => 'Trước mặt bạn là vùng đất chết người ta đồn. Bên kia là chỗ lữ khách năm nào kể.',
+      run: (S, X, a, ok) => { cnt(S, 'trips'); return ok ? (X.add('sm', 5), 'Bạn qua ba vùng, mỗi vùng một thứ tiếng, một kiểu nấu canh. Tới đâu bạn cũng học cách chào hỏi trước tiên. Sang vùng thứ ba, bạn chào được bằng cả ba thứ tiếng, và người ta cười với bạn như người quen.')
+        : (X.add('hl', -10), 'Giữa đường bạn ốm một trận nặng, sốt li bì. Bạn nằm ba tuần ở một quán trọ không ai biết tên mình. Bà chủ quán ngày nào cũng đặt một bát cháo ở đầu giường, không hỏi han gì. Khỏi bệnh, bạn trả tiền rồi đi tiếp, chân còn lảo đảo.'); } },
+    climax: { title: 'Cuối đường', body: () => 'Trước mặt bạn là vùng đất chết người ta đồn: đá xám, không một cái cây, gió rít suốt ngày đêm. Bên kia là chỗ lữ khách năm nào kể. Sau lưng là cả quãng đường bạn đã đi.',
       choices: (S, X, a) => [{ k: 'beyond', label: 'Vượt qua', sub: `Chừng ${Math.round(odds(S, X, .45 + (a.d.ok ? .1 : 0) + pb(a)) * 100)}% qua được.` },
         { k: 'settle', label: 'Dừng ở nơi đẹp nhất đã qua', sub: 'Dựng nhà ở đó.' }, { k: 'home', label: 'Quay về', sub: 'Mang chuyện về cho làng.' }],
       apply(S, X, ch, a) {
-        if (ch === 'beyond') { if (X.chance(odds(S, X, .45 + (a.d.ok ? .1 : 0) + pb(a)))) { S.fame += 6; X.add('sm', 8); return { t: 'Bạn đi mười hai ngày qua đất chết. Ngày thứ mười ba, bạn thấy biển.', o: 'beyond' }; }
-          X.add('hl', -18); return { t: 'Bạn đi bảy ngày qua đất chết rồi phải quay lại, mất nửa số đồ, mất cả đường về.', o: 'lost' }; }
-        if (ch === 'settle') { X.add('h', 8); return { t: 'Bạn quay lại thung lũng có con suối trong nhất từng thấy, dựng một căn nhà gỗ.', o: 'settle' }; }
-        X.add('so', 6); return { t: 'Bạn quay về. Đêm đầu tiên cả làng ngồi quanh bếp lửa nhà bạn tới sáng.', o: 'home' };
+        if (ch === 'beyond') { if (X.chance(odds(S, X, .45 + (a.d.ok ? .1 : 0) + pb(a)))) { S.fame += 6; X.add('sm', 8); return { t: 'Bạn đi mười hai ngày qua đất chết, nước chia từng ngụm, đêm nằm nghe gió rít như ai khóc. Sáng ngày thứ mười ba, leo hết một con dốc, bạn thấy biển. Bạn ngồi xuống ngay trên đá, nhìn mãi, quên cả uống nước.', o: 'beyond' }; }
+          X.add('hl', -18); return { t: 'Bạn đi bảy ngày qua đất chết thì nước cạn, phải quay lại. Một trận bão cát cuốn mất nửa số đồ. Lúc gió lặng, bạn nhìn quanh và không còn nhận ra đường về.', o: 'lost' }; }
+        if (ch === 'settle') { X.add('h', 8); return { t: 'Bạn quay lại thung lũng có con suối trong nhất từng thấy trên đường đi. Bạn dựng một căn nhà gỗ ở đó, tự tay đẽo từng thanh. Đêm đầu tiên ngủ dưới mái nhà mới, nghe tiếng suối chảy, bạn nghĩ: có lẽ chân trời là chỗ này.', o: 'settle' }; }
+        X.add('so', 6); return { t: 'Bạn quay về. Đêm đầu tiên cả làng ngồi quanh bếp lửa nhà bạn tới sáng, trẻ con ngủ gật mà vẫn cố mở mắt nghe. Bạn kể chuyện biển, chuyện thành đá trắng, chuyện những người nói thứ tiếng lạ. Cái túi đồ, bạn treo lên vách.', o: 'home' };
       },
       auto: S => S.traits.bold > .55 ? 'beyond' : S.traits.social > .55 ? 'home' : 'settle' },
-    after: { beyond: () => 'Bạn vẽ lại con đường ấy trên da dê, để lại cho đứa trẻ nào trong làng hay ngồi nghe bạn kể.', settle: () => 'Thung lũng ấy giờ có ba nóc nhà. Người tới sau gọi nó theo tên bạn.',
-      home: () => 'Chuyện bạn kể được người ta kể lại, mỗi lần một dài hơn.', lost: () => 'Bạn tìm được đường về sau một năm. Bạn không còn đi xa nữa.' }
+    after: { beyond: (S, X, a) => `Bạn vẽ lại con đường ấy lên một tấm da dê mới, từng con dốc, từng chỗ có nước. ${a.d.path === 'map' ? 'Tấm bản đồ cũ năm nào hóa ra sai gần hết; tấm này thì đúng. ' : ''}Bạn để nó lại cho đứa trẻ nào trong làng hay ngồi nghe bạn kể. Bạn dặn nó: đường có thật, cứ đi.`,
+      settle: () => 'Thung lũng ấy giờ có ba nóc nhà, khói bếp bay lên mỗi chiều. Người tới sau gọi nó theo tên bạn. Sáng nào bạn cũng ra suối rửa mặt, nhìn về phía con đường đã đưa mình tới.',
+      home: () => 'Chuyện bạn kể được người ta kể lại, mỗi lần một dài hơn, có cả những thứ bạn chưa từng thấy. Bạn nghe, không cải chính. Đứa trẻ nào trong làng cũng mơ một ngày được đi như bạn.',
+      lost: () => 'Một năm sau bạn mới tìm được đường về, người gầy rộc, tóc bạc đi nhiều. Bạn không còn đi xa nữa. Có đoàn buôn đi qua, bạn chỉ đứng ở cổng nhìn theo, tay nắm chặt cánh cổng.' }
   });
 
   // ── Tên nhà ──
@@ -419,30 +441,34 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Tên nhà', pitch: 'Gây dựng lại tên nhà.', axes: { gia: 1, quyen: .5 }, themes: ['romance', 'memory'], aim: 'family',
     quest: () => 'Gây dựng lại tên nhà', good: ['claimed', 'founded'], marks: { claimed: 'ten_nha', founded: 'dong_moi', let: 'buong_bo' },
     sum: { claimed: () => 'được họ tộc nhận lại tên nhà', founded: () => 'mở một dòng họ mới, con cháu đọc tên mình đầu tiên', let: () => 'buông chuyện tên nhà, sống yên với nhà mình' },
-    follow: ['Bạn ghi thêm một dòng vào cuốn gia phả tự viết.', 'Bạn nghĩ tới tên nhà mình mỗi lần ký tên.', 'Bạn kể cho con nghe chuyện ông bà.'],
-    beat: { any: ['Bạn hỏi các bô lão về ông bà mình.', 'Bạn sửa lại bàn thờ trong nhà.', 'Bạn ghi tên từng người trong họ lên một tấm gỗ.'] },
-    open: () => 'Có người nhắc tới tên nhà bạn bằng giọng khinh khỉnh. Đêm ấy bạn tự hứa: một ngày tên ấy sẽ được nói bằng giọng khác.',
-    knot: { title: 'Cách gây dựng tên nhà', body: () => 'Tên nhà không tự sáng lên. Bạn chọn cách nào?',
+    follow: ['Tối ấy bạn ghi thêm một dòng vào cuốn gia phả tự viết.', 'Mỗi lần ký tên, bạn lại nghĩ tới tên nhà mình, nét chữ cẩn thận hơn.', 'Bạn kể cho người trong nhà nghe chuyện ông bà, những gì mình biết được.'],
+    beat: { any: ['Bạn hỏi các bô lão về ông bà mình. Người nhớ một cái tên, người nhớ một câu chuyện, ghép lại vẫn còn nhiều khoảng trống.', 'Bạn sửa lại bàn thờ trong nhà, thay bát hương mới, lau từng tấm bài vị. Khói hương bay thẳng lên. Người già bảo đó là điềm tốt.', 'Bạn ghi tên từng người trong họ lên một tấm gỗ, tên nào chưa chắc thì viết bằng than. Tấm gỗ treo trên vách, mỗi năm thêm vài nét.'] },
+    open: (S, X, a) => `${lead(S, a)}Ở đám giỗ nhà hàng xóm, có người nhắc tới tên nhà bạn bằng giọng khinh khỉnh. Cả mâm cười. Bạn cũng cười theo, tay nắm chén rượu chặt tới trắng cả đốt ngón. Đêm ấy bạn tự hứa: một ngày cái tên ấy sẽ được nói bằng giọng khác.`,
+    knot: { title: 'Cách gây dựng tên nhà', body: () => 'Tên nhà không tự sáng lên. Có người lục giấy tờ cũ để chứng minh mình là ai, có người tự làm nên tên tuổi, có người nhờ một mối thông gia. Bạn chọn cách nào?',
       choices: () => [{ k: 'proof', label: 'Tìm bằng chứng huyết thống', sub: 'Giấy tờ cũ, người làm chứng.' }, { k: 'earn', label: 'Tự làm nên tên tuổi', sub: 'Để người ta nhớ tên bạn trước.' }, { k: 'match', label: 'Liên hôn với nhà có tiếng', sub: 'Nhanh nhất, không phải ai cũng chịu.' }],
-      apply(S, X, ch) { if (ch === 'proof') { X.add('sm', 4); return 'Bạn lục từng hòm giấy cũ trong đền làng, tìm tên ông bà.'; }
-        if (ch === 'earn') { S.fame += 2; return 'Bạn nhận mọi việc khó mà người khác chê.'; }
-        X.add('so', 3); return 'Bạn nhờ bà mối tìm một nhà có tiếng chịu kết thông gia.'; },
+      apply(S, X, ch) { if (ch === 'proof') { X.add('sm', 4); return 'Bạn lục từng hòm giấy cũ trong đền làng, giấy mục bở ra trong tay. Bụi bám đầy tóc, đầy mũi. Giữa hàng nghìn cái tên lạ, bạn dò tìm tên ông bà mình, từng dòng, từng dòng.'; }
+        if (ch === 'earn') { S.fame += 2; return 'Bạn nhận mọi việc khó mà người khác chê, làm tới nơi tới chốn. Bạn không nhắc gì tới tên nhà nữa. Bạn để việc mình làm nói thay.'; }
+        X.add('so', 3); return 'Bạn nhờ bà mối tìm một nhà có tiếng chịu kết thông gia. Bà mối nhìn bạn từ đầu tới chân, chép miệng một cái. Rồi bà nhận tiền, bảo: để bà thử.'; },
       auto: S => S.traits.studious > .55 ? 'proof' : S.traits.social > .55 ? 'match' : 'earn' },
     trial: { base: S => .45 + Math.min(.2, S.fame / 200),
-      run: (S, X, a, ok) => ok ? (S.fame += 3, a.d.path === 'proof' ? 'Bạn tìm được tờ giấy ghi tên ông cố trong sổ đinh của một làng xa.' : 'Tên bạn bắt đầu được nhắc ở chợ, không kèm câu khinh khỉnh nào.')
-        : (X.add('h', -6), a.d.path === 'proof' ? 'Tờ giấy duy nhất có tên ông cố đã mục nát, không đọc được chữ.' : 'Người ta vẫn nhắc tên bạn kèm chuyện cũ của nhà bạn.') },
-    climax: { title: 'Trước họ tộc', body: () => 'Họ tộc họp ở nhà thờ họ. Đây là dịp nói chuyện tên nhà.',
+      run: (S, X, a, ok) => ok ? (S.fame += 3, a.d.path === 'proof' ? 'Trong sổ đinh của một làng xa, ở trang thứ bốn mươi, bạn tìm được tên ông cố, mực đã nhạt mà nét chữ còn rõ. Bạn chép lại, tay run tới mức phải chép hai lần. Suốt mấy ngày đường về, bạn giữ tờ giấy trong ngực áo.'
+          : a.d.path === 'match' ? 'Nhà có tiếng ấy nhận lời gặp mặt. Bữa cơm đầu, bạn ngồi thẳng lưng tới mỏi, gắp từng miếng nhỏ. Lúc tiễn ra cổng, ông chủ nhà vỗ vai bạn một cái.'
+          : 'Ở chợ, người ta bắt đầu nhắc tên bạn, lần đầu tiên không kèm câu khinh khỉnh nào. Bạn nghe, đi tiếp, mà mãi mới tin là thật.')
+        : (X.add('h', -6), a.d.path === 'proof' ? 'Tờ giấy duy nhất có tên ông cố đã mục nát, chữ nhòe thành những vết loang. Bạn soi dưới nắng, dưới đèn, vẫn không đọc được. Bạn gói nó lại cẩn thận, như gói một người đã mất.'
+          : 'Người ta vẫn nhắc tên bạn kèm chuyện cũ của nhà bạn. Việc bạn làm tốt tới đâu, câu chuyện cũ vẫn đi trước một bước. Bạn bắt đầu hiểu một cái tiếng cũ nặng tới mức nào.') },
+    climax: { title: 'Trước họ tộc', body: (S, X, a) => `Họ tộc họp ở nhà thờ họ, mâm cỗ bày kín hai gian. Đây là dịp nói chuyện tên nhà, có lẽ là dịp duy nhất trong đời bạn. Trưởng họ ngồi ở ghế trên, mắt nhắm hờ.${a.d.ok && a.d.path === 'proof' ? ' Tờ giấy chép tên ông cố nằm trong ngực áo bạn.' : ''}`,
       choices: (S, X, a) => [{ k: 'claim', label: 'Đứng lên đòi lại danh phận', sub: `Chừng ${Math.round(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% được nhận.` },
         { k: 'found', label: 'Lập dòng mới, mình làm tổ', sub: 'Không cần ai nhận.' }, { k: 'let', label: 'Thôi, sống yên với nhà mình', sub: '' }],
       apply(S, X, ch, a) {
-        if (ch === 'claim') { if (X.chance(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) return { t: 'Trưởng họ đọc tên bạn trước cả họ tộc, rồi ghi nó vào gia phả bằng mực đỏ.', o: 'claimed' };
-          X.add('h', -8); return { t: 'Trưởng họ lắc đầu. Bạn ra về; trên đường bạn quyết định tự viết gia phả của mình.', o: 'founded' }; }
-        if (ch === 'found') { X.add('h', 5); return { t: 'Bạn khắc tên mình lên đầu một tấm gỗ mới, chừa chỗ cho con cháu.', o: 'founded' }; }
-        X.add('h', 6); return { t: 'Bạn không tới buổi họp. Tối ấy bạn ăn cơm với vợ con, không nghĩ gì tới tên nhà.', o: 'let' };
+        if (ch === 'claim') { if (X.chance(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) return { t: 'Bạn đứng lên giữa nhà thờ họ, nói rõ từng chữ. Trưởng họ nghe xong, im lặng rất lâu. Rồi ông đọc tên bạn trước cả họ tộc, ghi nó vào gia phả bằng mực đỏ. Bạn cúi đầu, mắt cay xè, không biết vì khói hương hay vì gì khác.', o: 'claimed' };
+          X.add('h', -8); return { t: 'Bạn đứng lên nói. Trưởng họ nghe hết, rồi lắc đầu, không cần giải thích. Bạn ra về giữa những tiếng xì xào. Đi được nửa đường, bạn dừng lại dưới gốc đa và quyết định: gia phả của mình, mình tự viết.', o: 'founded' }; }
+        if (ch === 'found') { X.add('h', 5); return { t: 'Bạn không đứng lên. Về nhà, bạn khắc tên mình lên đầu một tấm gỗ mới, bên dưới chừa chỗ trống cho con cháu. Gỗ mít thơm, đường dao chắc. Bạn treo nó lên vách, ngồi ngắm tới khuya.', o: 'founded' }; }
+        X.add('h', 6); return { t: 'Bạn không tới buổi họp. Tối ấy bạn ăn cơm ở nhà, nồi canh chua, đĩa cá kho. Bạn không nghĩ gì tới tên nhà nữa, và lạ là thấy nhẹ cả người.', o: 'let' };
       },
       auto: S => S.traits.bold > .4 ? 'claim' : S.traits.social < .55 ? 'found' : 'let' },
-    after: { claimed: () => 'Tết năm sau, nhà bạn được mời ngồi mâm trên ở nhà thờ họ.', founded: () => 'Tấm gỗ khắc tên bạn giờ có thêm ba dòng. Con cháu đọc tên bạn đầu tiên.',
-      let: () => 'Nhà bạn không có tên to. Nhưng bữa cơm nào cũng đủ người.' }
+    after: { claimed: () => 'Tết năm sau, nhà bạn được mời ngồi mâm trên ở nhà thờ họ. Mấy người năm xưa cười khinh khỉnh giờ rót rượu cho bạn trước. Bạn uống, cảm ơn, không nhắc chuyện cũ. Chuyện cũ tự họ nhớ.',
+      founded: () => 'Tấm gỗ khắc tên bạn giờ có thêm ba dòng. Con cháu đọc tên bạn đầu tiên, đọc to, rõ, không ai phải ngập ngừng. Cái giọng khinh khỉnh năm nào, bạn thấy nó nhỏ dần rồi tắt hẳn.',
+      let: () => 'Nhà bạn không có tên to, không được ngồi mâm trên ở đâu cả. Nhưng bữa cơm nào cũng đủ người, có tiếng cười. Bạn nghĩ, thế cũng là một cái tên.' }
   });
 
   // ── Giữ làng ──
@@ -450,36 +476,36 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Giữ làng', pitch: 'Đứng chắn cho làng trước mọi thứ từ bên ngoài.', axes: { vo: .8, gia: .5, quyen: .3 }, themes: ['raid', 'war', 'robbery'], aim: null,
     quest: () => 'Giữ làng bình yên', good: ['held', 'wall', 'saved'], marks: { held: 'nguoi_giu_lang', wall: 'nguoi_giu_lang', saved: 'duoc_tin', fell: 'cay_dang' },
     sum: { held: () => 'đứng ở cổng làng tới khi bầy quái rút', wall: () => 'dựng được tường rào và một đội dân canh cho làng', saved: () => 'đưa cả làng đi lánh nạn, không mất một ai', fell: () => 'không giữ được cổng làng ngày quái tràn vào' },
-    follow: ['Bạn đi một vòng quanh làng trước khi ngủ, như mọi đêm.', 'Bạn đếm lại số giáo trong kho của đội canh.', 'Tiếng chó sủa ngoài bìa rừng làm bạn ngồi dậy.'],
-    beat: { any: ['Bạn dạy mấy đứa trai làng cầm giáo cho đúng.', 'Bạn đi tuần bìa {z}, đánh dấu lối quái hay qua.', 'Bạn vá lại hàng rào phía bắc làng.'] },
-    open: (S, X, a) => `Đêm ấy bạn đứng trên mái nhà nhìn về phía ${zoneName(S, X, a)}. Ngoài đó có thứ gì đó đang đợi. Bạn tự hứa: chừng nào bạn còn đứng được, không gì vào được làng.`,
-    knot: { title: 'Cách giữ làng', body: () => 'Một người không giữ nổi cả làng. Bạn bắt đầu từ đâu?',
+    follow: ['Trước khi ngủ bạn đi một vòng quanh làng, như mọi đêm.', 'Bạn đếm lại số giáo trong kho, thiếu một cây là đi tìm cho bằng được.', 'Tiếng chó sủa ngoài bìa rừng làm bạn ngồi bật dậy, tay đã chạm cán giáo.'],
+    beat: { any: ['Bạn dạy mấy đứa trai làng cầm giáo cho đúng, đứng cho vững. Chúng cười đùa, đánh vào nhau chan chát. Bạn để chúng cười, miễn là tay không buông giáo.', 'Bạn đi tuần bìa {z}, đánh dấu những lối quái hay qua bằng mấy nút dây trên cành cây. Về tới làng thì trời đã tối mịt.', 'Hàng rào phía bắc làng lại mục một khúc. Bạn vác cọc ra vá, đóng tới trưa. Người đi ngang dừng lại phụ một tay.'] },
+    open: (S, X, a) => `${lead(S, a)}Đêm ấy bạn đứng trên mái nhà nhìn về phía ${zoneName(S, X, a)}. Rừng tối đen, thỉnh thoảng có tiếng gì đó làm gãy cành. Ngoài đó có thứ đang đợi. Bạn tự hứa: chừng nào mình còn đứng được, không gì vào được làng.`,
+    knot: { title: 'Cách giữ làng', body: () => 'Một người không giữ nổi cả làng, dù người đó khỏe tới đâu. Phải có người cùng canh, hoặc có lính của lãnh chúa, hoặc chính mình phải thành bức tường. Bạn bắt đầu từ đâu?',
       choices: (S, X) => [{ k: 'watch', label: 'Lập đội dân canh', sub: 'Cần người làng tin bạn.' }, { k: 'train', label: 'Tự luyện thành bức tường', sub: 'Một mình đứng ở cổng.' },
         { k: 'lord', label: 'Xin lãnh chúa gửi lính', sub: `Tốn chừng ${G.coin(Math.round(med(S, X)))} quà biếu.` }],
       apply(S, X, ch, a) {
-        if (ch === 'watch') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn lập đội canh', work: 'guard', bond: 30 }); a.d.mate = p.id; X.add('so', 4); G.trajBump(S, { quyen: .3 }); return `${first(p.name)} vác giáo tới nhà bạn ngay tối hôm ấy. Tuần sau đội canh có mười người.`; }
-        if (ch === 'train') { X.gain('Shield', 5); G.trajBump(S, { vo: .5 }); return 'Bạn tập đứng tấn ở cổng làng mỗi sáng, tới khi lũ trẻ quen coi bạn là cái cột cổng.'; }
-        X.money(-Math.round(med(S, X))); a.d.lord = true; return 'Bạn mang quà lên phủ. Lãnh chúa hứa mỗi mùa gửi về năm tay lính.';
+        if (ch === 'watch') { const p = G.castAdd(S, X, { role: 'ban', how: 'người cùng bạn lập đội canh', work: 'guard', bond: 30 }); a.d.mate = p.id; X.add('so', 4); G.trajBump(S, { quyen: .3 }); return `${first(p.name)} vác giáo tới nhà bạn ngay tối hôm ấy, không đợi ai nhờ. Tuần sau đội canh có mười người, chia nhau thay ca, mỗi ca một bó đuốc. Đêm đầu tiên đứng gác cùng nhau, cả đội không ai buồn ngủ.`; }
+        if (ch === 'train') { X.gain('Shield', 5); G.trajBump(S, { vo: .5 }); return 'Sáng nào bạn cũng ra cổng làng tập đứng tấn, tay cầm khiên, chân cắm xuống đất. Mưa cũng tập, rét cũng tập. Lâu dần lũ trẻ quen coi bạn như cái cột cổng, đi qua còn vỗ vào khiên một cái cho vui.'; }
+        X.money(-Math.round(med(S, X))); a.d.lord = true; return 'Bạn mang quà lên phủ, đợi nửa ngày ngoài cổng mới được gặp. Lãnh chúa nhận quà, hứa mỗi mùa gửi về năm tay lính. Đường về, bạn nhẩm lại số tiền đã biếu, rồi tự nhủ: miễn là lính tới.';
       },
       auto: (S, X) => S.traits.social > .55 ? 'watch' : S.gold > med(S, X) * 2 && S.traits.bold < .5 ? 'lord' : 'train' },
     trial: { base: (S, X, a) => .45 + (a.d.path === 'watch' ? .1 : a.d.path === 'lord' ? .05 : 0),
-      run: (S, X, a, ok) => ok ? (X.gain('Shield', 2), S.fame += 2, `Một bầy ${spName(a)} mò tới bìa làng lúc nửa đêm. Trống đánh, đuốc đốt khắp hàng rào, bầy quái rút về ${zoneName(S, X, a)}.`)
-        : (X.add('hl', -10), `Một bầy ${spName(a)} phá chuồng nhà cuối làng trước khi ai kịp tới. Sáng ra người làng nhìn bạn, không ai nói gì.`) },
-    climax: { title: 'Đêm quái tràn xuống', body: (S, X, a) => `Bầy ${spName(a)} lớn nhất trong trí nhớ người già đang kéo xuống từ ${zoneName(S, X, a)}.`,
+      run: (S, X, a, ok) => ok ? (X.gain('Shield', 2), S.fame += 2, `Nửa đêm, một bầy ${spName(a)} mò tới bìa làng. ${a.d.path === 'watch' ? 'Đội canh đánh trống trước cả khi bạn kịp hô.' : a.d.path === 'lord' ? 'Mấy tay lính của lãnh chúa còn đang ngủ, bạn phải đá cửa gọi dậy.' : 'Bạn là người đầu tiên chạy ra cổng.'} Đuốc đốt khắp hàng rào, trống mõ inh ỏi. Bầy quái lùi dần, rồi rút về ${zoneName(S, X, a)}.`)
+        : (X.add('hl', -10), `Một bầy ${spName(a)} phá chuồng nhà cuối làng trước khi ai kịp tới. Lúc bạn chạy tới, chỉ còn tiếng gia súc kêu và dấu móng vuốt trên đất. Bạn vật lộn với con cuối cùng, bị nó cắn một miếng vào vai. Sáng ra người làng nhìn bạn, không ai nói gì.`) },
+    climax: { title: 'Đêm quái tràn xuống', body: (S, X, a) => `Bầy ${spName(a)} lớn nhất trong trí nhớ người già đang kéo xuống từ ${zoneName(S, X, a)}. Tiếng chúng vọng tới làng từ lúc chạng vạng. Người già trẻ nhỏ đã dồn cả vào đình, đàn ông cầm đuốc đứng chờ bạn lên tiếng.`,
       choices: (S, X, a) => [{ k: 'stand', label: 'Đứng ở cổng, đánh tới sáng', sub: `Khả năng giữ được chừng ${Math.round(odds(S, X, (a.d.ok ? .55 : .35) + pb(a)) * 100)}%.` },
         { k: 'wall', label: 'Rút vào sau rào, giữ từng nhà', sub: a.d.path === 'watch' ? 'Đội canh đã quen việc.' : 'Chưa có đội canh, khó giữ.' }, { k: 'flee', label: 'Dẫn cả làng lên núi lánh nạn', sub: 'Mất nhà, giữ người.' }],
       apply(S, X, ch, a) {
-        if (ch === 'stand') { if (X.chance(odds(S, X, (a.d.ok ? .55 : .35) + pb(a)))) { S.fame += 6; return { t: 'Bạn đứng ở cổng làng tới khi trời rạng. Xác quái chất thành đống trước rào; sau lưng bạn không một mái nhà nào cháy.', o: 'held' }; }
-          X.add('hl', -20); X.cond('wound'); return { t: 'Cổng làng vỡ lúc gần sáng. Bạn bị kéo ra khỏi đống gỗ, tay vẫn nắm cán giáo gãy.', o: 'fell' }; }
-        if (ch === 'wall') { if (a.d.path === 'watch' || a.d.ok || X.chance(.5)) { S.fame += 3; return { t: 'Mỗi nhà một ngọn đuốc, mỗi ngõ một tay giáo. Bầy quái đi vòng quanh làng tới sáng rồi bỏ đi.', o: 'wall' }; }
-          X.add('hl', -12); return { t: 'Rào đổ ở phía bắc. Bạn chạy từ ngõ này sang ngõ khác, không kịp.', o: 'fell' }; }
-        X.money(-Math.round(med(S, X) * .5)); X.add('h', -3); return { t: 'Cả làng trèo lên núi trong đêm, người già trên lưng người trẻ. Sáng ra nhìn xuống, mái nhà cháy, nhưng đếm đủ người.', o: 'saved' };
+        if (ch === 'stand') { if (X.chance(odds(S, X, (a.d.ok ? .55 : .35) + pb(a)))) { S.fame += 6; return { t: 'Bạn đứng ở cổng làng suốt đêm, giáo gãy thì thay giáo. Tới khi trời rạng, xác quái chất thành đống trước rào. Bạn quay lại nhìn: sau lưng mình không một mái nhà nào cháy. Lúc ấy bạn mới ngồi xuống, và không đứng dậy nổi nữa.', o: 'held' }; }
+          X.add('hl', -20); X.cond('wound'); return { t: 'Cổng làng vỡ lúc gần sáng, cánh cổng đổ sập đè lên người bạn. Bầy quái tràn qua. Người làng kéo bạn ra khỏi đống gỗ khi mọi chuyện đã xong, tay bạn vẫn nắm cán giáo gãy, không ai gỡ ra được.', o: 'fell' }; }
+        if (ch === 'wall') { if (a.d.path === 'watch' || a.d.ok || X.chance(.5)) { S.fame += 3; return { t: 'Mỗi nhà một ngọn đuốc, mỗi ngõ một tay giáo. Bầy quái đi vòng quanh làng tới sáng, gầm gừ, cào vào rào, mà không tìm được chỗ hở. Gà gáy lần thứ ba, chúng bỏ đi. Bạn đi một vòng đếm lại người, đủ cả.', o: 'wall' }; }
+          X.add('hl', -12); return { t: 'Rào đổ ở phía bắc. Bạn chạy từ ngõ này sang ngõ khác, hô hoán đến khản giọng, mà không kịp. Tiếng la hét đuổi theo bạn suốt đêm ấy.', o: 'fell' }; }
+        X.money(-Math.round(med(S, X) * .5)); X.add('h', -3); return { t: 'Cả làng trèo lên núi trong đêm, người già trên lưng người trẻ, trẻ con ôm gà ôm chó. Bạn đi cuối cùng, ngoái lại mãi. Sáng ra nhìn xuống, mái nhà bốc khói. Nhưng đếm đi đếm lại, đủ người.', o: 'saved' };
       },
       auto: (S, X, a) => S.traits.bold > .55 ? 'stand' : a.d.path === 'watch' ? 'wall' : 'flee' },
-    after: { held: () => 'Người làng khắc tên bạn lên cột cổng. Bọn trẻ chơi trò giữ cổng, đứa nào cũng đòi làm bạn.',
-      wall: () => 'Hàng rào vẫn đó, đội canh vẫn thay ca mỗi đêm. Giờ có người khác cầm đuốc thay bạn.',
-      saved: () => 'Làng dựng lại ở chỗ cũ sau một mùa. Buổi lễ tạ ơn không thiếu một ai.',
-      fell: () => 'Làng dựng lại, nhưng có những ngôi nhà không ai về ở nữa. Bạn vẫn đi tuần mỗi đêm.' }
+    after: { held: () => 'Người làng khắc tên bạn lên cột cổng, nét chữ nghiêng nghiêng của thầy đồ. Bọn trẻ chơi trò giữ cổng, đứa nào cũng đòi làm bạn. Mỗi lần có tiếng mõ, người ta vẫn nhìn về phía nhà bạn trước tiên.',
+      wall: (S, X, a) => { const m = mateOf(S, a); return `Hàng rào vẫn đó, đội canh vẫn thay ca mỗi đêm. Giờ có người khác cầm đuốc thay bạn.${m ? ` Thỉnh thoảng ${m} ghé qua, hai người ngồi nhắc lại đêm quái tràn xuống.` : ''} Đêm nào nghe tiếng trống đổi ca, bạn vẫn tỉnh giấc, nằm nghe cho hết rồi mới ngủ lại.`; },
+      saved: () => 'Làng dựng lại ở chỗ cũ sau một mùa, nhà mới còn thơm mùi gỗ. Buổi lễ tạ ơn không thiếu một ai, cụ già nhất làng đứng lên điểm tên từng người. Tới tên bạn, cả sân đình vỗ tay.',
+      fell: () => 'Làng dựng lại, nhưng có những ngôi nhà không ai về ở nữa, cửa đóng, cỏ mọc kín sân. Bạn vẫn đi tuần mỗi đêm. Đi ngang những ngôi nhà ấy, bạn bước chậm lại.' }
   });
 
   // ── Một mối tình ──
@@ -488,32 +514,32 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Một mối tình', pitch: 'Giữ lấy một người, dù đời có xô đi đâu.', axes: { gia: 1, du: .2 }, themes: ['romance'], aim: 'family', gate: true,
     quest: a => `Giữ lấy ${lov(a)}`, good: ['wed', 'wait', 'let'], marks: { wed: 'tinh_mot_doi', wait: 'tinh_mot_doi', lost: 'cay_dang', let: 'buong_bo' },
     sum: { wed: d => `ở bên ${d.name || 'người ấy'} tới cuối đời`, wait: d => `đi xa rồi trở về, ${d.name || 'người ấy'} vẫn đợi`, lost: d => `đi xa quá lâu, về thì ${d.name || 'người ấy'} đã không còn đợi`, let: d => `buông tay cho ${d.name || 'người ấy'} đi tìm đời mình` },
-    follow: ['Bạn mang theo một món quà nhỏ, định bụng gặp người ấy sẽ đưa.', 'Đêm ấy bạn viết một lá thư dài, rồi chỉ gửi đi nửa trang.', 'Giữa lúc bận nhất bạn vẫn nghĩ tới nụ cười của người ấy.'],
-    beat: { any: ['Hai người đi dọc bờ suối tới khi trời tối.', 'Bạn sửa lại cái cổng nhà người ấy mà không ai nhờ.', 'Hai người cãi nhau một trận vì chuyện không đâu, rồi làm lành trước bữa tối.'] },
-    open: (S, X, a) => `Bạn gặp ${lov(a)} ở chợ phiên. Hai người nói chuyện tới khi người bán dọn hàng. Về nhà bạn biết đời mình từ nay có thêm một người.`,
-    knot: { title: 'Đường tới với nhau', body: (S, X, a) => `Nhà ${lov(a)} không mặn mà với bạn.`,
+    follow: ['Bạn mang theo một món quà nhỏ, định bụng gặp người ấy sẽ đưa. Rồi lại ngại, để trong túi áo cả tuần.', 'Đêm ấy bạn viết một lá thư dài, sáng ra đọc lại, chỉ dám gửi đi nửa trang.', 'Giữa lúc bận nhất, bạn vẫn chợt nghĩ tới nụ cười của người ấy, và tay chậm lại.'],
+    beat: { any: ['Hai người đi dọc bờ suối tới khi trời tối, nói đủ thứ chuyện không đâu vào đâu. Về tới đầu ngõ vẫn còn chuyện chưa nói hết.', 'Cái cổng nhà người ấy xệ một bên bản lề. Bạn mang búa tới sửa, không ai nhờ. Người ấy đứng trong sân nhìn ra, giả vờ không thấy, mà miệng thì cười.', 'Hai người cãi nhau một trận vì chuyện không đâu, giận tới mức không nhìn mặt. Chiều xuống, người ấy mang sang một rổ khoai. Trước bữa tối thì đã làm lành.'] },
+    open: (S, X, a) => `${lead(S, a)}Bạn gặp ${lov(a)} ở chợ phiên, giữa tiếng người mua kẻ bán. Hai người nói chuyện từ lúc nắng còn trên mái lều tới khi người bán dọn hàng. Đường về, bạn đi chậm hẳn. Bạn biết đời mình từ nay có thêm một người.`,
+    knot: { title: 'Đường tới với nhau', body: (S, X, a) => `Nhà ${lov(a)} không mặn mà với bạn. Mỗi lần bạn ghé, người nhà chỉ chào cho có rồi lui vào trong. Lúc tiễn bạn ra cổng, ${lov(a)} không nói gì, chỉ nắm tay bạn một cái thật chặt.`,
       choices: () => [{ k: 'prove', label: 'Làm cho nhà người ấy nể', sub: 'Lâu, nhưng đường hoàng.' }, { k: 'elope', label: 'Rủ người ấy bỏ đi', sub: 'Nhanh, mang tiếng.' }, { k: 'wait', label: 'Kiên nhẫn chờ', sub: 'Thời gian sẽ trả lời.' }],
-      apply(S, X, ch, a) { if (ch === 'prove') { S.fame += 2; X.gain(bestSk(S), 3); return 'Bạn nhận mọi việc khó trong làng, làm cho tới nơi, để nhà người ấy nghe tên bạn.'; }
-        if (ch === 'elope') { X.add('so', -4); G.trajBump(S, { du: .4 }); return `Một đêm không trăng, bạn và ${lov(a)} khoác tay nải đi sang làng bên.`; }
-        X.add('h', 2); return 'Bạn không nói gì thêm. Mỗi chiều bạn vẫn đi ngang cổng nhà người ấy.'; },
+      apply(S, X, ch, a) { if (ch === 'prove') { S.fame += 2; X.gain(bestSk(S), 3); return `Bạn nhận mọi việc khó trong làng, làm cho tới nơi, để nhà ${lov(a)} nghe tên bạn. Đắp đê có bạn, đi rừng có bạn, nhà ai có việc cũng có bạn. Người ta bắt đầu kể chuyện bạn ở đầu ngõ, đủ to để vọng vào nhà người ấy.`; }
+        if (ch === 'elope') { X.add('so', -4); G.trajBump(S, { du: .4 }); return `Một đêm không trăng, bạn và ${lov(a)} khoác tay nải đi sang làng bên. Hai người không đốt đuốc, nắm tay nhau dò từng bước. Tới đầu làng bên trời vừa sáng, sương còn đọng trên tóc. Ở làng cũ, chắc người ta đã bắt đầu xì xào.`; }
+        X.add('h', 2); return `Bạn không nói gì thêm, cũng không ép. Chiều nào bạn cũng đi ngang cổng nhà ${lov(a)}, gật đầu chào người nhà, rồi đi tiếp. Mưa cũng đi, nắng cũng đi. Bạn nghĩ: thời gian sẽ trả lời.`; },
       auto: S => S.traits.bold > .65 ? 'elope' : S.traits.social > .5 ? 'prove' : 'wait' },
     trial: { base: (S, X, a) => .5 + (a.d.path === 'prove' ? .1 : 0),
-      run: (S, X, a, ok) => ok ? (X.add('h', 6), a.d.path === 'elope' ? `Hai người dựng một căn nhà nhỏ ở làng bên. Người ta thôi xì xào sau một mùa.` : `Nhà ${lov(a)} cuối cùng cũng mở cửa đón bạn. Bà mẹ múc cho bạn bát canh đầy nhất.`)
-        : (X.add('h', -8), `Một trận ốm của ${lov(a)}, rồi một trận cãi lớn. Có lúc bạn tưởng đã mất người ấy.`) },
-    climax: { title: 'Giữa hai con đường', body: (S, X, a) => `Một cơ hội lớn mở ra ở nơi xa. Đi thì phải xa ${lov(a)} nhiều năm.`,
+      run: (S, X, a, ok) => ok ? (X.add('h', 6), a.d.path === 'elope' ? `Hai người dựng một căn nhà nhỏ ở làng bên, mái tranh, vách đất. Lúc đầu người ta xì xào, chỉ trỏ. Được một mùa thì thôi, có người còn mang sang biếu nắm rau. Tối tối, bếp nhà hai người đỏ lửa sớm nhất xóm.` : `Nhà ${lov(a)} cuối cùng cũng mở cửa đón bạn. Bữa cơm đầu tiên ngồi chung mâm, bà mẹ múc cho bạn bát canh đầy nhất, đầy tới sánh ra ngoài. ${lov(a)} nhìn bạn qua làn khói, cười.`)
+        : (X.add('h', -8), `Một trận ốm của ${lov(a)}, rồi một trận cãi lớn, cái nọ kéo cái kia. Có mấy tuần hai người không nhìn mặt nhau. Có lúc bạn tưởng đã mất người ấy thật. Rồi một sáng, ${lov(a)} đứng chờ ở đầu ngõ, mắt còn sưng.`) },
+    climax: { title: 'Giữa hai con đường', body: (S, X, a) => `Một cơ hội lớn mở ra ở nơi xa, thứ cả đời bạn chỉ dám nghĩ tới. Đi thì phải xa ${lov(a)} nhiều năm. Lá thư mời nằm trên bàn mấy hôm, chưa ai mở lời trước.`,
       choices: (S, X, a) => [{ k: 'stay', label: 'Ở lại', sub: 'Bỏ cơ hội ấy.' }, { k: 'go', label: 'Đi, hẹn ngày về', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% người ấy còn đợi.` },
         { k: 'free', label: 'Buông tay', sub: 'Để người ấy đi tìm đời mình.' }],
       apply(S, X, ch, a) {
-        if (ch === 'stay') { X.add('h', 8); return { t: `Bạn đốt lá thư mời. Tối ấy ${lov(a)} nấu một nồi cơm to hơn mọi ngày.`, o: 'wed' }; }
-        if (ch === 'go') { S.fame += 3; X.money(Math.round(med(S, X) * 1.5)); if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) return { t: `Bạn đi. Mỗi mùa một lá thư; ${lov(a)} lá nào cũng trả lời.`, o: 'wait' };
-          X.add('h', -10); return { t: 'Bạn đi. Thư thưa dần, rồi thôi hẳn.', o: 'lost' }; }
-        X.add('h', 2); return { t: `Bạn nói lời từ biệt trước. ${lov(a)} khóc, rồi gật đầu.`, o: 'let' };
+        if (ch === 'stay') { X.add('h', 8); return { t: `Bạn đốt lá thư mời trong bếp, nhìn nó cháy thành tro. Tối ấy ${lov(a)} nấu một nồi cơm to hơn mọi ngày, hai người ăn mãi không hết. Không ai nhắc tới lá thư, kể cả về sau.`, o: 'wed' }; }
+        if (ch === 'go') { S.fame += 3; X.money(Math.round(med(S, X) * 1.5)); if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) return { t: `Bạn đi. Mỗi mùa một lá thư gửi về, lá nào ${lov(a)} cũng trả lời, chữ nắn nót. Thư kể chuyện mưa nắng, chuyện cây hồng trước sân ra quả, chuyện con mèo hàng xóm đẻ một lứa năm con. Bạn giữ cả, buộc thành một bó để dưới gối.`, o: 'wait' };
+          X.add('h', -10); return { t: 'Bạn đi. Năm đầu thư về đều, năm thứ hai thưa dần, sang năm thứ ba thì thôi hẳn. Bạn vẫn viết thêm mấy lá, không biết gửi đi đâu. Mấy lá ấy bạn cất đi, không bao giờ đọc lại.', o: 'lost' }; }
+        X.add('h', 2); return { t: `Bạn nói lời từ biệt trước, khi người ấy chưa kịp nói gì. ${lov(a)} khóc, rồi gật đầu. Hai người đứng ở cổng rất lâu, không ai buông tay trước. Rồi bạn buông.`, o: 'let' };
       },
       auto: S => S.traits.social > .5 ? 'stay' : S.traits.bold > .6 ? 'go' : 'free' },
-    after: { wed: (S, X, a) => `Tóc ${lov(a)} bạc trước tóc bạn. Chiều nào hai người cũng ngồi trước hiên nhà.`,
-      wait: (S, X, a) => `Bạn về vào một sáng mưa. ${lov(a)} đứng ở cổng, như đã đứng ở đó suốt mấy năm.`,
-      lost: (S, X, a) => `Cổng nhà ${lov(a)} đã có người khác mở. Bạn đứng ở đầu ngõ một lúc rồi đi.`,
-      let: (S, X, a) => `Nghe nói ${lov(a)} sống yên ở một làng xa. Bạn thấy nhẹ lòng hơn bạn tưởng.` }
+    after: { wed: (S, X, a) => `Tóc ${lov(a)} bạc trước tóc bạn. Chiều nào hai người cũng ngồi trước hiên nhà, người tước lạt, người nhặt rau, chẳng cần nói gì nhiều. Thỉnh thoảng vẫn cãi nhau vì chuyện vặt, như hồi còn trẻ. Tới bữa tối thì lại làm lành.`,
+      wait: (S, X, a) => `Bạn về vào một sáng mưa, áo ướt sũng, tay ôm bó thư. ${lov(a)} đứng ở cổng, như đã đứng ở đó suốt mấy năm. Hai người không nói gì. Bạn bước vào nhà, thấy chỗ ngồi của mình vẫn để nguyên đó.`,
+      lost: (S, X, a) => `Cổng nhà ${lov(a)} đã có người khác mở. Bạn đứng ở đầu ngõ một lúc, nghe tiếng trẻ con cười vọng ra. Rồi bạn quay đi, không gõ cửa. Tối ấy bạn đốt mấy lá thư chưa gửi.`,
+      let: (S, X, a) => `Nghe nói ${lov(a)} sống yên ở một làng xa, có nhà, có vườn. Bạn thấy nhẹ lòng hơn bạn tưởng. Thỉnh thoảng đi chợ phiên, bạn vẫn dừng lại ở chỗ hai người gặp nhau năm nào.` }
   });
 
   // ── Bí mật cổ xưa ──
@@ -521,32 +547,34 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Bí mật cổ xưa', pitch: 'Tìm cho ra một bí mật mà thế giới đã quên.', axes: { tri: .8, phap: .6, du: .3 }, themes: ['treasure', 'ring', 'grave', 'learn'], aim: 'scholar',
     quest: () => 'Tìm ra bí mật cổ xưa', good: ['found', 'shared', 'sealed'], marks: { found: 'biet_bi_mat', shared: 'duoc_tin', sealed: 'buong_bo', curse: 'cay_dang' },
     sum: { found: () => 'mở được cánh cửa cổ, biết điều thế giới đã quên', shared: () => 'chép bí mật cổ xưa lại cho người đời sau', sealed: () => 'tìm ra bí mật rồi tự tay niêm phong nó lại', curse: () => 'chạm vào một bí mật không nên chạm, mang lời nguyền tới cuối đời' },
-    follow: ['Bạn chép thêm một dòng ký tự lạ vào cuốn sổ.', 'Đêm ấy bạn mơ thấy một cánh cửa đá không có tay nắm.', 'Bạn hỏi mọi lữ khách về những phế tích họ từng đi qua.'],
-    beat: { any: ['Bạn đọc tới khi nến tàn, rồi thắp cây khác.', 'Bạn đổi một tháng tiền công lấy một tấm da thuộc cũ có ký tự lạ.', 'Bạn so ký tự trên tấm bia ở {z} với cuốn sổ của mình.'] },
-    open: () => 'Trong một tấm da thuộc cũ bạn thấy một ký tự không ai trong vùng đọc được. Bạn chép nó lên tay áo. Từ hôm ấy bạn biết đời mình sẽ đi tìm nghĩa của nó.',
-    knot: { title: 'Lối đi tìm', body: () => 'Bí mật nằm đâu đó giữa sách cũ, phế tích và lời người chết.',
+    follow: ['Tối ấy bạn chép thêm một dòng ký tự lạ vào cuốn sổ.', 'Đêm ấy bạn mơ thấy một cánh cửa đá không có tay nắm, tỉnh dậy vẫn nhớ từng đường vân.', 'Gặp lữ khách nào bạn cũng hỏi về những phế tích họ từng đi qua.'],
+    beat: { any: ['Bạn đọc tới khi nến tàn, thắp cây khác, đọc tiếp. Sáp chảy thành từng vũng trên bàn. Gà gáy, bạn mới gấp sách.', 'Bạn đổi một tháng tiền công lấy một tấm da thuộc cũ có ký tự lạ. Người bán bảo nó chẳng đáng một bữa rượu. Bạn ôm nó về như ôm vàng.', 'Bạn tới {z}, so ký tự trên tấm bia đổ với cuốn sổ của mình, từng nét một. Hai ký tự khớp nhau. Cả buổi chiều bạn ngồi trên bia đá, không muốn về.'] },
+    open: (S, X, a) => `${lead(S, a)}Trong một tấm da thuộc cũ, bạn thấy một ký tự không ai trong vùng đọc được. Hỏi thầy đồ, hỏi thầy cúng, ai cũng lắc đầu. Bạn chép nó lên tay áo, đêm nằm cứ đưa ngón tay vẽ lại trong bóng tối. Từ hôm ấy bạn biết đời mình sẽ đi tìm nghĩa của nó.`,
+    knot: { title: 'Lối đi tìm', body: () => 'Bí mật nằm đâu đó giữa sách cũ, phế tích và lời người chết. Sách thì chậm, phế tích thì hay sập, còn người chết thì không nói không công. Bạn chọn lối nào?',
       choices: () => [{ k: 'books', label: 'Vùi đầu vào sách cũ', sub: 'Học viện, thư khố.' }, { k: 'ruins', label: 'Đi đào phế tích', sub: 'Nguy hiểm, nhiều manh mối.' }, { k: 'voices', label: 'Hỏi người chết', sub: 'Đường tối, nhanh.' }],
-      apply(S, X, ch) { if (ch === 'books') { X.add('sm', 5); G.trajBump(S, { tri: .5 }); return 'Bạn xin được chép sách thuê cho thư khố, đổi lại được đọc những cuốn không ai mượn.'; }
-        if (ch === 'ruins') { X.gain('Body', 3); G.trajBump(S, { du: .4 }); return 'Bạn mua một cái xẻng, một cuộn dây, rồi đi về phía những phế tích không ai dám tới.'; }
-        X.gain('Soul', 3); G.trajBump(S, { am: .5 }); return 'Bạn thắp nến giữa nghĩa địa cũ và gọi tên những người chết đã lâu.'; },
+      apply(S, X, ch) { if (ch === 'books') { X.add('sm', 5); G.trajBump(S, { tri: .5 }); return 'Bạn xin được chép sách thuê cho thư khố, đổi lại được đọc những cuốn không ai mượn. Thư khố lạnh, mùi giấy mốc, ông giữ kho điếc một tai. Bạn ngồi ở góc trong cùng, ngày chép, đêm đọc.'; }
+        if (ch === 'ruins') { X.gain('Body', 3); G.trajBump(S, { du: .4 }); return 'Bạn mua một cái xẻng, một cuộn dây, một bó đuốc, rồi đi về phía những phế tích không ai dám tới. Người làng tiễn bạn bằng ánh mắt như tiễn người sắp chết. Bạn thì háo hức như đi hội.'; }
+        X.gain('Soul', 3); G.trajBump(S, { am: .5 }); return 'Bạn thắp nến giữa nghĩa địa cũ và gọi tên những người chết đã lâu. Gió tắt nến hai lần. Lần thứ ba nến cháy, và có một tiếng gì đó đáp lại, rất khẽ. Bạn về nhà, tay lạnh ngắt tới sáng.'; },
       auto: S => S.traits.studious > .55 ? 'books' : S.traits.bold > .55 ? 'ruins' : G.trajShare(S, 'am') > .2 ? 'voices' : 'books' },
     trial: { base: (S, X, a) => .45 + (a.d.path === 'books' ? .1 : 0),
-      run: (S, X, a, ok) => ok ? (X.add('sm', 3), 'Bạn ghép được ba mảnh ký tự thành một câu: "Cửa mở cho người nhớ tên nó." Cả đêm bạn không ngủ.')
-        : (X.add('hl', -8), a.d.path === 'ruins' ? 'Hầm phế tích sập sau lưng bạn. Bạn bò ra được, cuốn sổ ghi chép nằm lại dưới đất đá.' : 'Mấy năm chép sách, đọc sách, bạn chỉ thêm được một dòng vào cuốn sổ, mà dòng ấy hóa ra đọc sai.') },
-    climax: { title: 'Trước cánh cửa đá', body: () => 'Cánh cửa đá không tay nắm đứng giữa phế tích. Bạn đã biết tên của nó.',
+      run: (S, X, a, ok) => ok ? (X.add('sm', 3), 'Bạn ghép được ba mảnh ký tự thành một câu: "Cửa mở cho người nhớ tên nó." Bạn đọc đi đọc lại, môi mấp máy. Cả đêm ấy bạn không ngủ, ngồi nhìn ra trời sao.')
+        : (X.add('hl', -8), a.d.path === 'ruins' ? 'Hầm phế tích sập sau lưng bạn, đất đá đổ ầm ầm. Bạn bò ra được bằng hai khuỷu tay, ho ra cả bụi. Cuốn sổ ghi chép mấy năm trời nằm lại dưới đó. Bạn ngồi trên đống đá rất lâu.'
+          : a.d.path === 'voices' ? 'Đêm nào bạn cũng ra nghĩa địa, mà người chết không đáp nữa. Có một đêm bạn nghe tiếng cười sau lưng, quay lại không thấy ai. Bạn chạy một mạch về nhà, đánh rơi cuốn sổ giữa đường.'
+          : 'Mấy năm chép sách, đọc sách, bạn chỉ thêm được một dòng vào cuốn sổ. Một đêm đọc lại, bạn nhận ra dòng ấy đọc sai ngay từ chữ đầu. Bạn gạch nó đi, rồi ngồi im rất lâu.') },
+    climax: { title: 'Trước cánh cửa đá', body: (S, X, a) => `Cánh cửa đá không tay nắm đứng giữa phế tích, rêu phủ kín chân. ${a.d.ok ? 'Bạn đã biết tên của nó, cái tên ghép từ ba mảnh ký tự năm nào.' : 'Bạn đã biết tên của nó, dù phải trả bằng mấy năm trời mò mẫm.'} Gió lùa qua khe cửa nghe như có ai thở bên trong.`,
       choices: (S, X, a) => [{ k: 'open', label: 'Gọi tên, mở cửa', sub: `Chừng ${Math.round(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% không có gì trả giá.` },
         { k: 'share', label: 'Chép lại, gửi về học viện', sub: 'Để người sau mở.' }, { k: 'seal', label: 'Niêm phong lại', sub: 'Có những cửa nên đóng.' }],
       apply(S, X, ch, a) {
-        if (ch === 'open') { if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.gain('Arcane', 5); S.fame += 5; return { t: 'Bạn gọi tên cánh cửa. Đá dịch ra không một tiếng động.', o: 'found' }; }
-          X.cond('curse'); X.add('hl', -10); return { t: 'Bạn gọi tên cánh cửa. Một luồng gió lạnh đi qua người bạn, rồi cánh cửa đóng lại.', o: 'curse' }; }
-        if (ch === 'share') { S.fame += 3; X.add('so', 3); return { t: 'Bạn chép lại tất cả, đóng thành sách, gửi về học viện kinh đô.', o: 'shared' }; }
-        X.add('h', 4); return { t: 'Bạn lấp đất lên lối vào, xóa hết dấu chân, rồi đốt trang sổ cuối.', o: 'sealed' };
+        if (ch === 'open') { if (X.chance(G.clamp(.45 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.gain('Arcane', 5); S.fame += 5; return { t: 'Bạn gọi tên cánh cửa, giọng run run. Đá dịch ra không một tiếng động, như đã chờ bạn từ lâu. Bên trong có ánh sáng, không phải ánh đuốc. Bạn bước vào.', o: 'found' }; }
+          X.cond('curse'); X.add('hl', -10); return { t: 'Bạn gọi tên cánh cửa. Một luồng gió lạnh đi xuyên qua người bạn, lạnh tới tận xương. Rồi cánh cửa đóng sập, chưa kịp hé quá một gang tay. Từ lúc ấy, bạn thấy có thứ gì đó đi theo mình.', o: 'curse' }; }
+        if (ch === 'share') { S.fame += 3; X.add('so', 3); return { t: 'Bạn chép lại tất cả, từng ký tự, từng hình vẽ, đóng thành sách. Bạn gửi về học viện kinh đô theo chuyến ngựa thư nhanh nhất. Cánh cửa đá bạn không mở. Để người sau.', o: 'shared' }; }
+        X.add('h', 4); return { t: 'Bạn lấp đất lên lối vào, xóa hết dấu chân, trồng lên đó một bụi gai. Đêm ấy bạn đốt trang sổ cuối, nhìn ngọn lửa liếm qua cái tên. Có những cửa nên đóng. Bạn tin thế, dù trong lòng vẫn tiếc.', o: 'sealed' };
       },
       auto: S => S.traits.bold > .55 ? 'open' : S.traits.social > .5 ? 'share' : 'seal' },
-    after: { found: () => 'Bạn không kể với ai những gì thấy sau cánh cửa. Nhưng từ hôm ấy bạn nhìn sao trời khác đi.',
-      shared: () => 'Ở học viện, học trò chép lại sổ của bạn; tên bạn đứng ở trang đầu.',
-      sealed: () => 'Chỉ mình bạn biết chỗ cánh cửa. Bạn mang cái tên của nó theo xuống mồ.',
-      curse: () => 'Đêm nào bạn cũng nghe tiếng gõ sau lưng. Lời nguyền đi theo bạn tới cuối đời.' }
+    after: { found: () => 'Bạn không kể với ai những gì thấy sau cánh cửa, kể cả người thân nhất. Nhưng từ hôm ấy bạn nhìn sao trời khác đi, hay ngồi ngoài hiên tới khuya. Có người hỏi bạn nhìn gì. Bạn chỉ cười.',
+      shared: () => 'Ở học viện, học trò chép lại sổ của bạn, lớp này sang lớp khác; tên bạn đứng ở trang đầu. Có cậu học trò lặn lội về tận làng tìm bạn, mang theo một câu hỏi mà chính bạn cũng chưa trả lời được. Hai người ngồi bàn tới sáng.',
+      sealed: () => 'Chỉ mình bạn biết chỗ cánh cửa. Bụi gai giờ đã mọc kín lối vào. Cái tên của nó, bạn sẽ mang theo xuống mồ, không viết ra, không nói với ai.',
+      curse: () => 'Đêm nào bạn cũng nghe tiếng gõ sau lưng, ba tiếng một, đều đặn. Quay lại thì không có ai. Lời nguyền đi theo bạn tới cuối đời, như cái bóng không chịu rời chân.' }
   });
 
   // ── Chuộc lỗi ──
@@ -554,32 +582,32 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Chuộc lỗi', pitch: 'Trả lại cho đời những gì mình đã lấy.', axes: { dao: .6, gia: .2 }, themes: ['faith'], aim: null, gate: true,
     quest: () => 'Chuộc lại lỗi xưa', good: ['redeemed', 'confessed', 'punished'], marks: { redeemed: 'da_chuoc', confessed: 'da_chuoc', punished: 'giu_loi', hidden: 'cay_dang' },
     sum: { redeemed: () => 'trả lại cho đời những gì mình đã lấy', confessed: () => 'đứng trước mọi người nhận lỗi và được tha', punished: () => 'nhận lỗi và chịu phạt tới nơi tới chốn', hidden: () => 'giấu kín lỗi xưa tới cuối đời' },
-    follow: ['Bạn đi qua chỗ cũ, rồi rẽ sang đường khác.', 'Bạn bỏ thêm mấy đồng vào hòm công đức mà không ai thấy.', 'Đêm ấy bạn lại mơ thấy gương mặt ấy.'],
-    beat: { any: ['Bạn giúp một nhà góa sửa lại mái mà không lấy công.', 'Bạn chia nửa bữa cơm cho một người ăn xin ở cổng làng.', 'Bạn thắp hương ở miếu làng, đứng lâu hơn mọi khi.'] },
-    open: (S, X, a) => `${a.d.why ? 'Bạn vẫn nhớ: ' + a.d.why.charAt(0).toLowerCase() + a.d.why.slice(1) + ' ' : ''}Đêm ấy bạn không ngủ được. Có những thứ không thể để yên mãi.`,
-    knot: { title: 'Cách chuộc lỗi', body: () => 'Lỗi cũ không tự mất đi. Bạn trả nó bằng cách nào?',
+    follow: ['Bạn đi qua chỗ cũ, rồi rẽ sang đường khác, dù đường ấy xa hơn.', 'Bạn bỏ thêm mấy đồng vào hòm công đức, lúc không có ai nhìn.', 'Đêm ấy bạn lại mơ thấy gương mặt ấy, tỉnh dậy ngồi tới sáng.'],
+    beat: { any: ['Bạn giúp một nhà góa sửa lại mái, trèo lên trèo xuống cả ngày, không lấy công. Bà chủ nhà mời ở lại ăn cơm, bạn từ chối, đi vội như sợ bị cảm ơn.', 'Ở cổng làng có người ăn xin, bạn chia cho ông nửa bữa cơm mang theo. Ông nhìn bạn, hỏi có phải bạn nợ ông gì không. Bạn lắc đầu, mà lòng thì giật thót.', 'Bạn thắp hương ở miếu làng, đứng lâu hơn mọi khi. Khói hương cay mắt. Bạn không khấn gì, chỉ đứng đó.'] },
+    open: (S, X, a) => `${lead(S, a)}Đêm ấy bạn không ngủ được, nằm nghe tiếng mưa trên mái. Gương mặt cũ cứ hiện lên mỗi lần nhắm mắt. Có những thứ không thể để yên mãi. Sáng ra, bạn biết mình phải làm gì đó.`,
+    knot: { title: 'Cách chuộc lỗi', body: () => 'Lỗi cũ không tự mất đi, chỉ nằm im mà chờ. Có người trả bằng việc thiện, có người tìm tới tận nhà người mình đã làm hại, có người vào đền quỳ cho tới khi lòng yên. Bạn trả bằng cách nào?',
       choices: () => [{ k: 'help', label: 'Làm việc thiện', sub: 'Từng việc nhỏ một.' }, { k: 'seek', label: 'Tìm người mình đã làm hại', sub: 'Gặp lại họ, hoặc người nhà họ.' }, { k: 'temple', label: 'Vào đền sám hối', sub: 'Cần một nơi để quỳ.' }],
-      apply(S, X, ch, a) { if (ch === 'help') { X.add('so', 4); X.money(-Math.round(med(S, X) * .3)); return 'Bạn bắt đầu bằng việc nhỏ: gánh nước cho bà cụ cuối xóm, mỗi sáng.'; }
-        if (ch === 'seek') { const p = G.castAdd(S, X, { role: 'on', how: 'người bạn từng làm hại', bond: 5 }); a.d.mate = p.id; return `Bạn hỏi thăm khắp vùng, rồi tìm ra nhà ${first(p.name)}. Bạn đứng ở cổng ba lần mới dám gõ cửa.`; }
-        X.gain('Spirit', 3); G.trajBump(S, { dao: .5 }); return 'Bạn quỳ trong đền từ tối tới sáng. Vị tư tế không hỏi gì, chỉ châm thêm dầu vào đèn.'; },
+      apply(S, X, ch, a) { if (ch === 'help') { X.add('so', 4); X.money(-Math.round(med(S, X) * .3)); return 'Bạn bắt đầu bằng việc nhỏ: mỗi sáng gánh nước cho bà cụ cuối xóm. Đôi thùng nặng, vai bạn hằn hai vệt đỏ. Bà cụ không biết chuyện cũ của bạn. Có lẽ vì thế mà bạn chọn bà.'; }
+        if (ch === 'seek') { const p = G.castAdd(S, X, { role: 'on', how: 'người bạn từng làm hại', bond: 5 }); a.d.mate = p.id; return `Bạn hỏi thăm khắp vùng, đi mất mấy tháng, rồi tìm ra nhà ${first(p.name)}. Bạn đứng ở cổng ba lần mới dám gõ cửa. Lần đầu quay về. Lần thứ hai đứng tới tối. Lần thứ ba, cửa mở.`; }
+        X.gain('Spirit', 3); G.trajBump(S, { dao: .5 }); return 'Bạn quỳ trong đền từ tối tới sáng, gối tê dại, lưng mỏi rã. Vị tư tế không hỏi gì, chỉ châm thêm dầu mỗi khi lửa đèn nhỏ lại. Gần sáng ông đặt một bát nước bên cạnh bạn rồi đi.'; },
       auto: S => S.traits.pious > .6 ? 'temple' : S.traits.social > .5 ? 'seek' : 'help' },
     trial: { base: (S, X, a) => .5 + (a.d.path === 'seek' ? .05 : 0),
-      run: (S, X, a, ok) => ok ? (X.add('h', 5), a.d.path === 'seek' ? 'Người ấy nghe bạn nói hết, rồi rót cho bạn một chén nước. Không ai nói chữ tha, nhưng bạn thấy nhẹ hơn.' : 'Người trong làng bắt đầu chào bạn trước.')
-        : (X.add('h', -8), 'Có người nhắc lại chuyện cũ của bạn giữa chợ. Ai cũng nghe.') },
-    climax: { title: 'Ngày nói ra', body: () => 'Có một người biết hết chuyện cũ, và người đó sắp nói.',
+      run: (S, X, a, ok) => ok ? (X.add('h', 5), a.d.path === 'seek' ? 'Người ấy nghe bạn nói hết, không ngắt lời. Rồi đứng dậy rót cho bạn một chén nước. Không ai nói chữ tha. Nhưng lúc ra về, bạn thấy bước chân mình nhẹ hơn lúc tới.' : 'Người trong làng bắt đầu chào bạn trước, có người còn gọi bạn vào uống nước. Bạn chưa quen được với chuyện ấy. Lần nào bạn cũng cúi đầu chào lại thật thấp.')
+        : (X.add('h', -8), 'Giữa phiên chợ đông, có người nhắc lại chuyện cũ của bạn, nói to, rõ từng chữ. Ai cũng nghe. Bạn đứng đó, tay cầm mớ rau, không biết nên đặt xuống hay mang đi. Hôm ấy bạn về sớm.') },
+    climax: { title: 'Ngày nói ra', body: () => 'Có một người biết hết chuyện cũ, và người đó sắp nói ra. Tin ấy tới tai bạn qua bà hàng nước đầu làng. Đêm ấy bạn ngồi trước cửa nhà, nghĩ tới tất cả những việc mình đã làm suốt mấy năm qua.',
       choices: (S, X, a) => [{ k: 'confess', label: 'Tự đứng ra nhận', sub: `Chừng ${Math.round(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% được tha.` },
         { k: 'give', label: 'Đem của cải trả lại', sub: 'Mất chừng nửa gia sản.' }, { k: 'hide', label: 'Giấu tiếp', sub: 'Bịt miệng người đó.' }],
       apply(S, X, ch, a) {
-        if (ch === 'confess') { if (X.chance(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.add('h', 8); return { t: 'Bạn đứng giữa sân đình kể hết. Im lặng rất lâu, rồi trưởng làng nói: đủ rồi.', o: 'confessed' }; }
-          X.money(-Math.round(med(S, X))); S.fame -= 2; return { t: 'Bạn đứng giữa sân đình kể hết. Người ta bắt bạn đền, và bạn đền.', o: 'punished' }; }
-        if (ch === 'give') { X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', 6); return { t: 'Bạn chia nửa gia sản thành từng túi nhỏ, gửi tới từng nhà, không kèm tên.', o: 'redeemed' }; }
-        X.money(-Math.round(med(S, X))); X.add('h', -6); return { t: 'Bạn gửi một túi tiền. Người kia im lặng, và bạn biết mình sẽ phải gửi thêm.', o: 'hidden' };
+        if (ch === 'confess') { if (X.chance(G.clamp(.5 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { X.add('h', 8); return { t: 'Bạn đứng giữa sân đình kể hết, không giấu một chi tiết nào. Im lặng rất lâu, chỉ nghe tiếng quạ trên cây đa. Rồi trưởng làng nói: đủ rồi. Người ta lần lượt đứng dậy ra về, có người đi ngang còn đặt tay lên vai bạn.', o: 'confessed' }; }
+          X.money(-Math.round(med(S, X))); S.fame -= 2; return { t: 'Bạn đứng giữa sân đình kể hết. Người ta bắt bạn đền, từng đồng một, và bạn đền. Không ai tha, nhưng cũng không ai đuổi. Đêm ấy, lần đầu sau nhiều năm, bạn ngủ được.', o: 'punished' }; }
+        if (ch === 'give') { X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', 6); return { t: 'Bạn chia nửa gia sản thành từng túi nhỏ, buộc dây gai. Đêm đêm bạn đi gửi tới từng nhà, đặt trước cửa, không kèm tên. Sáng ra cả làng xôn xao. Bạn ngồi nhà nghe, không nói gì.', o: 'redeemed' }; }
+        X.money(-Math.round(med(S, X))); X.add('h', -6); return { t: 'Bạn gửi một túi tiền tới người kia, kèm một lời nhắn ngắn. Người ấy im lặng. Và bạn biết, từ hôm nay, mình sẽ còn phải gửi thêm nhiều lần nữa.', o: 'hidden' };
       },
       auto: (S, X) => S.traits.pious > .55 ? 'confess' : S.gold > med(S, X) * 2 ? 'give' : S.traits.bold > .6 ? 'hide' : 'confess' },
-    after: { redeemed: () => 'Bạn sống những năm cuối trong căn nhà nhỏ hơn. Ngủ ngon hơn.',
-      confessed: () => 'Người ta vẫn nhớ chuyện cũ, nhưng giờ họ kể kèm chuyện bạn đã đứng ra nhận.',
-      punished: () => 'Bạn đền đủ tới đồng cuối. Hôm trả xong, có người mời bạn một chén rượu.',
-      hidden: () => 'Bí mật chết cùng người biết nó. Bạn thì vẫn còn sống với nó.' }
+    after: { redeemed: () => 'Bạn sống những năm cuối trong căn nhà nhỏ hơn, ăn uống đạm bạc. Đêm nào cũng ngủ ngon. Gương mặt cũ thôi hiện về trong mơ.',
+      confessed: () => 'Người ta vẫn nhớ chuyện cũ. Nhưng giờ họ kể kèm thêm một đoạn: ngày bạn đứng giữa sân đình nhận hết. Nghe nói đoạn ấy mỗi lần kể lại một dài hơn.',
+      punished: () => 'Bạn đền đủ tới đồng cuối. Hôm trả xong, có người mời bạn một chén rượu ở quán đầu làng. Chén rượu cay mà ấm. Lâu lắm rồi mới có người ngồi chung bàn với bạn.',
+      hidden: () => 'Bí mật chết cùng người biết nó, vào một mùa đông nọ. Bạn đi đưa tang, đứng ở hàng cuối. Người ấy không còn đòi gì nữa. Còn bạn thì vẫn sống với nó, mỗi ngày.' }
   });
 
   // ── Tham vọng ──
@@ -587,32 +615,32 @@ window.LifeSim = window.LifeSim || {};
     nameVi: 'Tham vọng', pitch: 'Leo lên trên đầu mọi người, bằng mọi giá.', axes: { am: 1, quyen: .6 }, themes: ['dark'], aim: 'power', gate: true,
     quest: () => 'Leo lên trên đầu mọi người', good: ['throne', 'back'], marks: { throne: 'ba_chu', fall: 'tay_trang', back: 'buong_bo' },
     sum: { throne: () => 'đứng trên đầu cả vùng, người ta sợ hơn là nể', fall: () => 'leo cao rồi ngã, mất hết những gì giành được', back: () => 'dừng lại trước bước cuối, quay về làm người thường' },
-    follow: ['Bạn ghi tên một người vào cuốn sổ nhỏ, cạnh mấy cái tên đã gạch.', 'Bạn mỉm cười với một kẻ bạn định hạ.', 'Đêm ấy bạn đếm lại những người còn đứng trên mình.'],
-    beat: { any: ['Bạn mua chuộc thêm một tay chân trong phủ.', 'Bạn để lộ một tin giả, rồi ngồi xem ai cắn câu.', 'Có người biến mất khỏi làng. Bạn không hỏi.'] },
-    open: () => 'Bạn nhìn kẻ đứng đầu vùng đi ngang qua, ngựa cao, áo đẹp. Bạn nghĩ: chỗ ấy không phải trời cho ai. Ai giành được thì ngồi.',
-    knot: { title: 'Bậc thang đầu tiên', body: () => 'Muốn lên cao phải có thứ người khác cần, hoặc sợ.',
+    follow: ['Tối ấy bạn ghi thêm một cái tên vào cuốn sổ nhỏ, ngay dưới mấy cái tên đã gạch.', 'Bạn mỉm cười với một kẻ bạn định hạ, rót rượu cho hắn đầy chén.', 'Đêm ấy bạn đếm lại những người còn đứng trên mình. Mỗi năm một ít đi.'],
+    beat: { any: ['Bạn mua chuộc thêm một tay chân trong phủ, chỉ tốn một bữa rượu và một lời hứa. Người ta rẻ hơn bạn tưởng.', 'Bạn để lộ một tin giả qua miệng bà hàng nước, rồi ngồi xem ai cắn câu. Tới tối đã biết. Bạn ghi tên kẻ ấy vào sổ.', 'Có người biến mất khỏi làng, nhà để trống, cửa không cài. Người ta xì xào. Bạn không hỏi.'] },
+    open: (S, X, a) => `${lead(S, a)}Bạn đứng bên đường nhìn kẻ đứng đầu vùng đi qua, ngựa cao, áo gấm, lính đi hai bên. Người ta cúi rạp xuống, bạn cũng cúi. Nhưng lúc ngẩng lên bạn đã nghĩ: chỗ ấy không phải trời cho ai. Ai giành được thì ngồi.`,
+    knot: { title: 'Bậc thang đầu tiên', body: () => 'Muốn lên cao phải có thứ người khác cần, hoặc thứ người khác sợ. Tiền mua được người, nỗi sợ giữ được người, còn một kẻ quyền thế thì cho bạn cái thang. Bậc đầu tiên bao giờ cũng khó bước nhất.',
       choices: () => [{ k: 'gold', label: 'Gom tiền, mua người', sub: 'Cần vốn.' }, { k: 'fear', label: 'Gieo sợ hãi', sub: 'Tay chân, dao găm.' }, { k: 'patron', label: 'Bám vào một kẻ quyền thế', sub: 'Rồi thay chỗ hắn.' }],
-      apply(S, X, ch) { if (ch === 'gold') { X.money(-Math.round(med(S, X) * .5)); G.trajBump(S, { thuong: .3, quyen: .3 }); return 'Bạn cho vay lãi nặng, rồi đòi nợ bằng chức, bằng lời hứa.'; }
-        if (ch === 'fear') { X.gain('Stealth', 4); G.trajBump(S, { am: .5 }); return 'Bạn nuôi mấy tay chân không hỏi nhiều. Người trong vùng bắt đầu nói nhỏ khi bạn đi qua.'; }
-        X.add('so', 4); G.trajBump(S, { quyen: .5 }); return 'Bạn vào làm việc cho một kẻ quyền thế, việc gì cũng nhận, chuyện gì cũng nhớ.'; },
+      apply(S, X, ch) { if (ch === 'gold') { X.money(-Math.round(med(S, X) * .5)); G.trajBump(S, { thuong: .3, quyen: .3 }); return 'Bạn cho vay lãi nặng, ai cần gấp cũng cho, không hỏi nhiều. Tới hạn, bạn không đòi tiền. Bạn đòi bằng chức, bằng lời hứa, bằng một chữ ký.'; }
+        if (ch === 'fear') { X.gain('Stealth', 4); G.trajBump(S, { am: .5 }); return 'Bạn nuôi mấy tay chân không hỏi nhiều, cho ăn no, cho dao tốt. Chẳng bao lâu, người trong vùng bắt đầu nói nhỏ khi bạn đi qua. Bạn thích cái im lặng ấy hơn bạn tưởng.'; }
+        X.add('so', 4); G.trajBump(S, { quyen: .5 }); return 'Bạn vào làm việc cho một kẻ quyền thế, việc gì cũng nhận, chuyện gì cũng nhớ. Hắn sai bạn như sai một con chó trung thành. Bạn cúi đầu vâng dạ, và ghi chép tất cả.'; },
       auto: (S, X) => S.traits.social > .55 ? 'patron' : S.gold > med(S, X) * 2 ? 'gold' : 'fear' },
     trial: { base: (S, X, a) => .45 + Math.min(.2, S.fame / 200) + (a.d.path === 'patron' ? .05 : 0),
-      run: (S, X, a, ok) => ok ? (X.money(Math.round(med(S, X) * .8)), 'Kẻ đứng trên bạn ngã ngựa vì một lá thư không ai biết ai viết. Bạn ngồi vào chỗ của hắn.')
-        : (X.add('hl', -8), 'Một tay chân của bạn khai ra hết. Bạn phải đốt nhà kho trong đêm để xóa dấu.') },
-    climax: { title: 'Bước cuối', body: () => 'Chỉ còn một người đứng trên bạn trong vùng.',
+      run: (S, X, a, ok) => ok ? (X.money(Math.round(med(S, X) * .8)), 'Kẻ đứng trên bạn ngã ngựa vì một lá thư không ai biết ai viết. Hắn bị giải đi giữa buổi chợ, mặt cắt không còn giọt máu. Ngay tuần sau, bạn ngồi vào chỗ của hắn. Nét chữ trong lá thư ấy, tất nhiên, không phải của bạn.')
+        : (X.add('hl', -8), 'Một tay chân của bạn bị bắt, khai ra hết. Bạn phải đốt nhà kho trong đêm để xóa dấu, nhìn sổ sách cháy thành tro. Lửa táp vào mặt nóng rát. Từ đêm ấy bạn ngủ với con dao dưới gối.') },
+    climax: { title: 'Bước cuối', body: () => 'Chỉ còn một người đứng trên bạn trong vùng. Hắn già rồi, nhưng chưa lẩm cẩm. Bạn biết hắn cũng đang nhìn bạn, như bạn đang nhìn hắn.',
       choices: (S, X, a) => [{ k: 'seize', label: 'Lật đổ hắn', sub: `Chừng ${Math.round(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9) * 100)}% thành.` },
         { k: 'deal', label: 'Ép hắn nhường ghế', sub: 'Chậm hơn, ít máu hơn.' }, { k: 'back', label: 'Dừng lại', sub: 'Giữ những gì đã có.' }],
       apply(S, X, ch, a) {
-        if (ch === 'seize') { if (X.chance(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { S.fame += 5; X.money(Math.round(med(S, X) * 3)); return { t: 'Một đêm, phủ đổi chủ. Sáng ra người ta thấy bạn ngồi ở chiếc ghế cao nhất.', o: 'throne' }; }
-          X.money(-Math.round(Math.max(0, S.gold) * .6)); X.add('hl', -15); return { t: 'Hắn biết trước. Bạn chạy thoát trong đêm, bỏ lại tất cả.', o: 'fall' }; }
-        if (ch === 'deal') { if (X.chance(G.clamp(.6 + pb(a), .1, .9))) { S.fame += 3; return { t: 'Bạn đặt lên bàn những lá thư hắn từng viết. Hắn đọc, rồi đứng dậy nhường ghế.', o: 'throne' }; }
-          X.money(-Math.round(Math.max(0, S.gold) * .4)); return { t: 'Hắn cười, đốt mấy lá thư ngay trước mặt bạn, rồi gọi lính.', o: 'fall' }; }
-        X.add('h', 3); return { t: 'Bạn đứng trước cửa phủ rất lâu, rồi quay về.', o: 'back' };
+        if (ch === 'seize') { if (X.chance(G.clamp(.4 + (a.d.ok ? .2 : 0) + pb(a), .1, .9))) { S.fame += 5; X.money(Math.round(med(S, X) * 3)); return { t: 'Một đêm không trăng, phủ đổi chủ. Không có tiếng la, chỉ có tiếng cửa đóng. Sáng ra người ta thấy bạn ngồi ở chiếc ghế cao nhất, áo còn mùi khói đuốc.', o: 'throne' }; }
+          X.money(-Math.round(Math.max(0, S.gold) * .6)); X.add('hl', -15); return { t: 'Hắn biết trước. Lính phục sẵn trong phủ, cửa vừa mở đã có tên bay ra. Bạn chạy thoát trong đêm, bỏ lại tất cả: nhà, tiền, cuốn sổ ghi tên.', o: 'fall' }; }
+        if (ch === 'deal') { if (X.chance(G.clamp(.6 + pb(a), .1, .9))) { S.fame += 3; return { t: 'Bạn đặt lên bàn những lá thư hắn từng viết, từng lá một, chậm rãi. Hắn đọc, mặt không đổi sắc. Rồi hắn đứng dậy nhường ghế, đi ra cửa mà không ngoái lại.', o: 'throne' }; }
+          X.money(-Math.round(Math.max(0, S.gold) * .4)); return { t: 'Hắn đọc mấy lá thư, rồi cười. Hắn đốt chúng ngay trước mặt bạn, từng lá một, chậm rãi y như bạn vừa làm. Rồi hắn gọi lính.', o: 'fall' }; }
+        X.add('h', 3); return { t: 'Bạn đứng trước cửa phủ rất lâu, tay đặt lên chuôi dao. Đèn trong phủ tắt dần từng ngọn. Rồi bạn quay về, đi bộ suốt quãng đường, không gọi xe.', o: 'back' };
       },
       auto: S => S.traits.bold > .6 ? 'seize' : S.traits.social > .55 ? 'deal' : 'back' },
-    after: { throne: () => 'Người ta cúi đầu khi bạn đi qua. Không ai dám nhìn bạn quá lâu, kể cả con cháu bạn.',
-      fall: () => 'Bạn mất hết trong một mùa. Những kẻ từng cúi đầu giờ quay mặt đi.',
-      back: () => 'Bạn đốt cuốn sổ ghi tên. Đêm ấy bạn ngủ một giấc dài như hồi còn nhỏ.' }
+    after: { throne: () => 'Người ta cúi đầu khi bạn đi qua. Không ai dám nhìn bạn quá lâu, kể cả con cháu bạn. Bữa cơm nào cũng đầy thức ăn mà không có tiếng nói. Có những đêm bạn giật mình, tưởng nghe tiếng cửa đóng.',
+      fall: () => 'Bạn mất hết trong một mùa, nhanh hơn lúc giành được. Những kẻ từng cúi đầu giờ quay mặt đi, có kẻ còn nhổ nước bọt theo. Đêm đêm, bạn vẫn nhẩm lại những cái tên ngày trước, như một thói quen không bỏ được.',
+      back: () => 'Bạn đốt cuốn sổ ghi tên, từng trang một, ngồi xem lửa liếm qua những cái tên đã gạch. Đêm ấy bạn ngủ một giấc dài như hồi còn nhỏ. Sáng dậy, nắng đã lên cao, bạn ra chợ mua rau như mọi người.' }
   });
 
   // ── Kết theo cả đường đi (người dùng chốt 17/10/2026): ngoài kết của cao trào, mỗi mạch chính có kết chỉ mở ra khi đi đúng
@@ -620,33 +648,33 @@ window.LifeSim = window.LifeSim || {};
   const PATH_END = {
     m_avenge: [{ o: 'band_win', when: (a, o) => o === 'win' && a.d.path === 'band', good: true, mark: 'nguoi_giu_lang',
       sum: d => `cùng một toán thợ săn trả nợ máu cho ${d.kin || 'làng'}, rồi giữ toán ấy lại làm phường săn giữ làng`,
-      after: (S, X, a) => `Toán người năm ấy không giải tán. Họ thành phường săn của làng, mỗi năm mài giáo một lần ở mộ ${a.d.kin || 'những người đã mất'}.` }],
+      after: (S, X, a) => { const m = mateOf(S, a); return `Toán người năm ấy không giải tán. Họ thành phường săn của làng, đứa trai nào lớn lên cũng xin được theo.${m ? ` ${m} giữ cái tù và của phường, sáng nào cũng thổi một hồi.` : ''} Mỗi năm vào đúng ngày ấy, cả phường ra mộ ${a.d.kin || 'những người đã mất'} mài giáo, rồi ngồi uống với nhau tới khuya.`; } }],
     m_rise: [{ o: 'workshop', when: (a, o) => (o === 'rich' || o === 'steady') && a.d.path === 'skill' && a.d.ok, good: true, mark: 'danh_tho',
-      sum: () => 'thoát nghèo nhờ một cái nghề, mở xưởng riêng', after: () => 'Cái xưởng nhỏ của bạn nhận ba đứa học việc. Đứa nào cũng con nhà nghèo, như bạn năm xưa.' }],
+      sum: () => 'thoát nghèo nhờ một cái nghề, mở xưởng riêng', after: () => 'Cái xưởng nhỏ của bạn treo tấm biển gỗ, chữ do chính tay bạn khắc. Bạn nhận ba đứa học việc, đứa nào cũng con nhà nghèo, như bạn năm xưa. Bạn không gõ thước vào tay chúng. Có lẽ đó là chỗ duy nhất bạn làm khác thầy mình.' }],
     m_power: [{ o: 'self_made', when: (a, o) => o === 'top' && a.d.path === 'alone' && a.d.ok, good: true, mark: 'vuot_doi_thu',
-      sum: () => 'tự luyện một mình, không thầy, mà vươn tới đỉnh', after: () => 'Người ta hỏi thầy bạn là ai. Bạn chỉ ra bãi đất trống sau nhà.' }],
+      sum: () => 'tự luyện một mình, không thầy, mà vươn tới đỉnh', after: () => 'Người ta hỏi thầy bạn là ai. Bạn chỉ lên ngọn núi có túp lều cũ, giờ mái tranh đã sập. Họ tưởng bạn đùa. Bạn không giải thích thêm.' }],
     m_craft: [{ o: 'new_style', when: (a, o) => o === 'work' && a.d.path === 'new' && a.d.ok, good: true, mark: 'dong_moi',
-      sum: () => 'mở ra một lối làm mới mà thợ đời sau gọi theo tên mình', after: () => 'Thợ trẻ khắp vùng làm theo lối của bạn, gọi nó bằng tên bạn. Có người làm hay hơn bạn; bạn mừng.' }],
+      sum: () => 'mở ra một lối làm mới mà thợ đời sau gọi theo tên mình', after: () => 'Thợ trẻ khắp vùng làm theo lối của bạn, gọi nó bằng tên bạn. Lối ấy bắt đầu từ một tờ giấy trắng để cả tuần không vẽ nổi một nét. Có người làm hay hơn bạn. Bạn mừng, mừng thật, dù đêm ấy vẫn lôi đồ nghề ra làm lại một món cũ.' }],
     m_lead: [{ o: 'feared', when: (a, o) => o === 'chosen' && a.d.path === 'fear', good: false, mark: 'ba_chu',
-      sum: () => 'được bầu làm người đứng đầu vì người ta sợ', after: () => 'Hũ đậu đầy, nhưng không ai nhìn vào mắt bạn lúc bỏ hạt. Bạn ngồi ghế trên, ăn cơm một mình.' },
+      sum: () => 'được bầu làm người đứng đầu vì người ta sợ', after: () => 'Hũ đậu đầy, nhưng không ai nhìn vào mắt bạn lúc bỏ hạt. Bạn ngồi ghế trên nhiều năm. Lời bạn nói ra không ai cãi, mà cũng không ai đáp. Tối nào bạn cũng ăn cơm một mình.' },
       { o: 'elder', when: (a, o) => o === 'step' && a.d.path === 'serve' && a.d.ok, good: true, mark: 'nguoi_dung_dau',
-      sum: () => 'không ngồi ghế trưởng mà làng vẫn tìm tới mình', after: () => 'Người khác ngồi ghế trưởng làng, nhưng có chuyện khó người ta vẫn gõ cửa nhà bạn trước.' }],
+      sum: () => 'không ngồi ghế trưởng mà làng vẫn tìm tới mình', after: () => 'Người khác ngồi ghế trưởng làng. Nhưng có chuyện khó, người ta vẫn gõ cửa nhà bạn trước, dù đêm hay ngày. Con đê bạn rủ cả làng đắp năm nào vẫn đứng đó. Bạn thấy thế là đủ.' }],
     m_faith: [{ o: 'own_way', when: (a, o) => o === 'left' && a.d.path === 'seek', good: true, mark: 'buong_bo',
-      sum: () => 'bỏ đạo cũ, tự tìm ra lời giải của riêng mình', after: () => 'Bạn không vào đền nữa. Sáng nào bạn cũng ngồi trước hiên, nhìn mặt trời lên, và thấy đủ.' }],
+      sum: () => 'bỏ đạo cũ, tự tìm ra lời giải của riêng mình', after: () => 'Bạn không vào đền nữa. Sáng nào bạn cũng ngồi trước hiên, nhìn mặt trời lên qua rặng tre. Mấy cuốn kinh của đủ các đạo vẫn xếp trên kệ, bạn không đọc lại. Bạn thấy đủ rồi.' }],
     m_road: [{ o: 'trader', when: (a, o) => o === 'settle' && a.d.path === 'caravan' && a.d.ok, good: true, mark: 'duoc_tin',
-      sum: () => 'theo đoàn buôn đi xa rồi dừng ở một thành buôn, thành người nối hai miền', after: () => 'Bạn mở một quán trọ ở ngã ba đường buôn. Đoàn nào đi qua cũng ghé, mang tin từ cả hai đầu đất nước.' }],
+      sum: () => 'theo đoàn buôn đi xa rồi dừng ở một thành buôn, thành người nối hai miền', after: () => 'Bạn mở một quán trọ ở ngã ba đường buôn, ngay chỗ đoàn năm nào hay dừng nghỉ. Đoàn nào đi qua cũng ghé, mang tin từ cả hai đầu đất nước. Giá muối ở miền biển bạn biết trước cả quan thu thuế. Đêm đêm, tiếng lục lạc lừa lại vang ngoài sân.' }],
     m_house: [{ o: 'allied', when: (a, o) => o === 'claimed' && a.d.path === 'match', good: true, mark: 'che_cho',
-      sum: () => 'được nhận lại tên nhà nhờ một cuộc liên hôn', after: () => 'Hai họ ngồi chung một mâm. Tên bạn ghi trong gia phả cả hai nhà.' }],
+      sum: () => 'được nhận lại tên nhà nhờ một cuộc liên hôn', after: () => 'Ngày cưới, hai họ ngồi chung một mâm, rượu rót tràn chén. Tên bạn được ghi vào gia phả của cả hai nhà. Bà mối năm nào cũng có mặt, ngồi cuối chiếu, cười suốt buổi.' }],
     m_guard: [{ o: 'militia', when: (a, o) => (o === 'held' || o === 'wall') && a.d.path === 'watch' && a.d.ok, good: true, mark: 'nguoi_dung_dau',
-      sum: () => 'lập đội dân canh thành lệ của làng', after: () => 'Đội dân canh của bạn thành lệ làng: trai mười sáu tuổi nào cũng phải canh một mùa. Lệ ấy giữ tới đời cháu.' }],
+      sum: () => 'lập đội dân canh thành lệ của làng', after: (S, X, a) => { const m = mateOf(S, a); return `Đội dân canh của bạn thành lệ làng: trai mười sáu tuổi nào cũng phải canh một mùa. Ngày nhận giáo, chúng đứng xếp hàng trước cổng, nghe bạn dặn những câu đã dặn từ thuở đầu.${m ? ` ${m} đứng bên cạnh, thỉnh thoảng nhắc thêm một câu bạn quên.` : ''} Lệ ấy giữ tới đời cháu.`; } }],
     m_love: [{ o: 'eloped', when: (a, o) => o === 'wed' && a.d.path === 'elope', good: true, mark: 'que_moi',
-      sum: () => 'bỏ đi cùng người thương, dựng nhà ở nơi không ai biết', after: (S, X, a) => `Ở chốn mới không ai hỏi hai người từ đâu tới. ${lov(a)} trồng một giàn hoa trước cửa, giống hệt nhà cũ.` }],
+      sum: () => 'bỏ đi cùng người thương, dựng nhà ở nơi không ai biết', after: (S, X, a) => `Ở chốn mới không ai hỏi hai người từ đâu tới. ${lov(a)} trồng một giàn hoa trước cửa, giống hệt giàn hoa ở nhà cũ. Mùa hoa nở, bạn ngồi dưới giàn, nhớ cái đêm không trăng năm ấy, hai bàn tay dò đường trong bóng tối. Bạn chưa bao giờ hối hận.` }],
     m_lore: [{ o: 'scholar', when: (a, o) => o === 'shared' && a.d.path === 'books' && a.d.ok, good: true, mark: 'biet_bi_mat',
-      sum: () => 'thành học giả, sách mang tên mình nằm trong thư viện kinh đô', after: () => 'Học viện kinh đô mời bạn lên giảng một mùa. Bạn đi, mang theo cuốn sổ ghi chép đầu tiên, rách mép.' }],
+      sum: () => 'thành học giả, sách mang tên mình nằm trong thư viện kinh đô', after: () => 'Học viện kinh đô mời bạn lên giảng một mùa. Bạn đi, mang theo cuốn sổ ghi chép đầu tiên, mép đã rách, chữ đã nhòe. Giữa giảng đường, bạn mở nó ra, đọc to cái ký tự năm xưa từng chép lên tay áo. Lần này, cả giảng đường cùng hiểu.' }],
     m_atone: [{ o: 'forgiven', when: (a, o) => o === 'redeemed' && a.d.path === 'seek' && a.d.ok, good: true, mark: 'buong_bo',
-      sum: () => 'tìm được người mình từng làm hại và được chính người ấy tha', after: () => 'Người ấy nắm tay bạn, nói một câu bạn đợi nửa đời. Từ đó bạn không còn mơ thấy chuyện cũ.' }],
+      sum: () => 'tìm được người mình từng làm hại và được chính người ấy tha', after: (S, X, a) => { const m = mateOf(S, a); return `Một chiều, ${m || 'người ấy'} tới tìm bạn, nắm lấy tay bạn, nói một câu bạn đợi nửa đời. Bạn không nhớ mình đã đáp lại thế nào. Chỉ biết từ hôm đó, bạn không còn mơ thấy chuyện cũ nữa.`; } }],
     m_shadow: [{ o: 'puppet', when: (a, o) => o === 'throne' && a.d.path === 'patron', good: false, mark: 'ke_tiem_quyen',
-      sum: () => 'leo lên ghế nhờ kẻ quyền thế rồi làm con rối cho hắn', after: () => 'Bạn ngồi ghế trên, nhưng mọi tờ lệnh đều phải qua tay kẻ đã đưa bạn lên. Bạn hiểu mình chỉ đổi một chủ này lấy một chủ khác.' }]
+      sum: () => 'leo lên ghế nhờ kẻ quyền thế rồi làm con rối cho hắn', after: () => 'Bạn ngồi ghế trên, nhưng mọi tờ lệnh đều phải qua tay kẻ đã đưa bạn lên. Hắn vẫn sai bạn như xưa, chỉ là giọng lịch sự hơn. Bạn hiểu mình chỉ đổi một chủ này lấy một chủ khác. Trong cuốn sổ nhỏ, bạn bắt đầu viết tên hắn.' }]
   };
   for (const [k, L] of Object.entries(PATH_END)) {
     const d = SAGA[k], e0 = d.end;
@@ -767,15 +795,15 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const L = top3(S, X), g = sg(S);
-      return { title: 'Đường đời', body: 'Bạn sắp bước vào đời. Nhìn lại những năm đã qua, có mấy con đường đang gọi bạn. Đường bạn chọn sẽ theo bạn tới cuối đời.',
+      return { title: 'Đường đời', body: 'Bạn sắp bước vào đời. Ngồi nhìn lại những năm đã qua, có mấy chuyện cứ trở đi trở lại trong đầu, chuyện nào cũng như một con đường đang gọi. Đường bạn chọn hôm nay sẽ theo bạn tới cuối đời.',
         choices: [...L.map(([k]) => ({ k, label: SAGA[k].nameVi, sub: (g.why[k] && g.why[k].length ? 'Vì: ' + g.why[k][g.why[k].length - 1] + ' ' : '') + SAGA[k].pitch })),
           { k: 'free', label: 'Chưa định, sống theo ngày', sub: g.asked ? 'Không hỏi lại nữa.' : 'Sẽ hỏi lại khi đã lớn hơn.' }] };
     },
     apply(S, X, k) {
       const g = sg(S); g.asked++; g.t = S.age; st('asked', null);
-      if (k === 'free' || !SAGA[k]) { st('free', null); return g.asked > 1 ? 'Bạn sống theo ngày. Đời bạn sẽ là những chuyện nhỏ nối vào nhau.' : 'Bạn chưa muốn chọn. Còn nhiều thời gian.'; }
+      if (k === 'free' || !SAGA[k]) { st('free', null); return g.asked > 1 ? 'Bạn sống theo ngày, được bữa nào hay bữa ấy. Đời bạn sẽ là những chuyện nhỏ nối vào nhau, chẳng ai chép lại, mà cũng chẳng thiếu gì.' : 'Bạn chưa muốn chọn. Còn trẻ, còn nhiều thời gian, cứ để mọi thứ tự tới.'; }
       openSaga(S, X, k);
-      return `Từ hôm ấy, đời bạn có một hướng: ${SAGA[k].pitch.charAt(0).toLowerCase() + SAGA[k].pitch.slice(1)}`;
+      return `Từ hôm ấy, đời bạn có một hướng: ${SAGA[k].pitch.charAt(0).toLowerCase() + SAGA[k].pitch.slice(1)} Bạn chưa biết đường ấy dài bao nhiêu. Chỉ biết là mình đã đặt chân lên.`;
     },
     auto(S, X, d) { const L = top3(S, X); return L.length && L[0][1] >= 1 ? L[0][0] : 'free'; }
   };
@@ -803,7 +831,7 @@ window.LifeSim = window.LifeSim || {};
     g.turns = (g.turns || 0) + 1; g.k = null; cnt(S, 'sg_turn'); st('turn', k);
     openSaga(S, X, k);
     const p = SAGA[k].pitch.charAt(0).toLowerCase() + SAGA[k].pitch.slice(1);
-    return a ? `Bạn bỏ dở đường ${old.nameVi}. Từ nay đời bạn rẽ sang hướng khác: ${p}` : `Đời bạn có thêm một hướng: ${p}`;
+    return a ? `Bạn bỏ dở đường ${old.nameVi}, những gì đã làm cho nó dừng lại ở đó. Từ nay đời bạn rẽ sang hướng khác: ${p} Không dễ, nhưng bạn đã quyết.` : `Đời bạn có thêm một hướng: ${p} Tay chân còn khỏe, bạn thấy mình như trẻ lại mấy tuổi.`;
   }
   // Hồi chọn lối của mọi mạch chính có thêm lựa chọn rẽ sang mạch khác đang gọi mạnh (điểm ≥ 3).
   const knotTurn = (S, X) => { const g = sg(S); if (!g.k || (g.turns || 0) >= G.SAGA_TURN.max) return [];
@@ -822,18 +850,18 @@ window.LifeSim = window.LifeSim || {};
       const g = sg(S), a = curMain(S, g), cur = SAGA[g.k];
       if (a) {
         const t = g.turn.k, more = alts(S, X, g, 2).map(x => x[0]).filter(k => k !== t).slice(0, 1);
-        return { title: 'Ngã rẽ', body: `${g.turn.why ? g.turn.why + ' ' : ''}Bạn đang đi đường ${cur.nameVi} (${STEP_VI[a.at] || a.at}, tiến độ ${Math.round(prog(a))}). Đi tiếp, hay rẽ sang đường khác?`,
+        return { title: 'Ngã rẽ', body: `${g.turn.why ? g.turn.why + (/[.!?…]$/.test(g.turn.why) ? '' : '…') + ' Chuyện ấy' : 'Có một chuyện'} làm bạn chùn chân giữa đường ${cur.nameVi} (${STEP_VI[a.at] || a.at}, tiến độ ${Math.round(prog(a))}). Bao nhiêu công sức đã bỏ vào con đường này, mà con đường kia thì cứ gọi. Đi tiếp, hay rẽ sang đường khác?`,
           choices: [{ k: 'keep', label: `Đi tiếp: ${cur.nameVi}`, sub: `Bỏ ngang thì những gì đã làm cho đường này dừng ở đó.` },
             ...[t, ...more].map(k => ({ k, label: `Rẽ sang: ${SAGA[k].nameVi}`, sub: whyOf(g, k) + SAGA[k].pitch }))] };
       }
       const d = lastDone(S, g.k), sum = d ? G.ARCS[d.k].sum(d.o, null, d) : null;
-      return { title: 'Đường đời mới', body: `Đường ${cur.nameVi} đã khép${sum ? ': ' + sum : ''}. Đời bạn còn dài. Có con đường nào khác đang gọi bạn không?`,
+      return { title: 'Đường đời mới', body: `Đường ${cur.nameVi} đã khép${sum ? ': ' + sum : ''}. Bạn ngồi lại một buổi, thấy tay chân còn khỏe, đời còn dài. Có con đường nào khác đang gọi bạn không?`,
         choices: [...alts(S, X, g, 3).map(([k]) => ({ k, label: SAGA[k].nameVi, sub: whyOf(g, k) + SAGA[k].pitch })), { k: 'free', label: 'Sống nốt đời theo ngày', sub: 'Không hỏi lại nữa.' }] };
     },
     apply(S, X, k) {
       const g = sg(S), a = curMain(S, g), old = SAGA[g.k]; g.last = S.age; g.turn = null;
-      if (k === 'keep') { if (a) a.d.prog = prog(a) + 1; g.base = Object.assign({}, g.seed); cnt(S, 'sg_keep'); return `Bạn gạt chuyện ấy sang một bên. ${old.nameVi} vẫn là đường của bạn.`; }
-      if (k === 'free' || !SAGA[k]) { g.settled = true; return 'Bạn không tìm thêm con đường nào nữa. Những năm còn lại là những ngày bình thường.'; }
+      if (k === 'keep') { if (a) a.d.prog = prog(a) + 1; g.base = Object.assign({}, g.seed); cnt(S, 'sg_keep'); return `Bạn gạt chuyện ấy sang một bên, như gạt một cành cây chắn lối. Đường ${old.nameVi} vẫn là đường của bạn. Bạn bước tiếp, chân chắc hơn trước.`; }
+      if (k === 'free' || !SAGA[k]) { g.settled = true; return 'Bạn không tìm thêm con đường nào nữa. Những năm còn lại là những ngày bình thường: sáng dậy làm việc, chiều về ngồi hiên nhìn người qua lại. Bạn thấy thế cũng là một cách sống.'; }
       return switchMain(S, X, k);
     },
     auto(S, X, d) {
@@ -848,7 +876,7 @@ window.LifeSim = window.LifeSim || {};
   NEWD.push('sg_turn');
   // Quyết định gieo mạch: chí hướng, bái sư, bầu trưởng làng, vào hội, chọn nghề, đi học.
   const linkDec = (S, X) => { X._lk = true; };
-  patchDec('aim_pick', (S, X, k) => { if (AIM_ARC[k] && !sg(S).k) { addSeed(S, AIM_ARC[k], 2, `Bạn quyết chí ${(G.AIMS[k] || {}).nameVi || ''}.`.replace(' .', '.')); linkDec(S, X); } });
+  patchDec('aim_pick', (S, X, k) => { if (AIM_ARC[k] && !sg(S).k) { addSeed(S, AIM_ARC[k], 2, `Bạn quyết chí theo con đường ${((G.AIMS[k] || {}).nameVi || '').toLowerCase()}.`.replace(' .', '.')); linkDec(S, X); } });
   patchDec('mentor', (S, X, k) => { if (k !== 'no' && !sg(S).k) { addSeed(S, 'm_power', 1.5, 'Bạn được một người thầy nhận dạy.'); linkDec(S, X); } });
   patchDec('head_elect', (S, X, k) => { if (k === 'yes') { addSeed(S, 'm_lead', 1.5, 'Bạn ra tranh ghế trưởng.'); linkDec(S, X); } });
   patchDec('school', (S, X, k) => { if (k !== 'no' && !sg(S).k) { addSeed(S, 'm_craft', .8, 'Bạn được đi học.'); linkDec(S, X); } });

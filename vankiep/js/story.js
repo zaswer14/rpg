@@ -79,11 +79,18 @@ window.LifeSim = window.LifeSim || {};
   const castHas = (S, role) => (S.cast || []).some(p => p.alive && p.role === role);
   // Gặp mặt: cập nhật lần gặp, độ thân; đánh dấu sự kiện này thuộc mạch.
   const touch = (S, X, p, d) => { p.seen = S.age; p.n++; if (d) p.bond = G.clamp(p.bond + d, -100, 100); X._lk = true; };
-  const newsOf = p => p.news.splice(0).slice(-2).join(', ');
+  // Lấy (và xóa) tối đa hai tin mới nhất của người quen; nwSay nối thành một vế: "đã chuyển tới X, rồi lập gia đình".
+  const newsL = p => p.news.splice(0).slice(-2);
+  const nwSay = L => L.map((x, i) => (i ? x.replace(/^đã /, '') : x)).join(', rồi ');
+  const newsOf = p => nwSay(newsL(p));
   const tagOf = (a, p) => G.ARCS[a.k].nameVi + (p ? ' · ' + first(p) : a.d.kin ? ' · ' + a.d.kin : '');
 
   // Đời giản lược của người trong dàn (hệ con "cast", trước "story").
-  const GRIEF = ['Bạn thắp một nén nhang, ngồi tới khuya.', 'Bạn lấy ra món đồ cũ người đó tặng, ngắm một lúc rồi cất đi.', 'Bạn uống một chén rượu thay cho người đó.', 'Cả ngày hôm ấy bạn không nói câu nào.'];
+  const GRIEF = ['Tối ấy bạn thắp một nén nhang, ngồi nhìn khói bay cho tới khi nhang tàn hẳn.', 'Bạn lục ra món đồ cũ người ấy từng cho, cầm trong tay một lúc lâu rồi mới cất đi.', 'Bạn rót hai chén rượu, uống một chén, chén kia để nguyên trên bàn tới sáng.', 'Cả ngày hôm ấy bạn không nói câu nào, tới bữa chỉ ngồi nhìn bát cơm nguội dần.'];
+  // Câu nhớ người quen vừa mất (thân thiết, không ở trong mạch nào), chọn theo vai.
+  const LOSS = { ban: 'Bao nhiêu chuyện hai người hẹn nhau, giờ còn dở dang gần hết.', an: 'Cái ơn năm xưa, bạn chưa kịp trả cho trọn.', on: 'Người bạn từng cứu một lần, rốt cuộc vẫn không giữ lại được.',
+    thay: 'Những gì thầy dạy, bạn vẫn còn giữ trong tay. Người dạy thì không còn nữa.', tro: 'Bạn nhớ ngày đầu nó tới học, lóng ngóng không biết cầm gì trước.', tinh: 'Bạn nhớ một mùa hè cũ, rồi thôi, không cho mình nhớ thêm.',
+    ho: 'Bạn nhớ những bữa cơm chung mâm hồi nhỏ, tiếng giành nhau miếng cháy dưới đáy nồi.', than: 'Người bạn từng theo sau suốt ba ngày hồi nhỏ, giờ chỉ còn lại trong trí nhớ.', doi: 'Không còn ai để bạn ganh đua nữa. Tự nhiên thấy trống.' };
   function castDie(S, X, p, why) {
     p.alive = false; p.died = S.world.year; p.news = [];
     const A = (S.arcs || []).filter(a => a.who === p.id);
@@ -96,7 +103,8 @@ window.LifeSim = window.LifeSim || {};
     }
     if (!A.length && Math.abs(p.bond) >= 30 && !p.missing) {
       X._tag = 'Người quen · ' + first(p);
-      X.log(p.bond > 0 ? `Tin ${refE(S, p)} mất${why ? ' vì ' + why : ''} đến tai bạn. ${X.pick(GRIEF)}` : `Tin ${refE(S, p)} chết${why ? ' vì ' + why : ''}. Bạn không biết nên vui hay buồn.`, p.bond > 0 ? 'bad' : 'info');
+      X.log(p.bond > 0 ? `Tin ${refE(S, p)} mất${why ? ' vì ' + why : ''} tới tai bạn vào một buổi chiều chẳng có gì khác mọi ngày. ${LOSS[p.role] || 'Bạn cố nhớ lần cuối hai người gặp nhau, đã nói với nhau những gì.'} ${X.pick(GRIEF)}`
+        : `Có người kể ${refE(S, p)} đã chết${why ? ' vì ' + why : ''}. Bạn chờ mình thấy hả dạ, mà cái cảm giác ấy mãi không tới. Chuyện cũ giữa hai người giờ chẳng còn ai để tính sổ.`, p.bond > 0 ? 'bad' : 'info');
       X._tag = null; p.heard = S.age;
     } else if (!A.length) p.news.push('đã mất');
   }
@@ -232,27 +240,32 @@ window.LifeSim = window.LifeSim || {};
   patch('ch_bully', (S, X, r) => {
     if (castHas(S, 'doi')) return;
     const p = G.castAdd(S, X, { role: 'doi', how: 'đứa cầm đầu lũ bắt nạt bạn hồi nhỏ', yrs: X.years(S) + X.int(1, 3), bond: -30, drive: .35 + .65 * X.rnd() });
-    r.t = r.t.replace('Lũ trẻ lớn hơn', `Lũ trẻ lớn hơn, cầm đầu là ${first(p)},`);
+    const t0 = r.t; r.t = r.t.replace('Lũ trẻ lớn hơn', `Lũ trẻ lớn hơn, cầm đầu là ${first(p)},`);
+    r.t += r.t !== t0 ? ` Bao nhiêu vết bầm rồi cũng lặn, riêng cái tên ${first(p)} thì bạn nhớ mãi.` : ` Đứa cầm đầu tên là ${first(p)}. Bao nhiêu vết bầm rồi cũng lặn, riêng cái tên ấy thì bạn nhớ mãi.`;
     G.arcOpen(S, X, 'rival', p, { fought: S.traits.bold > .55 });
   });
   // ── Ơn cứu mạng: người kéo bạn khỏi sông ──
   patch('ch_river', (S, X, r) => {
     const p = G.castAdd(S, X, { role: 'an', how: 'người chăn dê kéo bạn khỏi sông năm nào', yrs: X.years(S) + X.int(14, 30), work: 'herder', bond: 45, drive: .2 * X.rnd() });
-    r.t = r.t.replace('Một người chăn dê', `Một người chăn dê tên ${first(p)}`);
+    const t0 = r.t; r.t = r.t.replace('Một người chăn dê', `Một người chăn dê tên ${first(p)}`);
+    r.t += r.t !== t0 ? ` Về sau, mỗi lần đi ngang bến ấy, bạn lại nhớ đôi bàn tay chai sạn đã túm lấy cổ áo mình. Cái ơn ấy bạn chưa biết lấy gì mà trả.` : ` Người kéo bạn lên là ${first(p)}, một người chăn dê. Cái ơn ấy bạn chưa biết lấy gì mà trả.`;
     G.arcOpen(S, X, 'grace', p, { need: X.pick(['money', 'son', 'escort']) });
   });
   // ── Bạn thân: người bạn sau trận ẩu đả; ad_old_friend dùng người bạn có trong dàn ──
   patch('tn_brawl', (S, X, r) => {
     if ((S.cast || []).filter(p => p.alive && p.role === 'ban').length >= 2) return;
     const p = G.castAdd(S, X, { role: 'ban', how: 'người bạn quen sau trận ẩu đả ở quán rượu', yrs: X.years(S) + X.int(-2, 4), bond: 35, work: X.pick(['guard', 'hunter', 'adventurer', 'smith']) });
-    r.t = r.t.replace('được một người bạn', `được một người bạn: ${first(p)}`);
+    const t0 = r.t; r.t = r.t.replace('được một người bạn', `được một người bạn: ${first(p)}`);
+    r.t += r.t !== t0 ? ` Tan trận, hai người ngồi bệt ngoài cửa quán, chia nhau mảnh giẻ chặm máu, cười tới đau cả quai hàm. Lúc chia tay, ${first(p)} dặn lần sau có đánh nhau thì nhớ gọi.` : ` Người đứng cùng phía với bạn đêm ấy tên ${first(p)}. Lúc chia tay, ${first(p)} dặn lần sau có đánh nhau thì nhớ gọi.`;
     G.arcOpen(S, X, 'friend', p, {});
   });
   patch('ad_old_friend', (S, X, r) => {
     const fr = (S.cast || []).filter(p => p.alive && !p.missing && p.role === 'ban' && S.age - p.seen >= 2 && !(S.arcs || []).some(a => a.who === p.id));
     if (!fr.length) return;
     const p = fr.reduce((a, b) => (b.bond > a.bond ? b : a)), nw = newsOf(p), w = workVi(p);
-    r.t = `Bạn gặp lại ${refE(S, p)}${nw ? `, người giờ ${nw}` : w ? `, giờ làm ${w}` : ''}. Hai người uống tới sáng.`;
+    r.t = [`${S.age % 2 ? 'Giữa phiên chợ đông' : 'Ở một quán nước ven đường'}, có ai đó gọi giật tên bạn từ phía sau. Quay lại thì là ${refE(S, p)}, khác đi nhiều, mà giọng cười thì vẫn y như cũ.`,
+      nw ? `${first(p)} kể mình ${nw}.` : w ? `Giờ ${first(p)} làm ${w}.` : '',
+      'Hai người tìm một góc ngồi, gọi rượu, uống tới sáng. Chuyện ngày xưa, hóa ra mỗi người nhớ một kiểu, cãi nhau mãi không ai chịu ai.'].filter(Boolean).join(' ');
     touch(S, X, p, 10); X._tag = 'Người quen · ' + first(p);
   });
   // ── Tình xưa: mối tình đầu; người cầu hôn bị từ chối ──
@@ -301,7 +314,7 @@ window.LifeSim = window.LifeSim || {};
   patch('ad_bandits', (S, X, r) => {
     if (r.k !== 'bad' || !X.chance(.4) || (S.arcs || []).some(a => a.k === 'feud')) return;
     const p =G.castAdd(S, X, { role: 'thu', how: 'tên cướp chặn đường lấy tiền của bạn', yrs: X.years(S) + X.int(-3, 8), tier: Math.max(0, X.ctier(S)), work: 'thief', bond: -50, drive: .4 + .6 * X.rnd() });
-    r.t += ` Tên cầm đầu, ${first(p)}, vừa đếm tiền vừa cười.`;
+    r.t += ` Tên cầm đầu đếm tiền ngay trước mặt bạn, chậm rãi từng đồng, vừa đếm vừa cười. Đồng bọn gọi kẻ ấy là ${first(p)}. Bạn nhìn thật kỹ khuôn mặt ấy, để mai sau có gặp lại thì nhận ra ngay.`;
     G.arcOpen(S, X, 'feud', p, { gold: Math.round(med(S, X) * .4) });
   });
   // ── Báo thù: anh chị chết khi quái tràn vào làng (events.js đặt S.flags.kinKilled) ──
@@ -313,7 +326,8 @@ window.LifeSim = window.LifeSim || {};
   patch('ch_knight', (S, X, r) => {
     const j = S.flags.idol; S.flags.idol = null; if (!j) return;
     const p = G.castAdd(S, X, { race: X.chance(.7) ? S.race : undefined, role: 'than', how: `${j.job.toLowerCase()} bạn theo suốt ba ngày hồi nhỏ`, yrs: X.years(S) + X.int(18, 35), tier: j.tier, work: 'adventurer', bond: 15, drive: .6 + .4 * X.rnd() });
-    r.t = r.t.replace(`${j.job} ghé`, `${j.job} tên ${first(p)} ghé`);
+    const t0 = r.t; r.t = r.t.replace(`${j.job} ghé`, `${j.job} tên ${first(p)} ghé`);
+    r.t += r.t !== t0 ? ` Mấy tháng sau, bạn vẫn còn lẩm nhẩm cái tên ${first(p)} mỗi lần ra bờ giếng.` : ` Người ấy tên ${first(p)}. Mấy tháng sau bạn vẫn còn lẩm nhẩm cái tên ấy.`;
     G.arcOpen(S, X, 'idol', p, { school: j.school });
   });
   // ── Nợ cờ bạc: thua rồi vay để gỡ ──
@@ -321,7 +335,7 @@ window.LifeSim = window.LifeSim || {};
     if (r.k !== 'bad' || S.gold > med(S, X) || !X.chance(.5) || (S.arcs || []).some(a => a.k === 'debt')) return;
     const amt = Math.round(med(S, X) * .5);
     const p = G.castAdd(S, X, { role: 'no', how: 'tay cho vay nặng lãi', yrs: X.years(S) + X.int(5, 20), work: 'merchant', bond: -10, drive: .5 });
-    r.t += ` Bạn vay ${first(p)} ${G.coin(amt)} để gỡ, rồi thua nốt.`;
+    r.t += ` Không cam lòng, bạn vay ${first(p)}, tay cho vay ngồi sẵn ở góc chiếu bạc, ${G.coin(amt)} để gỡ. Mấy ván sau, số tiền ấy cũng đi nốt. ${first(p)} ghi tên bạn vào cuốn sổ bìa da, nắn nót từng chữ, rồi mỉm cười.`;
     G.arcOpen(S, X, 'debt', p, { amt, loc: S.loc });
   });
   // ── Lời bà đồng ──
@@ -330,7 +344,8 @@ window.LifeSim = window.LifeSim || {};
   patch('sk_paladin', (S, X, r) => {
     if (!/đánh gãy kiếm/.test(r.t) || (S.arcs || []).some(a => a.k === 'hunter')) return;
     const p = G.castAdd(S, X, { race: 'human', role: 'thu', how: 'Thánh Kỵ Sĩ trẻ bạn từng tha mạng', yrs: X.int(19, 26), tier: Math.max(1, X.ctier(S)), work: 'guard', bond: -20, drive: .8 });
-    r.t = r.t.replace('Một Thánh Kỵ Sĩ trẻ', `Một Thánh Kỵ Sĩ trẻ tên ${first(p)}`);
+    const t0 = r.t; r.t = r.t.replace('Một Thánh Kỵ Sĩ trẻ', `Một Thánh Kỵ Sĩ trẻ tên ${first(p)}`);
+    r.t += r.t !== t0 ? ` Đi được một quãng, ${first(p)} còn ngoái lại một lần, tay nắm chặt nửa thanh kiếm gãy.` : ` Người ấy tên ${first(p)}. Đi được một quãng còn ngoái lại một lần, tay nắm chặt chuôi kiếm.`;
     G.arcOpen(S, X, 'hunter', p, {});
   });
 
@@ -343,15 +358,15 @@ window.LifeSim = window.LifeSim || {};
       const w = X.pick(['thợ rèn', 'thợ săn', 'người chăn dê', 'bà bán bánh', 'ông lái đò', 'thầy lang']);
       const p = G.castAdd(S, X, { role: 'ban', how: 'bạn thân hồi nhỏ của bạn', yrs: X.years(S) + X.int(-1, 1), bond: 50 });
       G.arcOpen(S, X, 'friend', p, {});
-      return { t: `Bạn kết thân với ${first(p)}, con nhà ${w} cạnh nhà. Hai đứa đi đâu cũng có nhau, bị phạt cũng có nhau.`, k: 'good' };
+      return { t: `${first(p)} là con nhà ${w} cạnh nhà, sàn sàn tuổi bạn. Hai đứa quen nhau từ hôm cùng trèo trộm một cây ổi nhà hàng xóm và cùng bị bắt quả tang. Từ đó đi đâu cũng có nhau, bị phạt cũng có nhau. Có miếng gì ngon, ${first(p)} luôn để phần bạn một nửa.`, k: 'good' };
     } });
   opener({ id: 'st_rival', st: ['teen'], w: S => (castHas(S, 'doi') ? 0 : 1.5), tree: { body: 'living' },
     c: S => slot(S),
     run(S, X) {
       const p = G.castAdd(S, X, { role: 'doi', how: 'kẻ luôn hơn bạn một bậc thời trai trẻ', yrs: X.years(S) + X.int(-1, 1), bond: -20, drive: .5 + .5 * X.rnd() });
       G.arcOpen(S, X, 'rival', p, {});
-      const what = S.work ? `ở chỗ làm ${G.WORKS[S.work].nameVi.toLowerCase()}` : X.pick(['ở bãi tập của làng', 'ở lớp chữ của đền', 'trong đám trai trẻ đi săn']);
-      return { t: `${what[0].toUpperCase() + what.slice(1)}, ${first(p)} việc gì cũng làm hơn bạn một chút, và không bao giờ để bạn quên điều đó.`, k: 'info' };
+      const what = S.work ? `ở chỗ làm ${G.WORKS[S.work].nameVi.toLowerCase()}` : X.pick(['ở bãi tập của làng', 'ở lớp chữ của đền', 'trong đám thanh niên đi săn']);
+      return { t: `${what[0].toUpperCase() + what.slice(1)}, có một người tên ${first(p)} việc gì cũng làm hơn bạn một chút. Bạn xong một việc thì người ta đã xong hai, bạn được khen một câu thì người ta được khen hai. Mà ${first(p)} không bao giờ để bạn quên điều đó: một cái nhếch mép, một cái liếc ngang mỗi lần đi qua. Tối về, bạn nằm nghĩ cách vượt lên tới tận khuya.`, k: 'info' };
     } });
   opener({ id: 'st_rescue', st: ['adult', 'elder'], rep: true, gap: 10, w: S => .8 + S.traits.bold, tree: { body: 'living' },
     c: (S, X) => slot(S) && noArc(S, 'favor') && X.power(S) > .6 && (S.flags.rescueN || 0) < 2,   // tối đa hai lần một đời
@@ -360,9 +375,9 @@ window.LifeSim = window.LifeSim || {};
       const p = G.castAdd(S, X, { race: X.chance(.7) ? (S.undead ? 'human' : S.race) : X.wkey(X.reg(S).races), role: 'on', how: { merchant: 'thương nhân bạn kéo khỏi xe lật', noble: 'người bạn cứu khỏi bầy quái năm nào', outlaw: 'người mang dao bạn cõng ra khỏi rừng' }[type],
         yrs: X.years(S) + X.int(-8, 12), work: { merchant: 'merchant', noble: 'steward', outlaw: 'thief' }[type], tier: type === 'outlaw' ? 1 : 0, bond: 50, drive: .6 + .4 * X.rnd() });
       G.arcOpen(S, X, 'favor', p, { type });
-      return { t: { merchant: `Bạn kéo một thương nhân tên ${first(p)} ra khỏi chiếc xe lật dưới khe núi. Người đó để lại địa chỉ ở ${capName(S)}, bắt bạn hứa có dịp thì ghé.`,
-        noble: `Bạn đuổi bầy ${sp.nameVi} khỏi một người ăn mặc sang trọng bị lạc trong ${z.nameVi}. ${first(p)} hỏi tên bạn hai lần, như sợ quên.`,
-        outlaw: `Bạn cõng một người bị thương ra khỏi rừng, không hỏi vì sao người đó giắt dao ở cả hai bên hông. Người đó nói tên là ${first(p)}.` }[type], k: 'good' };
+      return { t: { merchant: `Dưới khe núi có một chiếc xe hàng lật nghiêng, một bánh còn quay chầm chậm. Bạn trèo xuống, dỡ từng bao hàng, kéo được người bị đè bên dưới ra. Người ấy tên ${first(p)}, làm ăn ở ${capName(S)}, mặt cắt không còn giọt máu mà miệng vẫn hỏi hàng có ướt không. Lúc chia tay, ${first(p)} viết địa chỉ vào một mảnh giấy, ấn vào tay bạn, bắt hứa có dịp thì ghé.`,
+        noble: `Trong ${z.nameVi}, một bầy ${sp.nameVi} đang vây một người ăn mặc sang trọng, vạt áo gấm rách toạc. Bạn xông vào đuổi chúng đi, xong việc tay vẫn còn run. Người ấy tên ${first(p)}, lạc đường từ hôm trước, giày đã mòn tới gót. ${first(p)} hỏi tên bạn tới hai lần, như sợ quên mất.`,
+        outlaw: `Ven rừng có một người nằm gục bên gốc cây, máu thấm đen cả vạt áo. Bạn cõng người ấy ra tới bìa rừng, không hỏi vì sao hai bên hông lại giắt hai con dao. Lúc tỉnh, người ấy chỉ nói mình tên là ${first(p)}. Rồi nhìn bạn rất lâu, cái nhìn của người không quen mắc nợ ai.` }[type], k: 'good' };
     } });
   opener({ id: 'st_witness', st: ['adult', 'elder'], rep: true, gap: 15, w: 1, tree: { body: 'living', soc: 1 },
     c: S => slot(S) && noArc(S, 'secret') && (S.flags.secretN || 0) < 2,
@@ -371,9 +386,9 @@ window.LifeSim = window.LifeSim || {};
       const p = G.castAdd(S, X, { role: 'bimat', how: { tax: 'người thu thuế bạn bắt gặp đêm ấy', dark: 'tu sĩ bạn bắt gặp đêm ấy', gate: 'đội trưởng lính tuần bạn bắt gặp đêm ấy' }[type],
         yrs: X.years(S) + X.int(0, 15), work: { tax: 'steward', dark: 'priest', gate: 'guard' }[type], tier: X.int(1, 2), bond: -5, drive: .7 });
       G.arcOpen(S, X, 'secret', p, { type });
-      return { t: { tax: `Đêm muộn, bạn thấy ${first(p)}, người thu thuế của vùng, chất mấy bao tiền thuế lên xe nhà mình.`,
-        dark: `Bạn thấy ${first(p)}, tu sĩ của đền làng, lén trao một bọc vải đen cho người của Hắc Giáo.`,
-        gate: `Nửa đêm, bạn thấy ${first(p)}, đội trưởng lính tuần, tự tay mở cổng cho một đoàn xe không đèn đi qua.` }[type], k: 'info' };
+      return { t: { tax: `Đêm ấy bạn về muộn, đi tắt qua sau dãy nhà kho. Dưới ánh đuốc leo lét, ${first(p)}, người thu thuế của vùng, đang chất từng bao tiền thuế lên chiếc xe của nhà mình. Bạn nép sau đống rơm, nín thở tới khi tiếng bánh xe xa hẳn. Sáng ra mọi thứ vẫn yên như thường, chỉ có bạn là biết.`,
+        dark: `Sau buổi lễ tối, bạn quay lại đền tìm món đồ bỏ quên. Ở góc sân, ${first(p)}, tu sĩ của đền làng, đang dúi một bọc vải đen vào tay một kẻ trùm mũ kín mặt. Trên vạt áo kẻ ấy thêu dấu của Hắc Giáo. Bạn lùi ra, tim đập thình thịch, không biết ${first(p)} có kịp nhìn thấy mình hay không.`,
+        gate: `Nửa đêm, bạn trở dậy vì tiếng bánh xe nghiến trên đường đá. Ngoài cổng, ${first(p)}, đội trưởng lính tuần, tự tay kéo then cho một đoàn xe không đèn lặng lẽ đi qua. Không ai hô hỏi, không ai ghi sổ. Lúc cổng khép lại, ${first(p)} đảo mắt nhìn quanh một vòng, và bạn vội rụt đầu khỏi khe cửa.` }[type], k: 'info' };
     } });
   opener({ id: 'st_kin', st: ['adult', 'elder'], rep: true, gap: 8, w: 1, tree: { body: 'living' },
     c: S => slot(S) && noArc(S, 'kin') && S.family.sibs.some((s, i) => s.alive && !(S.flags.kinAsked || []).includes(i)),
@@ -383,8 +398,10 @@ window.LifeSim = window.LifeSim || {};
       let p = (S.cast || []).find(x => x.sib === i);
       if (!p) p = G.castAdd(S, X, { name: s.name, role: 'ho', how: `${s.sex === 'm' ? 'anh' : 'chị'} ruột của bạn`, sex: s.sex, yrs: s.age, bond: 30, sib: i });
       G.arcOpen(S, X, 'kin', p, { type });
-      return { t: { debt: `Thư nhà: ${s.name} nợ thuế hai năm liền, sắp bị xiết nhà.`, sick: `Thư nhà: ${s.name} ốm nặng, thầy lang trong làng đã lắc đầu.`,
-        levy: `Thư nhà: con trai cả của ${s.name} bị bắt đi lính, cả nhà chạy vạy không ra tiền chuộc.` }[type], k: 'bad' };
+      const ac = s.sex === 'm' ? 'anh' : 'chị';
+      return { t: { debt: `Thư nhà tới, nét chữ run run của người viết thuê. ${s.name} nợ thuế hai năm liền, người ta đã tới đo đất, sắp xiết cả căn nhà. Cuối thư chỉ có một dòng: liệu được thì giúp ${ac} một tay. Bạn gấp lá thư làm tư, cất vào ngực áo, cả đêm trằn trọc.`,
+        sick: `Thư nhà tới vào một chiều mưa. ${s.name} ốm nặng, nằm liệt đã mấy tuần, thầy lang trong làng chỉ lắc đầu. Người viết không xin gì, chỉ kể. Nhưng bạn đọc ra được chỗ ngập ngừng giữa hai dòng chữ.`,
+        levy: `Thư nhà, mép giấy nhòe nước. Con trai cả của ${s.name} bị bắt đi lính, cả nhà chạy vạy khắp nơi mà không đủ tiền chuộc. Đọc tới đó bạn dừng lại, nhìn ra cửa rất lâu, nhớ cái thuở ${ac} em còn chung một mái nhà.` }[type], k: 'bad' };
     } });
   opener({ id: 'st_parent_lost', st: ['child', 'teen'], w: S => .3 + G.REGION[S.loc].danger * 1.5, tree: { body: 'flesh' },
     c: S => slot(S) && noArc(S, 'vengeance') && S.family.parents.some(p => p.alive && p.role === 'cha'),
@@ -392,7 +409,7 @@ window.LifeSim = window.LifeSim || {};
       const z = X.reg(S).zones[0], sp = X.monsterIn(z), f = S.family.parents.find(p => p.alive && p.role === 'cha');
       f.alive = false; X.add('h', -15);
       G.arcOpen(S, X, 'vengeance', null, { sp: sp.id, kin: 'cha', zone: z.id });
-      return { t: `Cha bạn vào ${z.nameVi} săn thú và không về. Người ta chỉ tìm thấy cây giáo gãy và dấu chân ${sp.nameVi}.`, k: 'bad', f: X.factOf(sp) };
+      return { t: `Một sáng sương còn dày, cha xách giáo vào ${z.nameVi} săn thú, dặn bạn ở nhà trông bếp lửa. Tối ấy cha không về, hôm sau cũng không. Người ta đi tìm, chỉ mang về được cây giáo gãy làm đôi, kể rằng quanh đó toàn dấu chân ${sp.nameVi}. Bạn giữ lại khúc cán giáo, đêm nào cũng đặt nó cạnh gối.`, k: 'bad', f: X.factOf(sp) };
     } });
 
   // ═════════ 5. Nút của các mạch: ở js/arcs.js (khuôn full() của js/saga.js). Ở đây chỉ còn móc cho Bộ Xương ═════════
@@ -400,18 +417,21 @@ window.LifeSim = window.LifeSim || {};
   patch('sk_child', (S, X, r) => {
     if ((S.arcs || []).some(a => a.k === 'flower')) return;
     const p = G.castAdd(S, X, { race: X.chance(.8) ? 'human' : X.wkey(X.reg(S).races), role: 'ban', how: 'đứa bé từng đặt hoa vào hốc mắt bạn', yrs: X.int(5, 8), bond: 30, drive: X.rnd() });
-    r.t = r.t.replace('Một đứa bé không sợ bạn.', `Một đứa bé không sợ bạn. Người ta gọi nó là ${first(p)}.`);
+    const t0 = r.t; r.t = r.t.replace('Một đứa bé không sợ bạn.', `Một đứa bé không sợ bạn. Người ta gọi nó là ${first(p)}.`);
+    r.t += r.t !== t0 ? ' Bạn đứng yên rất lâu, không dám cử động, sợ bông hoa rơi mất.' : ` Sau này bạn mới biết người ta gọi đứa bé ấy là ${first(p)}.`;
     G.arcOpen(S, X, 'flower', p, {});
   });
   // ── Bộ Xương: đoàn lữ khách hay bỏ chạy (sk_flee) dần quen mặt bạn; lần thứ ba thì thành mối buôn ──
   patch('sk_flee', (S, X, r) => {
     let p = (S.cast || []).find(x => x.caravan);
     if (!p) { if (!X.chance(.5)) return; p = G.castAdd(S, X, { race: 'human', role: 'on', how: 'chủ đoàn lữ khách hay đi qua nghĩa địa', yrs: X.int(30, 45), work: 'merchant', bond: 0, drive: .5 }); p.caravan = 1;
-      r.t = `Một đoàn lữ khách thấy bạn và bỏ chạy, để lại cả nồi cháo đang sôi. Người chạy sau cùng là chủ đoàn, ${first(p)}.`; lk(S, X, p, 5); return; }
+      r.t = `Một đoàn lữ khách vừa thấy bạn đã bỏ chạy tán loạn, để lại cả nồi cháo đang sôi bên đống lửa. Người chạy sau cùng là chủ đoàn, ${first(p)}, vừa chạy vừa ngoái lại, như còn tiếc nồi cháo. Bạn ngồi xuống bên đống lửa của họ, nhìn cháo trào qua vành nồi. Ăn thì không ăn được, mà bỏ đi cũng không nỡ.`; lk(S, X, p, 5); return; }
     p.caravan++; lk(S, X, p, 10);
-    if (p.caravan === 2) { r.t = `Lại là đoàn của ${first(p)}. Lần này họ chỉ dạt sang bên đường, đi chậm qua, không ai bỏ chạy.`; r.k = 'info'; X.add('h', 6); return; }
-    r.t = `${first(p)} dừng xe ở chân đồi, đặt xuống một thùng dầu và hai tấm vải, rồi chờ. Bạn để lại mấy món đồ cổ nhặt trong mộ. Từ đó mỗi mùa đoàn ${first(p)} đều ghé.`;
-    r.k = 'good'; X.add('h', 10); X.money(X.int(5, 15)); if (p.caravan > 3) r.t = `Đoàn của ${first(p)} ghé như mọi mùa. Hai bên đổi hàng, ${first(p)} kể chuyện dưới xuôi.`;
+    if (p.caravan === 2) { r.t = `Lại là đoàn xe của ${first(p)}. Lần này không ai bỏ chạy: họ chỉ dạt sang mép đường, đi thật chậm qua, ngựa thở phì phò. Tới khúc quanh, ${first(p)} quay đầu nhìn bạn, gật nhẹ một cái. Cái gật đầu ấy bạn nghĩ tới mấy đêm liền.`; r.k = 'info'; X.add('h', 6); return; }
+    r.t = `Lần này ${first(p)} cho dừng xe ở chân đồi, tự tay đặt xuống một thùng dầu và hai tấm vải, rồi lùi lại mấy bước mà chờ. Bạn bước ra, đặt xuống mấy món đồ cổ nhặt trong mộ. Không ai nói câu nào, vậy mà cả hai đều hiểu. Từ đó mỗi mùa đoàn ${first(p)} đều ghé.`;
+    r.k = 'good'; X.add('h', 10); X.money(X.int(5, 15)); if (p.caravan > 3) r.t = p.caravan % 2
+      ? `Đoàn của ${first(p)} lại ghé như mọi mùa, bánh xe in vết quen trên con đường đất. Đổi hàng xong, ${first(p)} ngồi lại trên càng xe, kể chuyện dưới xuôi: giá muối, đám cưới nhà ai, trận lụt năm ngoái. Bạn không đáp được mấy, chỉ ngồi nghe.`
+      : `Mùa này đoàn ${first(p)} tới muộn, xe chở nặng hơn mọi năm. Đổi hàng xong, ${first(p)} còn nán lại kể cho bạn nghe chuyện dưới xuôi, tới khi trời sập tối mới chịu lên đường.`;
   });
 
   // ═════════ 6. Gặp lại người quen (sự kiện ngẫu nhiên đọc dàn nhân vật) ═════════
@@ -419,32 +439,67 @@ window.LifeSim = window.LifeSim || {};
   const withNews = S => (S.cast || []).filter(p => p.news.length && !p.missing && knows(S, p) && S.age - p.seen >= 1 && p.role !== 'phoi');
   const visitors = S => (S.cast || []).filter(p => p.alive && !p.missing && p.bond >= 25 && p.loc === S.loc && S.age - p.seen >= 2 && p.role !== 'phoi');
   const foes = S => (S.cast || []).filter(p => p.alive && !p.missing && p.bond <= -30 && p.loc === S.loc && S.age - p.seen >= 2);
+  // Câu gợi lại chuyện cũ khi có tin về người quen: chọn theo vai, độ thân, tin mới nhất và S.age (không rút xúc xắc).
+  const MEMO = {
+    ban: ['Bạn nhớ những ngày hai người còn chia nhau từng miếng ăn, đi đâu cũng có nhau.', 'Đã lâu lắm rồi hai người chưa ngồi với nhau một bữa cho ra bữa.'],
+    doi: ['Bạn bảo mình chẳng quan tâm, mà vẫn nghe không sót chữ nào.', 'Bạn nhận ra mình vẫn còn ngấm ngầm đếm xem ai hơn ai.'],
+    thu: ['Chuyện cũ giữa hai người, bạn chưa quên ngày nào.', 'Nghe tới cái tên ấy, tay bạn vẫn bất giác siết lại.'],
+    an: ['Cái ơn ngày trước bạn vẫn còn nợ, chưa biết lấy gì mà trả.', 'Bạn nghe xong, lẩm nhẩm tính xem bao giờ mới có dịp tới thăm.'],
+    on: ['Chắc người ấy vẫn còn nhớ cái hôm được bạn cứu.', 'Bạn mỉm cười. Người hôm ấy suýt chết giờ đã sống thêm được ngần ấy năm.'],
+    thay: ['Bạn nhớ giọng thầy lúc mắng, và cả những lần khen, hiếm hơn nhiều.', 'Những gì thầy dạy, bạn vẫn còn giữ, chỉ là chưa dùng hết.'],
+    tro: ['Bạn nhớ cái dáng lóng ngóng của nó ngày đầu mới tới học.', 'Bạn nghe xong, lặng lẽ gật đầu, như thầy nghe trò trả bài.'],
+    tinh: ['Bạn ngồi im một lúc lâu, nhớ về một mùa hè đã xa.', 'Bạn nghe, gật đầu, rồi kiếm việc gì đó cho tay khỏi rỗi.'],
+    no: ['Bạn sờ lên túi tiền theo thói quen, dù chẳng có ai đòi.', 'Bạn chỉ mong cái tên ấy đừng tìm tới cửa nhà mình lần nữa.'],
+    bimat: ['Bạn nhớ cái đêm năm ấy, và những gì mình đã thấy.', 'Có những chuyện chỉ hai người biết. Bạn vẫn chưa kể với ai.'],
+    than: ['Bạn nhớ hồi nhỏ từng theo sau người ấy suốt ba ngày, mắt không rời.', 'Người bạn từng ngước nhìn ngày bé vẫn đang đi tiếp con đường của mình.'],
+    ho: ['Bạn nhớ những bữa cơm chung mâm hồi nhỏ, tiếng giành nhau miếng cháy dưới đáy nồi.', 'Bạn chợt thèm một bữa cơm nhà, đủ mặt anh chị em như ngày bé.'] };
+  const memo = (S, p, last) => {
+    const i = S.age % 2;
+    if (!p.alive) return p.bond > 0 ? ['Bạn cố nhớ lần cuối hai người gặp nhau là khi nào, mà nhớ không ra.', 'Tối ấy bạn rót thêm một chén rượu, để ở đầu bàn.'][i]
+      : ['Bạn những tưởng sẽ thấy hả dạ. Hóa ra chỉ thấy một chuyện cũ vừa khép lại, không ai kịp nói câu sau cùng.', 'Bạn nghe xong, không nói gì. Chuyện cũ giữa hai người giờ chẳng còn ai để tính.'][i];
+    if (last === 'đã lập gia đình' && p.role === 'tinh') return MEMO.tinh[1];
+    if (last === 'đã lập gia đình' && p.role === 'ban' && p.bond > 0) return 'Bạn tiếc vì hôm ấy không có mặt để nâng một chén mừng.';
+    if (/^đã thành /.test(last) && p.role === 'doi') return MEMO.doi[1];
+    const m = MEMO[p.role];
+    return m ? m[i] : p.bond >= 0 ? 'Bạn nghe xong, ngồi nhớ lại lần gặp trước.' : 'Bạn nghe xong, chỉ hừ một tiếng.';
+  };
   opener({ id: 'cm_news', st: ['teen', 'adult', 'elder'], w: S => (withNews(S).length ? 3 : 0), rep: true, gap: 1, tree: { body: 'living' },
     run(S, X) {
-      const p = X.pick(withNews(S)), dead = !p.alive, nw = newsOf(p);
+      const p = X.pick(withNews(S)), dead = !p.alive, L = newsL(p), nw = nwSay(L);
       p.heard = S.age; X._lk = true; X._tag = 'Người quen · ' + first(p);
       if (dead) X.add('h', p.bond > 0 ? -4 : 1); else X.add('h', p.bond > 0 ? 2 : -1);
-      return { t: `Có tin về ${refE(S, p)}: ${nw}.`, k: dead ? 'bad' : 'info' };
+      const src = [`Một người buôn đi ngang qua có mang theo tin về ${refE(S, p)}.`, `Ở chợ, giữa tiếng rao, bạn nghe người ta nhắc tới ${refE(S, p)}.`, `Thư từ phương xa gửi về, trong đó có mấy dòng về ${refE(S, p)}.`][S.age % 3];
+      return { t: `${src} ${dead ? `${first(p)} đã mất.` : `Nghe nói ${first(p)} ${nw}.`} ${memo(S, p, L[L.length - 1])}`, k: dead ? 'bad' : 'info' };
     } });
+  // Chuyện hai người nói với nhau khi người quen ghé chơi, theo vai.
+  const VISIT = { ban: () => 'Hai người nhắc lại chuyện cũ, chuyện nào cũng đã kể cả chục lần mà vẫn cười như lần đầu.', an: N => `Bạn lại nhắc tới cái ơn năm xưa, và lần nào ${N} cũng xua tay bảo thôi.`,
+    on: N => `${N} lại nhắc tới cái hôm được bạn cứu, dù bạn đã bảo đừng nhắc nữa.`, thay: () => 'Thầy hỏi dạo này bạn còn tập đều không. Bạn gật đầu, mà không dám nhìn thẳng.',
+    tro: N => `${N} hỏi bạn đủ thứ chuyện, y như hồi mới tới học.`, tinh: () => 'Có những chuyện cả hai đều nhớ, mà không ai nhắc tới.',
+    ho: () => 'Hai người nói chuyện nhà, chuyện cha mẹ, chuyện mái bếp cũ giờ không biết đã dột chưa.', doi: () => 'Nhắc lại những lần ganh nhau ngày trước, giờ cả hai đều bật cười.',
+    thu: () => 'Chuyện cũ giữa hai người, không ai nhắc lại. Thế cũng tốt.', no: () => 'Suốt buổi không ai nhắc tới chuyện tiền nong.', bimat: () => 'Cái đêm năm ấy, không ai nhắc lại một lời.',
+    than: () => 'Bạn hỏi về những vùng đất người ấy đã đi qua, nghe say tới quên cả rót nước.' };
   opener({ id: 'cm_visit', st: ['adult', 'elder'], w: S => (visitors(S).length ? 2.5 : 0), rep: true, gap: 2, tree: { body: 'living' },
     run(S, X) {
       const p = X.pick(visitors(S)), nw = newsOf(p); touch(S, X, p, 5); X._tag = 'Người quen · ' + first(p); X.add('so', 4); X.add('h', 4);
-      return { t: `${ref(S, p)} ghé chơi, mang theo ${X.pick(['một vò rượu', 'con cá vừa câu', 'một bọc bánh', 'tin tức dưới xuôi'])}.${nw ? ` ${first(p)} ${nw}.` : ''} Hai người ngồi tới khuya.`, k: 'good' };
+      const gift = X.pick(['một vò rượu nếp', 'xâu cá vừa câu còn giãy', 'một bọc bánh gói lá', 'cả bụng chuyện dưới xuôi']), v = VISIT[p.role];
+      return { t: [`${ref(S, p)} ghé chơi, mang theo ${gift}.`, nw ? `Ngồi được một lúc, ${first(p)} mới kể mình ${nw}.` : '',
+        v ? v(first(p)) : 'Hai người nói đủ thứ chuyện không đầu không cuối.', S.age % 2 ? 'Hai người ngồi tới khi đèn cạn dầu mới chịu đứng dậy.' : 'Lúc tiễn ra cổng, trời đã gần sáng.'].filter(Boolean).join(' '), k: 'good' };
     } });
   opener({ id: 'cm_glare', st: ['adult', 'elder'], w: S => (foes(S).length ? 1.5 : 0), rep: true, gap: 2, tree: { body: 'living' },
     run(S, X) {
       const p = X.pick(foes(S)); touch(S, X, p, -3); X._tag = 'Người quen · ' + first(p); X.add('h', -2);
-      if (p.tier >= 1 && X.chance(.5)) { const g = Math.round(Math.min(Math.max(0, S.gold) * .1, med(S, X) * .4)); X.money(-g); return { t: `${ref(S, p)} tung tin bạn ăn gian cân. Khách bỏ đi một nửa; bạn mất ${G.coin(g)} cả mùa.`, k: 'bad' }; }
-      return { t: `Bạn chạm mặt ${ref(S, p)} ở chợ. Không ai nhường đường ai.`, k: 'info' };
+      if (p.tier >= 1 && X.chance(.5)) { const g = Math.round(Math.min(Math.max(0, S.gold) * .1, med(S, X) * .4)); X.money(-g); return { t: `${ref(S, p)} tung tin bạn ăn gian cân. Chỉ mấy hôm cả chợ đã xì xào, khách quen đi qua cửa nhà bạn mà không ngoảnh vào. Bạn biết rõ tin ấy từ đâu ra, mà chẳng có cách gì chứng minh. Cả mùa ấy bạn mất ${G.coin(g)}.`, k: 'bad' }; }
+      return { t: S.age % 2 ? `Giữa chợ đông, bạn chạm mặt ${refE(S, p)}. Hai người đứng chắn lối nhau một lúc lâu, người đi chợ phải lách sang hai bên. Không ai nhường ai. Lúc quay đi, bạn còn nghe sau lưng một tiếng cười khẩy.`
+        : `Ở quán nước đầu đường, ${ref(S, p)} ngồi ngay bàn bên cạnh. Suốt buổi không ai nói với ai câu nào, chỉ có tiếng chén đặt xuống mạnh hơn cần thiết. Bạn trả tiền rồi đi trước, lưng thẳng như cây sào.`, k: 'info' };
     } });
   // Người quen tốt tới giúp lúc bạn khốn khó (ốm nặng, hết tiền).
   const helpers = S => (S.cast || []).filter(p => p.alive && !p.missing && p.bond >= 30 && p.role !== 'phoi' && S.age - p.seen >= 1);
   opener({ id: 'cm_help', st: ['teen', 'adult', 'elder'], w: (S, X) => (helpers(S).length && (S.hl < 45 || S.gold < 0 || S.h < 30) ? 4 : 0), rep: true, gap: 3, tree: { body: 'living' },
     run(S, X) {
       const p = X.pick(helpers(S)); touch(S, X, p, 8); X._tag = 'Người quen · ' + first(p);
-      if (S.gold < 0) { const g = Math.round(med(S, X) * .5); X.money(g); return { t: `${ref(S, p)} nghe tin bạn túng, gửi tới ${G.coin(g)}, dặn khi nào có hẵng trả.`, k: 'good' }; }
-      if (S.hl < 45) { X.add('hl', 8); return { t: `${ref(S, p)} nghe tin bạn ốm, vượt mấy ngày đường mang thuốc tới.`, k: 'good' }; }
-      X.add('h', 8); return { t: `${ref(S, p)} ở lại với bạn mấy hôm, không hỏi gì, chỉ ngồi cùng.`, k: 'good' };
+      if (S.gold < 0) { const g = Math.round(med(S, X) * .5); X.money(g); return { t: `Tin bạn túng quẫn chẳng biết đi đường nào mà tới tai ${refE(S, p)}. Mấy hôm sau có người gõ cửa, đưa tận tay bạn ${G.coin(g)}, kèm một mẩu giấy viết vội: khi nào có hẵng trả. Nét chữ nguệch ngoạc, vậy mà bạn đọc đi đọc lại tới mấy lần.`, k: 'good' }; }
+      if (S.hl < 45) { X.add('hl', 8); return { t: `${ref(S, p)} nghe tin bạn ốm, vượt mấy ngày đường mang thuốc tới, giày bám đầy bụi. Người ấy sắc thuốc, ép bạn uống từng bát đắng ngắt, đêm thì ngủ gục ngay bên giường. Mấy hôm sau cơn sốt lui dần. ${first(p)} chỉ cười, bảo bạn trả ơn bằng cách sống cho lâu.`, k: 'good' }; }
+      X.add('h', 8); return { t: `${ref(S, p)} tới, ở lại với bạn mấy hôm. Người ấy không hỏi han gì, chỉ lặng lẽ quét nhà, nấu cơm, tối thì ngồi cùng bạn ở bậc cửa nhìn ra ngõ. Bạn không ngờ mình cần đúng chừng ấy. Hôm ${first(p)} đi, bạn tiễn ra tận đầu đường.`, k: 'good' };
     } });
 
   // Sự kiện thường gặp có người quen xuất hiện (khi trong dàn có người hợp): đời liền mạch hơn, sự kiện vẫn bốc như cũ.
@@ -452,34 +507,35 @@ window.LifeSim = window.LifeSim || {};
   const lk = (S, X, p, d) => { touch(S, X, p, d); X._tag = 'Người quen · ' + first(p); };
   patch('ch_festival', (S, X, r) => {
     const p = X.chance(.6) && pal(S, X, p => (p.role === 'ban' || p.role === 'tinh') && p.bond >= 20 && p.loc === S.loc); if (!p) return;
-    r.t = r.t.replace('Bạn nhảy tới khi', `Bạn nhảy với ${first(p)} tới khi`); lk(S, X, p, 5);
+    const t0 = r.t; r.t = r.t.replace('Bạn nhảy tới khi', p.role === 'tinh' ? `Bạn nắm tay ${first(p)} nhảy tới khi` : `Bạn nhảy với ${first(p)} tới khi`);
+    r.t += r.t === t0 ? ` ${first(p)} cũng có mặt, kéo bạn vào vòng nhảy, không cho đứng ngoài.` : p.role === 'tinh' ? ' Trên đường về, hai người đi chậm hơn hẳn mọi khi.' : ` Lúc tan hội, ${first(p)} còn đứng ở đầu ngõ vẫy tay mãi.`; lk(S, X, p, 5);
   });
   patch('ch_hunger', (S, X, r) => {
     const p = X.chance(.6) && pal(S, X, p => p.bond >= 20 && p.loc === S.loc); if (!p) return;
-    r.t += ` Nhà ${first(p)} chia cho nhà bạn nửa bao lúa.`; X.add('hl', 4); lk(S, X, p, 8);
+    r.t += ` Một tối, ${first(p)} sang gõ cửa, để lại nửa bao lúa rồi đi ngay, không đợi ai kịp cảm ơn.`; X.add('hl', 4); lk(S, X, p, 8);
   });
   patch('el_aches', (S, X, r) => {
     const p = X.chance(.5) && pal(S, X, p => p.bond >= 20); if (!p) return;
-    r.t += ` ${first(p)} ghé thăm, mang theo một chai rượu thuốc và chuyện ngày xưa.`; X.add('h', 4); lk(S, X, p, 4);
+    r.t += ` ${first(p)} ghé thăm, mang theo một chai rượu thuốc ngâm đã ngả màu, tự tay xoa lên lưng cho bạn. Hai người ngồi bên hiên kể chuyện ngày xưa tới khi trời sập tối, có chuyện bạn tưởng mình đã quên từ lâu.`; X.add('h', 4); lk(S, X, p, 4);
   });
   patch('ad_restless', (S, X, r) => {
     const p = X.chance(.6) && pal(S, X, p => p.bond >= 20 && p.loc !== S.loc); if (!p) return;
-    r.t += ` Thư của ${first(p)} từ ${regName(p.loc)} nằm trên bàn đã mấy tháng.`; lk(S, X, p, 2);
+    r.t += ` Trên bàn, lá thư ${first(p)} gửi từ ${regName(p.loc)} nằm đó đã mấy tháng, góc giấy quăn lại vì bị mở ra đọc quá nhiều lần. Trong thư, ${first(p)} kể về những con đường bên ấy.`; lk(S, X, p, 2);
   });
   patch('ad_bounty_post', (S, X, r) => {
     const p = X.chance(.5) && pal(S, X, p => p.bond >= 20 && FIGHTER[p.work] && p.loc === S.loc); if (!p) return;
-    r.t += ` ${first(p)} gõ ngón tay lên tờ lệnh, nhìn bạn.`; lk(S, X, p, 3);
+    r.t += ` ${first(p)} đứng cạnh bạn từ lúc nào không hay, gõ gõ ngón tay lên tờ lệnh rồi quay sang nhìn bạn, nhướng mày. Câu hỏi ấy chẳng cần nói ra.`; lk(S, X, p, 3);
   });
   patch('ch_raid', (S, X, r) => {
     if (r.t.includes('không chạy kịp')) return;
     const p = X.chance(.5) && pal(S, X, p => p.bond >= 20 && p.loc === S.loc); if (!p) return;
-    r.t = r.t.replace('Cả nhà trốn trong hầm rượu tới sáng.', `${first(p)} kéo cả nhà bạn xuống hầm rượu nhà mình, ở tới sáng.`); lk(S, X, p, 6);
+    r.t = r.t.replace('Cả nhà trốn trong hầm rượu tới sáng.', `${first(p)} chạy sang đập cửa, kéo cả nhà bạn xuống hầm rượu nhà mình, ở tới sáng.`); lk(S, X, p, 6);
   });
   patch('ad_tax', (S, X, r) => {
     const p = pal(S, X, p => p.work === 'steward' && p.tier >= 1 && Math.abs(p.bond) >= 20 && p.loc === S.loc); if (!p) return;
     const g = Math.round(med(S, X) * .2);
-    if (p.bond > 0) { X.money(g); r.t += ` Người thu năm nay là ${first(p)}; phần nhà bạn được gạch bớt một dòng.`; }
-    else { X.money(-g); r.t += ` Người thu năm nay là ${first(p)}; phần nhà bạn nặng hơn nhà bên cạnh ${G.coin(g)}.`; }
+    if (p.bond > 0) { X.money(g); r.t += ` Người cầm sổ năm nay là ${first(p)}. Tới tên nhà bạn, ngòi bút dừng lại một chút rồi gạch bớt một dòng. ${first(p)} không ngẩng lên, cũng không nói gì.`; }
+    else { X.money(-g); r.t += ` Người cầm sổ năm nay là ${first(p)}. Phần nhà bạn, chẳng hiểu sao, nặng hơn nhà bên cạnh ${G.coin(g)}. Lúc bạn đặt tiền xuống, ${first(p)} đếm thật chậm, như muốn cả hàng người phía sau đều nhìn thấy.`; }
     lk(S, X, p, 0);
   });
 
@@ -530,9 +586,14 @@ window.LifeSim = window.LifeSim || {};
     const ends = arcEndsIn(S, c).map(d => sumOf(S, d)).filter(Boolean);
     const span = c.y0 === y1 ? `${y1} ${yu(S)}` : `${c.y0}–${y1} ${yu(S)}`;
     const res = ok ? 'đã làm được' : dead ? 'còn dang dở' : 'chưa làm được';
+    const tail = ok ? ['Ngoảnh lại mới thấy quãng đường ấy dài hơn mình tưởng.', 'Có lúc tưởng không qua nổi, vậy mà rồi cũng qua.'][S.age % 2]
+      : dead ? 'Việc ấy đành để lại cho người ở lại.' : ['Có những việc một quãng đời không làm cho xong. Bạn mang nó theo sang quãng sau.', 'Bạn chưa buông, chỉ là quãng đời này đã hết phần.'][S.age % 2];
     X._tag = null;
-    X.log(`Khép chương ${G.PHASE_VI[c.ph].toLowerCase()} (${span}). ${c.q}: ${res}.${ends.length ? ` Chuyện đã khép: ${ends.join('; ')}.` : ''}`, 'chapter');
+    X.log(`Khép chương ${G.PHASE_VI[c.ph].toLowerCase()} (${span}). ${c.q}: ${res}. ${tail}${ends.length ? ` Những chuyện đã khép lại trong quãng ấy: ${ends.join('; ')}.` : ''}`, 'chapter');
   }
+  // Câu mở đầu mỗi quãng đời, in sau tên chương.
+  const PH_OPEN = { teen: 'Tuổi thơ khép lại lúc nào không hay.', adult1: 'Tới lúc phải tự đứng bằng đôi chân của mình.', adult2: 'Những năm hăm hở đã lùi lại phía sau.',
+    elder: 'Bước chân chậm lại, những buổi chiều dài ra.', sk1: 'Trong hốc mắt rỗng, một đốm lửa hồn vừa bén.', sk2: 'Không còn hẳn là người chết, cũng chẳng bao giờ là người sống nữa.', skE: 'Lửa hồn bắt đầu leo lét, mỗi mùa một yếu hơn.' };
   function chapOpen(S, X, ph) {
     const cand = G.CHAPTERS.filter(c => c.ph.includes(ph)).map(c => ({ c, w: Math.max(0, c.w(S, X)) })).filter(x => x.w > 0);
     if (!cand.length) return;
@@ -542,7 +603,7 @@ window.LifeSim = window.LifeSim || {};
       arc: C.arc && a ? { k: a.k, who: a.who, d: a.d } : null };
     c.q = C.q(S, X, c);
     S.chap = c;
-    X.log(`Chương ${G.PHASE_VI[ph].toLowerCase()}: ${c.q}.`, 'chapter');
+    X.log(`Chương ${G.PHASE_VI[ph].toLowerCase()}: ${c.q}. ${PH_OPEN[ph] || ''}`.trim(), 'chapter');
   }
   G.chapText = S => (S.chap ? `${G.PHASE_VI[S.chap.ph]} · ${S.chap.q}` : '');
 
@@ -610,7 +671,7 @@ window.LifeSim = window.LifeSim || {};
       if (!S || was || !S.dead) return;
       chapClose(S, this, true);
       const L = (S.arcDone || []).filter(d => d.o !== 'faded' && d.o !== 'gone').map(d => sumOf(S, d)).filter(Boolean);
-      if (L.length) this.log(`Người ta nhớ về ${S.name.split(' ')[0]} qua mấy chuyện: ${L.slice(0, 5).join('; ')}.`, 'chapter');
+      if (L.length) this.log(`Người ta nhớ về ${S.name.split(' ')[0]} qua mấy chuyện: ${L.slice(0, 5).join('; ')}. Mỗi người kể một kiểu, thêm bớt đôi chỗ, mà chừng ấy chuyện thì ai cũng còn nhớ.`, 'chapter');
     };
   }
 

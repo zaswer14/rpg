@@ -69,7 +69,7 @@ window.LifeSim = window.LifeSim || {};
     if (S.undead || !S.work) { F.workYrs = 0; F.workAt = null; return; }
     if (F.workAt !== S.work) { F.workAt = S.work; F.workYrs = 0; }
     F.workYrs += ypt;
-    if (S.work === 'runesmith' && S.gear < 10 && X.chance(G.ECON.runeGear * ypt)) { S.gear++; X.log(`Bạn khắc ma văn lên đồ của mình. Trang bị ${S.gear}/10.`, 'good'); cnt(S, 'runeGear'); }
+    if (S.work === 'runesmith' && S.gear < 10 && X.chance(G.ECON.runeGear * ypt)) { S.gear++; X.log(`Mấy đêm liền bạn ngồi bên đèn, khắc từng nét ma văn lên đồ của mình. Nét cuối vừa xong, cả món đồ ấm lên trong tay. Trang bị ${S.gear}/10.`, 'good'); cnt(S, 'runeGear'); }
     if (ringOf(S) === 4 && F.workYrs >= G.ECON.patronYrs && !F.patronDone && !F.patronQ && X.chance(G.ECON.patronP * ypt)) F.patronQ = true;
   };
   { const k = G.SYSTEMS.findIndex(s => s.id === 'status'); G.SYSTEMS.splice(k + 1, 0, { id: 'econ', when: S => !S.dead, run: (S, X) => G.econYear(S, X) }); }
@@ -87,14 +87,14 @@ window.LifeSim = window.LifeSim || {};
     when: S => !S.dead && !!S.flags.patronQ && ringOf(S) === 4,
     build(S, X) {
       const p = S.flags.patronQ === true ? (S.flags.patronQ = patronName(S, X)) : S.flags.patronQ, w = W(S.work).nameVi.toLowerCase(), t = p.high ? 3 : 2;
-      return { title: 'Chủ nhà để mắt', body: `${p.name[0].toUpperCase() + p.name.slice(1)} khen bạn trước khách: ${S.flags.workYrs >= 8 ? 'nhiều năm' : 'mấy năm'} làm ${w} chưa lần nào làm phật lòng. Chủ nhà hỏi bạn muốn gì.`,
+      return { title: 'Chủ nhà để mắt', body: `Tiệc tàn, khách còn ngồi lại. ${p.name[0].toUpperCase() + p.name.slice(1)} gọi bạn ra giữa sảnh, khen trước mặt mọi người: ${S.flags.workYrs >= 8 ? 'nhiều năm' : 'mấy năm'} làm ${w} chưa lần nào làm phật lòng. Mấy người hầu khác đứng nép bên cột, nhìn bạn không chớp. Chủ nhà phẩy tay, hỏi bạn muốn gì.`,
         choices: [{ k: 'learn', label: 'Xin học cùng con chủ', sub: `Thầy của nhà dạy bạn tới Tier ${t}.` }, { k: 'elixir', label: 'Xin dược tề', sub: 'Năm năm được ban dược tề tốt, không mất tiền.' }, { k: 'gold', label: 'Nhận thưởng', sub: `Khoảng ${G.coin(Math.round(G.median(X.reg(S)) * 3))}.` }] };
     },
     apply(S, X, k) {
       const p = S.flags.patronQ, F = S.flags; F.patronQ = null; F.patronDone = true; cnt(S, 'patron_' + k);
-      if (k === 'learn') { F.patronT = p && p.high ? 3 : 2; return 'Mỗi sáng bạn đứng cuối sân tập, sau lưng mấy cậu chủ.'; }
-      if (k === 'elixir') { F.giftElixir = 5; return 'Quản gia đưa bạn một hộp gỗ, trong có mười lọ dược tề.'; }
-      X.money(Math.round(G.median(X.reg(S)) * 3)); X.add('so', 4); return 'Chủ nhà thưởng một túi bạc nặng tay.';
+      if (k === 'learn') { F.patronT = p && p.high ? 3 : 2; return 'Từ đó mỗi sáng bạn đứng cuối sân tập, sau lưng mấy cậu chủ. Thầy chẳng mấy khi nhìn tới, nhưng bạn nghe hết, nhớ hết.'; }
+      if (k === 'elixir') { F.giftElixir = 5; return 'Quản gia đưa bạn một hộp gỗ thơm, trong có mười lọ dược tề nút sáp đỏ xếp thẳng hàng. Ông dặn mỗi năm dùng hai lọ, đừng để ai thấy.'; }
+      X.money(Math.round(G.median(X.reg(S)) * 3)); X.add('so', 4); return 'Chủ nhà thưởng một túi bạc nặng tay. Tối ấy về phòng, bạn đổ ra đếm hai lần, rồi nhét dưới gối mà ngủ.';
     },
     auto: S => ['martial', 'adventure', 'power'].includes(S.aim) || S.traits.bold > .6 ? 'learn' : S.traits.studious > .5 ? 'elixir' : 'gold'
   };
@@ -107,17 +107,17 @@ window.LifeSim = window.LifeSim || {};
         X.money(g); S.fame = Math.min(100, S.fame + 4); cnt(S, 'artSold');
         if (!F.artMaster && X.chance(.2 + S.fame / 300)) {
           F.artMaster = true; S.pct = Math.min(.99, S.pct + .12); S.fame = Math.min(100, S.fame + 10); cnt(S, 'artMasterN');
-          return { t: `Phòng trưng bày ở kinh đô treo tác phẩm của bạn ngay sảnh chính. Đấu giá được ${G.coin(g)}. Từ nay người ta gọi bạn là danh gia.`, k: 'big' };
+          return { t: `Phòng trưng bày ở kinh đô treo tác phẩm của bạn ngay sảnh chính, chỗ ánh sáng đẹp nhất. Hôm đấu giá, giá cứ thế vọt lên, tới ${G.coin(g)} mới dừng. Bạn đứng khuất sau một cây cột, tay nắm chặt vạt áo. Từ nay người ta gọi bạn là danh gia.`, k: 'big' };
         }
-        return { t: `Một tác phẩm của bạn (${w}) được phòng trưng bày nhận, bán đấu giá được ${G.coin(g)}.`, k: 'good' };
+        return { t: F.artSold > 1 ? `Lại một tác phẩm nữa (${w}) được phòng trưng bày nhận, bán đấu giá được ${G.coin(g)}. Lần này bạn không đứng xem tới hết phiên, ghé qua lấy tiền rồi về làm tiếp.` : `Một tác phẩm của bạn (${w}) được phòng trưng bày nhận. Hôm mang tới, bạn bọc nó trong ba lớp vải, dọc đường chốc chốc lại sờ xem còn nguyên không. Phiên đấu giá bán được ${G.coin(g)}.`, k: 'good' };
       } },
     { id: 'cv_wrath', st: ['adult', 'elder'], c: S => !S.undead && ringOf(S) === 4 && (S.flags.workYrs || 0) >= 2, w: () => G.ECON.wrathP * 30, rep: true, gap: 10,
       run(S, X) {
         cnt(S, 'wrath');
-        if (X.chance(.4)) { X.add('h', -3); return { t: 'Chủ nhà nổi giận vì một chuyện nhỏ. Quản gia đứng ra nhận lỗi thay, bạn chỉ bị mắng.', k: 'bad' }; }
-        if (X.chance(.5)) { S.work = null; S.flags.workQ = true; S.pct = Math.max(.05, S.pct * .7); X.add('h', -8); cnt(S, 'wrathFired'); return { t: 'Chủ nhà nổi giận vì một chuyện nhỏ, đuổi bạn ra khỏi phủ ngay trong đêm.', k: 'bad' }; }
+        if (X.chance(.4)) { X.add('h', -3); return { t: `${S.flags.wrath > 1 ? 'Lại một lần nữa. ' : ''}Chỉ vì một chén trà nguội, chủ nhà nổi giận, ném vỡ cả bộ ấm. Quản gia đứng ra nhận lỗi thay, bạn chỉ bị mắng một trận. Tối ấy bạn mang sang cho ông nửa cái bánh, hai người ngồi ăn, không ai nói gì.`, k: 'bad' }; }
+        if (X.chance(.5)) { S.work = null; S.flags.workQ = true; S.pct = Math.max(.05, S.pct * .7); X.add('h', -8); cnt(S, 'wrathFired'); return { t: 'Chủ nhà nổi giận vì một chuyện nhỏ, quát người đuổi bạn ra khỏi phủ ngay trong đêm. Bạn ôm bọc quần áo đứng ngoài cổng, đèn trong phủ vẫn sáng, tiếng đàn vẫn vang. Bao năm hầu hạ, gói lại vừa một bọc.', k: 'bad' }; }
         X.add('hl', -X.int(6, 16)); X.add('h', -6);
-        return { t: 'Chủ nhà say rượu, đổ lỗi cho bạn trước mặt khách rồi sai người đánh hai mươi roi.', k: 'bad' };
+        return { t: 'Chủ nhà say rượu, đổ lỗi cho bạn trước mặt khách rồi sai người đánh hai mươi roi. Bạn cắn răng đếm từng roi một. Lưng chưa kịp đóng vảy, bạn đã lại phải bưng mâm hầu chính người ấy.', k: 'bad' };
       } }
   );
 
@@ -129,7 +129,7 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const T = G.tierOf(S), reg = X.reg(S), cur = W(S.work).nameVi.toLowerCase();
       const opts = reworkOpts(S).sort((a, b) => W(b).pct[1] - W(a).pct[1]).slice(0, 3);
-      return { title: 'Nghề của người có cấp', body: `Giờ bạn là ${G.tierName(T)}. Có những nghề chỉ nhận người có cấp, trả cao hơn làm ${cur}.`,
+      return { title: 'Nghề của người có cấp', body: `Giờ bạn là ${G.tierName(T)}. Tin ấy lan nhanh hơn bạn tưởng: có người tìm tới tận nơi, mời làm những nghề chỉ nhận người có cấp, trả cao hơn làm ${cur}. Bạn nhìn đôi tay đã quen việc cũ, chưa biết trả lời sao.`,
         choices: [...opts.map(id => { const w = W(id), m = G.incomeMult({ ...S, work: id }); return { k: id, label: w.nameVi, sub: `${G.RING_VI[w.ring]} · thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${G.coin(Math.round(G.incomeAt(reg, w.pct[1]) * m))}/năm` + (w.risk > 1.4 ? ' · nguy hiểm' : '') }; }),
           { k: 'keep', label: `Giữ nghề ${cur}`, sub: '' }] };
     },
@@ -138,7 +138,7 @@ window.LifeSim = window.LifeSim || {};
       if (k === 'keep') return null;
       const old = W(S.work).nameVi.toLowerCase(), fee = G.workFee(S, k); if (fee) X.money(-fee);
       S.work = k; S.pct = Math.max(S.pct * .8, W(k).pct[0]); cnt(S, 'rework');
-      return `Bạn thôi làm ${old}, nhận việc ${W(k).nameVi.toLowerCase()}.`;
+      return `Bạn thôi làm ${old}, nhận việc ${W(k).nameVi.toLowerCase()}. Ngày cuối ở chỗ cũ, bạn lau dụng cụ thật sạch rồi mới để lại.`;
     },
     auto(S, X, d) {
       const c = d.choices.find(c => c.k !== 'keep'), cur = W(S.work);

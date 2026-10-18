@@ -91,15 +91,15 @@ window.LifeSim = window.LifeSim || {};
     const c = S.flags.crimes;
     if (c === 1) {
       const f = Math.max(10, Math.round(Math.max(0, S.gold) * .3)); X.money(-f); X.add('so', -4);
-      X.log(`Lính ${n.name} bắt được bạn vì ${what}. Nộp phạt ${G.coin(f)}.`, 'bad'); return;
+      X.log(`Lính ${n.name} bắt được bạn vì ${what}. Họ trói tay dẫn bạn đi một quãng dài, người hai bên đứng nhìn, có người quen cũng quay mặt đi. Nộp phạt ${G.coin(f)}.`, 'bad'); return;
     }
     if (n.laws.includes('penal_labor')) {
       X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', -12); S.flags.labor = 2;
-      X.log(`Tái phạm vì ${what}: ${n.name} đưa bạn đi khổ sai hai năm.`, 'bad'); return;
+      X.log(`Tái phạm vì ${what}: ${n.name} đưa bạn đi khổ sai hai năm. Xích sắt cọ vào cổ chân suốt đường đi, tới nơi đã rớm máu. Bạn đếm ngày bằng những vạch khắc trên vách lán.`, 'bad'); return;
     }
     if (c >= 3) { X.die({ id: 'hanged', text: `bị ${n.name} treo cổ vì ${what}` }); return; }
     X.money(-Math.round(Math.max(0, S.gold) * .5)); X.add('h', -15); X.add('so', -8);
-    X.log(`Tái phạm vì ${what}: bạn bị giam một năm. Lần sau là giá treo cổ.`, 'bad');
+    X.log(`Tái phạm vì ${what}: bạn bị giam một năm. Từ ô cửa ngục nhìn ra được một góc pháp trường, giá treo cổ đứng đó, nắng mưa gì cũng thấy. Lần sau là tới lượt bạn.`, 'bad');
   };
 
   // Áp giải ra khỏi biên giới: phạt 20% bạc, chuyển sang vùng kề có khu dân cư lớn nhất không thuộc nước này (không có thì vùng kề bất kỳ).
@@ -109,7 +109,7 @@ window.LifeSim = window.LifeSim || {};
     const to = X.pick(out.length ? out : adj);
     const f = Math.round(Math.max(0, S.gold) * .2); X.money(-f); X.add('h', -8);
     S.flags.migrateQ = null; S.flags.outsider = 0;
-    X.log(`Lính ${n.name} áp giải bạn ra khỏi biên giới vì ở quá hạn. Phạt ${G.coin(f)}.`, 'bad');
+    X.log(`Lính ${n.name} gõ cửa lúc trời chưa sáng, cho bạn gom đồ trong lúc một ngọn đuốc cháy hết. Bạn bị áp giải ra khỏi biên giới vì ở quá hạn, ngoái lại chỉ thấy cột mốc đứng trơ. Phạt ${G.coin(f)}.`, 'bad');
     const t = G.moveTo(X, to, { force: true, escort: false }); if (t) X.log(t, 'info');
   };
 
@@ -118,10 +118,10 @@ window.LifeSim = window.LifeSim || {};
   G.lawYear = function (S, X) {
     const { n } = G.here(S), st = X.stage(S), R = G.RACES[S.race];
     // Khổ sai, nghĩa vụ đang chạy dù đã rời nước.
-    if (S.flags.labor > 0) { S.flags.labor--; X.add('hl', -6); X.add('h', -5); X.gain('Body', 2); if (!S.flags.labor) X.log('Mãn hạn khổ sai.', 'info'); }
+    if (S.flags.labor > 0) { S.flags.labor--; X.add('hl', -6); X.add('h', -5); X.gain('Body', 2); if (!S.flags.labor) X.log('Mãn hạn khổ sai. Người ta tháo xích, chỉ đường về rồi thôi không ngó tới. Cổ chân nhẹ hẳn, vậy mà mấy tháng sau bạn vẫn quen bước kéo lê.', 'info'); }
     if (S.flags.soldier > 0) {
       S.flags.soldier--; X.gain('Spear', 2.5); X.gain('Shield', 2); X.addXp(30);
-      if (!S.flags.soldier) { X.log('Hết hạn nghĩa vụ. Bạn về nhà với một vết sẹo và vài người bạn.', 'info'); X.add('so', 5); }
+      if (!S.flags.soldier) { X.log('Hết hạn nghĩa vụ. Bạn trả lại giáo và khiên, mang về một vết sẹo và vài người bạn từng ăn chung một nồi suốt ba năm. Đêm đầu ở nhà, giường êm quá mà lại không ngủ được.', 'info'); X.add('so', 5); }
     }
     if (!n || S.undead) return;
     if (n.laws.includes('ancestor_tithe')) X.add('h', 1);
@@ -136,7 +136,7 @@ window.LifeSim = window.LifeSim || {};
         if (n.laws.includes('ban_arcane')) { if (X.chance(.04)) G.caught(X, n, 'luyện phép'); }
         else if (n.laws.includes('mage_license') && !(n.template === 'E2' && S.race === n.race) && !inReg) {
           const fee = 8 * (1 + X.ctier(S));
-          if (S.gold >= fee) { X.money(-fee); if (S.flags.license == null || S.age - S.flags.license >= 5) { S.flags.license = S.age; X.log(`Nộp ${G.coin(fee)} gia hạn giấy phép pháp sư của ${n.name}.`, 'info'); } }
+          if (S.gold >= fee) { X.money(-fee); if (S.flags.license == null || S.age - S.flags.license >= 5) { S.flags.license = S.age; X.log(`Lại tới kỳ gia hạn giấy phép pháp sư của ${n.name}. Viên thư lại không ngẩng đầu, đóng dấu đánh cộp một cái. Nộp ${G.coin(fee)}.`, 'info'); } }
           else if (X.chance(.04)) G.caught(X, n, 'hành nghề phép không giấy phép');
         }
       }
@@ -148,7 +148,7 @@ window.LifeSim = window.LifeSim || {};
     // Cấm ngoại tộc ở lâu: sang năm thứ hai thì có lệnh trục xuất; cố ở thì bị bắt.
     if (n.laws.includes('no_outsiders') && ['adult', 'elder'].includes(st) && !n.fav.includes(S.race)) {
       S.flags.outsider = (S.flags.outsider || 0) + 1;
-      if (S.flags.outsider === 2) { S.flags.migrateQ = `Lệnh của ${n.name}: ${J.races[S.race].nameVi} không được ở quá một năm. Lính đã đến gõ cửa.`; S.flags.expelled = true; }
+      if (S.flags.outsider === 2) { S.flags.migrateQ = `Lệnh của ${n.name}: ${J.races[S.race].nameVi} không được ở quá một năm. Lính đã tới gõ cửa, đứng chờ ngoài hiên, tay đặt sẵn trên chuôi gươm.`; S.flags.expelled = true; }
       // Cố ở lại: lính áp giải ra vùng kề ngoài lãnh thổ nước này (không tính tiền án).
       if (S.flags.outsider >= 3 && X.chance(.35)) G.deport(X, n);
     } else S.flags.outsider = 0;
@@ -162,16 +162,16 @@ window.LifeSim = window.LifeSim || {};
     when: S => S.flags.conscriptQ != null && !S.undead,
     build(S, X) {
       const n = G.realm.nations[S.flags.conscriptQ];
-      return { title: 'Lệnh nghĩa vụ', body: `${n.name} gọi người tuổi bạn nhập ngũ ba năm.`, fact: G.LAWS.conscript.desc,
+      return { title: 'Lệnh nghĩa vụ', body: `Tiếng trống mộ lính vang từ sáng sớm: ${n.name} gọi người tuổi bạn nhập ngũ ba năm. Viên quan cầm sổ đọc tên từng người, tới tên bạn thì dừng lại, ngước lên nhìn. Mấy đứa cùng lứa đứng túm tụm ngoài sân, không ai nói gì.`, fact: G.LAWS.conscript.desc,
         choices: [{ k: 'join', label: 'Nhập ngũ', sub: 'Luyện thương và khiên; nếu có chiến tranh thì dễ chết trận hơn.' }, { k: 'flee', label: 'Trốn', sub: `Bị truy nã ở ${n.name}.` }] };
     },
     apply(S, X, k) {
       const n = G.realm.nations[S.flags.conscriptQ];
       S.flags.conscriptQ = null; S.flags.conscript = true;
-      if (k === 'join') { S.flags.soldier = 3; S.flags.served = true; X.add('so', 3); S.fame += 1; return 'Bạn nhận giáo và khiên.'; }
+      if (k === 'join') { S.flags.soldier = 3; S.flags.served = true; X.add('so', 3); S.fame += 1; return 'Bạn nhận giáo và khiên. Cán giáo còn mới, nhẵn tay, khiên thì nặng hơn bạn tưởng. Ba năm thôi, bạn tự nhủ, rồi sẽ về.'; }
       (S.flags.wanted = S.flags.wanted || {})[n.idx] = true;
-      S.flags.migrateQ = `Bạn trốn lính. Ở lại ${n.name} là có ngày bị bắt.`;
-      return 'Bạn trốn khỏi đợt mộ lính.';
+      S.flags.migrateQ = `Bạn đã trốn lính. Ở lại ${n.name} thì sớm muộn cũng có ngày lính gõ cửa.`;
+      return 'Bạn trốn khỏi đợt mộ lính, nằm trong bụi rậm suốt hai đêm, nghe tiếng ngựa đi qua đi lại. Từ nay tên bạn nằm trong sổ truy nã.';
     },
     auto: S => S.traits.bold > .35 || S.traits.social > .6 ? 'join' : 'flee'
   };
@@ -188,31 +188,31 @@ window.LifeSim = window.LifeSim || {};
   G.EVENTS.push(
     { id: 'law_wary', st: ['child', 'teen', 'adult', 'elder'], c: S => !S.undead && G.attitude(S) === 'wary', w: 1.5, rep: true, gap: 3, run(S, X) {
         const n = G.here(S).n; X.add('so', -6); X.add('h', -4);
-        return { t: `Ở ${n.name}, người ta nhìn ${J.races[S.race].nameVi} như kẻ lạ. Chủ quán nói hết hàng khi thấy bạn bước vào.`, k: 'bad' }; } },
+        return { t: S.age % 2 ? `Ở ${n.name}, người ta nhìn ${J.races[S.race].nameVi} như kẻ lạ. Bạn đi ngang, mấy bà mẹ kéo con vào nhà, cửa sổ đóng lại từng cánh một. Bạn bước tiếp, cố không đi nhanh hơn.` : `Ở ${n.name}, người ta nhìn ${J.races[S.race].nameVi} như kẻ lạ. Bạn vừa bước vào quán, chủ quán đã bảo hết hàng, trong khi nồi canh trên bếp còn bốc khói. Bạn đứng thêm một lúc rồi quay ra.`, k: 'bad' }; } },
     { id: 'law_fav', st: ['adult'], c: S => !S.undead && G.attitude(S) === 'fav' && G.here(S).n.fav.length <= 3, w: .8, rep: true, gap: 5, run(S, X) {
-        X.add('so', 4); X.money(X.int(5, 20)); return { t: `Ở ${G.here(S).n.name}, người cùng tộc được tin trước. Một mối làm ăn đến tay bạn dễ dàng.`, k: 'good' }; } },
+        X.add('so', 4); X.money(X.int(5, 20)); return { t: `Ở ${G.here(S).n.name}, người cùng tộc được tin trước. Một mối làm ăn đến tay bạn chỉ sau một chén trà, không giấy tờ, không người bảo lãnh. Lúc ra về, bạn còn nghe người ta dặn với theo: có gì cứ tìm tôi.`, k: 'good' }; } },
     { id: 'law_inventory', st: ['adult', 'elder'], c: S => G.RACES[S.race].construct && !!G.here(S).n && !G.lawHere(S, 'construct_citizen'), w: 2, rep: true, gap: 4, run(S, X) {
         X.add('h', -8); X.add('so', -3);
-        return { t: `Quan thuế ${G.here(S).n.name} ghi bạn vào sổ tài sản của chủ xưởng cũ, cạnh hai cái đe và một con la.`, k: 'bad', f: G.LAWS.construct_citizen.desc }; } },
+        return { t: `Quan thuế ${G.here(S).n.name} tới xưởng đếm đồ đạc, rồi ghi bạn vào sổ tài sản của chủ xưởng cũ, ngay dưới hai cái đe và trên một con la. Ông ta không hỏi tên bạn. Đêm ấy lõi trong ngực bạn quay chậm hẳn.`, k: 'bad', f: G.LAWS.construct_citizen.desc }; } },
     { id: 'law_liberation', st: ['adult', 'elder'], c: S => G.RACES[S.race].construct && !G.lawHere(S, 'construct_citizen') && !!libNation() && !S.flags.libCall, w: 1.5, run(S, X) {
-        const L = libNation(); S.flags.libCall = true; S.flags.migrateQ = `Có tin từ ${L.name}: ở đó Cơ Nhân là công dân. Người đưa tin chỉ đường qua biên giới.`;
-        return { t: `Một Cơ Nhân lạ để lại tờ truyền đơn của ${L.name} dưới cửa xưởng.`, k: 'info', f: G.LAWS.liberation.desc }; } },
+        const L = libNation(); S.flags.libCall = true; S.flags.migrateQ = `Có tin từ ${L.name}: ở đó Cơ Nhân là công dân, có tên trong sổ hộ như mọi người. Người đưa tin vẽ đường qua biên giới lên mặt bàn bằng dầu máy, rồi lau đi.`;
+        return { t: `Sáng ra, dưới cửa xưởng có một tờ truyền đơn của ${L.name}, mép giấy dính vết dầu. Đêm qua có một Cơ Nhân lạ đi ngang, bước chân nặng, không dừng lại. Bạn gấp tờ giấy làm tư, cất vào khe giữa hai tấm giáp.`, k: 'info', f: G.LAWS.liberation.desc }; } },
     { id: 'law_duel', st: ['adult', 'elder'], c: S => !S.undead && G.lawHere(S, 'duel_law'), w: 1.5, rep: true, gap: 4, run(S, X) {
         const p = G.clamp(.45 + (X.power(S) - 1) * .2 + Math.max(S.mastery.Sword, S.mastery.Axe, S.mastery.Unarmed) / 250, .1, .92);
-        if (X.rnd() < p) { const g = X.int(10, 40); X.money(g); S.fame += 2; return { t: `Tranh chấp ranh đất được xử bằng quyết đấu theo luật ${G.here(S).n.name}. Bạn thắng và giữ được đất, thêm ${G.coin(g)} tiền cược.`, k: 'good', f: G.LAWS.duel_law.desc }; }
+        if (X.rnd() < p) { const g = X.int(10, 40); X.money(g); S.fame += 2; return { t: `Tranh chấp ranh đất được xử bằng quyết đấu theo luật ${G.here(S).n.name}. Cả xóm kéo ra xem, đứng thành vòng quanh bãi đất. Đối phương ngã xuống trước, bạn giữ được đất, thêm ${G.coin(g)} tiền cược.`, k: 'good', f: G.LAWS.duel_law.desc }; }
         X.add('hl', -X.int(8, 18)); X.money(-Math.min(Math.max(0, S.gold), 30));
-        return { t: 'Bạn thua trận quyết đấu xử tranh chấp. Mất phần đất tranh chấp và một chiếc răng.', k: 'bad', f: G.LAWS.duel_law.desc }; } },
+        return { t: 'Trận quyết đấu xử tranh chấp kết thúc nhanh hơn bạn tưởng. Bạn nằm ngửa trên đất, miệng đầy vị máu, nghe người ta hô tên kẻ thắng. Mất phần đất tranh chấp và một chiếc răng. Mỗi lần lưỡi chạm vào chỗ trống ấy, bạn lại nhớ.', k: 'bad', f: G.LAWS.duel_law.desc }; } },
     { id: 'law_raid', st: ['child', 'teen', 'adult', 'elder'], c: S => !S.undead && !!raidNeighbor(S), w: 2, rep: true, gap: 2, run(S, X) {
         const o = raidNeighbor(S);
-        if (['adult', 'elder'].includes(X.stage(S)) && X.power(S) > 1 + X.rnd()) { S.fame += 1; return { t: `Toán cướp của ${o.name} tràn qua biên. Bạn cùng dân làng đánh lui chúng.`, k: 'good', f: G.LAWS.raid_law.desc }; }
+        if (['adult', 'elder'].includes(X.stage(S)) && X.power(S) > 1 + X.rnd()) { S.fame += 1; return { t: `Toán cướp của ${o.name} tràn qua biên lúc nửa đêm, đuốc sáng rực cả một khúc đồi. Bạn cùng dân làng cầm gậy gộc, giáo mác ra chặn, đánh lui chúng tới tận bờ suối. Sáng ra, người ta nhắc tên bạn khi kể lại trận ấy.`, k: 'good', f: G.LAWS.raid_law.desc }; }
         const loss = Math.min(Math.max(0, S.gold), X.int(10, 50)); X.money(-loss); X.add('hl', -X.int(2, 8)); X.add('h', -5);
-        return { t: `Toán cướp của ${o.name} đốt kho thóc làng bên và lấy ${G.coin(loss)} của nhà bạn. Bên kia biên giới gọi đó là luật.`, k: 'bad', f: G.LAWS.raid_law.desc }; } },
+        return { t: `Toán cướp của ${o.name} đốt kho thóc làng bên, khói đen bay sang tận đây. Chúng phá cửa nhà bạn, lấy đi ${G.coin(loss)}. Bên kia biên giới gọi đó là luật.`, k: 'bad', f: G.LAWS.raid_law.desc }; } },
     { id: 'law_contract', st: ['adult', 'elder'], c: S => !S.undead && G.lawHere(S, 'contract_law'), w: 1, rep: true, gap: 6, run(S, X) {
-        if (X.chance(.6)) { X.add('so', 5); return { t: 'Bạn giữ đúng lời hứa trả nợ trước tiết đông chí. Khế ước tự cháy thành tro.', k: 'good', f: G.LAWS.contract_law.desc }; }
+        if (X.chance(.6)) { X.add('so', 5); return { t: 'Trước tiết đông chí một ngày, bạn mang đủ tiền tới trả nợ, đúng như lời hứa. Tờ khế ước trên bàn tự bén lửa, cháy thành một nhúm tro mịn. Chủ nợ gật đầu, rót cho bạn một chén trà.', k: 'good', f: G.LAWS.contract_law.desc }; }
         X.cond('curse'); X.add('h', -6);
-        return { t: 'Bạn lỡ hẹn trả một món nợ nhỏ. Sáng hôm sau, khế ước đã khắc vào da tay bạn.', k: 'bad', f: G.LAWS.contract_law.desc }; } },
+        return { t: 'Bạn lỡ hẹn trả một món nợ nhỏ, chỉ chậm vài hôm. Sáng hôm sau thức dậy, từng dòng khế ước đã hằn lên da tay bạn, đỏ như vết bỏng. Rửa thế nào cũng không đi.', k: 'bad', f: G.LAWS.contract_law.desc }; } },
     { id: 'law_tax_up', st: ['adult', 'elder'], c: S => flesh(S) && !!G.here(S).n && G.here(S).n.tax >= .2 && !(G.sTier && G.sTier(S)), w: 1, rep: true, gap: 4, run(S, X) {
         const n = G.here(S).n, t = Math.round(Math.max(0, S.gold) * .1); X.money(-t); X.add('h', -3);
-        return { t: `${n.name} thu thêm một khoản thuế đầu người. Bạn nộp ${G.coin(t)}.`, k: 'bad' }; } }
+        return { t: S.age % 2 ? `Lại thêm một khoản thuế đầu người của ${n.name}. Người ta xếp hàng từ sáng, chẳng ai dám than to. Bạn nộp ${G.coin(t)}.` : `${n.name} thu thêm một khoản thuế đầu người. Viên thu thuế đọc tên từng nhà, giọng đều đều như đọc kinh. Bạn nộp ${G.coin(t)}.`, k: 'bad' }; } }
   );
 })(window.LifeSim);

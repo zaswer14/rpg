@@ -183,7 +183,10 @@ window.LifeSim = window.LifeSim || {};
 
     // ═════════ Ghi sổ ═════════
     log(text, kind = 'info', fact = null) {
-      const S = this.S, e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact, arc: this._tag || null, ev: this._ev || null };   // arc: nhãn mạch truyện (js/story.js); ev: mã sự kiện, quyết định sinh ra dòng này (chế độ kiểm duyệt)
+      const S = this.S;
+      // Dòng kiến thức (fact) chỉ hiện lần đầu trong một đời; dòng tác động (fx) dùng fact cho "Không chọn" nên không chặn (docs/18 mục 4).
+      if (fact && kind !== 'fx') { const fs = S.factSeen || (S.factSeen = {}); if (fs[fact]) fact = null; else fs[fact] = 1; }
+      const e = { age: S.age, yrs: this.years(S), wy: S.world.year, kiep: S.kiep, text, kind, fact, arc: this._tag || null, ev: this._ev || null };   // arc: nhãn mạch truyện (js/story.js); ev: mã sự kiện, quyết định sinh ra dòng này (chế độ kiểm duyệt)
       if (!this.headless) { S.log.push(e); if (S.log.length > 500) S.log.splice(0, S.log.length - 500); }
       this.hook.log(e);
       return e;
@@ -298,19 +301,19 @@ window.LifeSim = window.LifeSim || {};
       S.pos = G.homePos(st, urban, T.rnd); S.path2.push(S.pos);
       // Lời mở đầu.
       const where = urban ? st.name : `vùng quê quanh ${st.name}`, realmN = G.nationOf(st);
-      const parentsTxt = S.flags.orphan ? 'Không ai nhận là cha mẹ bạn; bà mụ gửi bạn vào nhà tế bần.' :
-        R.construct ? `Bạn được đúc ở ${st.name}. Thợ đúc ${S.family.parents[0].name} gõ ba lần lên vỏ bạn, lõi bắt đầu quay.` :
-        `Mẹ bạn ${S.family.parents[0].name}, ${S.family.parents[0].age} tuổi.` + (S.family.parents[1] ? ` Cha ${S.family.parents[1].name}, ${S.family.parents[1].age} tuổi.` : ' Cha bạn không có mặt.');
-      this.log(`Năm ${S.world.year} lịch Varen. Bạn chào đời ở ${where} (${G.TIER_VI[st.tier].toLowerCase()}, ${reg.nameVi}${realmN ? ', ' + realmN.name : ', đất vô chủ'}): ${J.races[race].nameVi}${sex === 'n' ? '' : sex === 'm' ? ', con trai' : ', con gái'}, nhà ${G.CLASSES[S.q].nameVi.toLowerCase()}. Tên bạn là ${S.name}.`, 'big', reg.lore);
-      this.log(parentsTxt + (S.family.sibs.length ? ` Bạn có ${S.family.sibs.length} anh chị.` : ''), 'info');
-      if (S.faith) this.log(`Gia đình theo ${J.faiths[S.faith].nameVi}.`, 'info');
-      if (S.flags.omen) this.log(`Đêm bạn sinh có sao chổi. Bà đỡ bảo đứa trẻ mang khí chất ${J.aspects[S.flags.omen].nameVi}.`, 'big');
+      const parentsTxt = S.flags.orphan ? 'Không ai đứng ra nhận là cha mẹ bạn. Bà mụ quấn bạn trong một tấm khăn cũ, bế tới nhà tế bần, gõ cửa ba tiếng rồi lặng lẽ quay về.' :
+        R.construct ? `Bạn được đúc ở ${st.name}. Thợ đúc ${S.family.parents[0].name} lau tay vào tạp dề, gõ ba lần lên vỏ bạn. Trong ngực bạn, lõi khẽ rung lên rồi bắt đầu quay.` :
+        `Mẹ bạn là ${S.family.parents[0].name}, năm ấy ${S.family.parents[0].age} tuổi, ôm bạn vào lòng khi tóc còn ướt mồ hôi.` + (S.family.parents[1] ? ` Cha bạn, ${S.family.parents[1].name}, ${S.family.parents[1].age} tuổi, đứng ở cửa buồng mãi mới dám bước vào.` : ' Cha bạn không có mặt, và trong nhà không ai nhắc tới.');
+      this.log(`Năm ${S.world.year} lịch Varen, ở ${where} (${G.TIER_VI[st.tier].toLowerCase()}, ${reg.nameVi}${realmN ? ', ' + realmN.name : ', đất vô chủ'}), bạn chào đời: ${sex === 'n' ? '' : sex === 'm' ? 'một bé trai ' : 'một bé gái '}${J.races[race].nameVi}, trong một nhà ${G.CLASSES[S.q].nameVi.toLowerCase()}. ${urban ? 'Ngoài cửa, phố xá vẫn ồn như mọi ngày, bánh xe nghiến trên đá không ngớt.' : 'Ngoài ngõ chó sủa mấy tiếng rồi thôi, gió lùa qua khe vách.'} Người ta đặt tên bạn là ${S.name}.`, 'big', reg.lore);
+      this.log(parentsTxt + (S.family.sibs.length ? ` Trong nhà đã có ${S.family.sibs.length} anh chị, chen nhau ngó mặt đứa em mới.` : ''), 'info');
+      if (S.faith) this.log(`Nhà bạn theo ${J.faiths[S.faith].nameVi}. Lời khấn đầu tiên bạn nghe được, trước cả tên mình, là lời khấn của đạo ấy.`, 'info');
+      if (S.flags.omen) this.log(`Đêm bạn sinh, một ngôi sao chổi kéo vệt sáng dài ngang trời. Bà đỡ đứng nhìn lên rất lâu, rồi bảo đứa trẻ này mang khí chất ${J.aspects[S.flags.omen].nameVi}. Cả nhà nghe vậy, không biết nên mừng hay nên lo.`, 'big');
       if (origTxt) this.log(origTxt, 'big');
       this.log(talTxt.text, talTxt.big ? 'big' : 'info');
       // Tuổi thọ kỳ vọng — như "trong số trẻ sinh cùng năm, X% sống tới…" của 1in8b.
       const surv = a => { let l = 1; for (let x = 0; x < Math.min(a, lt.q.length); x++) l *= 1 - lt.q[x]; return l; };
       const aT = Math.round(lt.adultT);
-      this.log(`Trong số ${J.races[race].nameVi} sinh cùng năm ở ${reg.nameVi}, khoảng ${Math.round(surv(aT) * 100)}% sống tới tuổi trưởng thành (${R.adult}) và ${Math.round(surv(Math.round(lt.leT)) * 100)}% sống tới ${Math.round(lt.leT * R.ypt)}.`, 'info');
+      this.log(`Những đứa trẻ ${J.races[race].nameVi} ra đời cùng năm với bạn ở ${reg.nameVi}, chừng ${Math.round(surv(aT) * 100)}% sẽ sống tới tuổi trưởng thành (${R.adult}), và ${Math.round(surv(Math.round(lt.leT)) * 100)}% sống tới ${Math.round(lt.leT * R.ypt)}.`, 'info');
       if (!opt.noPeers && !this.headless) { this.makePeers(); G.bindWorld(S.world); }   // đồng niên sống trên bản sao thế giới; gắn lại thế giới của đời này
       this.planYear();
       return S;
@@ -345,10 +348,10 @@ window.LifeSim = window.LifeSim || {};
       G.riseTalents(old, S);
       S.pos = G.map.pointIn(reg.id, 0, this.rnd); S.path2.push(S.pos);
       const here = G.nationAtPos(S.pos[0], S.pos[1]); S.nation = here ? here.idx : null;
-      this.log(`Năm ${S.world.year}. Đất ở ${grave.nameVi} (${reg.nameVi}) nứt ra. Một bộ xương đứng dậy, không nhớ tên mình, chỉ nhớ một điều.`, 'big');
-      if (dom) this.log(`Kỹ năng chủ đạo của kiếp trước còn trong xương: ${G.mv(dom.skill)} ${dom.value}. Mọi thứ khác đã mục.`, 'big', 'Bộ Xương: không đói, không bệnh, không có con; tuổi tính bằng năm kể từ khi trỗi dậy. Hồn phai dần theo thời gian.');
-      this.log('Người sống sẽ sợ bạn. Tu sĩ Quang Minh sẽ săn bạn. Hắc Giáo sẽ mời bạn.', 'info');
-      this.log(`Căn cốt theo hồn mà đi: ${G.rootText(S)}. Thiên phú của thân xác cũ đã mất.`, 'info');
+      this.log(`Năm ${S.world.year}. Ở ${grave.nameVi} (${reg.nameVi}), mặt đất khô nứt ra một đường dài, đất vụn lăn xuống lách tách. Một bàn tay xương bám lên mép hố, rồi cả bộ xương đứng dậy. Nó không nhớ tên mình. Chỉ nhớ một điều.`, 'big');
+      if (dom) this.log(`Thứ còn nằm lại trong xương là kỹ năng chủ đạo của kiếp trước, quen như một thói tay: ${G.mv(dom.skill)} ${dom.value}. Mọi thứ khác đã mục cùng thịt.`, 'big', 'Bộ Xương: không đói, không bệnh, không có con; tuổi tính bằng năm kể từ khi trỗi dậy. Hồn phai dần theo thời gian.');
+      this.log('Gió thổi qua hốc mắt, nghe rỗng không. Từ nay người sống sẽ sợ bạn, tu sĩ Quang Minh sẽ săn bạn, còn Hắc Giáo thì sẽ gửi lời mời.', 'info');
+      this.log(`Căn cốt theo hồn mà đi, nên vẫn còn: ${G.rootText(S)}. Thiên phú gắn với thân xác cũ thì đã mục theo nó.`, 'info');
       this.planYear();
       return S;
     }
@@ -450,7 +453,7 @@ window.LifeSim = window.LifeSim || {};
       if (['adult', 'elder', 'teen'].includes(st) && !(st === 'teen' && S.family.parents.some(p => p.alive))) {
         const cost = S.undead ? 0 : G.median(reg) * .5 * (.55 + .15 * S.q);
         this.money(-cost);
-        if (S.gold < 0) { this.add('h', -6); this.add('hl', -3); if (S.gold < -G.median(reg)) { S.gold = 0; if (G.lawHere(S, 'caste')) { this.add('h', -8); this.log('Nợ chồng nợ. Bạn bán hết đồ đạc; luật đẳng cấp vẫn giữ bạn ở tầng lớp cũ, nhưng ai cũng biết.', 'bad'); } else { S.q = Math.max(1, S.q - 1); this.log('Nợ chồng nợ. Bạn bán hết đồ đạc và rơi xuống tầng lớp thấp hơn.', 'bad'); } } }
+        if (S.gold < 0) { this.add('h', -6); this.add('hl', -3); if (S.gold < -G.median(reg)) { S.gold = 0; if (G.lawHere(S, 'caste')) { this.add('h', -8); this.log(`${S.age % 2 ? 'Nợ cũ chưa trả, nợ mới đã gõ cửa. Bạn bán dần từng món trong nhà, cái nồi cuối cùng ra đi vào một sáng mưa.' : 'Lại một mùa nợ đè lên vai. Lần này đến cả tấm chăn bông cũng phải đem ra chợ, đêm về đắp tạm manh áo cũ.'} Luật đẳng cấp vẫn giữ bạn ở tầng lớp cũ, nhưng ai cũng biết: người ta chào bạn vẫn đủ lễ, chỉ có mắt là nhìn đi chỗ khác.`, 'bad'); } else { S.q = Math.max(1, S.q - 1); this.log(`${S.age % 2 ? 'Nợ cũ chưa trả, nợ mới đã gõ cửa. Bạn bán dần từng món trong nhà, cái nồi cuối cùng ra đi vào một sáng mưa.' : 'Lại một mùa nợ đè lên vai. Lần này đến cả tấm chăn bông cũng phải đem ra chợ, đêm về đắp tạm manh áo cũ.'} Bạn rơi xuống tầng lớp thấp hơn. Từ hôm ấy người quen chào bạn khác đi, lời vẫn thế mà giọng thì không.`, 'bad'); } } }
       }
       // 3. Chỉ số trôi về mục tiêu (quán tính 25%/năm).
       G.driftStats(this);
@@ -468,7 +471,14 @@ window.LifeSim = window.LifeSim || {};
       S.age++;
       S.world.year += R.ypt;
       const st2 = this.stage(S);
-      if (st2 !== st) this.log(`Bạn bước vào tuổi ${G.STAGES[st2].toLowerCase()}.`, 'info');
+      // Câu bước sang giai đoạn mới: mỗi giai đoạn một câu riêng (docs/18), Bộ Xương già theo kiểu của nó.
+      if (st2 !== st) this.log(({
+        child: 'Bạn bước vào tuổi thơ ấu. Đôi chân đã chạy được khắp sân, miệng thì hỏi không ngớt, cái gì cũng phải sờ tận tay mới chịu. Mỗi tối bạn ngủ thiếp đi với bụi đất còn dính dưới móng tay.',
+        teen: 'Bạn bước vào tuổi thiếu niên. Giọng nói đổi khác, áo năm ngoái giờ đã ngắn cũn. Có những buổi chiều bạn ngồi một mình rất lâu, nghĩ về những chuyện chưa biết gọi tên là gì.',
+        adult: 'Bạn bước vào tuổi trưởng thành. Không ai còn dắt tay bạn qua chợ, cũng không ai đứng ra gánh lỗi thay bạn nữa. Đường phía trước dài, và từ nay rẽ lối nào là do bạn.',
+        elder: S.undead ? 'Bạn bước vào tuổi già, theo cách của Bộ Xương: hồn phai dần. Có hôm bạn đứng giữa đường, quên mất mình định đi đâu. Tiếng đất gọi từ bên dưới nghe gần hơn trước.'
+          : 'Bạn bước vào tuổi già. Sáng ra các khớp cứng lại, phải ngồi một lúc mới đứng dậy nổi. Bạn đi chậm hơn, nói ít hơn, và bắt đầu để ý những người cùng lứa lần lượt vắng mặt.'
+      })[st2] || `Bạn bước vào tuổi ${G.STAGES[st2].toLowerCase()}.`, 'info');
       this.hook.year(S);
       this.planYear();
     }
@@ -530,7 +540,7 @@ window.LifeSim = window.LifeSim || {};
       // Kết quả trỗi dậy được tung ngay lúc chết (cùng seed thì cùng kết quả).
       S.rose = this.rnd() < Math.max(G.REINCARNATE_P, G.tfx(S).rise) ?(S.dominant || { skill: 'Body', value: 5 }) : null;
       S.years.push({ age: S.age, yrs: this.years(S), hl: 0, h: Math.round(S.h), so: Math.round(S.so), sm: Math.round(S.sm), gold: S.gold, level: S.level, loc: S.loc });
-      this.log(`${S.name} qua đời ở tuổi ${this.years(S)}: ${S.cause}.`, 'death');
+      this.log(`${S.name} qua đời ở tuổi ${this.years(S)}: ${S.cause}. ${S.undead ? 'Bộ xương đổ sụp xuống, các khớp rã ra, nằm im giữa đất.' : 'Việc còn dở, lời chưa kịp nói, từ giờ đều thành của người ở lại.'}`, 'death');
       this.hook.death(S);
     }
 
@@ -591,7 +601,7 @@ window.LifeSim = window.LifeSim || {};
       const S = this.S, st = this.stage(S);
       if (!['teen', 'adult', 'elder'].includes(st)) return;
       let zid = S.zoneSel;
-      if (!zid) { if (!S.flags.noZoneMsg) { this.log(`Không có khu nào ở ${this.reg(S).nameVi} hợp sức bạn. Phải rời vùng hoặc bật Liều mạng.`, 'bad'); S.flags.noZoneMsg = S.age; } return; }
+      if (!zid) { if (!S.flags.noZoneMsg) { this.log(`Quanh ${this.reg(S).nameVi}, khu săn nào bạn ngó qua cũng thấy không hợp sức mình. Muốn săn tiếp thì phải rời vùng hoặc bật Liều mạng.`, 'bad'); S.flags.noZoneMsg = S.age; } return; }
       let zone = G.ZONE[zid].zone;
       // Phiêu lưu: đi sâu thêm một khu nếu khu đó vẫn mở.
       if (adventure) { const zs = this.zonesFor(S), nx = zs.find(z => z.index > G.ZONE[zid].index); if (nx && nx.open) zone = nx.zone; }
@@ -626,7 +636,7 @@ window.LifeSim = window.LifeSim || {};
         if (pWin < .85) this.add('hl', -this.int(1, 6));
         S.fame = Math.min(100, S.fame + { normal: .3, elite: 1.5, alpha: 3, lord: 20 }[grade] * (1 + s.tier * .3));
         if (grade !== 'normal' || pWin < .5 || s.tier > ct || adventure && this.chance(.4))
-          this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: hạ ${what}. +${G.coin(loot)}.`, grade !== 'normal' ? 'big' : 'good', grade !== 'normal' || this.chance(.3) ? this.factOf(s) : null);
+          this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: ${pWin < .5 ? `sau một trận suýt mất mạng, tay còn run, bạn hạ được ${what}.` : grade !== 'normal' ? `${what} đổ xuống, tiếng động vang xa, mấy hôm sau người ta còn kể.` : [`bạn hạ ${what}, thở ra một hơi rồi gom chiến lợi phẩm.`, `một trận gọn gàng, ${what} nằm lại, bạn nhặt nhạnh những gì đáng giá.`, `bạn hạ ${what}, ngồi nghỉ cho tim đập chậm lại rồi mới thu chiến lợi phẩm.`][S.hunts.won % 3]} +${G.coin(loot)}.`, grade !== 'normal' ? 'big' : 'good', grade !== 'normal' || this.chance(.3) ? this.factOf(s) : null);
         if (adventure && this.chance(.12)) G.treasure(this, enc.zone);
       } else {
         S.hunts.lost++;
@@ -643,8 +653,8 @@ window.LifeSim = window.LifeSim || {};
         if (st2 === 'curse' && this.chance(.25)) { this.cond('curse'); }
         else if (st2 === 'poison' && this.chance(.3)) this.cond('poison');
         else if (this.chance(.18)) this.cond(this.R(S).undead ? 'crack' : this.R(S).construct ? 'rust' : 'wound');
-        if (this.chance(.03) && !this.hasCond('maimed') && !S.undead) { this.cond('maimed'); this.log(`Trận thua trước ${what} để lại tật vĩnh viễn.`, 'bad'); }
-        this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: thua ${what}${fled ? ', bỏ chạy được' : ', được kéo về'}.`, 'bad', this.factOf(s));
+        if (this.chance(.03) && !this.hasCond('maimed') && !S.undead) { this.cond('maimed'); this.log(`Trận thua trước ${what} để lại cho bạn một tật vĩnh viễn. Từ đó, mỗi lần trở trời, chỗ cũ lại nhức như có ai nhắc.`, 'bad'); }
+        this.log(`${adventure ? 'Phiêu lưu' : 'Săn'} ở ${where}: thua ${what}. ${fled ? (S.hunts.lost % 2 ? 'Bạn bỏ chạy được, tim còn đập thình thịch suốt đường về.' : 'Bạn quay lưng chạy thục mạng, tới khi không còn nghe tiếng đuổi sau lưng mới dám dừng.') : S.hunts.lost % 2 ? 'Bạn gục xuống, được người ta kéo về, tỉnh dậy thấy cả người ê ẩm.' : 'Bạn ngã quỵ, mắt tối sầm. Lúc tỉnh lại đã nằm trên cáng, có người đang kéo bạn về.'}`, 'bad', this.factOf(s));
       }
       this.hook.hunt(rec);
       return rec;
@@ -674,7 +684,7 @@ window.LifeSim = window.LifeSim || {};
       this.addXp(20 * share);
       // Nghề biển: rủi ro theo Tier thấp nhất của tầng biển nơi làm; thỉnh thoảng gặp quái biển (vẫn qua luật Tier của encounterTable).
       const sw = G.seaWork(S), risk = W.risk * (sw ? 1 + .25 * sw.zone.tier[0] : 1);
-      if (this.rnd() < .05 * risk * share) { this.add('hl', -this.int(5, 18)); this.log(`Tai nạn khi làm ${W.nameVi.toLowerCase()}${sw ? ' trên ' + G.realm.seas[G.SEAS.indexOf(sw.sea)].name : ''}.`, 'bad'); }
+      if (this.rnd() < .05 * risk * share) { this.add('hl', -this.int(5, 18)); this.log(`Tai nạn khi làm ${W.nameVi.toLowerCase()}${sw ? ' trên ' + G.realm.seas[G.SEAS.indexOf(sw.sea)].name + ': một con sóng đánh ngang, bạn đập người vào mạn thuyền, nằm co ro cả tuần.' : ': chỉ một phút lơ đễnh, mà cả tháng sau người vẫn còn đau.'}`, 'bad'); }
       if (sw && this.rnd() < .1 * share * (S.world.zonePop[sw.zone.id] ?? 1)) {
         const enc = this.rollEncounter(sw.zone, sw.cell != null ? { cell: sw.cell } : {});
         if (enc) this.fight(enc, false);

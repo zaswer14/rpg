@@ -183,7 +183,7 @@ window.LifeSim = window.LifeSim || {};
     G.talRecalc(S);
     for (const id of S.tal.list) applyStart(S, X, id);
     const top = Math.max(G.RANK[root], ...S.tal.list.map(id => G.TALENTS[id].r));
-    return { text: (top >= 3 ? 'Bà đỡ sờ xương bạn rồi lặng đi một lúc. ' : '') + G.talText(S), big: top >= 3 };
+    return { text: (G.RACES[S.race].construct ? (top >= 3 ? 'Thợ đúc áp tai vào vỏ bạn nghe tiếng lõi quay, rồi lặng đi một lúc. ' : 'Thợ đúc gõ thử từng khớp của bạn, gật gù. ') : top >= 3 ? 'Bà đỡ sờ xương bạn rồi lặng đi một lúc, tay vẫn đặt trên ngực đứa bé, như sợ buông ra thì mất. ' : 'Bà đỡ nắn tay chân bạn một lượt, quen tay như đã làm cả nghìn lần. ') + G.talText(S), big: top >= 3 };
   };
   // Bộ Xương giữ căn cốt (theo hồn); thiên phú của thân xác cũ mất hết, chí hướng về Thuận theo tự nhiên.
   G.riseTalents = function (old, S) {
@@ -199,19 +199,19 @@ window.LifeSim = window.LifeSim || {};
   G.AIMS = {
     free:      { nameVi: 'Thuận theo tự nhiên', icon: '🍃', d: 'Không ép; sống theo tính cách.', trait: {}, focus: {}, works: [], schools: [] },
     adventure: { nameVi: 'Phiêu lưu mạo hiểm', icon: '🗺', d: 'Săn quái, vào hang, đi xa. Nghề ưu tiên: mạo hiểm giả, thợ săn.', trait: { bold: .3 }, focus: { hunt: 3, adventure: 3, train: 2 }, works: ['adventurer', 'hunter'], schools: ['combat', 'ranged', 'shadow'],
-      dream: 'những con đường chưa ai đi', side: 'tập phóng lao sau chuồng bò', sign: 'Ở quán rượu có người kể về một đoàn mạo hiểm đang tuyển thêm người.' },
+      dream: 'những con đường chưa ai đi', side: 'tập phóng lao sau chuồng bò', sign: 'Ở quán rượu, một gã râu rậm đập bàn kể về đoàn mạo hiểm của hắn: sắp lên đường, còn thiếu người. Cả quán nghe, bạn nghe chăm nhất.' },
     martial:   { nameVi: 'Tu luyện võ đạo', icon: '⚔', d: 'Luyện tập là chính, mạnh lên là mục đích. Nghề ưu tiên: lính canh, thợ săn.', trait: { bold: .2, studious: .1 }, focus: { train: 5, hunt: 1 }, works: ['guard', 'hunter', 'adventurer', 'bodyguard'], schools: ['martial', 'combat'],
-      dream: 'trở thành người mạnh nhất vùng', side: 'đứng tấn dưới gốc cây', sign: 'Người ta đồn trên núi sau làng có một cao nhân ẩn cư.' },
+      dream: 'trở thành người mạnh nhất vùng', side: 'đứng tấn dưới gốc cây', sign: 'Người ta đồn trên núi sau làng có một cao nhân ẩn cư. Có người bảo từng thấy ông chẻ đôi tảng đá bằng tay không, có người bảo chỉ là chuyện bịa. Bạn thì nhìn về phía núi lâu hơn thường lệ.' },
     scholar:   { nameVi: 'Học vấn', icon: '📜', d: 'Đọc sách, vào học viện, làm học giả hay thầy thuốc.', trait: { studious: .3, bold: -.1 }, focus: { study: 5 }, works: ['scholar', 'healer', 'alchemist', 'tutor'], schools: ['arcane', 'craft'],
-      dream: 'những cuốn sách ở thành phố', side: 'đọc sách dưới đèn dầu', sign: 'Có tin một thư viện của dòng tu mở cửa cho người ngoài.' },
+      dream: 'những cuốn sách ở thành phố', side: 'đọc sách dưới đèn dầu', sign: 'Có tin một thư viện của dòng tu mở cửa cho người ngoài. Bạn hỏi đường hai lần, lần thứ hai còn nhờ người ta vẽ ra giấy.' },
     wealth:    { nameVi: 'Làm giàu', icon: '💰', d: 'Buôn bán, làm thợ, góp vốn. Nghề ưu tiên: thương nhân, thợ rèn.', trait: { social: .15, studious: .1 }, focus: { work: 5 }, works: ['merchant', 'smith', 'miner', 'jeweler', 'appraiser'], schools: ['craft'],
-      dream: 'một cửa hàng của riêng mình', side: 'buôn vặt ở chợ phiên', sign: 'Một thương nhân quen đang tìm người góp vốn.' },
+      dream: 'một cửa hàng của riêng mình', side: 'buôn vặt ở chợ phiên', sign: 'Một thương nhân quen đang tìm người góp vốn. Ông ta ghé qua, chưa nói thẳng, chỉ hỏi dạo này bạn làm ăn ra sao.' },
     faith:     { nameVi: 'Tu hành', icon: '🕯', d: 'Cầu nguyện, hành hương, làm tu sĩ.', trait: { pious: .35 }, focus: { faith: 5 }, works: ['priest', 'healer'], schools: ['martial', 'death'],
-      dream: 'tiếng chuông trong đền lớn', side: 'tụng kinh tới khuya', sign: 'Một đoàn hành hương dừng chân ở đầu làng.' },
+      dream: 'tiếng chuông trong đền lớn', side: 'tụng kinh tới khuya', sign: 'Một đoàn hành hương dừng chân ở đầu làng, tiếng tụng kinh trầm trầm vọng tới tận chiều. Bạn ra đứng xem, rồi đứng lâu hơn mình định.' },
     power:     { nameVi: 'Quyền thế', icon: '🏛', d: 'Kết giao, làm quan, giữ chức, lên tước.', trait: { social: .25, bold: .1 }, focus: { govern: 5, work: 1, family: 1 }, works: ['guard', 'merchant', 'scholar', 'steward'], schools: ['combat'],
-      dream: 'một chỗ ngồi trong phủ lãnh chúa', side: 'chạy việc cho trưởng làng', sign: 'Phủ lãnh chúa sắp mở tiệc, người có chút tiếng tăm đều được mời.' },
+      dream: 'một chỗ ngồi trong phủ lãnh chúa', side: 'chạy việc cho trưởng làng', sign: 'Phủ lãnh chúa sắp mở tiệc, người có chút tiếng tăm đều được mời. Cả vùng xôn xao, nhà nào cũng hỏi nhau ai được gọi tên.' },
     family:    { nameVi: 'Gia đình êm ấm', icon: '🏠', d: 'Lấy vợ lấy chồng, nuôi con, sống yên ổn.', trait: { social: .25, bold: -.2 }, focus: { family: 4, work: 2, rest: 1 }, works: [], schools: [],
-      sign: 'Bà mối trong làng ghé chơi lâu hơn thường lệ.' }
+      sign: 'Bà mối trong làng ghé chơi lâu hơn thường lệ, hỏi han đủ chuyện, mắt cứ liếc quanh nhà. Lúc về, bà còn quay lại dặn một câu chẳng đâu vào đâu.' }
   };
   G.setAim = function (S, k) { S.aim = G.AIMS[k] ? k : 'free'; G.syncTraits(S); };
   // Sinh kế ưu tiên: nghề đã định khi rời nhà / nghe lời (flags.workPref) rồi nghề của chí hướng.
@@ -247,11 +247,11 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !S.undead && !S.flags.aimSet && X.stage(S) === 'teen',
     build(S, X) {
       const sc = aimScores(S), keys = Object.keys(G.AIMS).filter(k => k !== 'free').sort((a, b) => sc[b] - sc[a]).slice(0, 4);
-      return { title: 'Chí hướng', body: `Bạn ${X.years(S)} tuổi. ${G.talText(S)} Đêm nằm nhìn mái nhà, bạn nghĩ về đời mình.`,
+      return { title: 'Chí hướng', body: `Năm ấy bạn ${X.years(S)} tuổi. ${G.talText(S)} Đêm nằm nhìn lên mái nhà, nghe gió lùa qua khe ngói, bạn nghĩ mãi về đời mình: rồi sẽ đi đâu, làm gì, thành người thế nào.`,
         fact: 'Chí hướng đổi được lúc nào cũng được ở ô Chí hướng dưới phần focus. Khi bật Tự sống, nhân vật đi theo chí hướng.',
         choices: [...keys.map(k => ({ k, label: `${G.AIMS[k].icon} ${G.AIMS[k].nameVi}`, sub: G.AIMS[k].d })), { k: 'free', label: '🍃 Chưa biết', sub: 'Sống theo tính cách, để đời tự dẫn.' }] };
     },
-    apply(S, X, k) { G.setAim(S, k); S.flags.aimSet = true; return k === 'free' ? 'Bạn chưa muốn nghĩ xa.' : `Bạn quyết chí: ${G.AIMS[k].nameVi.toLowerCase()}.`; },
+    apply(S, X, k) { G.setAim(S, k); S.flags.aimSet = true; return k === 'free' ? 'Bạn chưa muốn nghĩ xa. Đời còn dài, ngày mai cứ để ngày mai lo.' : `Bạn quyết chí: ${G.AIMS[k].nameVi.toLowerCase()}. Sáng hôm sau bạn dậy sớm hơn mọi ngày, trong lòng như vừa thắt chặt một nút dây.`; },
     auto(S, X, d) { const sc = aimScores(S); return X.wpick(d.choices, c => c.k === 'free' ? 1.6 : Math.max(.05, sc[c.k])).k; }
   };
 
@@ -265,7 +265,7 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !S.undead && !S.flags.defied && !S.work && DEFY.includes(S.aim) && ['teen', 'adult'].includes(X.stage(S)) && S.q <= 2 && rural(S) && S.family.parents.some(p => p.alive),
     build(S, X) {
       const A = G.AIMS[S.aim], p = S.family.parents.find(p => p.alive), go = A.works.find(id => G.workOK(S, id)) || A.works[0];
-      return { title: 'Nối nghiệp nhà', body: `${cap(p.role)} bạn muốn bạn ở lại làm ${G.WORKS[familyTrade(S)].nameVi.toLowerCase()} như cả nhà. Bạn thì chỉ nghĩ tới ${A.dream}.`,
+      return { title: 'Nối nghiệp nhà', body: `Bữa cơm tối, ${p.role} bạn đặt đũa xuống, nói chậm từng chữ: con ở lại làm ${G.WORKS[familyTrade(S)].nameVi.toLowerCase()} như cả nhà. Ngoài kia mưa nắng thất thường, đất thì không phụ ai. Bạn cúi đầu ăn, mà trong đầu chỉ nghĩ tới ${A.dream}.`,
         choices: [
           { k: 'stay', label: 'Nghe lời', sub: `Ở lại làm ${G.WORKS[familyTrade(S)].nameVi.toLowerCase()}. Gia đình vui; chí hướng để sau, lúc nào cũng có thể đổi nghề.` },
           { k: 'both', label: 'Vừa làm vừa tập', sub: `Ngày phụ nhà, tối ${A.side}. Năm nào cũng tiến một chút, hơi mệt.` },
@@ -274,11 +274,11 @@ window.LifeSim = window.LifeSim || {};
     apply(S, X, k) {
       S.flags.defied = k; cnt(S, 'defy_' + k);
       const p = S.family.parents.find(p => p.alive);
-      if (k === 'stay') { X.add('so', 5); X.add('h', -6); S.flags.workPref = familyTrade(S); return 'Bạn treo ước mơ lên xà nhà.'; }
-      if (k === 'both') { X.add('h', 3); return 'Đèn trong nhà kho sáng tới khuya.'; }
+      if (k === 'stay') { X.add('so', 5); X.add('h', -6); S.flags.workPref = familyTrade(S); return 'Bạn treo ước mơ lên xà nhà, cạnh mấy bó lúa giống. Thỉnh thoảng ngước lên, nó vẫn còn đó, bám bụi dần.'; }
+      if (k === 'both') { X.add('h', 3); return 'Ngày bạn phụ việc nhà, tối lẻn ra sau nhà kho. Đèn trong kho sáng tới khuya, người nhà biết mà không ai nói gì.'; }
       X.add('so', -10); X.add('h', 6); X.money(X.int(3, 15));
       S.flags.workPref = G.AIMS[S.aim].works.find(id => G.workOK(S, id)) || G.AIMS[S.aim].works[0];   // ở đây chưa làm được thì chờ tới chỗ làm được
-      return `${p ? cap(p.role) + ' bạn không ra tiễn' : 'Không ai ra tiễn'}. Bạn đi với mấy đồng bạc dắt lưng.`;
+      return `${p ? cap(p.role) + ' bạn không ra tiễn' : 'Không ai ra tiễn'}. Bạn đi với mấy đồng bạc dắt lưng, tới đầu dốc mới dám ngoái lại. Cửa nhà vẫn đóng.`;
     },
     auto: S => { const T = S.traits; return T.bold > .78 ? 'leave' : T.studious > .55 || T.bold > .5 ? 'both' : 'stay'; }
   };
@@ -298,7 +298,7 @@ window.LifeSim = window.LifeSim || {};
     build(S, X) {
       const aw = aimOnly(S), all = jobOpts(S), mine = all.filter(id => aw.includes(id)), rest = all.filter(id => !aw.includes(id)).sort(() => X.rnd() - .5);
       const opts = [...mine, ...rest].slice(0, 3), A = G.AIMS[S.aim], cur = G.WORKS[S.work].nameVi.toLowerCase(), reg = X.reg(S);
-      return { title: 'Đổi nghề?', body: mine.length ? `Làm ${cur} đã lâu, mà bạn vẫn nghĩ tới ${A.dream || A.nameVi.toLowerCase()}.` : `Bạn chán nghề ${cur}. Ngày nào cũng như ngày nào.`,
+      return { title: 'Đổi nghề?', body: mine.length ? `Làm ${cur} đã lâu, tay đã quen việc mà lòng thì chưa. Những lúc nghỉ tay, bạn vẫn nghĩ tới ${A.dream || A.nameVi.toLowerCase()}.` : `Bạn chán nghề ${cur}. Ngày nào cũng như ngày nào: dậy, làm, ăn, ngủ. Có buổi sáng bạn ngồi ở mép giường rất lâu mới chịu đứng lên.`,
         choices: [...opts.map(id => { const w = G.WORKS[id], fee = G.workFee(S, id), m = G.incomeMult({ ...S, work: id });
           return { k: id, label: w.nameVi, sub: w.adventurer ? 'Ghi tên Hội Mạo Hiểm; sống bằng săn quái và tiền thưởng, thu nhập theo danh vọng.' : `Thu nhập ${Math.round(G.incomeAt(reg, w.pct[0]) * m)}–${G.coin(Math.round(G.incomeAt(reg, w.pct[1]) * m))}/năm; năm đầu học việc, lương thấp` + (fee ? ` · phí phường hội ${G.coin(fee)}` : '') }; }),
           { k: 'keep', label: `Giữ nghề ${cur}`, sub: '' }] };
@@ -309,7 +309,7 @@ window.LifeSim = window.LifeSim || {};
       if (fee) X.money(-fee);
       S.work = k; if (!w.adventurer) S.pct = Math.max(S.pct * .6, w.pct[0]);
       cnt(S, 'workSwitch'); if (w.adventurer) cnt(S, 'toAdv'); X.add('h', 6); S.flags.workPref = null;
-      return w.adventurer ? `Bạn bỏ nghề ${old}, ghi tên vào Hội Mạo Hiểm.` : `Bạn bỏ nghề ${old}, bắt đầu học việc ${w.nameVi.toLowerCase()}.`;
+      return w.adventurer ? `Bạn bỏ nghề ${old}, ghi tên vào Hội Mạo Hiểm. Viên thư ký hỏi tên, hỏi tuổi, rồi đưa cho bạn một tấm thẻ gỗ còn thơm mùi sơn.` : `Bạn bỏ nghề ${old}, bắt đầu học việc ${w.nameVi.toLowerCase()}. Lại làm đứa mới, lại bị sai vặt, vậy mà bạn thấy nhẹ người.`;
     },
     auto(S, X, d) {
       const T = S.traits, aw = aimOnly(S), c = d.choices.find(c => aw.includes(c.k));
@@ -322,32 +322,32 @@ window.LifeSim = window.LifeSim || {};
   const CHANCE = {
     adventure(S, X) {
       const z = S.zoneSel && G.ZONE[S.zoneSel] ? G.ZONE[S.zoneSel].zone : null;
-      return { title: 'Đoàn mạo hiểm thiếu người', body: `Một đoàn bốn người ở ${homeName(S, X)} cần thêm một tay cho chuyến đi${z ? ' vào ' + z.nameVi : ''}. Sức bạn ${X.power(S).toFixed(1)} Tier.`,
+      return { title: 'Đoàn mạo hiểm thiếu người', body: `Ở ${homeName(S, X)}, một đoàn bốn người ngồi chụm đầu trong góc quán, tấm bản đồ trải giữa bàn. Họ cần thêm một tay cho chuyến đi${z ? ' vào ' + z.nameVi : ''}. Người dẫn đoàn nhìn bạn từ đầu tới chân. Sức bạn ${X.power(S).toFixed(1)} Tier.`,
         choices: [...(z && X.stage(S) !== 'child' ? [{ k: 'go', label: 'Đi cùng đoàn', sub: 'Hai trận phiêu lưu; có đồng đội gánh bớt (sức +0,3 Tier trong chuyến). Chia chiến lợi phẩm.' }] : []),
           { k: 'porter', label: 'Làm khuân vác cho đoàn', sub: 'An toàn; học lỏm được ít nhiều, có chút tiền công.' }, { k: 'no', label: 'Thôi', sub: '' }] };
     },
     // Cao nhân chỉ nhận một lần; đã được dạy thì về sau là lên thăm sư phụ, chỉ điểm thêm ít nhiều.
-    martial: (S, X) => S.flags.hermit ? { title: 'Thư trên núi', body: 'Sư phụ trên núi nhắn bạn lên chơi.', choices: [{ k: 'visit', label: 'Lên thăm', sub: 'Được chỉ điểm thêm vài đường.' }, { k: 'no', label: 'Bận, hẹn dịp khác', sub: '' }] } : ({ title: 'Cao nhân ẩn cư', body: 'Trên núi sau làng có một người tập võ một mình. Người ta bảo ông không nhận ai.',
+    martial: (S, X) => S.flags.hermit ? { title: 'Thư trên núi', body: 'Một chú tiều phu dưới núi ghé qua, đưa bạn mảnh giấy gấp làm tư. Nét chữ của sư phụ, chỉ một dòng: lên chơi.', choices: [{ k: 'visit', label: 'Lên thăm', sub: 'Được chỉ điểm thêm vài đường.' }, { k: 'no', label: 'Bận, hẹn dịp khác', sub: '' }] } : ({ title: 'Cao nhân ẩn cư', body: 'Trên núi sau làng có một người tập võ một mình. Sáng sớm gió thuận, người dưới chân núi còn nghe được tiếng hô. Người ta bảo ông không nhận ai, ai tới xin học cũng chỉ thấy cửa đóng.',
       choices: [{ k: 'kneel', label: 'Quỳ trước cửa ba ngày', sub: `Không tốn bạc; khoảng ${Math.round(kneelP(S) * 100)}% được nhận. Không được thì ốm một trận.` },
         ...(S.gold >= gift(S, X) ? [{ k: 'pay', label: `Mang lễ vật xin học (${G.coin(gift(S, X))})`, sub: '60% được nhận.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
-    scholar: (S, X) => ({ title: 'Thư viện cũ', body: 'Thư viện của một dòng tu cho người ngoài vào đọc, mỗi mùa thu một ít bạc.',
+    scholar: (S, X) => ({ title: 'Thư viện cũ', body: 'Thư viện của một dòng tu mở cửa cho người ngoài vào đọc, mỗi mùa thu một ít bạc. Qua khe cửa, bạn thấy những kệ sách cao tới trần, mùi giấy cũ bay ra tận bậc thềm.',
       choices: [...(S.gold >= fee(S, X, .4) ? [{ k: 'read', label: `Mua thẻ đọc (${G.coin(fee(S, X, .4))})`, sub: 'Hiểu biết tăng mạnh, rèn Huyền thuật, Luyện kim.' }] : []),
         { k: 'copy', label: 'Chép sách thuê', sub: 'Có tiền công, đọc được ít nhiều.' }, { k: 'no', label: 'Thôi', sub: '' }] }),
     wealth(S, X) {
       const big = Math.round(Math.min(S.gold * .5, G.median(X.reg(S)) * 2)), small = Math.round(Math.min(S.gold * .2, G.median(X.reg(S)) * .6));
-      return { title: 'Mối hàng', body: `Một thương nhân rủ bạn góp vốn chở một chuyến hàng. Ước chừng ${Math.round(tradeP(S) * 100)}% có lãi.`,
+      return { title: 'Mối hàng', body: `Một thương nhân quen rủ bạn góp vốn chở một chuyến hàng. Ông ta vỗ vai bạn, nói chắc như đinh đóng cột, mà mắt thì đảo liên tục. Ước chừng ${Math.round(tradeP(S) * 100)}% có lãi.`,
         choices: [...(big >= 10 ? [{ k: 'big', label: `Góp lớn (${G.coin(big)})`, sub: 'Lãi thì được 120%, lỗ thì mất trắng.', v: big }] : []), ...(small >= 5 ? [{ k: 'small', label: `Góp nhỏ (${G.coin(small)})`, sub: 'Lãi 80%, lỗ mất trắng.', v: small }] : []),
           { k: 'help', label: 'Đi theo làm phụ', sub: 'Không góp vốn; có tiền công và học cách buôn.' }, { k: 'no', label: 'Thôi', sub: '' }] };
     },
-    faith: (S, X) => ({ title: 'Hành hương', body: `Đoàn hành hương${S.faith ? ' ' + window.JobLibrary.faiths[S.faith].nameVi : ''} rủ bạn đi cùng tới đền lớn.`,
+    faith: (S, X) => ({ title: 'Hành hương', body: `Đoàn hành hương${S.faith ? ' ' + window.JobLibrary.faiths[S.faith].nameVi : ''} dừng chân nghỉ, bụi đường bám đầy gấu áo. Họ rủ bạn đi cùng tới đền lớn: đi bộ, ngủ đâu hay đó.`,
       choices: [{ k: 'go', label: 'Đi cùng đoàn', sub: 'Devotion tăng mạnh, lòng nhẹ đi; đường xa có thể ốm.' }, ...(S.gold >= fee(S, X, .2) ? [{ k: 'give', label: `Gửi lễ (${G.coin(fee(S, X, .2))})`, sub: 'Devotion tăng ít, được người trong đạo quý.' }] : []), { k: 'no', label: 'Thôi', sub: '' }] }),
-    power: (S, X) => ({ title: 'Yến tiệc quyền quý', body: `Một chức sắc ở ${homeName(S, X)} mở tiệc. Ai có chút tiếng tăm đều được mời.`,
+    power: (S, X) => ({ title: 'Yến tiệc quyền quý', body: `Một chức sắc ở ${homeName(S, X)} mở tiệc. Ai có chút tiếng tăm đều được mời, thiệp đỏ gửi tới tận tay. Bạn xoay tấm thiệp trong tay, nghĩ xem nên mặc gì, nên nói gì.`,
       choices: [...(S.gold >= gift(S, X) ? [{ k: 'gift', label: `Mang lễ (${G.coin(gift(S, X))})`, sub: 'Quan hệ, danh vọng tăng; được ghi công với nước.' }] : []),
         { k: 'ask', label: 'Xin một chân việc', sub: `Khoảng ${Math.round(askP(S) * 100)}% được nhận; không thì bẽ mặt.` }, { k: 'no', label: 'Thôi', sub: '' }] }),
     family(S, X) {
       const single = X.stage(S) === 'adult' && !(S.family.spouse && S.family.spouse.alive) && !S.flags.suitor && !S.undead && !G.RACES[S.race].construct;
-      return single ? { title: 'Bà mối', body: 'Bà mối trong làng nhắc tới một người hiền lành, chăm chỉ.', choices: [{ k: 'meet', label: 'Nhờ bà mối dắt mối', sub: 'Có người tìm hiểu; quyết định cưới hay không sau.' }, { k: 'no', label: 'Thôi', sub: '' }] }
-        : { title: 'Sum họp', body: 'Cả nhà định tụ về một bữa cơm cuối năm.', choices: [{ k: 'home', label: 'Về sum họp', sub: 'Tâm trạng, quan hệ tăng; tốn chút tiền quà.' }, { k: 'no', label: 'Bận, không về', sub: '' }] };
+      return single ? { title: 'Bà mối', body: 'Bà mối trong làng uống hết ba chén trà mới chịu vào chuyện: có một người hiền lành, chăm chỉ, tuổi cũng vừa. Nói xong bà nhìn bạn, chờ.', choices: [{ k: 'meet', label: 'Nhờ bà mối dắt mối', sub: 'Có người tìm hiểu; quyết định cưới hay không sau.' }, { k: 'no', label: 'Thôi', sub: '' }] }
+        : { title: 'Sum họp', body: 'Cả nhà định tụ về một bữa cơm cuối năm. Thư nhắn tới, nét chữ run run, cuối thư dặn thêm một câu: về sớm.', choices: [{ k: 'home', label: 'Về sum họp', sub: 'Tâm trạng, quan hệ tăng; tốn chút tiền quà.' }, { k: 'no', label: 'Bận, không về', sub: '' }] };
     }
   };
   G.AIM_CHANCE = CHANCE;   // trang Duyệt Nội Dung trích câu chữ từ đây
@@ -362,7 +362,7 @@ window.LifeSim = window.LifeSim || {};
     const j = X.job(S), sc = j && j.tier > 0 ? j.school : (S.path || 'martial');
     for (const m of window.JobLibrary.schools[sc].masteries) X.gain(m, 2.5);
     cnt(S, 'hermit');
-    return 'Ông cho bạn ở lại một mùa. Bạn xuống núi khác hẳn lúc lên.';
+    return 'Ông cho bạn ở lại một mùa. Sáng gánh nước, trưa bổ củi, chiều đứng tấn tới khi chân run. Ông ít nói, sửa thế đứng bằng đầu gậy. Ngày xuống núi, bạn khác hẳn lúc lên.';
   }
   DEC.aim_chance = {
     prio: 6, gap: 1,
@@ -376,32 +376,32 @@ window.LifeSim = window.LifeSim || {};
         case 'go': if (S.aim === 'faith') {
             S.devotion = Math.min(100, S.devotion + 12 * G.tfx(S).dev); X.add('h', 6); X.add('hl', -X.int(0, 8));
             if (X.chance(.06) && !S.undead) X.cond('fever');
-            return 'Bạn đi bộ ba tuần, ngủ dưới mái hiên đền. Về tới nhà, lòng nhẹ hẳn.';
+            return 'Bạn đi bộ ba tuần, ngủ dưới mái hiên đền, ăn chung nồi cháo với người lạ. Tới nơi, chuông đền lớn ngân dài, bạn quỳ xuống mà quên mất mình định cầu gì. Về tới nhà, người gầy đi, lòng thì nhẹ hẳn.';
           } else {
             S.flags.boost = .3; let won = 0;
             for (let i = 0; i < 2 && !S.dead; i++) { const r = X.hunt(true); if (r && r.win) won++; }
             S.flags.boost = 0; if (S.dead) return null;
             S.fame = Math.min(100, S.fame + won); X.add('so', 3);
-            return won === 2 ? 'Chuyến đi trót lọt. Đoàn mời bạn lần sau đi tiếp.' : won ? 'Một thắng một thua; cả đoàn về đủ người.' : 'Chuyến đi hỏng. Cả đoàn lếch thếch quay về.';
+            return won === 2 ? 'Chuyến đi trót lọt. Đêm cuối cả đoàn ngồi quanh lửa, kể đi kể lại trận vừa rồi, ai cũng muốn mình là người ra đòn quyết định. Họ mời bạn lần sau đi tiếp.' : won ? 'Một thắng một thua. Cả đoàn về đủ người, băng bó cho nhau bên đống lửa, không ai trách ai.' : 'Chuyến đi hỏng. Cả đoàn lếch thếch quay về, đồ rơi dọc đường cũng không ai buồn nhặt. Tới cổng thì mỗi người một ngả.';
           }
-        case 'porter': X.addXp(60); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cả tháng, nghe hết chuyện của dân mạo hiểm.';
-        case 'kneel': if (X.chance(kneelP(S))) return hermit(S, X); X.add('hl', -8); X.add('h', -4); return 'Cửa không mở. Bạn xuống núi với hai đầu gối sưng.';
-        case 'pay': X.money(-gift(S, X)); if (X.chance(.6)) return hermit(S, X); return 'Ông nhận lễ, uống một chén trà rồi tiễn bạn về.';
-        case 'visit': X.trainYear(.35); X.add('h', 4); return 'Sư phụ xem bạn đánh một bài, sửa đúng hai chỗ.';
-        case 'read': X.money(-fee(S, X, .4)); X.add('sm', 6 * G.tfx(S).learn); X.gain('Arcane', 3); X.gain('Alchemy', 2); X.addXp(30); return 'Bạn đọc hết một kệ sách trong một mùa.';
-        case 'copy': X.money(Math.round(med * .12)); X.add('sm', 3 * G.tfx(S).learn); return 'Chép sách mỏi tay, nhưng chữ nào cũng đọng lại một ít.';
+        case 'porter': X.addXp(60); X.gain('Body', 2); X.money(X.int(5, 15)); return 'Bạn vác đồ cho đoàn cả tháng, vai sưng đỏ. Đêm nào cũng ngồi cuối đống lửa nghe dân mạo hiểm kể chuyện, chuyện nào cũng có một con quái to hơn chuyện trước.';
+        case 'kneel': if (X.chance(kneelP(S))) return hermit(S, X); X.add('hl', -8); X.add('h', -4); return 'Ba ngày ba đêm, cửa không mở. Sương xuống ướt lưng, rồi nắng lên khô lại. Bạn xuống núi với hai đầu gối sưng tấy, nhưng vẫn nhớ đường lên.';
+        case 'pay': X.money(-gift(S, X)); if (X.chance(.6)) return hermit(S, X); return 'Ông nhận lễ, rót cho bạn một chén trà, hỏi vài câu không đâu vào đâu rồi tiễn bạn ra cổng. Chén trà ấy, bạn nhớ là rất đắng.';
+        case 'visit': X.trainYear(.35); X.add('h', 4); return 'Sư phụ già đi trông thấy. Ông xem bạn đánh một bài, không khen, sửa đúng hai chỗ. Hai chỗ ấy, bạn tập tới tận mùa sau.';
+        case 'read': X.money(-fee(S, X, .4)); X.add('sm', 6 * G.tfx(S).learn); X.gain('Arcane', 3); X.gain('Alchemy', 2); X.addXp(30); return 'Bạn đọc hết một kệ sách trong một mùa, sáng từ lúc cửa mở, tối tới khi người giữ thư viện rung chùm chìa khóa. Mắt mỏi nhừ, mà đầu thì đầy.';
+        case 'copy': X.money(Math.round(med * .12)); X.add('sm', 3 * G.tfx(S).learn); return 'Chép sách thuê mỏi nhừ cổ tay, mực dây cả vào móng. Nhưng chữ nào đi qua ngòi bút cũng đọng lại trong đầu một ít.';
         case 'big': case 'small': {
           const v = c.v || 0; X.money(-v);
-          if (X.chance(tradeP(S))) { const g = Math.round(v * (k === 'big' ? 2.2 : 1.8)); X.money(g); X.add('h', 5); cnt(S, 'tradeWin'); return `Chuyến hàng về đủ. Bạn nhận ${G.coin(g)}.`; }
-          X.add('h', -6); return 'Hàng bị cướp giữa đường. Bạn mất trắng phần góp.'; }
-        case 'help': X.money(Math.round(med * .1)); X.add('so', 3); X.add('sm', 1); return 'Bạn học được cách mặc cả và cách nhìn người.';
-        case 'give': X.money(-fee(S, X, .2)); S.devotion = Math.min(100, S.devotion + 5 * G.tfx(S).dev); X.add('so', 3); return 'Tên bạn được đọc trong buổi lễ.';
-        case 'gift': X.money(-gift(S, X)); X.add('so', 6); S.fame = Math.min(100, S.fame + 3); if (G.addMerit && S.nation != null) G.addMerit(S, S.nation, 3); return 'Chủ tiệc nhớ mặt bạn.';
-        case 'ask': if (X.chance(askP(S))) { X.money(Math.round(med * .3)); S.fame = Math.min(100, S.fame + 3); X.add('so', 4); cnt(S, 'askWin'); return 'Bạn được giao chạy việc cho phủ. Việc nhỏ, nhưng là một bước.'; }
-          X.add('h', -4); return 'Người ta cười. Bạn ra về sớm.';
+          if (X.chance(tradeP(S))) { const g = Math.round(v * (k === 'big' ? 2.2 : 1.8)); X.money(g); X.add('h', 5); cnt(S, 'tradeWin'); return `Chuyến hàng về đủ, không thiếu một kiện. Thương nhân đếm tiền ra bàn, từng chồng ngay ngắn. Bạn nhận ${G.coin(g)}.`; }
+          X.add('h', -6); return 'Hàng bị cướp giữa đường. Thương nhân về tay không, mặt xám ngoét, kể đi kể lại mà chẳng ai tin hẳn. Bạn mất trắng phần góp.'; }
+        case 'help': X.money(Math.round(med * .1)); X.add('so', 3); X.add('sm', 1); return 'Theo chân đoàn buôn, bạn học được cách mặc cả, và cả cách nhìn người: kẻ nói nhiều thường giấu nhiều.';
+        case 'give': X.money(-fee(S, X, .2)); S.devotion = Math.min(100, S.devotion + 5 * G.tfx(S).dev); X.add('so', 3); return 'Tên bạn được đọc trong buổi lễ, lẫn giữa hàng trăm cái tên khác. Người ta kể lại thế. Bạn không có mặt, mà vẫn hình dung được tiếng chuông lúc ấy.';
+        case 'gift': X.money(-gift(S, X)); X.add('so', 6); S.fame = Math.min(100, S.fame + 3); if (G.addMerit && S.nation != null) G.addMerit(S, S.nation, 3); return 'Lễ vật đưa tới tận tay. Chủ tiệc cầm lên ngắm một lúc, rồi nhìn bạn lâu hơn mức xã giao. Từ nay ông ta nhớ mặt bạn.';
+        case 'ask': if (X.chance(askP(S))) { X.money(Math.round(med * .3)); S.fame = Math.min(100, S.fame + 3); X.add('so', 4); cnt(S, 'askWin'); return 'Bạn được giao chạy việc cho phủ. Việc nhỏ, giấy tờ đưa đi đưa lại, nhưng là một bước. Lần đầu tiên bạn qua cổng phủ mà không bị lính chặn.'; }
+          X.add('h', -4); return 'Người ta cười, không to, chỉ vừa đủ để bạn nghe thấy. Bạn ra về sớm, đi bộ một quãng dài mới thấy mặt bớt nóng.';
         case 'meet': { const race = S.race; S.flags.suitor = { name: X.name(race, X.chance(.5) ? 'm' : 'f'), race, work: G.WORKS[X.pick(['farmer', 'smith', 'healer', 'merchant', 'herder'])].nameVi.toLowerCase(), age: X.years(S) + X.int(-3, 3) };
-          return `Bà mối dắt ${S.flags.suitor.name} tới chơi.`; }
-        case 'home': X.money(-Math.round(med * .08)); X.add('h', 8); X.add('so', 6); return 'Cả nhà ngồi tới khuya.';
+          return `Bà mối dắt ${S.flags.suitor.name} tới chơi. Hai người ngồi hai đầu chiếu, nói chuyện thời tiết tới ba lần. Lúc về, người ấy ngoái lại một lần.`; }
+        case 'home': X.money(-Math.round(med * .08)); X.add('h', 8); X.add('so', 6); return 'Cả nhà ngồi tới khuya, nồi canh hâm đi hâm lại mấy bận. Chuyện cũ kể mãi không hết, có chuyện kể tới lần thứ ba mà vẫn cười.';
       }
       return null;
     },
@@ -429,12 +429,12 @@ window.LifeSim = window.LifeSim || {};
       const offers = [];
       for (let i = 0; i < 3; i++) { const id = pickTalent(X, S, rollRank(X, .45), offers); if (id) offers.push(id); }
       if (!offers.length) { S.flags.awakenQ = null; return null; }
-      return { title: 'Thiên phú thức tỉnh', body: `${S.flags.awakenQ} Có thứ gì đó trong bạn đang mở ra. Chỉ giữ được một.`,
+      return { title: 'Thiên phú thức tỉnh', body: `${S.flags.awakenQ} Có thứ gì đó trong bạn đang mở ra, như cánh cửa hé dưới một vệt sáng. Mấy con đường hiện lên cùng lúc, mà bạn chỉ giữ được một.`,
         choices: offers.map(id => { const t = G.TALENTS[id]; return { k: id, label: `${t.nameVi} · ${G.rarityOf(id).nameVi}`, sub: `${t.d} ${cap(G.fxText(t.fx))}.` }; }) };
     },
     apply(S, X, k) {
       S.flags.awakenQ = null; G.addTalent(S, X, k); cnt(S, 'talAwaken');
-      return `Thiên phú ${G.TALENTS[k].nameVi} (${G.rarityOf(k).nameVi}) thức tỉnh.`;
+      return `Thiên phú ${G.TALENTS[k].nameVi} (${G.rarityOf(k).nameVi}) thức tỉnh. Những con đường kia mờ dần rồi tắt, chỉ còn một ngọn đèn trong người, ấm và rõ.`;
     },
     auto(S, X, d) {
       const sc = id => { const t = G.TALENTS[id], A = G.AIMS[S.aim] || G.AIMS.free; return t.r * 10 + (schoolsOf(t).some(s => A.schools.includes(s)) ? 4 : 0) + (t.fx.rate ? 2 : 0); };
@@ -453,7 +453,7 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => !!S.tal && G.RANK[S.tal.root] < 5 && ['teen', 'adult', 'elder'].includes(X.stage(S)) && nextBreak(S) != null,
     build(S, X) {
       const L = nextBreak(S), rk = G.RANK[S.tal.root], c = elixir(S, X);
-      return { title: `Bình cảnh Tier ${L / 10}`, body: `Lên tới Tier ${G.tierOf(S)}, bạn thấy mình chững lại. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
+      return { title: `Bình cảnh Tier ${L / 10}`, body: `Lên tới Tier ${G.tierOf(S)}, bạn thấy mình chững lại: tập mãi mà như đổ nước vào cát. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[rk].rate)}. Người ta nói tẩy tủy được thì căn cốt lên ${G.RARITY[rk + 1].nameVi} (×${num(G.RARITY[rk + 1].rate)}).`,
         choices: [...(S.gold >= c ? [{ k: 'elixir', label: `Mua thuốc tẩy tủy (${G.coin(c)})`, sub: `${Math.round(pElixir(S) * 100)}% thành công.` }] : []),
           { k: 'seclude', label: 'Bế quan tự ngộ', sub: `${Math.round(pSeclude(S) * 100)}% thành công; hỏng thì tổn thương.` }, { k: 'no', label: 'Thuận theo tự nhiên', sub: 'Không thử lần này.' }] };
     },
@@ -464,10 +464,10 @@ window.LifeSim = window.LifeSim || {};
       if (k === 'elixir') { X.money(-elixir(S, X)); p = pElixir(S); } else p = pSeclude(S);
       if (X.chance(p)) {
         S.tal.root = G.RARITY[G.RANK[S.tal.root] + 1].id; G.talRecalc(S); cnt(S, 'talBreak');
-        return `Thành công. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[G.RANK[S.tal.root]].rate)}.`;
+        return `Thành công. Cơn đau đi qua từng đốt xương như lửa chạy, rồi người nhẹ bẫng. ${G.rootText(S)}, tu luyện ×${num(G.RARITY[G.RANK[S.tal.root]].rate)}.`;
       }
-      if (k === 'seclude') { X.add('hl', -X.int(8, 18)); if (X.chance(.25)) X.cond(S.undead ? 'crack' : G.RACES[S.race].construct ? 'rust' : 'wound'); return 'Khí huyết đảo lộn. Bạn nôn ra máu rồi nằm liệt nửa tháng.'; }
-      return 'Thuốc không ngấm. Tiền mất, người vẫn thế.';
+      if (k === 'seclude') { X.add('hl', -X.int(8, 18)); if (X.chance(.25)) X.cond(S.undead ? 'crack' : G.RACES[S.race].construct ? 'rust' : 'wound'); return S.undead || G.RACES[S.race].construct ? 'Bế quan tới ngày thứ bảy thì hồn lực đảo lộn. Bạn đổ sụp xuống, nằm im nửa tháng, các khớp kêu răng rắc mỗi lần cựa mình.' : 'Bế quan tới ngày thứ bảy thì khí huyết đảo lộn. Bạn nôn ra máu, nằm liệt nửa tháng, nghe tiếng mưa trên mái mà không ngồi dậy nổi.'; }
+      return 'Thuốc đắng tới tê lưỡi, uống xong ngồi chờ suốt đêm. Không có gì xảy ra. Tiền mất, người vẫn thế.';
     },
     auto(S, X, d) {
       const T = S.traits;
@@ -476,7 +476,7 @@ window.LifeSim = window.LifeSim || {};
     }
   };
   // ═════════ Hệ con "talent" (sau career): luyện riêng khi vừa làm vừa tập, gieo thức tỉnh ═════════
-  const AWAKE_WHY = ['Một đêm bạn mơ thấy mình đứng trên đỉnh núi không tên.', 'Sét đánh trúng cây trước nhà; bạn đứng ngay dưới.', 'Bạn ngồi tĩnh tọa tới sáng mà không biết.', 'Một lão ăn mày nắm cổ tay bạn, cười rồi bỏ đi.'];
+  const AWAKE_WHY = ['Một đêm bạn mơ thấy mình đứng trên đỉnh một ngọn núi không tên, gió thổi tới đâu mây tan tới đó.', 'Sét đánh trúng cây trước nhà đúng lúc bạn đứng ngay dưới, tai ù đi, cả người tê rần.', 'Bạn ngồi tĩnh tọa, nhắm mắt lúc trăng vừa lên, mở mắt thì gà đã gáy.', 'Một lão ăn mày chặn bạn giữa đường, nắm cổ tay bạn bóp mạnh, cười khà khà rồi bỏ đi, không xin một đồng.'];
   G.talentYear = function (S, X) {
     if (!S.tal) return;
     const st = X.stage(S), tot = Object.values(S.focusTime).reduce((a, b) => a + b, 0) || 1, A = G.AIMS[S.aim] || G.AIMS.free;
@@ -496,8 +496,8 @@ window.LifeSim = window.LifeSim || {};
       const near = S.hl < 22, deep = ((S.focusTime.faith || 0) + (S.focusTime.train || 0)) / tot;
       const p = .006 + (S.flags.omen ? .015 : 0) + (near ? .06 : 0) + deep * .01;
       if (X.rnd() < p) {
-        S.flags.awakenQ = near ? 'Bạn nằm giữa sống và chết suốt mấy ngày.' : X.pick(AWAKE_WHY);
-        X.log(S.flags.awakenQ + ' Tỉnh dậy, bạn thấy người mình khác đi.', 'big');
+        S.flags.awakenQ = near ? 'Bạn nằm giữa sống và chết suốt mấy ngày, nghe tiếng người bên giường lúc gần lúc xa.' : X.pick(AWAKE_WHY);
+        X.log(S.flags.awakenQ + ' Tỉnh dậy, bạn thấy người mình khác đi, nhẹ mà lạ, như vừa thay một lớp áo bên trong.', 'big');
       }
     }
   };

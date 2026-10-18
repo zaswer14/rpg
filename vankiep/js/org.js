@@ -99,7 +99,7 @@ window.LifeSim = window.LifeSim || {};
       if (!live(s)) {
         const to = R.settlements.filter(x => live(x) && x.nation === (s ? s.nation : NONE) && G.TIER_RANK[x.tier] <= 2).sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y))[0];
         if (to && X.chance(.6)) { o.seat = to.id; s = to; }
-        else { o.gone = true; Dn().hist(D, year, 'org', `${o.name} giải tán sau khi ${s ? s.name : 'trụ sở'} bị bỏ hoang.`); if (mine[o.id] && S) { delete mine[o.id]; X.log(`${o.name} giải tán.`, 'bad'); } continue; }
+        else { o.gone = true; Dn().hist(D, year, 'org', `${o.name} giải tán sau khi ${s ? s.name : 'trụ sở'} bị bỏ hoang.`); if (mine[o.id] && S) { delete mine[o.id]; X.log(`${o.name} giải tán. Tấm biển hiệu được gỡ xuống, kê làm chân bàn ở một quán trọ nào đó. Bạn giữ lại tờ giấy ghi tên mình trong sổ hội, gấp vào túi áo.`, 'bad'); } continue; }
       }
       const lead = o.leader.player && S && mine[o.id] && mine[o.id].rank >= 2 ? share(S, 'govern') : 0;
       const tgt = memTarget(o.kind, s) * (1 + lead * 1.5 + (o.leader.player ? .3 : 0));
@@ -117,14 +117,14 @@ window.LifeSim = window.LifeSim || {};
     if (S.dead) return;
     const gov = share(S, 'govern'), reg = X.reg(S), med = G.median(reg);
     // Hiệp Hội Mạo Hiểm: mạo hiểm giả tự ghi tên.
-    if (!r.adv && S.work === 'adventurer') { r.adv = { since: year, branch: null }; flag(S, 'advJoin'); X.log('Bạn ghi tên vào Hiệp Hội Mạo Hiểm, nhận thẻ hạng Đồng.', 'info'); }
+    if (!r.adv && S.work === 'adventurer') { r.adv = { since: year, branch: null }; flag(S, 'advJoin'); X.log('Bạn ghi tên vào Hiệp Hội Mạo Hiểm, nhận thẻ hạng Đồng. Tấm thẻ mỏng, cạnh còn sắc, bạn mân mê nó suốt đường về.', 'info'); }
     if (r.adv && r.adv.branch && !live(G.SET[r.adv.branch])) r.adv.branch = null;
     if (r.adv && r.adv.branch) X.money(Math.round(med * (.4 + gov)));
     // Trưởng khu: khu lớn dần theo focus Quản lý (và một phần Làm ăn, Gia đình); lương lấy từ thuế khu.
     const h = r.head != null ? G.SET[r.head] : null;
     if (r.head != null && (!live(h) || !h.head || !h.head.player || S.home.settlement !== h.id)) {
       if (live(h) && h.head && h.head.player) Dn().setField(D, h, 'head', { name: G.personName(h.race || 'human', 'm', X.rnd), player: false, since: year });
-      X.log(live(h) ? `Bạn không còn ở ${h.name}; dân bầu người khác làm ${G.HEAD_VI[h.tier] || 'trưởng'}.` : 'Khu bạn làm trưởng đã thành phế tích.', 'bad');
+      X.log(live(h) ? `Bạn không còn ở ${h.name}; dân bầu người khác làm ${G.HEAD_VI[h.tier] || 'trưởng'}. Con dấu bạn từng giữ giờ nằm trong tay người lạ.` : 'Khu bạn làm trưởng đã thành phế tích. Những nóc nhà bạn từng đếm từng cái giờ chỉ còn nền gạch và cỏ dại.', 'bad');
       r.head = null;
     } else if (h) {
       const s2 = gov + .3 * (share(S, 'work') + share(S, 'family')), cap = G.ORG.cap[h.tier] || 1e9;
@@ -142,12 +142,12 @@ window.LifeSim = window.LifeSim || {};
       if (!lost && ruler && of.ruler !== ruler.name) { if (X.chance(.25)) lost = `${ruler.title} ${ruler.name} mới lên thay người cũ trong triều`; of.ruler = ruler.name; }
       if (!lost && X.chance(.02 * ypt)) {
         const take = X.chance(.4 + .3 * (1 - S.traits.pious));
-        if (take) { X.money(Math.round(med * 2)); if (X.chance(.25)) { lost = 'nhận hối lộ bị phát giác'; flag(S, 'crimes'); } else X.log('Một thương nhân để lại túi bạc trên bàn. Bạn không trả lại.', 'info'); }
+        if (take) { X.money(Math.round(med * 2)); if (X.chance(.25)) { lost = 'nhận hối lộ bị phát giác'; flag(S, 'crimes'); } else X.log('Một thương nhân để quên túi bạc trên bàn, quên một cách rất cố ý. Bạn nhìn nó hồi lâu. Rồi cất vào ngăn kéo, không trả lại.', 'info'); }
       }
-      if (lost) { X.log(`Bạn mất chức ${G.OFFICE_VI[of.rank].toLowerCase()} của ${n.name}: ${lost}.`, 'bad'); r.office = null; }
+      if (lost) { X.log(`Bạn mất chức ${G.OFFICE_VI[of.rank].toLowerCase()} của ${n.name}: ${lost}. Ngày trả ấn, bạn dọn bàn làm việc trong một buổi chiều, đồ đạc vừa đầy một cái rương nhỏ.`, 'bad'); r.office = null; }
       else {
         if (of.rank === 1 && G.tierOf(S) >= G.OFFICE_TIER[2] && year - of.since >= (G.eduLv && G.eduLv(S) >= 3 ? 4 : 6) && (G.tierOf(S) >= 4 || S.fame >= 40 || S.sm >= 70 || (r.noble && r.noble.rank >= 3)) && X.chance(.12 * (.5 + gov) * ypt)) {
-          of.rank = 2; flag(S, 'office2'); X.log(`Bạn được triệu về kinh làm Đại thần của ${n.name}.`, 'big');
+          of.rank = 2; flag(S, 'office2'); X.log(`Chiếu triệu tới lúc trời vừa sáng: bạn được về kinh làm Đại thần của ${n.name}. Đêm trước khi lên đường, bạn ngồi bên cửa sổ dinh tỉnh, nhìn những mái nhà mình đã coi sóc bao năm. Kinh thành nghe nói rộng lắm, và cũng lạnh lắm.`, 'big');
           Dn().hist(D, year, 'office', `${S.name} được phong Đại thần của ${n.name}.`);
         }
         X.money(Math.round(med * (of.rank === 2 ? 2.5 : 1.2)));
@@ -157,7 +157,7 @@ window.LifeSim = window.LifeSim || {};
     // Người cai trị: ổn định theo focus Quản lý, hạnh phúc giảm; thu thuế; tuổi theo nhân vật.
     if (r.ruler != null) {
       const k = r.ruler, d = D.nat[k];
-      if (!d || !d.alive || !d.ruler || !d.ruler.player) { X.log(d && !d.alive ? `${R.nations[k].name} đã mất. Bạn không còn ngai để ngồi.` : 'Bạn không còn là người cai trị.', 'bad'); r.ruler = null; }
+      if (!d || !d.alive || !d.ruler || !d.ruler.player) { X.log(d && !d.alive ? `${R.nations[k].name} đã mất. Bạn không còn ngai để ngồi, chỉ còn chiếc áo bào gấp dưới đáy tay nải.` : 'Bạn không còn là người cai trị. Sáng ra không ai đứng chờ ngoài cửa xin ý chỉ nữa, và căn phòng bỗng yên tới lạ.', 'bad'); r.ruler = null; }
       else {
         d.ruler.age = X.years(S);
         d.stab = G.clamp(d.stab + (.035 * gov - .01) * ypt, 0, 1);
@@ -181,7 +181,7 @@ window.LifeSim = window.LifeSim || {};
   // Sự kiện của trưởng khu: người tới xin ở, quái đánh khu (hang ổ gần hoặc thú triều), tường rào giảm thiệt hại.
   function headEvents(R, W, X, S, h) {
     const D = W.dyn;
-    if (X.chance(.15)) { const n = X.int(10, 40) + Math.round(h.urban * .02); Dn().setField(D, h, 'urban', h.urban + n); X.log(`${n} người từ nơi khác tới xin ở ${h.name}. Bạn chia đất cho họ.`, 'good'); }
+    if (X.chance(.15)) { const n = X.int(10, 40) + Math.round(h.urban * .02); Dn().setField(D, h, 'urban', h.urban + n); X.log(`${n} người từ nơi khác tới xin ở ${h.name}, quang gánh lấm bụi đường xa. Bạn cắm cọc chia đất cho từng nhà, và tối ấy ở rìa khu có thêm mấy đống lửa mới.`, 'good'); }
     const near = ((D.lairs || []).filter(l => l.empty == null && Math.hypot(G.lairPos(l)[0] - h.x, G.lairPos(l)[1] - h.y) < 70).sort((a, b) => b.lv - a.lv))[0];
     const raid = h.province >= 0 ? D.raid[h.province] || 0 : 0;
     if (X.chance(.04 + raid * .15 + (near ? .04 * near.lv : 0))) {
@@ -192,8 +192,8 @@ window.LifeSim = window.LifeSim || {};
       const rec = X.fight({ ...enc, count: Math.min(6, enc.count + 1) }, false);
       if (S.dead) return;
       const walls = (h.bld || []).includes('walls');
-      if (rec.win) { X.add('so', 4); S.fame = Math.min(100, S.fame + 1.5); X.log(`Quái${near ? ' từ ' + near.name : ''} đánh ${h.name}. Bạn dẫn trai tráng giữ được cổng.`, 'good'); }
-      else { D.hp[h.id] = Math.max(.1, (D.hp[h.id] ?? 1) - (walls ? .05 : .12)); X.log(`Quái${near ? ' từ ' + near.name : ''} phá ${walls ? 'một đoạn rào' : 'mấy nóc nhà'} ở ${h.name}.`, 'bad'); }
+      if (rec.win) { X.add('so', 4); S.fame = Math.min(100, S.fame + 1.5); X.log(`Quái${near ? ' từ ' + near.name : ''} đánh ${h.name} giữa đêm, tiếng mõ gõ dồn khắp xóm. Bạn dẫn trai tráng cầm đuốc ra giữ cổng tới khi trời rạng, sáng ra ai cũng muốn múc cho bạn bát cháo đầu tiên.`, 'good'); }
+      else { D.hp[h.id] = Math.max(.1, (D.hp[h.id] ?? 1) - (walls ? .05 : .12)); X.log(`Quái${near ? ' từ ' + near.name : ''} phá ${walls ? 'một đoạn rào' : 'mấy nóc nhà'} ở ${h.name}. Sáng ra bạn đi một vòng đếm chỗ hỏng; có người không nói gì, chỉ nhìn bạn.`, 'bad'); }
     }
   }
 
@@ -278,11 +278,11 @@ window.LifeSim = window.LifeSim || {};
         ch.push({ k: 't' + st.cell, label: `Lập thị trấn ${name}`, sub: `${where(st)}; ${G.coin(cost)}; đưa theo ${men} người.`, st, name, cost, tier: 'town', men });
       }
       if (!ch.length) { S.recentDec.found_settle = S.age; return null; }
-      return { title: 'Lập nghiệp', body: `Bạn có ${G.coin(S.gold)}, danh vọng ${Math.round(S.fame)}${men ? `, nhân lực ${men} người` : ''}. Có chỗ đất dựng được ${ch.some(c => c.tier === 'town') ? 'cả một thị trấn' : 'một làng'}. Bạn sẽ là ${ch[0].tier === 'town' ? 'thị trưởng' : 'trưởng làng'}.`,
+      return { title: 'Lập nghiệp', body: `Bạn có ${G.coin(S.gold)}, danh vọng ${Math.round(S.fame)}${men ? `, nhân lực ${men} người` : ''}. Người đi rừng về kể có chỗ đất tốt, đủ dựng ${ch.some(c => c.tier === 'town') ? 'cả một thị trấn' : 'một làng'}, cỏ cao ngang ngực, chưa ai cắm cọc. Nếu đi, bạn sẽ là ${ch[0].tier === 'town' ? 'thị trưởng' : 'trưởng làng'}.`,
         choices: [...ch, { k: 'no', label: 'Thôi', sub: 'Không phải ai cũng muốn làm trưởng.' }] };
     },
     apply(S, X, k, c) {
-      if (k === 'no' || !c.st) return null;
+      if (k === 'no' || !c.st) return k === 'no' ? 'Bạn cất tấm bản đồ vẽ tay vào rương. Đất ấy rồi sẽ có người khác tới cắm cọc. Còn bạn ở lại với mái nhà quen.' : null;
       S.gold -= c.cost;
       if (c.tier === 'town') {
         const r = roles(S), h = r.head != null ? G.SET[r.head] : null;
@@ -291,12 +291,12 @@ window.LifeSim = window.LifeSim || {};
         const s = settle(S, X, c.st, 'town', c.name, Math.min(c.men, 800) + X.int(300, 700), X.int(200, 500));
         flag(S, 'foundTown');
         Dn().hist(S.world.dyn, S.world.year, 'found', `${S.name} đưa ${c.men} người tới dựng thị trấn ${s.name} ở ${G.REGION[s.region].nameVi}.`);
-        return `Thị trấn ${s.name} có tường rào và chợ ngay năm đầu. Bạn là thị trưởng.`;
+        return `Đoàn người theo bạn kéo dài cả một quãng đường, xe bò chở gỗ, chở nồi niêu. Thị trấn ${s.name} có tường rào và chợ ngay năm đầu, phiên chợ đầu tiên đông tới mức giẫm cả lên luống rau mới gieo. Bạn là thị trưởng.`;
       }
       const s = settle(S, X, c.st, 'village', c.name, X.int(40, 90) + Math.round(S.fame), X.int(100, 300));
       flag(S, 'foundVillage');
       Dn().hist(S.world.dyn, S.world.year, 'found', `${S.name} lập ${s.name} ở ${G.REGION[s.region].nameVi}.`);
-      return `Bạn dựng nhà đầu tiên của ${s.name}. Vài gia đình theo bạn tới.`;
+      return `Bạn tự tay dựng ngôi nhà đầu tiên của ${s.name}, cột kèo còn ứa nhựa. Vài gia đình theo bạn tới, dựng lều quanh đống lửa chung. Đêm đầu chẳng ai ngủ được, cứ ngồi nghe gió trên đồng lạ.`;
     },
     auto(S, X, d) {
       const T = S.traits, t = d.choices.find(c => c.tier === 'town');
@@ -315,15 +315,15 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const h = homeS(S), t = G.HEAD_VI[h.tier];
-      return { title: `Bầu ${t}`, body: `${h.head ? `${G.HEAD_VI[h.tier][0].toUpperCase() + t.slice(1)} ${h.head.name} xin thôi.` : `${h.name} cần người đứng ra lo việc chung.`} Các bô lão nhắc tên bạn.`,
+      return { title: `Bầu ${t}`, body: `${h.head ? `${G.HEAD_VI[h.tier][0].toUpperCase() + t.slice(1)} ${h.head.name} xin thôi.` : `${h.name} cần người đứng ra lo việc chung.`} Ở buổi họp dưới gốc cây đầu làng, các bô lão nhắc tên bạn, rồi cả đám đông quay lại nhìn.`,
         choices: [{ k: 'yes', label: 'Nhận', sub: 'Thu thuế khu, lo đường sá, đứng ra khi quái tới. Mở focus Quản lý.' }, { k: 'no', label: 'Từ chối', sub: 'Làm dân thường cho nhẹ đầu.' }] };
     },
     apply(S, X, k) {
-      if (k !== 'yes') return null;
+      if (k !== 'yes') return 'Bạn lắc đầu, viện cớ việc nhà còn bộn bề. Các bô lão thở dài, quay sang nhắc một cái tên khác.';
       const h = homeS(S), D = S.world.dyn;
       Dn().setField(D, h, 'head', { name: S.name, player: true, since: S.world.year }); roles(S).head = h.id; flag(S, 'headElect');
       Dn().hist(D, S.world.year, 'head', `${S.name} được bầu làm ${G.HEAD_VI[h.tier]} ${h.name}.`);
-      return `Bạn là ${G.HEAD_VI[h.tier]} ${h.name}.`;
+      return `Bạn là ${G.HEAD_VI[h.tier]} ${h.name}. Hôm đầu nhận việc, người ta xếp hàng trước cửa từ sáng: nhà này kiện bờ rào, nhà kia xin giảm thuế. Tới tối bạn mới nhớ ra mình chưa ăn gì.`;
     },
     auto: (S) => S.traits.social > .75 && S.traits.bold > .3 ? 'yes' : 'no'
   };
@@ -342,14 +342,14 @@ window.LifeSim = window.LifeSim || {};
       if (h.tier === 'town' && h.urban >= U.upCity.urban && S.gold >= U.upCity.cost && S.fame >= U.upCity.fame) ch.push({ k: 'city', label: 'Lên thành phố', sub: `${G.coin(U.upCity.cost)}: tường đá, trường, doanh trại. Bạn thành thành chủ.` });
       if (h.tier === 'village' && !(h.bld || []).includes('walls') && S.gold >= wc) ch.push({ k: 'walls', label: 'Dựng rào gỗ', sub: `${G.coin(wc)}: quái và thú triều phá ít hơn một nửa.` });
       if (!ch.length) return null;
-      return { title: h.name, body: `${h.name} có ${h.urban.toLocaleString('vi')} người trong khu. Bạn có ${G.coin(S.gold)}.`, choices: [...ch, { k: 'no', label: 'Để sau', sub: '' }] };
+      return { title: h.name, body: `${h.name} có ${h.urban.toLocaleString('vi')} người trong khu, chợ sáng đã chật, đường đã chẳng đủ cho hai xe tránh nhau. Bạn có ${G.coin(S.gold)}.`, choices: [...ch, { k: 'no', label: 'Để sau', sub: '' }] };
     },
     apply(S, X, k) {
       const h = G.SET[roles(S).head], D = S.world.dyn, U = G.ORG, old = h.name;
-      if (k === 'walls') { S.gold -= Math.round(G.median(X.reg(S)) * 4); Dn().setField(D, h, 'bld', [...(h.bld || []), 'walls']); Dn().setField(D, h, 'buildings', [...(h.buildings || []), 'Rào gỗ']); return `${h.name} có rào gỗ.`; }
-      if (k === 'town') { S.gold -= U.upTown.cost; promote(S, X, h, 'town'); flag(S, 'upTown'); Dn().hist(D, S.world.year, 'found', `${old} lên thị trấn, đổi tên thành ${h.name}.`); Dn().setField(D, h, 'head', { name: S.name, player: true, since: S.world.year }); return `${old} thành thị trấn ${h.name}. Bạn là thị trưởng.`; }
-      if (k === 'city') { S.gold -= U.upCity.cost; promote(S, X, h, 'city'); flag(S, 'upCity'); Dn().hist(D, S.world.year, 'found', `${old} lên thành phố, đổi tên thành ${h.name}.`); return `${old} thành ${h.name}. Bạn là thành chủ.`; }
-      return null;
+      if (k === 'walls') { S.gold -= Math.round(G.median(X.reg(S)) * 4); Dn().setField(D, h, 'bld', [...(h.bld || []), 'walls']); Dn().setField(D, h, 'buildings', [...(h.buildings || []), 'Rào gỗ']); return `Cả làng góp sức đốn gỗ, vót cọc suốt một mùa. ${h.name} có rào gỗ. Đêm đầu tiên sau khi cổng đóng, nhà nhà ngủ một mạch tới sáng.`; }
+      if (k === 'town') { S.gold -= U.upTown.cost; promote(S, X, h, 'town'); flag(S, 'upTown'); Dn().hist(D, S.world.year, 'found', `${old} lên thị trấn, đổi tên thành ${h.name}.`); Dn().setField(D, h, 'head', { name: S.name, player: true, since: S.world.year }); return `${old} thành thị trấn ${h.name}. Tấm biển tên mới treo lên cổng, chữ sơn còn bóng. Người già vẫn quen miệng gọi tên cũ, còn bạn từ nay là thị trưởng.`; }
+      if (k === 'city') { S.gold -= U.upCity.cost; promote(S, X, h, 'city'); flag(S, 'upCity'); Dn().hist(D, S.world.year, 'found', `${old} lên thành phố, đổi tên thành ${h.name}.`); return `${old} thành ${h.name}. Tường đá lên cao tới đâu, bạn đứng trên đó nhìn ra xa tới đó. Bạn là thành chủ. Đêm đầu tiên, đèn trên các tháp canh sáng rực cả một góc trời.`; }
+      return 'Bạn gác chuyện mở mang lại. Còn nhiều mùa nữa để tính.';
     },
     auto: (S, X, d) => d.choices[0].k
   };
@@ -362,14 +362,14 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const n = G.realm.nations[S.nation], p = homeS(S).province;
-      return { title: 'Ra làm quan', body: `${n.name} cần người coi tỉnh ${G.realm.provinces[p].name}. ${S.sm >= 50 ? 'Bạn đọc thông viết thạo.' : 'Tiếng tăm của bạn đã tới tai quan trên.'}`,
+      return { title: 'Ra làm quan', body: `Một viên thư lại cưỡi ngựa trạm tới, áo còn ướt sương: ${n.name} cần người coi tỉnh ${G.realm.provinces[p].name}. ${S.sm >= 50 ? 'Người ta nghe nói bạn đọc thông viết thạo, sổ sách nào cũng gỡ được.' : 'Tiếng tăm của bạn đã tới tai quan trên.'}`,
         choices: [{ k: 'yes', label: 'Nhận chức Quan tỉnh', sub: 'Lương bổng, giữ yên tỉnh; mất chức khi tỉnh đổi chủ hoặc triều đổi người.' }, { k: 'no', label: 'Không ra làm quan', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k !== 'yes') return null;
+      if (k !== 'yes') return 'Bạn mời viên thư lại uống chén trà rồi tiễn ra cổng. Chốn quan trường, bạn nghĩ, vào thì dễ mà ra thì khó.';
       const W = S.world, p = homeS(S).province, ru = W.dyn.nat[S.nation].ruler;
       roles(S).office = { k: S.nation, p, rank: 1, since: W.year, ruler: ru ? ru.name : null }; flag(S, 'office');
-      return `Bạn nhận ấn Quan tỉnh ${G.realm.provinces[p].name}.`;
+      return `Bạn nhận ấn Quan tỉnh ${G.realm.provinces[p].name}. Chiếc ấn đồng nặng trĩu trong tay, mặt dưới còn dính mực đỏ của người tiền nhiệm. Đêm đầu ở dinh, bạn thức tới khuya lật từng cuốn sổ thuế.`;
     },
     auto: (S) => (S.traits.studious > .8 && S.traits.pious < .8) || (G.tierOf(S) >= 2 && (S.traits.social > .45 || S.aim === 'power')) ? 'yes' : 'no'   // người có cấp được trọng dụng nên dễ nhận hơn
   };
@@ -384,11 +384,11 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const h = G.SET[roles(S).head], ts = templatesFor(S).slice().sort((a, b) => (a.size === 'L') - (b.size === 'L') || X.rnd() - .5).slice(0, 3);
-      return { title: 'Lập nước', body: `Tỉnh ${G.realm.provinces[h.province].name} không thuộc nước nào. Các trưởng làng muốn ${h.name} đứng đầu. Chọn thể chế (${G.coin(G.ORG.nationCost)}).`,
+      return { title: 'Lập nước', body: `Tỉnh ${G.realm.provinces[h.province].name} không thuộc nước nào. Các trưởng làng kéo nhau tới ${h.name}, ngồi kín gian nhà lớn, ai cũng muốn nơi này đứng đầu. Câu hỏi còn lại là dựng nước theo lề lối nào (${G.coin(G.ORG.nationCost)}).`,
         choices: [...ts.map(t => ({ k: t.id, label: `${t.label} (${G.GOVS[t.gov].nameVi.toLowerCase()})`, sub: `${t.trait.nameVi}: ${t.trait.desc}`, tpl: t.id })), { k: 'no', label: 'Chưa', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn bảo các trưởng làng hãy về đợi thêm ít năm. Có người gật gù, có người lắc đầu bỏ về trước. Chuyện lập nước, nói ra rồi thì khó mà nuốt lại.';
       const W = S.world, R = G.bindWorld(W), D = W.dyn, h = G.SET[roles(S).head], p = h.province, t = G.NATION_TEMPLATES.find(x => x.id === k);
       const title = (G.NAMES.nation.ruler[t.gov] || ['Thủ Lĩnh']), ruler = { title: title.length > 1 && S.sex === 'f' ? title[1] : title[0], name: S.name, sex: S.sex, age: X.years(S), player: true };
       S.gold -= G.ORG.nationCost;
@@ -398,7 +398,7 @@ window.LifeSim = window.LifeSim || {};
       roles(S).ruler = nn.idx; S.nation = nn.idx; flag(S, 'foundNation'); D.n.pnation = (D.n.pnation || 0) + 1;
       Dn().hist(D, W.year, 'rebel', `${S.name} lập ${nn.name} (${G.GOVS[nn.gov].nameVi.toLowerCase()}), kinh đô ${h.name}.`);
       if (R._dirty.length) G.wildCommit(R);
-      return `${nn.name} ra đời. Bạn là ${ruler.title} ${S.name}.`;
+      return `${nn.name} ra đời trong một buổi sáng nắng hanh, giữa tiếng trống của mọi làng trong tỉnh. Lá cờ mới may vội, đường kim còn lệch. Từ nay người ta gọi bạn là ${ruler.title} ${S.name}, và bạn phải tập quay đầu lại khi nghe cái tên ấy.`;
     },
     auto: (S, X, d) => S.traits.bold > .5 ? d.choices[0].k : 'no'
   };
@@ -414,11 +414,11 @@ window.LifeSim = window.LifeSim || {};
     },
     build(S, X) {
       const D = S.world.dyn, p = rebelProv(S), k = D.prov[p], n = G.realm.nations[k], ch = G.rebelChance(S);
-      return { title: 'Dấy binh', body: `${n.name} đang rối ren (ổn định ${Math.round(D.nat[k].stab * 100)}). Người tỉnh ${G.realm.provinces[p].name} hỏi bạn có dám đứng lên không. Ước chừng ${Math.round(ch * 100)}% thành công.`,
+      return { title: 'Dấy binh', body: `${n.name} đang rối ren (ổn định ${Math.round(D.nat[k].stab * 100)}). Đêm đêm, người tỉnh ${G.realm.provinces[p].name} tụ lại sau nhà bạn, nói nhỏ, mắt liếc ra ngõ. Họ hỏi bạn có dám đứng lên không. Ước chừng ${Math.round(ch * 100)}% thành công.`,
         choices: [{ k: 'go', label: 'Dấy binh', sub: `${G.coin(G.ORG.rebelCost)} mua giáo mác. Thua thì mất hết, có khi mất đầu.` }, { k: 'no', label: 'Giữ phận', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k !== 'go') return null;
+      if (k !== 'go') return 'Bạn bảo họ về đi, đừng tụ tập nữa. Những cái bóng sau nhà thưa dần rồi thôi hẳn. Có đêm bạn vẫn nghe tiếng thì thầm, chẳng rõ ngoài ngõ hay trong đầu mình.';
       const W = S.world, R = G.bindWorld(W), D = W.dyn, p = rebelProv(S), from = D.prov[p], old = R.nations[from];
       S.gold -= G.ORG.rebelCost;
       if (G.stripTitle) G.stripTitle(S, from, `làm phản ${old.name}`);
@@ -428,7 +428,7 @@ window.LifeSim = window.LifeSim || {};
         roles(S).office = null;
         if (X.chance(.35)) { X.die({ id: 'hanged', text: `bị ${old.name} xử tử vì tội làm phản` }); return null; }
         (S.flags.wanted = S.flags.wanted || {})[from] = true;
-        return `Quân ${old.name} dẹp tan. Bạn trốn được, nhưng đầu bạn giờ có giá.`;
+        return `Quân ${old.name} tới nhanh hơn ai ngờ, và chỉ một trận là dẹp tan. Bạn trốn được, lội qua đầm sậy trong đêm, bùn ngập tới gối. Từ nay tờ cáo thị dán ở cổng chợ có cả mặt bạn: đầu bạn đã có giá.`;
       }
       const tpls = templatesFor(S), t = X.wpick(tpls, t => t.size === 'S' ? 3 : t.size === 'M' ? 1.5 : .3);
       const title = (G.NAMES.nation.ruler[t.gov] || ['Thủ Lĩnh']), ruler = { title: title.length > 1 && S.sex === 'f' ? title[1] : title[0], name: S.name, sex: S.sex, age: X.years(S), player: true };
@@ -440,7 +440,7 @@ window.LifeSim = window.LifeSim || {};
       Dn().hist(D, W.year, 'rebel', `${S.name} dấy binh ở tỉnh ${R.provinces[p].name}, tách khỏi ${old.name} lập ${nn.name}.`);
       if (!Dn().provsOf(D, from).length) { D.nat[from].alive = false; old.alive = false; }
       if (R._dirty.length) G.wildCommit(R);
-      return `Cờ ${nn.name} kéo lên. ${old.name} sẽ không để yên.`;
+      return `Cờ ${nn.name} kéo lên trên cổng tỉnh lỵ, gió thổi phần phật. Dưới chân thành, người ta reo hò tới khản cổ. ${old.name} sẽ không để yên, bạn biết, và đêm ấy bạn ngủ với thanh gươm bên gối.`;
     },
     auto: (S, X) => S.traits.bold > .8 && G.rebelChance(S) > .55 ? 'go' : 'no'
   };
@@ -461,22 +461,22 @@ window.LifeSim = window.LifeSim || {};
         const b = [...foes].sort((x, y) => (n.relations[x] || 0) - (n.relations[y] || 0))[0];
         if (b != null && d.stab > .35) ch.push({ k: 'war', label: `Tuyên chiến với ${R.nations[b].name}`, sub: `Quan hệ ${n.relations[b] || 0}. Chiến tranh làm ổn định giảm.`, b });
       }
-      return { title: `Triều chính ${n.name}`, body: `Ổn định ${Math.round(d.stab * 100)}, thuế ${Math.round(n.tax * 100)}%, ${Dn().provsOf(D, k).length} tỉnh.${war ? ' Đang có chiến tranh.' : ''}`, choices: ch };
+      return { title: `Triều chính ${n.name}`, body: `Sáng nào án thư cũng chất đầy tấu sớ. Ổn định ${Math.round(d.stab * 100)}, thuế ${Math.round(n.tax * 100)}%, ${Dn().provsOf(D, k).length} tỉnh.${war ? ' Đang có chiến tranh, ngày nào cũng có ngựa trạm từ mặt trận về.' : ''}`, choices: ch };
     },
     apply(S, X, k, c) {
       const W = S.world, R = G.bindWorld(W), D = W.dyn, K = roles(S).ruler, n = R.nations[K], d = D.nat[K];
-      if (k === 'down' || k === 'up') { d.tax = +G.clamp(n.tax + (k === 'up' ? .03 : -.03), .03, .4).toFixed(3); n.tax = d.tax; d.stab = G.clamp(d.stab + (k === 'up' ? -.05 : .05), 0, 1); flag(S, 'court'); return `Thuế ${n.name} giờ là ${Math.round(n.tax * 100)}%.`; }
+      if (k === 'down' || k === 'up') { d.tax = +G.clamp(n.tax + (k === 'up' ? .03 : -.03), .03, .4).toFixed(3); n.tax = d.tax; d.stab = G.clamp(d.stab + (k === 'up' ? -.05 : .05), 0, 1); flag(S, 'court'); return `${k === 'up' ? 'Chiếu tăng thuế dán khắp các cổng chợ, dân đọc xong lặng lẽ bỏ đi.' : 'Tin giảm thuế về tới các làng, có nhà thắp hương tạ ơn.'} Thuế ${n.name} giờ là ${Math.round(n.tax * 100)}%.`; }
       if (k === 'war') {
         D.wars.push({ a: K, b: c.b, score: 0, years: 0, start: W.year, occ: [] }); D.n.wars++; flag(S, 'court');
         Dn().hist(D, W.year, 'war', `${n.name} tuyên chiến với ${R.nations[c.b].name}.`);
-        return `Lệnh mộ lính ban xuống mọi tỉnh của ${n.name}.`;
+        return `Lệnh mộ lính ban xuống mọi tỉnh của ${n.name}. Trống trận từ kinh thành vọng ra tới các cửa ô. Đêm ấy bạn đứng trên tường thành rất lâu, nhìn về phía biên giới.`;
       }
       if (k === 'peace') {
         const w = D.wars.find(x => (x.a === K || x.b === K)); if (!w) return null;
         D.wars = D.wars.filter(x => x !== w); Dn().endWar(R, D, w, W.year, X, S); flag(S, 'court');
-        return 'Sứ giả hai bên ký hòa ước.';
+        return 'Sứ giả hai bên ký hòa ước dưới một mái lều dựng giữa chiến tuyến. Mực chưa khô, bên ngoài đã nghe tiếng người tháo giáp.';
       }
-      return null;
+      return ['Bạn để mọi việc như cũ. Triều thần tâu xong lui ra, đèn trong điện tắt sớm.', 'Năm ấy bạn không đổi gì. Kho vẫn thế, thuế vẫn thế, dân chẳng có gì để than mà cũng chẳng có gì để mừng.', 'Bạn phê một chữ "y" lên chồng tấu sớ rồi gác bút. Có những năm, ngồi yên cũng là một cách trị nước.'][W.year % 3];
     },
     auto(S, X, d) {
       const D = S.world.dyn, K = roles(S).ruler, st = D.nat[K].stab, has = id => d.choices.find(c => c.k === id);
@@ -502,15 +502,15 @@ window.LifeSim = window.LifeSim || {};
       if (!r.adv && S.level >= 3) ch.push({ k: 'adv', label: 'Ghi tên Hiệp Hội Mạo Hiểm', sub: 'Mọi nghề đều nhận. Bảng nhiệm vụ, tiền thưởng, hạng theo danh vọng.' });
       for (const o of orgsHere(S, o => canJoin(S, X, o)).slice(0, 2)) ch.push({ k: o.id, label: `Vào ${o.name}`, sub: `${o.members} người, ${o.kind === 'merc' ? 'nhận hợp đồng đánh thuê và hộ tống' : `thu nhập +${Math.round(G.ORG_KINDS[o.kind].inc[0] * 100)}%`}; lệ phí ${G.coin(fee)}. ${G.ORG_KINDS[o.kind].ranks[2][0].toUpperCase() + G.ORG_KINDS[o.kind].ranks[2].slice(1)}: ${o.leader.name}.`, fee });
       if (!ch.length) return null;
-      return { title: 'Hội, đoàn', body: 'Người trong nghề rủ bạn vào hội. Vào thì có chỗ dựa; không vào thì không ai đòi hội phí.', choices: [...ch, { k: 'no', label: 'Không vào', sub: '' }] };
+      return { title: 'Hội, đoàn', body: 'Mấy người trong nghề ghé quán ngồi cùng bàn, rủ bạn vào hội. Vào thì có chỗ dựa lúc trái gió trở trời; không vào thì chẳng ai đòi hội phí.', choices: [...ch, { k: 'no', label: 'Không vào', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn cười, rót thêm rượu cho họ rồi lái sang chuyện khác. Một mình thì vất vả hơn, nhưng cũng chẳng phải nghe ai.';
       const r = roles(S), W = S.world;
-      if (k === 'adv') { r.adv = { since: W.year, branch: null }; flag(S, 'advJoin'); return 'Bạn nhận thẻ hạng ' + G.ADV_RANKS[G.advRank(S)] + '.'; }
+      if (k === 'adv') { r.adv = { since: W.year, branch: null }; flag(S, 'advJoin'); return 'Bạn nhận thẻ hạng ' + G.ADV_RANKS[G.advRank(S)] + '. Người thư ký đóng dấu, thổi cho khô mực rồi đẩy tấm thẻ qua ô cửa. Bảng nhiệm vụ trên tường dán kín giấy, tờ nào cũng hứa một chuyến đi xa.'; }
       const o = G.orgById(W, k); if (!o) return null;
       S.gold -= c.fee || 0; r.orgs[o.id] = { rank: 0, since: W.year }; o.members++; flag(S, o.kind === 'merc' ? 'mercJoin' : 'orgJoin');
-      return `Bạn là ${G.ORG_KINDS[o.kind].ranks[0]} của ${o.name}.`;
+      return `Bạn là ${G.ORG_KINDS[o.kind].ranks[0]} của ${o.name}. Hôm nhập hội, người ta ghi tên bạn vào cuốn sổ dày, ngay dưới một cái tên đã bị gạch. Tối ấy cả hội uống mừng, và bạn là người bị chuốc say trước tiên.`;
     },
     auto(S, X, d) {
       const T = S.traits, merc = d.choices.find(c => c.k !== 'adv' && c.k !== 'no' && G.orgById(S.world, c.k).kind === 'merc');
@@ -538,16 +538,16 @@ window.LifeSim = window.LifeSim || {};
       for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 0 && m.offer && orgT(S, 1)) ch.push({ k: 'o' + id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[1]} ${o.name}`, sub: 'Lo sổ sách, chia việc; có phụ cấp. Mở focus Quản lý.' }); }
       for (const [id, m] of Object.entries(r.orgs)) { const o = G.orgById(S.world, id); if (o && m.rank === 1 && !o.leader.player && S.world.year - m.since >= 3 && orgT(S, 2)) ch.push({ k: id, label: `Làm ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}`, sub: `${o.leader.name} già yếu muốn nhường. ${o.members} người.` }); }
       if (!ch.length) return null;
-      return { title: 'Đề cử', body: 'Người ta muốn bạn đứng đầu.', choices: [...ch, { k: 'no', label: 'Chỉ làm thành viên', sub: '' }] };
+      return { title: 'Đề cử', body: 'Buổi họp cuối năm, tới chuyện ai đứng ra gánh việc thì cả gian phòng im bặt, rồi từng người một quay sang bạn. Người ta muốn bạn đứng đầu.', choices: [...ch, { k: 'no', label: 'Chỉ làm thành viên', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k === 'no') { for (const m of Object.values(roles(S).orgs)) delete m.offer; return null; }
+      if (k === 'no') { for (const m of Object.values(roles(S).orgs)) delete m.offer; return 'Bạn xua tay, nói mình chỉ quen làm, không quen sai bảo ai. Cuộc họp tan, chuyện ấy được gác lại.'; }
       const r = roles(S), W = S.world;
-      if (k === 'adv') { r.adv.branch = S.home.settlement; flag(S, 'advBranch'); Dn().hist(W.dyn, W.year, 'org', `${S.name} làm trưởng chi nhánh Hiệp Hội Mạo Hiểm ở ${G.SET[S.home.settlement].name}.`); return 'Bạn nhận chìa khóa két tiền thưởng.'; }
-      if (k[0] === 'o') { const id = k.slice(1), o = G.orgById(W, id); r.orgs[id].rank = 1; r.orgs[id].since = W.year; delete r.orgs[id].offer; flag(S, 'orgOfficer'); return `Bạn làm ${G.ORG_KINDS[o.kind].ranks[1]} ${o.name}.`; }
+      if (k === 'adv') { r.adv.branch = S.home.settlement; flag(S, 'advBranch'); Dn().hist(W.dyn, W.year, 'org', `${S.name} làm trưởng chi nhánh Hiệp Hội Mạo Hiểm ở ${G.SET[S.home.settlement].name}.`); return 'Bạn nhận chìa khóa két tiền thưởng, chiếc chìa đồng đã mòn vẹt. Từ nay mỗi tờ nhiệm vụ trên bảng đều phải qua tay bạn trước.'; }
+      if (k[0] === 'o') { const id = k.slice(1), o = G.orgById(W, id); r.orgs[id].rank = 1; r.orgs[id].since = W.year; delete r.orgs[id].offer; flag(S, 'orgOfficer'); return `Bạn làm ${G.ORG_KINDS[o.kind].ranks[1]} ${o.name}. Sổ sách của hội giờ chất trên bàn bạn, chồng cao, trang nào cũng có vết tay người.`; }
       const o = G.orgById(W, k); r.orgs[k].rank = 2; o.leader = { name: S.name, player: true }; flag(S, 'orgLead');
       Dn().hist(W.dyn, W.year, 'org', `${S.name} làm ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}.`);
-      return `Bạn là ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}.`;
+      return `Bạn là ${G.ORG_KINDS[o.kind].ranks[2]} ${o.name}. Người tiền nhiệm nhường lại cho bạn chiếc ghế đầu bàn, mặt ghế đã lún theo dáng ngồi của người ấy. Phải mất một mùa bạn mới ngồi cho quen.`;
     },
     auto: (S, X, d) => S.traits.social > .7 ? d.choices[0].k : 'no'
   };
@@ -569,17 +569,17 @@ window.LifeSim = window.LifeSim || {};
     when: (S, X) => foundable(S, X).length > 0,
     build(S, X) {
       const h = homeS(S);
-      return { title: 'Lập hội', body: `${h.name} chưa có hội cho người như bạn.`,
+      return { title: 'Lập hội', body: `${h.name} chưa có hội cho người như bạn. Mỗi lần có việc lớn, người trong nghề lại phải lặn lội sang chỗ khác nhờ vả. Đã có người bóng gió: sao bạn không tự đứng ra?`,
         choices: [...foundable(S, X).map(kind => ({ k: kind, label: kind === 'merc' ? 'Lập đoàn lính đánh thuê' : `Lập ${G.ORG_KINDS[kind].nameVi} ${G.rootName(h.name)}`, sub: `${G.coin(kind === 'merc' ? 500 : 300)}; bạn là ${G.ORG_KINDS[kind].ranks[2]}.` })), { k: 'no', label: 'Thôi', sub: '' }] };
     },
     apply(S, X, k) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn nghĩ tới sổ sách, hội phí, những cuộc cãi vã không dứt, rồi thôi. Việc của mình, mình lo đã đủ mệt.';
       const W = S.world, R = G.bindWorld(W), h = homeS(S);
       S.gold -= k === 'merc' ? 500 : 300;
       const o = newOrg(R, W, k, h, W.year, X, { name: S.name, player: true });
       roles(S).orgs[o.id] = { rank: 2, since: W.year }; flag(S, 'orgFound');
       Dn().hist(W.dyn, W.year, 'org', `${S.name} lập ${o.name} ở ${h.name}.`);
-      return `${o.name} có ${o.members} người theo bạn.`;
+      return `Tấm biển ${o.name} treo lên trước cửa, gỗ mới còn thơm. Buổi họp đầu tiên có ${o.members} người tới, ngồi chật cả hiên. Bạn đọc bài nói đã nhẩm suốt đêm, và quên mất một nửa.`;
     },
     auto: (S, X, d) => S.traits.bold + S.traits.social > 1.55 ? d.choices[0].k : 'no'
   };
@@ -594,10 +594,10 @@ window.LifeSim = window.LifeSim || {};
       const z = X.recommendedZone(S); if (z) ch.push({ k: 'escort', label: 'Hộ tống đoàn buôn', sub: `Qua ${z.zone.nameVi}, 1–3 trận; ${G.coin(pay(18))} mỗi trận.`, zone: z.zone.id, per: pay(18) });
       if (!S.flags.bounty && z) ch.push({ k: 'bounty', label: 'Nhận lệnh săn thủ lĩnh', sub: 'Lệnh treo thưởng ghi tên bạn.' });
       ch.push({ k: 'gather', label: 'Tìm đồ thất lạc, hái thuốc', sub: `Không phải đánh; ${G.coin(pay(8))} nếu tìm được.`, pay: pay(8) });
-      return { title: 'Bảng nhiệm vụ', body: `Hạng ${G.ADV_RANKS[G.advRank(S)]}. Sức bạn ${X.power(S).toFixed(1)}.`, choices: [...ch, { k: 'no', label: 'Không nhận', sub: '' }] };
+      return { title: 'Bảng nhiệm vụ', body: `Giấy trên bảng dán chồng lên nhau, tờ mới đè tờ cũ, mép tờ nào cũng quăn. Hạng ${G.ADV_RANKS[G.advRank(S)]}. Sức bạn ${X.power(S).toFixed(1)}.`, choices: [...ch, { k: 'no', label: 'Không nhận', sub: '' }] };
     },
     apply(S, X, k, c) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn đứng trước bảng một lúc rồi quay đi. Lần này để người khác nhận.';
       flag(S, 'quests');
       const W = S.world;
       if (k === 'lair') { const l = (W.dyn.lairs || []).find(x => x.id === c.lair && x.empty == null); if (!l) return null; const out = G.raidLair(X, l); if (S.dead) return null; if (l.empty != null) { X.money(c.bonus); S.fame = Math.min(100, S.fame + 1); return out + ` Hiệp Hội thưởng ${G.coin(c.bonus)}.`; } return out; }
@@ -605,13 +605,13 @@ window.LifeSim = window.LifeSim || {};
         const z = G.ZONE[c.zone].zone, n = X.int(1, 3); let won = 0;
         for (let i = 0; i < n; i++) { const enc = X.rollEncounter(z); if (!enc) break; const rec = X.fight(enc, false); if (S.dead) return null; if (!rec.win) break; won++; }
         X.money(won * c.per); S.fame = Math.min(100, S.fame + won * .5);
-        return won === n ? `Đoàn buôn tới nơi an toàn. +${G.coin(won * c.per)}.` : `Đoàn buôn mất mấy xe hàng. +${G.coin(won * c.per)}.`;
+        return won === n ? `Xe hàng cuối cùng lăn qua cổng thành, chủ buôn vỗ vai bạn cười. Đoàn buôn tới nơi an toàn. +${G.coin(won * c.per)}.` : `Đoàn buôn mất mấy xe hàng, vải vóc vương vãi trên bùn, chủ buôn chẳng nói với bạn câu nào. +${G.coin(won * c.per)}.`;
       }
-      if (k === 'bounty') { const z = G.ZONE[X.recommendedZone(S).zone.id].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null; const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(40 * Math.pow(1 + sp.tier, 2)) }; return `Lệnh săn ${sp.nameVi} thủ lĩnh ở ${z.nameVi}.`; }
+      if (k === 'bounty') { const z = G.ZONE[X.recommendedZone(S).zone.id].zone, t = X.encounterTable(z, X.ctier(S), false); if (!t.length) return null; const sp = X.wpick(t, 'w').s; S.flags.bounty = { species: sp.id, zone: z.id, reward: Math.round(40 * Math.pow(1 + sp.tier, 2)) }; return `Bạn gỡ tờ lệnh khỏi bảng, gấp làm tư: săn ${sp.nameVi} thủ lĩnh ở ${z.nameVi}. Hình con vật vẽ phác trên giấy, nét mực run run như người vẽ còn sợ.`; }
       if (k === 'gather') {
         const sk = Math.max(S.mastery.Stealth || 0, S.mastery.Alchemy || 0, S.mastery.Nature || 0);
-        if (X.chance(.45 + sk / 200)) { X.money(c.pay); S.fame = Math.min(100, S.fame + .3); return `Tìm được. +${G.coin(c.pay)}.`; }
-        X.add('hl', -X.int(2, 6)); return 'Lội cả tuần không thấy gì.';
+        if (X.chance(.45 + sk / 200)) { X.money(c.pay); S.fame = Math.min(100, S.fame + .3); return `Lần theo mấy dấu vết mờ qua bụi rậm, cuối cùng bạn cũng tìm được. +${G.coin(c.pay)}.`; }
+        X.add('hl', -X.int(2, 6)); return 'Lội cả tuần không thấy gì, chỉ mang về đôi chân sưng và mấy vết gai cào.';
       }
       return null;
     },
@@ -638,19 +638,19 @@ window.LifeSim = window.LifeSim || {};
         if (ch.length >= 2) break;
       }
       if (!ch.length) ch.push({ k: 'escort', label: 'Nhận việc hộ tống', sub: `Đi cùng đoàn buôn, 1–2 trận; ${G.coin(Math.round(med * .8))}.` });
-      return { title: o.name, body: `Đoàn có ${o.members} người. Bạn là ${G.ORG_KINDS.merc.ranks[rank]}.`, choices: [...ch, { k: 'no', label: 'Nghỉ năm nay', sub: '' }], org: o.id, rank };
+      return { title: o.name, body: `Mùa mới, cả đoàn lại tụ về quanh đống lửa chia việc. Đoàn có ${o.members} người. Bạn là ${G.ORG_KINDS.merc.ranks[rank]}.`, choices: [...ch, { k: 'no', label: 'Nghỉ năm nay', sub: '' }], org: o.id, rank };
     },
     apply(S, X, k, c) {
-      if (k === 'no') return null;
+      if (k === 'no') return 'Bạn treo kiếm lên vách, nghỉ một năm. Tiếng anh em trong đoàn gọi nhau đi qua ngõ, bạn nghe mà không ra.';
       const W = S.world, R = G.bindWorld(W), D = W.dyn, rank = Math.max(0, ...Object.entries(roles(S).orgs).map(([id, m]) => G.orgById(W, id) && G.orgById(W, id).kind === 'merc' ? m.rank : 0));
       const o = Object.keys(roles(S).orgs).map(id => G.orgById(W, id)).find(x => x && x.kind === 'merc'), med = G.median(X.reg(S));
       if (k === 'escort') {
         const z = X.recommendedZone(S); let won = 0; const n = X.int(1, 2);
         if (z) for (let i = 0; i < n; i++) { const enc = X.rollEncounter(z.zone); if (!enc) break; const rec = X.fight(enc, false); if (S.dead) return null; if (!rec.win) break; won++; }
         X.money(Math.round(med * .8 * (won ? 1 : .5))); flag(S, 'mercJobs');
-        return won ? 'Hàng tới nơi.' : 'Mất hàng giữa đường; chủ hàng chỉ trả nửa.';
+        return won ? 'Hàng tới nơi, không thiếu một bao.' : 'Mất hàng giữa đường; chủ hàng đếm tiền trả nửa, đếm thật chậm cho bạn thấy.';
       }
-      const w = D.wars.find(x => (x.a === c.side || x.b === c.side)); if (!w) return 'Hai bên đã ngừng đánh trước khi bạn tới.';
+      const w = D.wars.find(x => (x.a === c.side || x.b === c.side)); if (!w) return 'Tới nơi thì hai bên đã ngừng đánh. Bãi chiến trường chỉ còn bầy quạ và mấy lá cờ rách.';
       flag(S, 'mercC');
       const pw = X.power(S), size = G.clamp(o.members / 60, .5, 2), pDie = G.clamp(.07 - .012 * pw - .01 * rank, .008, .07);
       if (X.chance(pDie)) { X.die({ id: 'war', text: `tử trận khi đánh thuê cho ${R.nations[c.side].name}` }); return null; }
@@ -659,7 +659,7 @@ window.LifeSim = window.LifeSim || {};
       const pay = Math.round(med * (1.5 + rank)); X.money(pay); S.fame = Math.min(100, S.fame + 1 + rank);
       X.add('hl', -X.int(3, 12)); X.addXp(40 * (1 + X.ctier(S)));
       o.rep = Math.min(1, o.rep + .02);
-      return `Bạn theo ${o.name} đánh một mùa cho ${R.nations[c.side].name}. +${G.coin(pay)}.`;
+      return W.year % 2 ? `Bạn theo ${o.name} đánh một mùa cho ${R.nations[c.side].name}, ngủ trong bùn, nhai bánh khô. Lúc nhận tiền, tay còn run vì lạnh. +${G.coin(pay)}.` : `Một mùa đánh thuê cho ${R.nations[c.side].name} cùng ${o.name}: hành quân dưới mưa, cắm trại bên những làng đã cháy. Về tới nơi, bạn ngủ liền hai ngày. +${G.coin(pay)}.`;
     },
     auto(S, X, d) { const w = d.choices.find(c => c.k[0] === 'w'); if (w && S.hl > 55) return w.k; return d.choices[0].k === 'escort' && S.hl > 45 ? 'escort' : 'no'; }
   };
@@ -676,16 +676,16 @@ window.LifeSim = window.LifeSim || {};
   // ═════════ Rời hội, từ chức (nút ở giao diện) ═════════
   G.leaveRole = function (S, X, what, id) {
     const r = roles(S), W = S.world, D = W.dyn;
-    if (what === 'org') { const o = G.orgById(W, id); if (o && o.leader.player && r.orgs[id] && r.orgs[id].rank === 2) o.leader = { name: G.personName(S.race === 'skeleton' ? 'human' : S.race, 'm', X.rnd), player: false }; delete r.orgs[id]; if (o) o.members = Math.max(3, o.members - 1); return o ? `Bạn rời ${o.name}.` : null; }
-    if (what === 'adv') { if (r.adv && r.adv.branch) { r.adv.branch = null; return 'Bạn giao lại chi nhánh, vẫn giữ thẻ hội.'; } r.adv = null; return 'Bạn trả thẻ Hiệp Hội.'; }
-    if (what === 'head') { const h = G.SET[r.head]; if (live(h)) Dn().setField(D, h, 'head', { name: G.personName(h.race || 'human', 'm', X.rnd), player: false, since: W.year }); r.head = null; return 'Bạn giao lại việc chung cho người khác.'; }
-    if (what === 'office') { r.office = null; return 'Bạn treo ấn từ quan.'; }
+    if (what === 'org') { const o = G.orgById(W, id); if (o && o.leader.player && r.orgs[id] && r.orgs[id].rank === 2) o.leader = { name: G.personName(S.race === 'skeleton' ? 'human' : S.race, 'm', X.rnd), player: false }; delete r.orgs[id]; if (o) o.members = Math.max(3, o.members - 1); return o ? `Bạn rời ${o.name}, để lại huy hiệu hội trên bàn người thư ký. Ra tới cửa, bạn còn nghe tiếng sổ gập lại.` : null; }
+    if (what === 'adv') { if (r.adv && r.adv.branch) { r.adv.branch = null; return 'Bạn giao lại chi nhánh cùng chiếc chìa két, vẫn giữ thẻ hội trong túi áo.'; } r.adv = null; return 'Bạn trả thẻ Hiệp Hội. Người thư ký gạch tên bạn khỏi sổ, nét bút gọn như cắt.'; }
+    if (what === 'head') { const h = G.SET[r.head]; if (live(h)) Dn().setField(D, h, 'head', { name: G.personName(h.race || 'human', 'm', X.rnd), player: false, since: W.year }); r.head = null; return 'Bạn giao lại việc chung cho người khác. Sáng hôm sau ngủ dậy, ngoài cửa chẳng có ai đứng chờ.'; }
+    if (what === 'office') { r.office = null; return 'Bạn treo ấn từ quan, gói ghém mấy bộ áo rời dinh tỉnh. Đi được một quãng mới thấy vai nhẹ hẳn.'; }
     if (what === 'noble') return G.renounceTitle ? G.renounceTitle(S) : null;
-    if (what === 'rank') { const t = G.rankText(S); r.rank = null; return t ? `Bạn từ bỏ bậc ${t.split(' của ')[0]}.` : null; }
+    if (what === 'rank') { const t = G.rankText(S); r.rank = null; return t ? `Bạn từ bỏ bậc ${t.split(' của ')[0]}, gấp bộ phẩm phục cất xuống đáy rương.` : null; }
     if (what === 'ruler') {
       const k = r.ruler, n = G.realm.nations[k], nr = Dn().makeRuler(n, X);
       if (nr) { D.nat[k].ruler = nr; n.ruler = nr; } D.nat[k].stab = Math.max(0, D.nat[k].stab - .08);
-      Dn().hist(D, W.year, 'king', `${S.name} thoái vị; ${nr ? nr.name : 'hội đồng'} nắm ${n.name}.`); r.ruler = null; return 'Bạn trao ngai và lui về.';
+      Dn().hist(D, W.year, 'king', `${S.name} thoái vị; ${nr ? nr.name : 'hội đồng'} nắm ${n.name}.`); r.ruler = null; return 'Bạn trao ngai và lui về. Ngày rời cung, bạn đi cửa bên, không kèn không trống.';
     }
     return null;
   };

@@ -230,7 +230,7 @@ window.LifeSim = window.LifeSim || {};
     if (S && S.home && S.home.settlement === s.id && !S.dead) {
       if (to) { S.home = { region: to.region, settlement: to.id }; S.loc = to.region; S.pos = G.homePos(to, S.urban, X.rnd); S.path2.push(S.pos); }
       else S.home.settlement = null;
-      X.log(`${s.name} không còn ai ở. ${to ? `Nhà bạn dọn về ${to.name}.` : 'Bạn thành kẻ không nhà.'}`, 'bad');
+      X.log(`Nhà cuối cùng ở ${s.name} cũng đóng cửa, cỏ đã mọc lấn lên bậc thềm. ${to ? `Bạn chất đồ đạc lên xe, theo dòng người dọn về ${to.name}, ngoái lại mấy lần tới khi mái nhà cũ khuất hẳn.` : 'Bạn thành kẻ không nhà, đêm ngủ nhờ dưới mái hiên người lạ.'}`, 'bad');
     }
     // Kinh đô sụp: dời đô.
     const k = s.nation;
@@ -505,7 +505,7 @@ window.LifeSim = window.LifeSim || {};
     for (const m of M.slice()) if (year >= m.until) {
       M.splice(M.indexOf(m), 1); n.mineEnd = (n.mineEnd || 0) + 1;
       hist(D, year, 'mine', `Mỏ ma tinh ở tỉnh ${pname(R, m.p)} cạn.`);
-      if (S && G.provOfS(S) === m.p) X.log(`Mỏ ma tinh ở ${pname(R, m.p)} cạn. Phu mỏ kéo nhau đi nơi khác.`, 'info');
+      if (S && G.provOfS(S) === m.p) X.log(`Mỏ ma tinh ở ${pname(R, m.p)} cạn, ánh xanh dưới đáy hầm tắt dần rồi tắt hẳn. Phu mỏ cuốn chiếu kéo nhau đi nơi khác, quán rượu đầu dốc vắng hẳn tiếng cười.`, 'info');
     }
     // Mỏ mới lộ ở tỉnh ma lực cao.
     for (let p = 0; p < R.provinces.length && M.length < K.mineMax; p++) {
@@ -515,7 +515,7 @@ window.LifeSim = window.LifeSim || {};
       M.push(m); n.mines = (n.mines || 0) + 1;
       const k = D.prov[p], owner = k >= 0 ? R.nations[k].name : null;
       hist(D, year, 'mine', `Mỏ ma tinh lộ ra ở tỉnh ${pname(R, p)}${owner ? ` (${owner})` : ', đất vô chủ'}.`);
-      if (S && (G.provOfS(S) === p || neighbors(R, p).includes(G.provOfS(S)))) X.log(`Người ta đào được ma tinh ở ${pname(R, p)}. Cả vùng xôn xao.`, 'big');
+      if (S && (G.provOfS(S) === p || neighbors(R, p).includes(G.provOfS(S)))) X.log(`Người ta đào được ma tinh ở ${pname(R, p)}. Tin lan nhanh hơn lửa bén rơm: chưa hết tháng, đường tới đó đã kín người vác cuốc, chợ phiên bày bán cả xẻng lẫn bùa may. Ai cũng tin mình sẽ là người đào được viên lớn nhất.`, 'big');
     }
   }
   // Mỏ ở tỉnh nhà hoặc tỉnh kề (js/inst.js cv_mine, js/econ.js cầu "ore").
@@ -539,7 +539,7 @@ window.LifeSim = window.LifeSim || {};
       const l = lairAt(R, D, q.cell, b, lairFam(reg.zones[b], X, prefer), year, X);
       count[a] = (count[a] || 0) + 1; cnt(D, 'lairRuin');
       hist(D, year, 'lair', `Quái làm tổ trong phế tích ${q.name}: giờ gọi là ${l.name}.`);
-      if (here(l)) X.log(`Phế tích ${q.name} giờ là ${l.name}. Đêm đêm có tiếng động từ phía đó.`, 'bad');
+      if (here(l)) X.log(`Phế tích ${q.name} đã có chủ mới, người ta gọi là ${l.name}. Đêm đêm từ phía đó vọng lại tiếng cào, tiếng rít. Nhà nào cũng cài then sớm, trẻ con thôi ra đầu làng chơi.`, 'bad');
     }
     R._lairQ = [];
     for (const l of L.slice()) {
@@ -559,7 +559,7 @@ window.LifeSim = window.LifeSim || {};
       const k = G.lairKey(l);
       if (l.lv < 3 && (zp[k] ?? 1) > 1.2 && X.chance(K.lairGrow)) {
         l.lv++; cnt(D, 'lairUp');
-        if (l.lv === 3) { hist(D, year, 'lair', `${l.name} thành sào huyệt; quái tràn ra các làng quanh đó.`); if (here(l)) X.log(`${l.name} thành sào huyệt. Quái từ đó tràn xuống ven làng mỗi mùa.`, 'bad'); }
+        if (l.lv === 3) { hist(D, year, 'lair', `${l.name} thành sào huyệt; quái tràn ra các làng quanh đó.`); if (here(l)) X.log(`${l.name} giờ đã thành sào huyệt. Mỗi mùa quái lại từ đó tràn xuống ven làng, để lại vết cào sâu hoắm trên hàng rào. Người già bắt đầu nhắc tới chuyện bỏ đi.`, 'bad'); }
       }
       // Sào huyệt tràn quái ra tầng ven của tỉnh: nguồn chính của thú triều.
       if (l.lv === 3) { const v = lairArea(l.cell) + ':0'; zp[v] = Math.min(2.2, (zp[v] ?? 1) + K.lairSpill); }
@@ -576,7 +576,7 @@ window.LifeSim = window.LifeSim || {};
       if (!cs.length) continue;
       const l = lairAt(R, D, X.pick(cs), b, null, year, X); mask.add(l.cell);
       count[a.key] = (count[a.key] || 0) + 1;
-      if (here(l)) X.log(`Thợ săn về báo: quái làm ổ ở ${lairZone(l).nameVi}, người ta gọi là ${l.name}.`, 'info');
+      if (here(l)) X.log(`Thợ săn về báo: quái làm ổ ở ${lairZone(l).nameVi}, người ta gọi là ${l.name}. Họ kể mà tay còn run, bát nước uống không hết.`, 'info');
     }
     cnt(D, 'lairSum', L.filter(l => l.empty == null).length); cnt(D, 'lairYrs');
   }
@@ -618,7 +618,7 @@ window.LifeSim = window.LifeSim || {};
     S.flags.lairTries = (S.flags.lairTries || 0) + 1;
     const r = G.assault(X, { ...zone, nameVi: l.name }, n, { cell: l.cell, fam: l.fam, boss: l.lv === 3 });
     if (r.dead) return null;
-    if (!r.done) return `Thắng ${r.won}/${n} trận rồi phải rút ra. ${l.name} vẫn còn đó.`;
+    if (!r.done) return `Thắng ${r.won}/${n} trận thì sức đã cạn, bạn đành lùi ra, vừa đi vừa ngoái. Tiếng gầm trong ${l.name} còn đuổi theo một quãng dài.`;
     const t = Math.min(zone.tier[1], X.ctier(S) + 1), loot = Math.round(25 * Math.pow(1 + t, 2) * l.lv * (.7 + X.rnd() * .6));
     X.money(loot); S.fame = Math.min(100, S.fame + 2 * l.lv * (1 + t * .3));
     for (let i = 0; i < l.lv; i++) if (X.chance(.6)) G.treasure(X, zone);
@@ -627,7 +627,7 @@ window.LifeSim = window.LifeSim || {};
     if (bonus) X.money(bonus);
     G.clearLair(W, l, X, S.name);
     S.flags.lairs = (S.flags.lairs || 0) + 1;
-    return `Dọn sạch ${l.name} sau ${n} trận. +${G.coin(loot)}${bonus ? `, quan ${G.realm.nations[k].name} thưởng thêm ${bonus}` : ''}.`;
+    return `${l.lv === 3 ? 'Thủ lĩnh sào huyệt đổ xuống như cây cổ thụ bị đốn, kéo theo cả một mảng vách' : 'Con quái cuối cùng gục xuống'}, và ${l.name} im bặt. Bạn ngồi trên một tảng đá thở dốc, tay áo khô cứng vì máu. Dọn sạch sau ${n} trận. +${G.coin(loot)}${bonus ? `, quan ${G.realm.nations[k].name} thưởng thêm ${bonus}` : ''}.`;
   };
   // Di tích (docs/03 mục 4.2): tĩnh, đặt từ seed (G.realm.dungeons); W.dyn.dg[id][k] = năm dọn xong tầng k, sau 25 năm quái về lại.
   G.DG_REFILL = 25;
@@ -644,7 +644,7 @@ window.LifeSim = window.LifeSim || {};
     S.flags.dgTries = (S.flags.dgTries || 0) + 1;
     const r = G.assault(X, { ...zone, nameVi: `${d.name}, ${zone.nameVi.toLowerCase()}` }, n, { cell: d.cell, boss: true });
     if (r.dead) return null;
-    if (!r.done) return `Thắng ${r.won}/${n} trận ở ${zone.nameVi.toLowerCase()} rồi phải leo lên.`;
+    if (!r.done) return `Thắng ${r.won}/${n} trận ở ${zone.nameVi.toLowerCase()} thì đuốc đã sắp tàn, bạn đành mò đường leo lên. Ra tới cửa hầm, ánh sáng ngoài trời làm bạn nheo cả mắt.`;
     const t = Math.min(zone.tier[1], X.ctier(S) + 1), loot = Math.round(40 * Math.pow(1 + t, 2) * (k + 1) * (.7 + X.rnd() * .6));
     X.money(loot); S.fame = Math.min(100, S.fame + 3 * (k + 1) * (1 + t * .3));
     for (let i = 0; i <= k; i++) G.treasure(X, zone);
@@ -654,7 +654,7 @@ window.LifeSim = window.LifeSim || {};
     cnt(D, 'dgFloors');
     hist(D, W.year, 'dungeon', `${S.name} xuống tới ${zone.nameVi.toLowerCase()} của ${d.name}${first ? ', lần đầu có người sống sót trở về' : ''}.`);
     S.flags.dgFloors = (S.flags.dgFloors || 0) + 1;
-    return `Dọn sạch ${zone.nameVi.toLowerCase()} của ${d.name}. +${G.coin(loot)}.`;
+    return `Kẻ canh giữ cuối cùng ngã xuống, bụi đá rơi lả tả từ trần hầm. Bạn đã dọn sạch ${zone.nameVi.toLowerCase()} của ${d.name}. ${first ? 'Trên vách còn những hình khắc chưa người sống nào từng nhìn thấy' : 'Trên vách còn vết muội đuốc của những người đi trước'}. +${G.coin(loot)}.`;
   };
 
   // ═════════ Mật độ quái theo tỉnh × tầng (docs/03 mục 3.5) ═════════
@@ -669,7 +669,7 @@ window.LifeSim = window.LifeSim || {};
         const key = a.key + ':' + b;
         let p = zp[key] ?? 1;
         p += .1 * (1 - p / 1.5) * (1 + a.danger * .6) - .045 * patrol * CULL[b] + (X.rnd() - .5) * .08;
-        if (X.chance(.025)) { p += .35; if (S && a.prov === lp && b <= 1) X.log(`Mùa sinh sản ở ${G.REGION[S.loc].zones[b].nameVi}: quái đông bất thường.`, 'info'); }
+        if (X.chance(.025)) { p += .35; if (S && a.prov === lp && b <= 1) X.log(`Mùa sinh sản ở ${G.REGION[S.loc].zones[b].nameVi}: quái đông bất thường, đêm nào cũng nghe chúng gọi nhau.`, 'info'); }
         zp[key] = G.clamp(p, .3, 2.2);
       }
       for (let b = 3; b > 0; b--) if (zp[a.key + ':' + b] > 1.6) zp[a.key + ':' + (b - 1)] = Math.min(2.2, zp[a.key + ':' + (b - 1)] + G.DYN.spill[b - 1]);
@@ -718,7 +718,7 @@ window.LifeSim = window.LifeSim || {};
       hp = loss ? hp - loss * (K.frail[s.tier] || 1) * (.7 + X.rnd() * .6) : Math.min(1, hp + G.DYN.heal);
       D.hp[s.id] = +hp.toFixed(3);
       if (hp < .15) { ruin(R, D, s, year, hitR ? 'thú triều' : hitW ? 'chiến tranh' : 'dịch bệnh', X, S); continue; }
-      if (!s.dwindling && hp < .5) { setDwindling(R, D, s, true); if (S && S.home.settlement === s.id) X.log(`${s.name} sa sút: nhà trống nhiều hơn nhà có khói bếp.`, 'bad'); }
+      if (!s.dwindling && hp < .5) { setDwindling(R, D, s, true); if (S && S.home.settlement === s.id) X.log(`${s.name} sa sút: nhà trống giờ nhiều hơn nhà có khói bếp. Chợ phiên họp muộn, tan sớm, hàng rong chỉ còn lèo tèo mấy gánh. Đi qua những cánh cửa đóng im, bạn bất giác bước nhanh hơn.`, 'bad'); }
       else if (s.dwindling && hp > .8) setDwindling(R, D, s, false);
     }
 
@@ -738,7 +738,7 @@ window.LifeSim = window.LifeSim || {};
           const fight = X.chance(qk(n, 'two_lines') || tpl(n, 'O2') ? .45 : .2), nr = (G.royalSucceed && G.royalSucceed(W, n.idx, X, S, fight)) || makeRuler(n, X);
           d.ruler = nr; n.ruler = nr; d.stab = Math.max(0, d.stab - (fight ? .18 : .06)); D.n.kings++;
           hist(D, year, 'king', `${ru.title} ${ru.name} của ${n.name} băng hà ở tuổi ${ru.age}.` + (fight ? ` Hai phe tranh ngôi; ${nr.name} thắng.` : ` ${nr.name} lên ngôi.`));
-          news(n.idx, `${ru.title} ${ru.name} băng hà.` + (fight ? ` Triều đình chia hai phe; ${nr.name} giành được ngai.` : ` ${nr.name} lên ngôi.`), fight ? 'bad' : 'info');
+          news(n.idx, `${['Cờ rủ khắp ' + n.name, 'Chuông tang gióng suốt đêm ở kinh thành ' + n.name, 'Ngựa trạm phóng qua các ngả đường ' + n.name + ', người cưỡi quấn khăn trắng'][year % 3]}: ${ru.title} ${ru.name} băng hà.` + (fight ? ` Triều đình chia hai phe, kinh thành đóng cổng mấy ngày liền; cuối cùng ${nr.name} giành được ngai.` : ` ${nr.name} lên ngôi, và chợ phiên tuần sau lại họp như thường.`), fight ? 'bad' : 'info');
         }
       }
     }
@@ -762,8 +762,8 @@ window.LifeSim = window.LifeSim || {};
         if (back >= 0) w.occ.splice(back, 1); else w.occ.push({ p, by, from });
         setOwner(R, D, p, by); D.n.occ++;
         hist(D, year, 'occ', `${NN[by].name} chiếm tỉnh ${pname(R, p)} của ${NN[from].name}.`);
-        if (S && G.provOfS(S) === p) X.log(`Quân ${NN[by].name} vào ${pname(R, p)}. Cờ trên cổng thành đổi màu.`, 'big');
-        else if (mine(by) || mine(from)) X.log(`${NN[by].name} chiếm tỉnh ${pname(R, p)}.`, mine(by) ? 'good' : 'bad');
+        if (S && G.provOfS(S) === p) X.log(`Quân ${NN[by].name} vào ${pname(R, p)}, tiếng giày đinh dội khắp các ngả đường. Sáng hôm sau, lá cờ trên cổng thành đã đổi màu. Người ta đóng cửa, nói khẽ, chờ xem chủ mới là người thế nào.`, 'big');
+        else if (mine(by) || mine(from)) X.log(`${NN[by].name} chiếm tỉnh ${pname(R, p)}. ${mine(by) ? 'Tin thắng trận về tới nơi, quán rượu mở cửa tới khuya.' : 'Tin dữ về tới nơi, cả buổi chợ chẳng ai buồn mặc cả.'}`, mine(by) ? 'good' : 'bad');
         if (p === capP) moveCapital(R, D, from, year, `mất ${pname(R, p)}`);
         w.score += by === a ? -.2 : .2;
         if (!provsOf(D, from).length) killNation(R, D, from, year, NN[by].name);
@@ -796,8 +796,8 @@ window.LifeSim = window.LifeSim || {};
         if (!X.chance(p)) continue;
         D.wars.push({ a, b, score: 0, years: 0, start: year, occ: [] }); D.n.wars++;
         hist(D, year, 'war', `${na.name} tuyên chiến với ${nb.name}.`);
-        if (mine(a) || mine(b)) X.log(`${na.name} tuyên chiến với ${nb.name}. Lính mộ đi khắp các làng.`, 'big');
-        else if (S && X.chance(.4)) X.log(`Tin từ xa: ${na.name} tuyên chiến với ${nb.name}.`, 'info');
+        if (mine(a) || mine(b)) X.log(`${na.name} tuyên chiến với ${nb.name}. Lính mộ đi khắp các làng, gõ cửa từng nhà ghi tên trai tráng. Đêm ấy nhiều bếp lửa cháy tới sáng.`, 'big');
+        else if (S && X.chance(.4)) X.log(year % 2 ? `Tin từ xa theo chân lái buôn về tới chợ: ${na.name} tuyên chiến với ${nb.name}. Người ta bàn tán mấy hôm rồi thôi, chuyện xa thì vẫn xa.` : `Tin từ xa: ${na.name} tuyên chiến với ${nb.name}. Ở quán rượu, mấy ông già trải tấm bản đồ nhàu ra bàn cãi nhau xem bên nào thắng.`, 'info');
       }
     }
 
@@ -814,7 +814,7 @@ window.LifeSim = window.LifeSim || {};
       if (X.chance(.5)) {
         d.stab = Math.max(0, d.stab - .03);
         hist(D, year, 'riot', `Tỉnh ${pname(R, p)} nổi loạn chống ${n.name}, bị dẹp.`);
-        if (S && G.provOfS(S) === p) X.log(`${pname(R, p)} nổi loạn. Quân ${n.name} dẹp yên sau một mùa; nhà nào cũng có người bị bắt.`, 'bad');
+        if (S && G.provOfS(S) === p) X.log(`${pname(R, p)} nổi loạn. Một mùa khói lửa, rồi quân ${n.name} dẹp yên; nhà nào cũng có người bị bắt đi. Lúc lính rút, đầu làng còn trơ lại mấy cột gỗ cháy đen.`, 'bad');
         continue;
       }
       const joinTo = neighbors(R, p).map(q => D.prov[q]).filter(o => o >= 0 && o !== k && D.nat[o].alive && NN[o].faith && NN[o].faith === faith);
@@ -829,7 +829,7 @@ window.LifeSim = window.LifeSim || {};
       } else continue;
       D.n.rebel++;
       hist(D, year, 'rebel', txt);
-      if (S && G.provOfS(S) === p) X.log(txt, 'big'); else news(k, txt, 'bad');
+      if (S && G.provOfS(S) === p) X.log(txt + ' Cờ cũ bị giật xuống, đốt ngay giữa chợ, tro bay vào cả những nhà đóng cửa.', 'big'); else news(k, txt + ' Tin về tới nơi, người ta nhìn nhau, chẳng ai dám nói to.', 'bad');
       if (!provsOf(D, k).length) killNation(R, D, k, year, null);
     }
 
@@ -840,14 +840,14 @@ window.LifeSim = window.LifeSim || {};
       if (!cand.length || !X.chance(G.DYN.annexP)) continue;
       const o = X.pick(cand); setOwner(R, D, p, o); D.n.annex++;
       hist(D, year, 'annex', `${pname(R, p)} xin nhập vào ${NN[o].name}.`);
-      if (S && G.provOfS(S) === p) X.log(`Các bô lão ${pname(R, p)} xin nhập vào ${NN[o].name}. Từ nay có lính tuần, có thuế.`, 'big');
+      if (S && G.provOfS(S) === p) X.log(`Các bô lão ${pname(R, p)} chống gậy lên đường, xin nhập vào ${NN[o].name}. Từ nay đường có lính tuần, nhà có sổ thuế. Có người thở phào, có người lẩm bẩm tiếc những năm chẳng ai quản.`, 'big');
     }
 
     // ── Khu mới: hồi sinh phế tích hoặc làng mới ven sông, ở nước đang yên.
     if (X.chance(G.DYN.foundP)) {
       const calm = alive.filter(n => D.nat[n.idx].alive && D.nat[n.idx].stab > .45 && !wars(n.idx));
       const n = X.wpick(calm, n => provsOf(D, n.idx).length);
-      if (n) { const s = found(R, D, n.idx, year, X); if (s && S && G.provOfS(S) === s.province) X.log(`Có người dựng nhà ở ${s.name}, cách đây không xa.`, 'info'); }
+      if (n) { const s = found(R, D, n.idx, year, X); if (s && S && G.provOfS(S) === s.province) X.log(`Có người dựng nhà ở ${s.name}, cách đây không xa. Chiều chiều nhìn về phía đó đã thấy khói bếp.`, 'info'); }
     }
     roadDecay(R, D, year);
     if (R._dirty.length) G.wildCommit(R);
@@ -871,7 +871,7 @@ window.LifeSim = window.LifeSim || {};
     const txt = win == null ? `Chiến tranh ${NN[w.a].name} – ${NN[w.b].name} kết thúc sau ${w.years} năm, không bên nào được gì.`
       : `${NN[win].name} thắng ${NN[win === w.a ? w.b : w.a].name} sau ${w.years} năm` + (kept.length ? `, giữ ${kept.map(p => 'tỉnh ' + pname(R, p)).join(' và ')}.` : '.');
     hist(D, year, 'peace', txt + ' Hưu chiến 15 năm.');
-    if (S && (S.nation === w.a || S.nation === w.b)) X.log(txt, win === S.nation ? 'good' : 'info');
+    if (S && (S.nation === w.a || S.nation === w.b)) X.log(txt + (win === S.nation ? ' Lính về làng, mẹ già ra tận đầu đường đón con.' : win == null ? ' Lính về làng, chẳng ai nói được mình đã đánh vì cái gì.' : ' Lính về làng, ít hơn lúc ra đi.'), win === S.nation ? 'good' : 'info');
   }
 
   // ═════════ Hệ con "nations" (sau "world") ═════════
@@ -884,8 +884,8 @@ window.LifeSim = window.LifeSim || {};
     const now = k >= 0 ? k : null;
     if (now !== S.nation) {
       const p = G.provOfS(S), name = p >= 0 ? 'tỉnh ' + R.provinces[p].name : 'nơi bạn ở';
-      if (now != null) X.log(S.undead ? `Năm ${W.year}, ${name} về tay ${R.nations[now].name}. Quê cũ của bộ xương này giờ treo cờ khác.` : `Năm ${W.year}, ${name} về tay ${R.nations[now].name}. Từ nay bạn là dân ${R.nations[now].name}.`, 'big');
-      else X.log(`Năm ${W.year}, ${name} không còn thuộc nước nào.`, 'big');
+      if (now != null) X.log(S.undead ? `Năm ${W.year}, ${name} về tay ${R.nations[now].name}. Quê cũ của bộ xương này giờ treo cờ khác, còn gió lùa qua hốc mắt thì vẫn lạnh như xưa.` : `Năm ${W.year}, ${name} về tay ${R.nations[now].name}. Bố cáo mới dán ở đầu chợ, mực còn chưa khô. Từ nay bạn là dân ${R.nations[now].name}.`, 'big');
+      else X.log(`Năm ${W.year}, ${name} không còn thuộc nước nào. Không lính tuần, không người thu thuế; đêm xuống, nhà nào lo phận nhà nấy.`, 'big');
       S.nation = now; S.flags.homeFlip = (S.flags.homeFlip || 0) + 1;
     }
   };

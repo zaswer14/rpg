@@ -274,8 +274,8 @@ window.LifeSim = window.LifeSim || {};
     const S = X.S, rw = G.skRewards(key, S.sk[key].m), got = {};
     for (let r = r0 + 1; r <= r1; r++) for (const [s, n] of Object.entries(rw[r] || {})) got[s] = (got[s] || 0) + n;
     const up = (S.up[tierOfKey(key)] || []).includes(key);
-    if (r1 >= 5 && up) X.log(`${G.skName(key)} đạt bậc 5.${Object.keys(got).length ? ' ' + statTxt(got) + '.' : ''} Level ${G.lvOf(S)}.`, 'good');
-    else if (Object.keys(got).length) X.log(`${G.skName(key)} lên bậc ${r1}. ${statTxt(got)}.`, 'good');
+    if (r1 >= 5 && up) X.log(`${G.skName(key)} đạt bậc 5, ${['thuần tới mức tay tự biết đường', 'giờ ra chiêu không cần nghĩ', 'đã nằm gọn trong tay như một thói quen'][G.lvOf(S) % 3]}.${Object.keys(got).length ? ' ' + statTxt(got) + '.' : ''} Level ${G.lvOf(S)}.`, 'good');
+    else if (Object.keys(got).length) X.log(`${G.skName(key)} lên bậc ${r1}, ${['', 'đường chiêu mới thành hình', 'bắt đầu thuận tay', 'ra chiêu đã có lực', 'chỉ còn một bước nữa là thuần', 'đã thuần'][r1] || 'tay nghề thêm chắc'}. ${statTxt(got)}.`, 'good');
   };
   // Chỉ số đã chạm trần của Tier: phần vượt chờ lên Tier mới được cộng.
   const over = S => { const o = G.statOver(S), ks = Object.keys(o); return ks.length ? ` Chỉ số chạm trần ${G.statCap(S)} (${ks.map(k => G.STAT_VI[k] + ' dư ' + o[k]).join(', ')}), lên Tier mới được cộng.` : ''; };
@@ -288,10 +288,10 @@ window.LifeSim = window.LifeSim || {};
     if (L >= G.maxLvOf(S) && F.maxLog !== jt) {
       F.maxLog = jt; (F.powMax = F.powMax || {})[jt] = +X.power(S).toFixed(2);
       { const d = G.skDir(S), e = d && Object.entries(d.req || {})[0]; if (e) (F.mOver = F.mOver || {})[jt] = Math.round((S.mastery[e[0]] || 0) - e[1]); }
-      if (jt >= 5) { X.log(`Level ${L}: đỉnh của ${G.tierName(5)}, không còn gì trên nữa.`, 'big'); return; }
+      if (jt >= 5) { X.log(`Level ${L}: đỉnh của ${G.tierName(5)}. Phía trên không còn bậc nào nữa, đường tu đã tới chỗ tận cùng. Đêm ấy bạn ngồi nhìn trời rất lâu.`, 'big'); return; }
       const open = G.succOf(S.race, S.job, S.faith).filter(d => G.gateOk(S, d));
-      X.log(open.length ? `Level ${L}, đỉnh của ${G.tierName(jt)}.${over(S)} Có thể thử vào ${open.map(d => X.jobName(S, d.id)).join(', ')}.`
-        : `Level ${L}, đỉnh của ${G.tierName(jt)}. Trong mười kỹ năng đã nâng không có trọn cặp kỹ năng của nghề Tier ${jt + 1} nào: không còn đường lên.`, open.length ? 'big' : 'bad');
+      X.log(open.length ? `Level ${L}, đỉnh của ${G.tierName(jt)}: chén đã đầy tới miệng.${over(S)} Muốn đi tiếp thì phải đổi nghề, có thể thử vào ${open.map(d => X.jobName(S, d.id)).join(', ')}.`
+        : `Level ${L}, đỉnh của ${G.tierName(jt)}. Bạn rà lại mười kỹ năng đã nâng mà không thấy trọn cặp kỹ năng của nghề Tier ${jt + 1} nào: không còn đường lên. Cánh cửa ấy, hóa ra bạn đã tự tay khép lại từ lâu.`, open.length ? 'big' : 'bad');
     }
   };
   // Cặp gate của nghề đích nằm trong chỗ nâng của Tier hiện tại và đã max.
@@ -462,7 +462,7 @@ window.LifeSim = window.LifeSim || {};
         const gate = s.gateFor.length ? ` · gate vào ${s.gateFor.map(id => X.jobName(S, id)).join(', ')}` : '';
         return { k: s.key, label: G.skName(s.key), sub: `${G.skDesc(s.key) ? G.skDesc(s.key) + ' · ' : ''}${G.mv(s.m)}${gate} · ${r5}` + (lose.length ? ` · ⚠ không còn chỗ cho cặp gate vào ${lose.map(d => X.jobName(S, d.id)).join(', ')}` : '') };
       });
-      return { title: 'Nâng kỹ năng mới', body: `${X.jobName(S)}: còn ${left} / ${G.SK_UP} chỗ nâng ở Tier ${jt}. Kỹ năng không được nâng chỉ học tới bậc 1. Muốn lên nghề Tier ${jt + 1} thì cặp kỹ năng của nghề đó phải nằm trong mười kỹ năng được nâng.`,
+      return { title: 'Nâng kỹ năng mới', body: `Đêm ấy bạn ngồi đếm lại những gì mình đã học, và những gì còn chỗ để học. ${X.jobName(S)}: còn ${left} / ${G.SK_UP} chỗ nâng ở Tier ${jt}. Kỹ năng không được nâng chỉ học tới bậc 1. Muốn lên nghề Tier ${jt + 1} thì cặp kỹ năng của nghề đó phải nằm trong mười kỹ năng được nâng.`,
         choices: [...choices, { k: 'auto', label: 'Để tự chọn cả Tier này', sub: 'Ưu tiên cặp kỹ năng của nghề theo hướng đi.' }] };
     },
     apply(S, X, k) {
@@ -483,7 +483,7 @@ window.LifeSim = window.LifeSim || {};
     // Ngộ đạo: không ai dạy được Huyền Thoại Giả. Thủ Hộ Giả max level mỗi năm có một cơ hội tự ngộ (docs/09 mục 6.1).
     if (jobTier(S) === 4 && G.lvFull(S) && !S.flags.enlight && X.chance(G.CULT.enlight * G.cultRate(S) * (.5 + S.sm / 100))) {
       S.flags.enlight = S.age;
-      X.log(`Bạn ngộ ra điều mà không người thầy nào nói được. Cánh cửa lên ${G.tierName(5)} đã mở.`, 'big');
+      X.log(`Một buổi sáng như mọi buổi sáng, đang làm một việc rất quen, bạn bỗng dừng tay. Điều mà không người thầy nào nói được, giờ tự nó hiện ra. Cánh cửa lên ${G.tierName(5)} đã mở.`, 'big');
     }
   };
   { const k = G.SYSTEMS.findIndex(s => s.id === 'career'); G.SYSTEMS.splice(k + 1, 0, { id: 'cult', when: S => !S.dead, run: (S, X) => G.cultYear(S, X) }); }
